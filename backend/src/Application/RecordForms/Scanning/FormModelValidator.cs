@@ -404,6 +404,7 @@ internal static partial class FormModelValidator
             )
             .ToArray();
         ValidateTasks(form, questions, problems);
+        ValidateConditions(form, sections, problems);
 
         foreach (
             var duplicate in questions
@@ -476,19 +477,9 @@ internal static partial class FormModelValidator
                 EqualityComparer<(string SectionId, string TaskId, string Id)>.Default
             )
             .ToArray();
+        ValidatePageMetadata(form, pages, problems);
         foreach (var page in pages)
         {
-            if (
-                page.Select(static x => (x.Question.Page.Title, x.Question.Page.Order))
-                    .Distinct()
-                    .Count() > 1
-            )
-            {
-                problems.Add(
-                    $"{form} declares page '{page.Key.Id}' with different titles or orders."
-                );
-            }
-
             ReportTies(
                 page,
                 static x => x.Question.Field.Order,
@@ -525,6 +516,220 @@ internal static partial class FormModelValidator
         )
         {
             problems.Add($"{form} has page '{page.Key}' in more than one task.");
+        }
+    }
+
+    /// <summary>
+    /// Checks every question and page condition: the trigger exists, comes earlier, and is an
+    /// enum choice that the values belong to.
+    /// </summary>
+    private static void ValidateConditions(
+        string form,
+        (EntityDeclaration Entity, FormSectionAttribute Section)[] sections,
+        List<string> problems
+    )
+    {
+        // Form position of each question: section order, task order, page order, then question
+        // order.
+        Dictionary<string, (QuestionDeclaration Question, int SectionOrder)> questions = sections
+            .SelectMany(static x =>
+                x.Entity.Questions.Select(q => (Question: q, SectionOrder: x.Section.Order))
+            )
+            .DistinctBy(static x => x.Question.Field.Id, StringComparer.Ordinal)
+            .ToDictionary(static x => x.Question.Field.Id, StringComparer.Ordinal);
+
+        ValidateQuestionConditions(questions, problems);
+        ValidatePageConditions(form, sections, questions, problems);
+    }
+
+    private static void ValidateQuestionConditions(
+        Dictionary<string, (QuestionDeclaration Question, int SectionOrder)> questions,
+        List<string> problems
+    )
+    {
+        foreach (var (question, _) in questions.Values)
+        {
+            if (question.ShowWhen is not { } showWhen)
+            {
+                continue;
+            }
+
+            string where = $"{question.Where} [FormShowWhen]";
+            if (!question.Binding.IsNullable)
+            {
+                problems.Add(
+                    $"{where} is on a non-nullable column, which cannot be cleared when the question does not apply."
+                );
+            }
+
+            if (!questions.TryGetValue(showWhen.QuestionId, out var trigger))
+            {
+                problems.Add($"{where} names unknown question '{showWhen.QuestionId}'.");
+                continue;
+            }
+
+            if (
+                !string.Equals(trigger.Question.Page.Id, question.Page.Id, StringComparison.Ordinal)
+                || trigger.Question.Field.Order >= question.Field.Order
+            )
+            {
+                problems.Add(
+                    $"{where} names '{showWhen.QuestionId}', which must be an earlier question on the same page."
+                );
+            }
+
+            ValidateTrigger(where, trigger.Question, showWhen.Values, problems);
+        }
+    }
+
+    private static void ValidatePageConditions(
+        string form,
+        (EntityDeclaration Entity, FormSectionAttribute Section)[] sections,
+        Dictionary<string, (QuestionDeclaration Question, int SectionOrder)> questions,
+        List<string> problems
+    )
+    {
+        var pageConditions = sections
+            .DistinctBy(static x => x.Entity)
+            .SelectMany(static x => x.Entity.PageConditions.Select(c => (x.Entity, Condition: c)))
+            .ToArray();
+
+        foreach (
+            var duplicate in pageConditions
+                .GroupBy(static x => x.Condition.PageId, StringComparer.Ordinal)
+                .Where(static g => g.Count() > 1)
+        )
+        {
+            problems.Add(
+                $"{form} has more than one [FormPageShowWhen] for page '{duplicate.Key}'."
+            );
+        }
+
+        foreach (var (entity, condition) in pageConditions)
+        {
+            string where =
+                $"{entity.ClrType.Name} [FormPageShowWhen] for page '{condition.PageId}'";
+            QuestionDeclaration? onPage = entity.Questions.FirstOrDefault(q =>
+                string.Equals(q.Page.Id, condition.PageId, StringComparison.Ordinal)
+            );
+            if (onPage is null)
+            {
+                problems.Add($"{where} names a page that {entity.ClrType.Name} does not declare.");
+                continue;
+            }
+
+            if (!questions.TryGetValue(condition.QuestionId, out var trigger))
+            {
+                problems.Add($"{where} names unknown question '{condition.QuestionId}'.");
+                continue;
+            }
+
+            ValidateNotFirstInTask(where, onPage, questions, problems);
+            int pageSectionOrder = questions[onPage.Field.Id].SectionOrder;
+            if (
+                (
+                    trigger.SectionOrder,
+                    trigger.Question.Task.Order,
+                    trigger.Question.Page.Order
+                ).CompareTo((pageSectionOrder, onPage.Task.Order, onPage.Page.Order)) >= 0
+            )
+            {
+                problems.Add(
+                    $"{where} names '{condition.QuestionId}', which must be on an earlier page."
+                );
+            }
+
+            ValidateTrigger(where, trigger.Question, condition.Values, problems);
+        }
+    }
+
+    /// <summary>The task list links to a task's first page, so it must always apply.</summary>
+    private static void ValidateNotFirstInTask(
+        string where,
+        QuestionDeclaration onPage,
+        Dictionary<string, (QuestionDeclaration Question, int SectionOrder)> questions,
+        List<string> problems
+    )
+    {
+        int firstPageOrder = questions
+            .Values.Where(x =>
+                string.Equals(x.Question.Task.Id, onPage.Task.Id, StringComparison.Ordinal)
+            )
+            .Min(static x => x.Question.Page.Order);
+        if (onPage.Page.Order == firstPageOrder)
+        {
+            problems.Add(
+                $"{where} is on the first page of task '{onPage.Task.Id}', which must always apply."
+            );
+        }
+    }
+
+    private static void ValidateTrigger(
+        string where,
+        QuestionDeclaration trigger,
+        IReadOnlyList<object> values,
+        List<string> problems
+    )
+    {
+        if (
+            trigger.Control is not (FormControl.Radio or FormControl.Select or FormControl.Checkbox)
+            || trigger.Binding.EnumType is not { } enumType
+        )
+        {
+            problems.Add(
+                $"{where} names '{trigger.Field.Id}', which must be a Radio, Select or Checkbox on an enum."
+            );
+            return;
+        }
+
+        if (values.Count == 0)
+        {
+            problems.Add($"{where} needs at least one value.");
+        }
+
+        foreach (object value in values)
+        {
+            if (value.GetType() != enumType || !Enum.IsDefined(enumType, value))
+            {
+                problems.Add(
+                    $"{where} has value '{value}', which is not a {enumType.Name} member."
+                );
+            }
+        }
+
+        if (values.Distinct().Count() != values.Count)
+        {
+            problems.Add($"{where} repeats a value.");
+        }
+    }
+
+    private static void ValidatePageMetadata(
+        string form,
+        IGrouping<
+            (string SectionId, string TaskId, string Id),
+            (QuestionDeclaration Question, string SectionId)
+        >[] pages,
+        List<string> problems
+    )
+    {
+        foreach (var page in pages)
+        {
+            if (
+                page.Select(static x =>
+                        (
+                            x.Question.Page.Title,
+                            x.Question.Page.Order,
+                            x.Question.Page.CommercialInConfidence
+                        )
+                    )
+                    .Distinct()
+                    .Count() > 1
+            )
+            {
+                problems.Add(
+                    $"{form} declares page '{page.Key.Id}' with different titles, orders or commercial in confidence flags."
+                );
+            }
         }
     }
 

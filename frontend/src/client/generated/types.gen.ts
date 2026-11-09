@@ -60,6 +60,18 @@ export type ChangeRecordStatusCommand = {
 };
 
 /**
+ * The kind of a condition that decides whether a question applies. Part of the HTTP API
+ * contract: the member names are sent to the frontend, so never rename or remove one.
+ */
+export const ConditionKind = { ANSWER_IN: 'AnswerIn' } as const;
+
+/**
+ * The kind of a condition that decides whether a question applies. Part of the HTTP API
+ * contract: the member names are sent to the frontend, so never rename or remove one.
+ */
+export type ConditionKind = typeof ConditionKind[keyof typeof ConditionKind];
+
+/**
  * Represents the information required to create a new organisation.
  */
 export type CreateOrganisationDto = {
@@ -505,7 +517,7 @@ export type MedicinesTreatmentDetailDto = {
     /**
      * Gets the proposed place in therapy.
      */
-    proposedPlaceInTherapy: string;
+    proposedPlaceInTherapy?: null | string;
     /**
      * Gets the estimated duration of treatment.
      */
@@ -1071,6 +1083,25 @@ export type RecordNameAndIdentifierDto = {
 };
 
 /**
+ * A condition that decides whether a question applies, from another question's answer.
+ */
+export type RecordPageConditionDto = {
+    /**
+     * How the condition is evaluated.
+     */
+    kind: ConditionKind;
+    /**
+     * The ID of the trigger question, an earlier question on the same page.
+     */
+    questionId: string;
+    /**
+     * For ConditionKind.AnswerIn: the condition is met when the trigger's answer
+     * includes any of these option values.
+     */
+    values: Array<string>;
+};
+
+/**
  * One page of a record content form: its questions, options and current answers.
  */
 export type RecordPageDto = {
@@ -1078,11 +1109,6 @@ export type RecordPageDto = {
      * The form's version. Echo it back on save.
      */
     formVersion: string;
-    /**
-     * The concurrency token of the record's latest revision, which the page reads and writes.
-     * Echo it back on save.
-     */
-    revisionVersion: number;
     /**
      * The record the page belongs to.
      */
@@ -1119,6 +1145,11 @@ export type RecordPageDto = {
     answers: {
         [key: string]: unknown;
     };
+    /**
+     * A hash of the answers of the page that must be provided when saving updates.
+     * If the hash has changed, answers will be rejected.
+     */
+    pageHash: string;
 };
 
 /**
@@ -1134,13 +1165,17 @@ export type RecordPageOptionDto = {
      */
     label: string;
     /**
+     * Help text shown under the option, or null when it has none.
+     */
+    hint: null | string;
+    /**
      * The child options of a hierarchical option, or null.
      */
     children: null | Array<RecordPageOptionDto>;
 };
 
 /**
- * A page's ID and title.
+ * A page's ID, title and "Commercial in confidence" flag.
  */
 export type RecordPagePageDto = {
     /**
@@ -1151,6 +1186,10 @@ export type RecordPagePageDto = {
      * A short name for the page.
      */
     title: string;
+    /**
+     * Whether the page shows the "Commercial in confidence" badge.
+     */
+    commercialInConfidence: boolean;
 };
 
 /**
@@ -1197,6 +1236,7 @@ export type RecordPageQuestionDto = {
      * The button text that adds another entry to a multi-value hierarchical select.
      */
     addAnotherLabel: null | string;
+    showWhen: null | RecordPageConditionDto;
     /**
      * The rules, in evaluation order.
      */
@@ -1584,16 +1624,16 @@ export type SaveRecordPageCommand = {
      */
     formVersion: string;
     /**
-     * The uint RecordPageDto.RevisionVersion the page was loaded with.
-     */
-    revisionVersion: number;
-    /**
      * Every question on the page, keyed by question ID: null for an unanswered single-value
      * question and an empty array for an unanswered multi-value question.
      */
     answers: {
         [key: string]: unknown;
     };
+    /**
+     * The page hash value returned from the query.
+     */
+    pageHash: string;
 };
 
 /**
@@ -1838,7 +1878,8 @@ export const UserMembershipAction = {
     DEACTIVATE_MEMBERSHIP: 'DeactivateMembership',
     REACTIVATE_MEMBERSHIP: 'ReactivateMembership',
     EDIT_USER_ROLE: 'EditUserRole',
-    REMOVE_USER: 'RemoveUser'
+    REMOVE_USER: 'RemoveUser',
+    MANAGE_USER_DETAILS: 'ManageUserDetails'
 } as const;
 
 /**
@@ -3225,11 +3266,7 @@ export type GetUserDetailsWithinOrganisationErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * Returned if the caller is not authorised to view the organisation's users.
-     */
-    403: ProblemDetails;
-    /**
-     * Returned if the organisation does not exist or the user is not a member of it.
+     * The user does not exist in this organisation or is not accessible to the caller (ADR-004).
      */
     404: ProblemDetails;
     /**
@@ -3437,11 +3474,7 @@ export type GetUserRegistrationByIdErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The current user is not allowed to view membership requests for the organisation.
-     */
-    403: ProblemDetails;
-    /**
-     * No membership request was found with the supplied identifier.
+     * The membership request does not exist or is not accessible to the caller (ADR-004).
      */
     404: ProblemDetails;
     /**
@@ -3483,11 +3516,7 @@ export type ApproveErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The current user is not allowed to approve the membership request.
-     */
-    403: ProblemDetails;
-    /**
-     * The membership request could not be found.
+     * The membership request does not exist or is not accessible to the caller (ADR-004).
      */
     404: ProblemDetails;
     /**
@@ -3527,11 +3556,7 @@ export type RejectErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The current user is not allowed to reject the membership request.
-     */
-    403: ProblemDetails;
-    /**
-     * The membership request could not be found.
+     * The membership request does not exist or is not accessible to the caller (ADR-004).
      */
     404: ProblemDetails;
     /**

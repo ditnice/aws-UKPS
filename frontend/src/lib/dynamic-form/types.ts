@@ -1,4 +1,5 @@
 import type {
+  RecordPageConditionDto,
   RecordPageOptionDto,
   RecordPageQuestionDto,
   RecordPageRuleDto,
@@ -7,6 +8,7 @@ import type {
 export type Question = RecordPageQuestionDto
 export type Rule = RecordPageRuleDto
 export type Option = RecordPageOptionDto
+export type Condition = RecordPageConditionDto
 
 /** An answer on the wire: a string or null, or an array of strings for multi-value questions. */
 export type Answer = string | null | string[]

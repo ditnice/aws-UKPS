@@ -1,6 +1,8 @@
 # Record content forms: high-level design
 
-> **Status: first delivery implemented** (Medicine form, Indication details section). The
+> **Status: first delivery implemented** (Medicine form, Indication details section), with
+> conditional questions and pages (Development background, Laboratory testing and Patient and
+> clinical requirements sections). The
 > decision is recorded in
 > [ADR-006](../ADR/ADR-006-attribute-annotated-record-content-forms.md).
 
@@ -77,7 +79,8 @@ model, telling it which column or junction table holds the answer.
 | Bindings | Column (string, enum, reference ID), flags enum, junction table |
 | Entry points | The record task list is the root of the journey. Record creation redirects to it, and **Update record** on the record details page opens it. Both show only when `canEditContent`, returned by `POST /records` and `GET /records/{id}`, is true: the record type has a form and the user can edit it |
 | Audit | One event per save, one row per changed answer |
-| Later | Conditional pages and questions, add-another groups, precision dates, vaccine forms, searchable combobox |
+| Conditions | Questions revealed by an answer on the same page, and pages shown by an answer on an earlier page (see [Conditional questions and pages](#conditional-questions-and-pages)) |
+| Later | Add-another groups, precision dates, vaccine forms, searchable combobox, hiding answers that do not apply on View record |
 
 ## Architecture
 
@@ -151,10 +154,12 @@ flowchart LR
 | Bindings | `backend/src/Application/RecordForms/Bindings/` |
 | Option providers | `backend/src/Application/RecordForms/Options/` |
 | Rules | `backend/src/Application/RecordForms/Rules/` |
+| Conditions and applicability | `backend/src/Application/RecordForms/Conditions/` |
 | Services | `backend/src/Application/RecordForms/RecordFormQueryService.cs`, `RecordFormSaveService.cs`, sharing `RecordFormPageLoader.cs` |
 | Server-side page validation | `backend/src/Application/RecordForms/Rules/PageAnswerValidator.cs`, `AnswerParser.cs`, `RuleEvaluator.cs` |
 | Controller | `backend/src/WebApi/Controllers/RecordFormController.cs` |
 | Shared rule fixture | `backend/tests/Application/RecordForms/Fixtures/rule-cases.json` (run by `RuleCasesTests` and `frontend/src/lib/dynamic-form/ruleCases.test.ts`) |
+| Shared condition fixture | `backend/tests/Application/RecordForms/Fixtures/condition-cases.json` (run by `ConditionCasesTests` and `frontend/src/lib/dynamic-form/conditionCases.test.ts`) |
 | Page route | `frontend/src/app/portal/records/[recordId]/[pageId]/page.tsx` |
 | Renderer and question components | `frontend/src/components/DynamicForm/` (`FormPage.tsx`, `questionRegistry.tsx`, `questions/`) |
 | Form logic | `frontend/src/lib/dynamic-form/` |
@@ -178,15 +183,19 @@ flowchart TD
     F -- invalid --> X["API fails to start"]
 ```
 
-The form model is `FormModel → FormSection → FormPage → FormQuestion`. It is a plain immutable
-object graph, so the rest of the system never touches attributes or reflection:
+The form model is `FormModel → FormSection → FormTask → FormPage → FormQuestion`. It is a plain
+immutable object graph, so the rest of the system never touches attributes or reflection:
 
 - **`FormModel`**: one per `RecordType`. Holds the version, the ordered sections, a flat
-  ordered list of pages, and `FindPage`, `NextPage` and `PreviousPage`.
-- **`FormSection`**: ID, title and ordered pages.
-- **`FormPage`**: ID, title, section, and ordered questions.
-- **`FormQuestion`**: ID, control, label, hint, display hint, rules, option provider key and
-  binding.
+  ordered list of pages, `FindPage`, `FindQuestion`, `NextPage` and `PreviousPage` (which stay
+  within the task and skip pages that do not apply), and, for each page, the rows a request needs (`EntitiesToRead`,
+  `EntitiesToSave`) and the questions a save may clear (`AffectedBy`).
+- **`FormSection`**: ID, title and ordered tasks.
+- **`FormTask`**: ID, title and ordered pages; its first page is the task list's link.
+- **`FormPage`**: ID, title, section, task, ordered questions, and an optional `ShowWhen`
+  condition.
+- **`FormQuestion`**: ID, control, label, hint, display hint, rules, optional `ShowWhen`
+  condition, option provider key and binding.
 
 The registry is a singleton built from the EF design-time model of an `AppDbContext` created
 without a connection string (`FormModelFactory.LoadModel`), so it never depends on database
@@ -370,6 +379,74 @@ Rule messages are written in the attributes and shown verbatim on both sides. Th
 fixture `rule-cases.json` is run by both xUnit and Vitest, so the two implementations cannot
 drift apart.
 
+### Conditional questions and pages
+
+Some questions and pages only apply when an earlier question has a particular answer:
+
+- **A question revealed on the same page.** `[FormShowWhen(questionId, values...)]` on a
+  property. The trigger must be an earlier question on the same page. For a `Radio` trigger the
+  frontend shows the question beneath each option that reveals it, while that option is chosen;
+  for other triggers it is shown as the next question.
+- **A page shown by an earlier page.** `[FormPageShowWhen(pageId, questionId, values...)]` on the
+  entity that declares the page. The trigger must be on an earlier page, and the page must not
+  be the first of its task, which the task list links to. Back and Save and continue skip the
+  page while it does not apply.
+
+```csharp
+[FormPage("co-marketing", "Co-marketing", Order = 30)]
+[FormField(
+    "medicines_development_background.co_marketing_company_name",
+    "Co-marketing company name",
+    FormControl.Text,
+    Order = 20
+)]
+[FormShowWhen("medicines_development_background.is_co_marketed", YesNoUnknown.Yes)]
+[FormRequired("Enter the co-marketing company name")]
+public string? CoMarketingCompanyName { get; set; }
+```
+
+The values are typed enum members, so renaming one is a compile error, and they are stored as
+member names, the wire format. The trigger must be a `Radio`, `Select` or `Checkbox` on an enum or
+flags enum. The condition is met when the trigger's answer includes any of the values.
+
+**One evaluator for the whole revision.** `FormApplicability.Evaluate` takes the form model and
+the revision's answers, and works out which pages and questions apply:
+
+- A page applies when it has no condition, or its condition is met.
+- A question applies when its page applies, and its own condition (if any) is met.
+- A trigger that does not apply reads as unanswered, so conditions chain. Triggers always come
+  earlier, so the evaluation always ends.
+
+Each page or question is worked out when first asked about, so a request only needs the answers
+it actually depends on. The form model works out at startup which rows each page needs, so
+conditions cost nothing unless they cross pages:
+
+| Request | Rows loaded |
+|---|---|
+| Load a page (`EntitiesToRead`) | The page's own, plus those holding the triggers of page conditions (and their own triggers), which decide whether the page applies and where Back and Save and continue go |
+| Save a page (`EntitiesToSave`) | Those it reads, plus those holding `AffectedBy`: questions on other pages whose applicability depends on this page's answers |
+
+Same-page reveals add no rows, because the trigger and the follow-up are on the page being loaded.
+A form without page conditions loads only each page's own rows. Saving a page only clears answers
+in `AffectedBy`, so it never rewrites answers that it cannot affect.
+
+The evaluator does not depend on the page being viewed, so a summary of the whole record (View
+record, check your answers) can use it, given every answer, to decide which answers to show. An
+optional question that applies but is unanswered is still shown as "Not yet provided".
+
+**What it changes:**
+
+| Where | Effect |
+|---|---|
+| GET a page | 404 if the page does not apply. `previousPageId` skips pages that do not apply. Each question carries its `showWhen` condition |
+| PUT a page | 404 if the page does not apply. A question that does not apply is not validated (so a required follow-up can be left blank) and is stored as unanswered, whatever was sent |
+| After a save | Every answer that no longer applies, on this page or any page that depends on it, is cleared in the same save, with a field audit row each. Stored answers therefore always match what applies |
+| `nextPageId` | The next page that applies, worked out from the answers just saved |
+
+The frontend mirrors the evaluator for same-page conditions (`lib/dynamic-form/conditions.ts`).
+It hides and skips validation for questions whose condition is not met, and sends them as `null`
+or `[]`. The shared fixture `condition-cases.json` is run by both xUnit and Vitest.
+
 ### Startup checks
 
 `FormModelValidator` collects **every** problem and reports them together in one exception, so a
@@ -393,6 +470,7 @@ broken build lists everything to fix at once. The full catalogue is in
     (with its current value) to force the `UPDATE`.
   - A save racing another one is caught by EF's concurrency check, which also returns
     `revision_changed`.
+- **`pageAnswersChanged`** when the answers for a page have changed between a read and a write, the will be a HTTP 409 response with the error code `page_answers_changed`
 
 ### Authorisation
 
@@ -495,14 +573,15 @@ sequenceDiagram
             B-->>F: 409 { code }
             F-->>U: "This page has changed", reload link
         else Can save
-            B->>P: Read saved answers ("before")
-            B->>B: Check shape, normalise, check options, run rules
+            B->>P: Read saved answers ("before"), including those conditions read
+            B->>B: Check shape, normalise, then options and rules for questions that apply
             alt Invalid
                 B-->>F: 400 errors keyed by question ID
                 F-->>U: Errors shown against fields
             else Nothing changed
                 B-->>F: 200 { nextPageId }
             else Changed
+                B->>B: Clear answers that no longer apply, on this page or pages that depend on it
                 B->>P: Write changed answers through bindings (creating FirstSave rows)
                 B->>P: Touch the revision row so xmin moves on
                 B->>P: INSERT record_field_audit (one row per changed question)
@@ -535,6 +614,12 @@ revision:
 | `NotStarted` | No answer has been saved for the task |
 | `InProgress` | At least one answer is saved, but one or more required questions are unanswered |
 | `Completed` | Every required question has a saved answer; unanswered optional questions do not prevent completion |
+
+Only questions that apply count. A question hidden by its condition, or on a page that does not
+apply, is neither an answer nor a required question still to answer, so a required follow-up does
+not hold its task open while its trigger hides it. Working this out loads the rows of
+`FormModel.TriggerEntities`, which hold every question a condition reads; a form without
+conditions loads none.
 
 The endpoint is read-only. Missing and inaccessible records both return `404`, so record access
 is not disclosed.
@@ -573,9 +658,9 @@ examples below use record 5, revision 7.
 | `formVersion`, `revisionVersion` | Echo both back on save |
 | `recordId` | Used to build page URLs |
 | `section`, `task`, `page` | IDs and titles; the task title is the page caption |
-| `previousPageId` | Target of Back, or `null` on the task's first page, where Back goes to the task list |
-| `nextPageId` | The next page in the task, or `null` on the task's last page, where the button reads **Save and return to task list** |
-| `questions` | `id`, `type` (the `FormControl`), `multiple` (the answer is an array), `label`, `hint`, `display`, `placeholder`, `childLabel`, `childPlaceholder`, `addAnotherLabel`, `rules` (`kind`, `value`, `message`), `options` (`value`, `label`, `children`) |
+| `previousPageId` | Target of Back: the previous page in the task that applies, or `null` when there is none, where Back goes to the task list |
+| `nextPageId` | The next page in the task that applies given the saved answers, or `null` when there is none, where the button reads **Save and return to task list** |
+| `questions` | `id`, `type` (the `FormControl`), `multiple` (the answer is an array), `label`, `hint`, `display`, `placeholder`, `childLabel`, `childPlaceholder`, `addAnotherLabel`, `showWhen` (`kind`, `questionId`, `values`, or `null`), `rules` (`kind`, `value`, `message`), `options` (`value`, `label`, `children`) |
 | `answers` | Every page question: a string or `null`, or an array for multi-value questions |
 
 `GET /records/5/pages/therapeutic-area` returns `200 OK`:
@@ -594,8 +679,8 @@ examples below use record 5, revision 7.
       "id": "medicines_indication_detail_therapeutic_area",
       "type": "HierarchicalSelect",
       "multiple": true,
-      "label": "Select the most appropriate therapeutic area for this product (optional)",
-      "hint": "Select up to 3 therapeutic areas. If you are unsure, you can move on and answer this question later.",
+      "label": "Select the most appropriate therapeutic area(s) for this product (optional)",
+      "hint": "You can select up to 3 therapeutic areas if this product is cross-cutting. If this product genuinely spans more than 3 therapeutic areas, select the 3 most clinically relevant. If you are unsure, you can move on and answer this question later.",
       "display": "combobox",
       "placeholder": "Choose a therapeutic area",
       "childLabel": "Select the disease or condition (optional)",
@@ -656,7 +741,7 @@ Send `null` for an unanswered single-value question and `[]` for an unanswered c
 
 | Status | When | Body |
 |---|---|---|
-| 200 | Saved, or nothing changed | `{ nextPageId }` (`null` after the task's last page) |
+| 200 | Saved, or nothing changed | `{ nextPageId }`: the next page in the task that applies, or `null` after the task's last |
 | 400 | Missing, unknown or malformed answers, invalid options, failed rules | `ValidationProblemDetails`, keyed by question ID |
 | 403 | Can read the record but not edit it | `ProblemDetails` |
 | 404 | Not found or not readable (concealed) | `ProblemDetails` |
@@ -722,7 +807,7 @@ All three use `ProblemDetails`:
 | Status | `detail` | `code` |
 |---|---|---|
 | 403 | `You are not authorised to edit this record.` | n/a |
-| 404 | `The specified page could not be found.` (identical for every not-found or concealed case) | n/a |
+| 404 | `The specified page could not be found.` (identical for every not-found or concealed case, including a page that does not apply) | n/a |
 | 409 | `This record can't be edited in its current status.` | `record_not_editable` |
 | 409 | `This record has changed since the page was loaded.` | `revision_changed` |
 | 409 | `This form has changed since the page was loaded.` | `form_version_changed` |
@@ -778,9 +863,18 @@ loaded by the synthetic data seeder; see [Reference data](reference-data.md).
 
 ## Not in the first delivery
 
-- Conditional pages and questions (`ShowWhen`, `requiredWhen`) and clearing answers that no
-  longer apply. These will add a `context` member to the page response, holding the earlier
-  answers a page's conditions reference.
+- **Hiding answers that do not apply on View record and check your answers.** Run
+  `FormApplicability.Evaluate` over the record's answers in `RecordViewService`, return the IDs
+  of questions that do not apply, and hide those rows.
+- **Conditional requiredness**, such as Service readiness becoming mandatory 12 months before the
+  marketing authorisation date. A `FormRequiredWhen` can reuse `FormCondition`. A date condition
+  kind would give the evaluator today's date, and it needs precision dates first. It probably
+  belongs to section completeness (tasklist, submission) rather than to page saves.
+- **Other condition kinds**: compound `All`/`Any`, and triggers on reference data (such as a
+  storage requirement of "Other"), which need stable option codes. Each kind is a new
+  `FormCondition` subclass with fixture cases.
+- **A question revealed by an earlier page's answer.** This would add a `context` member to the
+  page response, holding the earlier answers the page's conditions read.
 - Add-another groups, precision dates and their bindings.
 - The searchable combobox: the hierarchical selects use plain dropdowns behind
   `display: "combobox"` until it exists.

@@ -87,7 +87,7 @@ Monorepo: `backend/` (.NET 10, EF Core, Postgres), `frontend/` (Next.js 16, Payl
 - Components: `frontend/src/components/` (`Input`, `Textarea`, `Select`, `Button`, `PageHeader`, `Placeholder/ErrorState`); NDS radio/checkbox via `@nice-digital/nds-radio` / `nds-checkbox` (see `app/portal/components/(examples)/`).
 - API client is generated: `pnpm generate:api` → `src/client/generated/`. Server-side calls via `src/client/server-api.ts`.
 - Error helpers: `src/lib/form/` (`errorMessages.ts`, `formErrorHandling.ts`, `getFieldErrorMessage.ts`), `src/lib/responses/typeGuards.ts`.
-- Tests: `pnpm test:unit` (Vitest, `*.spec.tsx` beside source), `pnpm test:e2e` (Playwright). Lint/format: `pnpm lint:check`.
+- Tests: `pnpm test:unit` (Vitest, `*.test.tsx` beside source), `pnpm test:e2e` (Playwright). Lint/format: `pnpm lint:check`.
 - Existing record UI lives under `/portal/organisations/[id]/records` (list only). There is **no record detail page** yet.
 
 ### Prerequisites (not yet in the code)

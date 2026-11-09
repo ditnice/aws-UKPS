@@ -3,6 +3,7 @@ using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using UKPS.Api.Application.RecordForms;
+using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
 using UKPS.Api.Application.RecordForms.Rules;
@@ -34,8 +35,19 @@ public class RecordFormServiceTests : DatabaseTestBase
     private const string BnfChapter = "medicines_indication_detail.bnf_chapter_id";
     private const string TherapeuticAreas = "medicines_indication_detail_therapeutic_area";
     private const string Paediatric = "medicines_indication_detail.indication_is_paediatric";
+    private const string IsCoMarketed = "medicines_development_background.is_co_marketed";
+    private const string CoMarketingName =
+        "medicines_development_background.co_marketing_company_name";
+
+    private const string Formulation = "medicines_indication_detail.formulation_type_id";
+    private const string TechnologyStatus =
+        "medicines_indication_detail.medicine_technology_status";
+
+    private const string LabPrefix = "medicines_laboratory_testing.";
 
     private static readonly DateTime _now = new(2026, 10, 15, 9, 30, 0, DateTimeKind.Utc);
+
+    private static readonly string[] _biosimilarAndNewIndication = ["Biosimilar", "NewIndication"];
 
     private Organisation _organisation = null!;
     private User _user = null!;
@@ -46,6 +58,8 @@ public class RecordFormServiceTests : DatabaseTestBase
     private TherapeuticArea _area = null!;
     private TherapeuticArea _condition = null!;
     private TherapeuticArea _otherCondition = null!;
+    private FormulationType _formulation = null!;
+    private PatientPathwayPoint _pathwayPoint = null!;
     private ServiceTestHarness<IRecordFormQueryService> _queryHarness = null!;
     private ServiceTestHarness<IRecordFormSaveService> _saveHarness = null!;
 
@@ -120,6 +134,11 @@ public class RecordFormServiceTests : DatabaseTestBase
             },
             Ct
         );
+        _formulation = await AddEntity(new FormulationType { Label = "Tablet" }, Ct);
+        _pathwayPoint = await AddEntity(
+            new PatientPathwayPoint { Label = "Initial presentation" },
+            Ct
+        );
 
         _queryHarness = CreateHarness<IRecordFormQueryService>(UserRole.Standard, _organisation.Id);
         _saveHarness = CreateHarness<IRecordFormSaveService>(UserRole.Standard, _organisation.Id);
@@ -131,7 +150,6 @@ public class RecordFormServiceTests : DatabaseTestBase
         RecordPageDto page = await GetPage("indication");
 
         page.FormVersion.ShouldBe(FormVersions.Medicine);
-        page.RevisionVersion.ShouldBe(await RevisionVersion());
         page.Section.Title.ShouldBe("Indication details");
         (page.Task.Id, page.Task.Title).ShouldBe(("indication-details", "Indication details"));
         page.PreviousPageId.ShouldBeNull();
@@ -143,9 +161,9 @@ public class RecordFormServiceTests : DatabaseTestBase
     [Fact]
     public async Task GetPage_LastPageOfTheTask_HasNoNextPage()
     {
-        RecordPageDto page = await GetPage("rare-disease");
+        RecordPageDto page = await GetPage("technology-status");
 
-        page.PreviousPageId.ShouldBe("cancer");
+        page.PreviousPageId.ShouldBe("personalised-medicine");
         page.NextPageId.ShouldBeNull();
     }
 
@@ -231,14 +249,11 @@ public class RecordFormServiceTests : DatabaseTestBase
             Answer(Indication, "  Chronic hepatitis C  ")
         );
 
+        (await RevisionVersion()).ShouldNotBe(versionBefore);
+
         result.NextPageId.ShouldBe("bnf-chapter");
         MedicinesIndicationDetail row = await IndicationRow();
         row.Indication.ShouldBe("Chronic hepatitis C");
-
-        RecordRevision revision = await Context
-            .RecordRevisions.AsNoTracking()
-            .SingleAsync(r => r.Id == _revision.Id, Ct);
-        revision.Version.ShouldNotBe(versionBefore);
 
         RecordFieldAudit audit = await FieldAudits().SingleAsync(Ct);
         audit.RecordId.ShouldBe(_record.Id);
@@ -271,6 +286,25 @@ public class RecordFormServiceTests : DatabaseTestBase
                 "rare-disease",
                 Answer("medicines_indication_detail.indication_is_rare_disease", "No")
             )
+        ).NextPageId.ShouldBe("formulation");
+        (
+            await SaveOk("formulation", Answer(Formulation, $"{_formulation.Id}"))
+        ).NextPageId.ShouldBe("presentation");
+        await SaveOk("presentation", Answer("medicines_indication_detail.presentation", "10mg"));
+        await SaveOk(
+            "mode-of-action",
+            Answer("medicines_indication_detail.mode_of_action", "Mode")
+        );
+        await SaveOk(
+            "dose-regimen",
+            Answer("medicines_indication_detail.proposed_dose_regimen", "Dose")
+        );
+        await SaveOk(
+            "personalised-medicine",
+            Answer("medicines_indication_detail.is_personalised_medicine", "Yes")
+        );
+        (
+            await SaveOk("technology-status", Answer(TechnologyStatus, _biosimilarAndNewIndication))
         ).NextPageId.ShouldBeNull();
 
         MedicinesIndicationDetail row = await IndicationRow();
@@ -278,6 +312,14 @@ public class RecordFormServiceTests : DatabaseTestBase
         row.IndicationIsPaediatric.ShouldBe(IndicationPaediatricStatus.ExclusivelyAdults);
         row.IndicationIsCancer.ShouldBe(YesNoUnknown.No);
         row.IndicationIsRareDisease.ShouldBe(YesNoUnknown.No);
+        row.FormulationTypeId.ShouldBe(_formulation.Id);
+        row.Presentation.ShouldBe("10mg");
+        row.ModeOfAction.ShouldBe("Mode");
+        row.ProposedDoseRegimen.ShouldBe("Dose");
+        row.IsPersonalisedMedicine.ShouldBe(YesNoUnknown.Yes);
+        row.MedicineTechnologyStatus.ShouldBe(
+            MedicineTechnologyStatus.Biosimilar | MedicineTechnologyStatus.NewIndication
+        );
         row.TherapeuticAreas.Select(static t => t.TherapeuticAreaId)
             .Order()
             .ShouldBe(new[] { _area.Id, _condition.Id }.Order());
@@ -294,6 +336,12 @@ public class RecordFormServiceTests : DatabaseTestBase
                 Paediatric,
                 "medicines_indication_detail.indication_is_cancer",
                 "medicines_indication_detail.indication_is_rare_disease",
+                Formulation,
+                "medicines_indication_detail.presentation",
+                "medicines_indication_detail.mode_of_action",
+                "medicines_indication_detail.proposed_dose_regimen",
+                "medicines_indication_detail.is_personalised_medicine",
+                TechnologyStatus,
             ]);
         changes[1].NewValue.ShouldBe($"{_bnfSection.Id}");
         changes[2]
@@ -303,6 +351,122 @@ public class RecordFormServiceTests : DatabaseTestBase
                 )
             );
         changes[3].NewValue.ShouldBe("ExclusivelyAdults");
+    }
+
+    [Fact]
+    public async Task SavePage_StepsThroughEveryPatientAndClinicalRequirementsPage_StoringEachAnswer()
+    {
+        UkPatientPopulationRange range = await AddEntity(
+            new UkPatientPopulationRange { Label = "Between 25 and 50 per 100,000", SortOrder = 3 },
+            Ct
+        );
+
+        (
+            await SaveOk(
+                "screening-programme",
+                new(StringComparer.Ordinal)
+                {
+                    ["medicines_patient_identification.screening_required"] = Json("No"),
+                    ["medicines_patient_identification.screening_details"] = Json<string?>(null),
+                }
+            )
+        ).NextPageId.ShouldBe("urgent-identification");
+        (
+            await SaveOk(
+                "urgent-identification",
+                new(StringComparer.Ordinal)
+                {
+                    ["medicines_patient_identification.urgent_identification_required"] = Json(
+                        "Yes"
+                    ),
+                    ["medicines_patient_identification.urgent_identification_details"] = Json(
+                        "Time-critical"
+                    ),
+                }
+            )
+        ).NextPageId.ShouldBe("place-in-therapy");
+        (
+            await SaveOk(
+                "place-in-therapy",
+                Answer("medicines_treatment_detail.proposed_place_in_therapy", "Second line")
+            )
+        ).NextPageId.ShouldBe("treatment-duration");
+        (
+            await SaveOk(
+                "treatment-duration",
+                Answer("medicines_treatment_detail.estimated_duration_of_treatment", "6 months")
+            )
+        ).NextPageId.ShouldBe("nhs-service-changes");
+        (
+            await SaveOk(
+                "nhs-service-changes",
+                new(StringComparer.Ordinal)
+                {
+                    ["medicines_service_impact.nhs_service_changes_required"] = Json("SomeChange"),
+                    ["medicines_service_impact.nhs_service_changes_details"] = Json(
+                        "Extra staffing"
+                    ),
+                }
+            )
+        ).NextPageId.ShouldBe("handling-storage");
+        (
+            await SaveOk(
+                "handling-storage",
+                new(StringComparer.Ordinal)
+                {
+                    ["medicines_service_impact.handling_storage_requirements"] = Json("Unknown"),
+                    ["medicines_service_impact.handling_storage_details"] = Json<string?>(null),
+                }
+            )
+        ).NextPageId.ShouldBe("population-range");
+        (
+            await SaveOk(
+                "population-range",
+                new(StringComparer.Ordinal)
+                {
+                    ["medicines_service_impact.uk_patient_population_range_id"] = Json(
+                        $"{range.Id}"
+                    ),
+                    ["medicines_service_impact.uk_patient_population_notes"] = Json("Notes"),
+                }
+            )
+        ).NextPageId.ShouldBe("eligible-population");
+        (
+            await SaveOk(
+                "eligible-population",
+                new(StringComparer.Ordinal)
+                {
+                    ["medicines_service_impact.estimated_eligible_patient_population"] = Json(
+                        "1,000 to 2,000"
+                    ),
+                }
+            )
+        ).NextPageId.ShouldBeNull();
+
+        MedicinesPatientIdentification identification = await Context
+            .MedicinesPatientIdentifications.AsNoTracking()
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+        identification.UrgentIdentificationRequired.ShouldBe(YesNoUnknown.Yes);
+        identification.ScreeningRequired.ShouldBe(YesNoUnknown.No);
+        identification.UrgentIdentificationDetails.ShouldBe("Time-critical");
+
+        MedicinesTreatmentDetail treatmentDetail = await Context
+            .MedicinesTreatmentDetails.AsNoTracking()
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+        treatmentDetail.ProposedPlaceInTherapy.ShouldBe("Second line");
+        treatmentDetail.EstimatedDurationOfTreatment.ShouldBe("6 months");
+
+        MedicinesServiceImpact serviceImpact = await Context
+            .MedicinesServiceImpacts.AsNoTracking()
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+        serviceImpact.NhsServiceChangesRequired.ShouldBe(NhsServiceChangesRequired.SomeChange);
+        serviceImpact.NhsServiceChangesDetails.ShouldBe("Extra staffing");
+        serviceImpact.HandlingStorageRequirements.ShouldBe(YesNoUnknown.Unknown);
+        serviceImpact.UkPatientPopulationRangeId.ShouldBe(range.Id);
+        serviceImpact.UkPatientPopulationNotes.ShouldBe("Notes");
+        serviceImpact.EstimatedEligiblePatientPopulation.ShouldBe("1,000 to 2,000");
+
+        (await FieldAudits().CountAsync(Ct)).ShouldBe(11);
     }
 
     [Fact]
@@ -427,29 +591,10 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task SavePage_StaleRevisionVersion_IsAConflict()
-    {
-        uint staleVersion = await RevisionVersion();
-        await SaveOk("indication", Answer(Indication, "First"));
-
-        SaveRecordPageError error = (
-            await Save("indication", Answer(Indication, "Second"), staleVersion)
-        ).ShouldBeError();
-
-        error.ShouldBeOfType<SaveRecordPageError.RevisionChanged>();
-        (await IndicationRow()).Indication.ShouldBe("First");
-    }
-
-    [Fact]
     public async Task SavePage_OldFormVersion_IsAConflict()
     {
         SaveRecordPageError error = (
-            await Save(
-                "indication",
-                Answer(Indication, "Text"),
-                await RevisionVersion(),
-                formVersion: "2000.1.1"
-            )
+            await Save("indication", Answer(Indication, "Text"), formVersion: "2000.1.1")
         ).ShouldBeError();
 
         error.ShouldBeOfType<SaveRecordPageError.FormVersionChanged>();
@@ -489,14 +634,6 @@ public class RecordFormServiceTests : DatabaseTestBase
         await SaveOk("indication", Answer(Indication, "Text"));
 
         (await IndicationRow()).Indication.ShouldBe("Text");
-    }
-
-    [Fact]
-    public async Task GetPage_EarlierRevisions_ReadsTheLatestRevision()
-    {
-        await AddEarlierPublishedRevision();
-
-        (await GetPage("indication")).RevisionVersion.ShouldBe(await RevisionVersion());
     }
 
     [Fact]
@@ -563,6 +700,350 @@ public class RecordFormServiceTests : DatabaseTestBase
         (await RevisionVersion()).ShouldBe(versionBefore);
     }
 
+    [Fact]
+    public async Task GetPage_RevealedQuestion_DescribesItsCondition()
+    {
+        RecordPageDto page = await GetPage("co-marketing");
+
+        page.PreviousPageId.ShouldBe("originator");
+        page.Questions.Select(static q => q.Id).ShouldBe([IsCoMarketed, CoMarketingName]);
+        page.Questions[0].ShowWhen.ShouldBeNull();
+        RecordPageConditionDto showWhen = page.Questions[1].ShowWhen.ShouldNotBeNull();
+        showWhen.Kind.ShouldBe(ConditionKind.AnswerIn);
+        showWhen.QuestionId.ShouldBe(IsCoMarketed);
+        showWhen.Values.ShouldBe(["Yes"]);
+        (await GetPage("repurposed-medicine")).PreviousPageId.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SavePage_HiddenRequiredQuestion_IsNotValidated()
+    {
+        SaveRecordPageDto result = await SaveOk(
+            "co-marketing",
+            CoMarketing("No", companyName: null)
+        );
+
+        result.NextPageId.ShouldBeNull();
+        (await DevelopmentBackgroundRow()).IsCoMarketed.ShouldBe(YesNoUnknown.No);
+    }
+
+    [Fact]
+    public async Task SavePage_RevealedRequiredQuestion_IsValidated()
+    {
+        (await SaveInvalid("co-marketing", CoMarketing("Yes", companyName: "  "))).ShouldBe(
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                [CoMarketingName] = "Enter the co-marketing company name",
+            }
+        );
+    }
+
+    [Fact]
+    public async Task SavePage_AnswerThatNoLongerApplies_IsClearedAndAudited()
+    {
+        await SaveOk("co-marketing", CoMarketing("Yes", companyName: "Acme Pharma"));
+
+        await SaveOk("co-marketing", CoMarketing("No", companyName: "Acme Pharma"));
+
+        MedicinesDevelopmentBackground row = await DevelopmentBackgroundRow();
+        row.IsCoMarketed.ShouldBe(YesNoUnknown.No);
+        row.CoMarketingCompanyName.ShouldBeNull();
+        RecordFieldAudit cleared = await FieldAudits()
+            .Where(static a => a.FieldPath == CoMarketingName)
+            .OrderBy(static a => a.Id)
+            .LastAsync(Ct);
+        cleared.OldValue.ShouldBe("Acme Pharma");
+        cleared.NewValue.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SavePage_HiddenQuestionSentWithAValue_IsStoredEmpty()
+    {
+        await SaveOk("co-marketing", CoMarketing("No", companyName: "Acme Pharma"));
+
+        (await DevelopmentBackgroundRow()).CoMarketingCompanyName.ShouldBeNull();
+        (await FieldAudits().Select(static a => a.FieldPath).ToListAsync(Ct)).ShouldBe([
+            IsCoMarketed,
+        ]);
+    }
+
+    [Fact]
+    public async Task SavePage_RevealedOptionalQuestion_MayBeLeftBlank()
+    {
+        await SaveOk(
+            "repurposed-medicine",
+            new Dictionary<string, JsonElement>(StringComparer.Ordinal)
+            {
+                ["medicines_development_background.is_repurposed_medicine"] = Json("Yes"),
+                ["medicines_development_background.repurposed_medicine_details"] = Json<string?>(
+                    null
+                ),
+            }
+        );
+
+        (await DevelopmentBackgroundRow()).IsRepurposedMedicine.ShouldBe(YesNoUnknown.Yes);
+    }
+
+    [Fact]
+    public async Task SavePage_AnotherSection_LeavesItsAnswersAlone()
+    {
+        // A follow-up stored although its trigger hides it, as seeded or older data may be.
+        await AddEntity(
+            new MedicinesDevelopmentBackground
+            {
+                RevisionId = _revision.Id,
+                IsCoMarketed = YesNoUnknown.No,
+                CoMarketingCompanyName = "Acme Pharma",
+            },
+            Ct
+        );
+
+        await SaveOk("indication", Answer(Indication, "Hepatitis C"));
+
+        (await DevelopmentBackgroundRow()).CoMarketingCompanyName.ShouldBe("Acme Pharma");
+        (await FieldAudits().Select(static a => a.FieldPath).ToListAsync(Ct)).ShouldBe([
+            Indication,
+        ]);
+    }
+
+    private static Dictionary<string, JsonElement> CoMarketing(
+        string isCoMarketed,
+        string? companyName
+    ) =>
+        new(StringComparer.Ordinal)
+        {
+            [IsCoMarketed] = Json(isCoMarketed),
+            [CoMarketingName] = Json(companyName),
+        };
+
+    private async Task<MedicinesDevelopmentBackground> DevelopmentBackgroundRow() =>
+        await Context
+            .MedicinesDevelopmentBackgrounds.AsNoTracking()
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+
+    [Fact]
+    public async Task GetPage_FlaggedPage_ShowsTheCommercialInConfidenceBadge()
+    {
+        RecordPageDto page = await GetPage("diagnostic-test-required");
+
+        page.Page.CommercialInConfidence.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task GetPage_OptionWithAHint_ReturnsTheHint()
+    {
+        await AddGenomicRoute();
+
+        RecordPageDto page = await GetPage("biomarker-type");
+
+        RecordPageOptionDto option = page
+            .Questions.Single()
+            .Options!.Single(static o =>
+                string.Equals(o.Value, "GenomicBiomarker", StringComparison.Ordinal)
+            );
+        option.Hint.ShouldBe("For example, a gene mutation, chromosomal alteration");
+    }
+
+    [Fact]
+    public async Task GetPage_PathwayPointPage_OffersTheReferenceData()
+    {
+        await AddGenomicRoute();
+
+        RecordPageDto page = await GetPage("pathway-point");
+
+        RecordPageOptionDto option = page.Questions.Single().Options!.ShouldHaveSingleItem();
+        (option.Value, option.Label).ShouldBe(($"{_pathwayPoint.Id}", "Initial presentation"));
+    }
+
+    [Fact]
+    public async Task SavePage_FirstLaboratoryTestingSave_CreatesTheRow()
+    {
+        (
+            await Context.MedicinesLaboratoryTestings.AnyAsync(
+                x => x.RevisionId == _revision.Id,
+                Ct
+            )
+        ).ShouldBeFalse();
+
+        await SaveOk(
+            "diagnostic-test-required",
+            Answer($"{LabPrefix}diagnostic_test_required", "Yes")
+        );
+
+        MedicinesLaboratoryTesting row = await LaboratoryTestingRow();
+        row.DiagnosticTestRequired.ShouldBe(YesNoUnknown.Yes);
+        row.BiomarkerType.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SavePage_StepsThroughEveryLaboratoryTestingPage_StoringAndAuditingEachAnswer()
+    {
+        (string PageId, string QuestionId, string Value)[] answers =
+        [
+            ("diagnostic-test-required", $"{LabPrefix}diagnostic_test_required", "Yes"),
+            ("biomarker-type", $"{LabPrefix}biomarker_type", "GenomicBiomarker"),
+            // Genomic route: the non-genomic-biomarker page does not apply and is skipped.
+            ("genomic-target", $"{LabPrefix}genomic_target", "EGFR"),
+            ("ngtd-relationship", $"{LabPrefix}genomic_test_ngtd_relationship", "NewTest"),
+            ("sample-type", $"{LabPrefix}genomic_sample_type", "Tissue"),
+            ("turnaround-time", $"{LabPrefix}genomic_turnaround_time_details", "14 days"),
+            ("pathway-point", $"{LabPrefix}patient_pathway_point_id", $"{_pathwayPoint.Id}"),
+            ("genomic-alterations", $"{LabPrefix}genomic_alterations", "Exon 19 deletion"),
+            ("additional-genomic-factors", $"{LabPrefix}additional_genomic_factors", "T790M"),
+            ("test-used-in-trials", $"{LabPrefix}genomic_test_used_in_trials", "PCR assay"),
+            (
+                "specificity-sensitivity",
+                $"{LabPrefix}genomic_test_specificity_sensitivity",
+                "95% and 90%"
+            ),
+            (
+                "test-mandatory",
+                $"{LabPrefix}genomic_test_mandatory_status",
+                "MandatoryNoAlternatives"
+            ),
+            ("monitoring-tests", $"{LabPrefix}monitoring_tests_details", "Quarterly ctDNA"),
+            ("safety-tests", $"{LabPrefix}safety_tests_details", "Monthly liver function"),
+        ];
+
+        string notesQuestion = $"{LabPrefix}genomic_test_notes";
+
+        for (int i = 0; i < answers.Length; i++)
+        {
+            Dictionary<string, JsonElement> page = Answer(answers[i].QuestionId, answers[i].Value);
+            if (string.Equals(answers[i].PageId, "test-mandatory", StringComparison.Ordinal))
+            {
+                // Mandatory testing shows the notes box, which is then required.
+                page[notesQuestion] = Json("Repeat testing at relapse");
+            }
+
+            SaveRecordPageDto saved = await SaveOk(answers[i].PageId, page);
+            saved.NextPageId.ShouldBe(i + 1 < answers.Length ? answers[i + 1].PageId : null);
+        }
+
+        MedicinesLaboratoryTesting row = await LaboratoryTestingRow();
+        row.DiagnosticTestRequired.ShouldBe(YesNoUnknown.Yes);
+        row.BiomarkerType.ShouldBe(BiomarkerType.GenomicBiomarker);
+        row.NonGenomicBiomarkerDescription.ShouldBeNull();
+        row.GenomicTarget.ShouldBe("EGFR");
+        row.GenomicTestNgtdRelationship.ShouldBe(GenomicTestNgtdRelationship.NewTest);
+        row.GenomicSampleType.ShouldBe("Tissue");
+        row.GenomicTurnaroundTimeDetails.ShouldBe("14 days");
+        row.PatientPathwayPointId.ShouldBe(_pathwayPoint.Id);
+        row.GenomicAlterations.ShouldBe("Exon 19 deletion");
+        row.AdditionalGenomicFactors.ShouldBe("T790M");
+        row.GenomicTestUsedInTrials.ShouldBe("PCR assay");
+        row.GenomicTestSpecificitySensitivity.ShouldBe("95% and 90%");
+        row.GenomicTestMandatoryStatus.ShouldBe(GenomicTestMandatoryStatus.MandatoryNoAlternatives);
+        row.GenomicTestNotes.ShouldBe("Repeat testing at relapse");
+        row.MonitoringTestsDetails.ShouldBe("Quarterly ctDNA");
+        row.SafetyTestsDetails.ShouldBe("Monthly liver function");
+
+        List<RecordFieldAudit> changes = await FieldAudits()
+            .OrderBy(static a => a.Id)
+            .ToListAsync(Ct);
+        changes
+            .Select(static c => (c.FieldPath, c.NewValue))
+            .ShouldBe(
+                answers
+                    .Select(static a => (a.QuestionId, (string?)a.Value))
+                    .SelectMany(a =>
+                        string.Equals(
+                            a.QuestionId,
+                            $"{LabPrefix}genomic_test_mandatory_status",
+                            StringComparison.Ordinal
+                        )
+                            ? new[] { a, (notesQuestion, (string?)"Repeat testing at relapse") }
+                            : new[] { a }
+                    )
+            );
+    }
+
+    [Fact]
+    public async Task SavePage_PathwayPointThatIsNotOffered_IsRejected()
+    {
+        await AddGenomicRoute();
+        string question = $"{LabPrefix}patient_pathway_point_id";
+
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "pathway-point",
+            Answer(question, $"{_pathwayPoint.Id + 100}")
+        );
+
+        errors.ShouldContainKey(question);
+        (await LaboratoryTestingRow()).PatientPathwayPointId.ShouldBeNull();
+    }
+
+    // The route to the genomic pages: they apply only once these two answers are saved.
+    private async Task AddGenomicRoute() =>
+        await AddEntity(
+            new MedicinesLaboratoryTesting
+            {
+                RevisionId = _revision.Id,
+                DiagnosticTestRequired = YesNoUnknown.Yes,
+                BiomarkerType = BiomarkerType.GenomicBiomarker,
+            },
+            Ct
+        );
+
+    [Fact]
+    public async Task SavePage_WhenThePageHasBeenChangedAfterTheRead_ShouldReturnConcurrencyError()
+    {
+        RecordPageDto page = await GetPage("indication");
+
+        SaveRecordPageResult firstSaveResult = await Save(page, Answer(Indication, "AnswerA"));
+        firstSaveResult.ShouldBeSuccess();
+
+        SaveRecordPageResult secondSaveResult = await Save(page, Answer(Indication, "AnswerB"));
+        secondSaveResult.ShouldBeError().ShouldBeOfType<SaveRecordPageError.PageAnswersChanged>();
+    }
+
+    [Fact]
+    public async Task SavePage_WhenAnswerIsUnchangedExceptForWhitespace_ShouldBeSuccess()
+    {
+        RecordPageDto page = await GetPage("indication");
+
+        SaveRecordPageResult firstSaveResult = await Save(page, Answer(Indication, "Answer"));
+        firstSaveResult.ShouldBeSuccess();
+
+        SaveRecordPageResult secondSaveResult = await Save(
+            page,
+            Answer(Indication, "   Answer   ")
+        );
+        secondSaveResult.ShouldBeSuccess();
+    }
+
+    [Fact]
+    public async Task SavePage_WhenTheAnswerIsEmptyAndUnchanged_ShouldBeSuccess()
+    {
+        var answer = "Test";
+        RecordPageDto page = await GetPage("indication");
+
+        SaveRecordPageResult firstSaveResult = await Save(page, Answer(Indication, answer));
+        firstSaveResult.ShouldBeSuccess();
+
+        SaveRecordPageResult secondSaveResult = await Save(page, Answer(Indication, answer));
+        secondSaveResult.ShouldBeSuccess();
+    }
+
+    [Fact]
+    public async Task SavePage_ShouldBeAbleToEditTwoDifferentPagesInParallel()
+    {
+        RecordPageDto indicationPage = await GetPage("indication");
+
+        RecordPageDto bnfChapterPage = await GetPage("bnf-chapter");
+        SaveRecordPageResult bnfChapterUpdate = await Save(
+            bnfChapterPage,
+            Answer(BnfChapter, $"{_bnfSection.Id}")
+        );
+        bnfChapterUpdate.ShouldBeSuccess();
+
+        SaveRecordPageResult indicationSaveResult = await Save(
+            indicationPage,
+            Answer(Indication, "Update")
+        );
+        indicationSaveResult.ShouldBeSuccess();
+    }
+
     private ServiceTestHarness<TService> CreateHarness<TService>(UserRole role, int organisationId)
         where TService : notnull
     {
@@ -611,22 +1092,42 @@ public class RecordFormServiceTests : DatabaseTestBase
         (await _queryHarness.Service.GetPage(_record.Id, pageId, Ct)).ShouldBeSuccess();
 
     private async Task<SaveRecordPageResult> Save(
+        RecordPageDto page,
+        Dictionary<string, JsonElement> answers
+    )
+    {
+        return await _saveHarness.Service.SavePage(
+            _record.Id,
+            page.Page.Id,
+            new SaveRecordPageCommand
+            {
+                FormVersion = page.FormVersion,
+                Answers = answers,
+                PageHash = page.PageHash,
+            },
+            Ct
+        );
+    }
+
+    private async Task<SaveRecordPageResult> Save(
         string pageId,
         Dictionary<string, JsonElement> answers,
-        uint? revisionVersion = null,
         string formVersion = FormVersions.Medicine
-    ) =>
-        await _saveHarness.Service.SavePage(
+    )
+    {
+        var page = await GetPage(pageId);
+        return await _saveHarness.Service.SavePage(
             _record.Id,
             pageId,
             new SaveRecordPageCommand
             {
                 FormVersion = formVersion,
-                RevisionVersion = revisionVersion ?? await RevisionVersion(),
                 Answers = answers,
+                PageHash = page.PageHash,
             },
             Ct
         );
+    }
 
     private async Task<SaveRecordPageDto> SaveOk(
         string pageId,
@@ -653,6 +1154,11 @@ public class RecordFormServiceTests : DatabaseTestBase
         await Context
             .MedicinesIndicationDetails.AsNoTracking()
             .Include(static x => x.TherapeuticAreas)
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+
+    private async Task<MedicinesLaboratoryTesting> LaboratoryTestingRow() =>
+        await Context
+            .MedicinesLaboratoryTestings.AsNoTracking()
             .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
 
     private IQueryable<RecordFieldAudit> FieldAudits() =>
