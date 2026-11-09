@@ -8,11 +8,6 @@
   margin-bottom: utils.rem(spacing.$medium);
 }
 
-.errorGroup {
-  border-left: utils.rem(spacing.$x-small) solid colours.$error;
-  padding-left: utils.rem(spacing.$medium);
-}
-
 .label {
   @include typography.font-size(p);
   display: block;
@@ -30,10 +25,6 @@
   font-weight: bold;
   margin-bottom: utils.rem(spacing.$small);
   margin-top: 0;
-}
-
-.errorHeading {
-  margin-bottom: utils.rem(spacing.$x-small);
 }
 
 .field {

@@ -604,7 +604,6 @@ export const fakeRecordPageQuestionDto = (options?: Options): RecordPageQuestion
         label: f.string.sample(),
         hint: f.datatype.boolean() ? f.string.sample() : null,
         display: f.datatype.boolean() ? f.string.sample() : null,
-        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { errorHeading: f.datatype.boolean() ? f.string.sample() : null },
         placeholder: f.datatype.boolean() ? f.string.sample() : null,
         childLabel: f.datatype.boolean() ? f.string.sample() : null,
         childPlaceholder: f.datatype.boolean() ? f.string.sample() : null,

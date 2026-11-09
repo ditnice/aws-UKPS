@@ -57,7 +57,6 @@ function HierarchicalEntrySelects({
       <Select
         aria-describedby={describedBy([hintId, ownsError ? undefined : errorId])}
         error={Boolean(error)}
-        errorHeading={ownsError ? (question.errorHeading ?? undefined) : undefined}
         errorMessage={ownsError ? error : undefined}
         id={parentId}
         label={null}

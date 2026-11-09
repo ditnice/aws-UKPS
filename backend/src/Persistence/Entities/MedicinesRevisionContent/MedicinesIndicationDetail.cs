@@ -44,8 +44,7 @@ internal sealed class MedicinesIndicationDetail
         FormControl.HierarchicalSelect,
         Placeholder = "Choose BNF chapter",
         ChildLabel = "Select the BNF subchapter (optional)",
-        ChildPlaceholder = "Choose BNF subchapter",
-        ErrorHeading = "BNF chapter must be selected"
+        ChildPlaceholder = "Choose BNF subchapter"
     )]
     [FormRequired("Choose a BNF chapter")]
     public int? BnfChapterId { get; set; }
