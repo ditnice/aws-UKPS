@@ -18,6 +18,10 @@ public class WebApiCurrentUserInfoServiceTests
         new Claim(UkpsClaimTypes.UserRole, UserRole.Super.ToString()),
         new Claim(UkpsClaimTypes.Email, "example.user@email.com"),
         new Claim(UkpsClaimTypes.Username, "24a97ae0-d7d2-4c6b-88de-d835b13e8038"),
+        new Claim(
+            "auth_time",
+            $"{new DateTimeOffset(2020, 12, 11, 2, 2, 2, 2, TimeSpan.Zero).ToUnixTimeSeconds()}"
+        ),
     ];
 
     [Fact]

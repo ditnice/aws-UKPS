@@ -18,6 +18,7 @@ internal class DevAuthenticationClaims
         new Claim(UkpsClaimTypes.OrganisationId, $"{1}"),
         new Claim(UkpsClaimTypes.Email, DefaultUserEmail),
         new Claim(UkpsClaimTypes.Username, DefaultUserCognitoUsername.Value),
+        new Claim("auth_time", $"{DateTimeOffset.UtcNow.AddMinutes(-3).ToUnixTimeSeconds()}"),
     ];
     public ICollection<Claim> Claims { get; } = DefaultClaims.ToList();
 

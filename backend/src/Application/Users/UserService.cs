@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Options;
 using Npgsql;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
@@ -38,20 +39,42 @@ using UpdateUserDetailsResult = UKPS.Api.Application.Common.Result<
 
 namespace UKPS.Api.Application.Users;
 
-internal partial class UserService(
-    AppDbContext dbContext,
-    IOrganisationAuthoriser organisationAuthoriser,
-    IDateTimeProvider timeProvider,
-    IIdentityService identityService,
-    CurrentDbUserEntityService currentDbUserEntityService,
-    ICurrentUserInfoService currentUserInfoService,
-    ILogger<UserService> logger
-) : IUserService
+internal partial class UserService : IUserService
 {
+    private readonly AppDbContext _dbContext;
+    private readonly IOrganisationAuthoriser _organisationAuthoriser;
+    private readonly IDateTimeProvider _timeProvider;
+    private readonly IIdentityService _identityService;
+    private readonly CurrentDbUserEntityService _currentDbUserEntityService;
+    private readonly ICurrentUserInfoService _currentUserInfoService;
+    private readonly ILogger<UserService> _logger;
+    private readonly SecurityOptions _securityOptions;
+
+    public UserService(
+        AppDbContext dbContext,
+        IOrganisationAuthoriser organisationAuthoriser,
+        IDateTimeProvider timeProvider,
+        IIdentityService identityService,
+        CurrentDbUserEntityService currentDbUserEntityService,
+        ICurrentUserInfoService currentUserInfoService,
+        IOptions<SecurityOptions> securityOptions,
+        ILogger<UserService> logger
+    )
+    {
+        _dbContext = dbContext;
+        _organisationAuthoriser = organisationAuthoriser;
+        _timeProvider = timeProvider;
+        _identityService = identityService;
+        _currentDbUserEntityService = currentDbUserEntityService;
+        _currentUserInfoService = currentUserInfoService;
+        _securityOptions = securityOptions.Value;
+        _logger = logger;
+    }
+
     public async Task<UserInformationDto> GetCurrentUser(CancellationToken cancellationToken)
     {
-        CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
-        User user = await currentDbUserEntityService.GetCurrentUser(
+        CurrentUser currentUser = _currentUserInfoService.GetCurrentUserInfo();
+        User user = await _currentDbUserEntityService.GetCurrentUser(
             x => x.Include(x => x.UserOrgMemberships)!.ThenInclude(x => x.Organisation),
             cancellationToken
         );
@@ -83,7 +106,7 @@ internal partial class UserService(
         CancellationToken cancellationToken
     )
     {
-        User user = await currentDbUserEntityService.GetCurrentUser(
+        User user = await _currentDbUserEntityService.GetCurrentUser(
             q => q.Include(x => x.UserOrgMemberships)!.ThenInclude(x => x.Organisation),
             cancellationToken
         );
@@ -96,14 +119,14 @@ internal partial class UserService(
         }
 
         // Disposing the transaction without committing rolls back any changes.
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(
             cancellationToken
         );
 
         // Needs to be done in two separate operations so that the unique index on the
         // selected organisation is not violated while the selection is changed.
         user.ResetCurrentOrganisation();
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         if (!user.TryUpdateCurrentOrganisation(command.OrganisationId))
         {
@@ -111,7 +134,7 @@ internal partial class UserService(
                 "The organisation was validated as selectable but could not be selected."
             );
         }
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
         return UpdateCurrentOrganisationResult.Ok();
@@ -121,7 +144,7 @@ internal partial class UserService(
         CancellationToken cancellationToken
     )
     {
-        User user = await currentDbUserEntityService.GetCurrentUser(
+        User user = await _currentDbUserEntityService.GetCurrentUser(
             q => q.Include(x => x.UserOrgMemberships)!.ThenInclude(x => x.Organisation),
             cancellationToken
         );
@@ -141,7 +164,7 @@ internal partial class UserService(
         CancellationToken cancellationToken
     )
     {
-        User user = await currentDbUserEntityService.GetCurrentUser(
+        User user = await _currentDbUserEntityService.GetCurrentUser(
             q => q.Include(x => x.UserOrgMemberships),
             cancellationToken
         );
@@ -172,7 +195,7 @@ internal partial class UserService(
             );
         }
 
-        List<string> championEmails = await dbContext
+        List<string> championEmails = await _dbContext
             .UserOrgMemberships.EnabledChampions(organisationId.Value)
             .Select(x => x.User!.WorkEmail)
             .Distinct()
@@ -197,7 +220,7 @@ internal partial class UserService(
             return GetUsersResult.Err(organisationError);
         }
 
-        var permittedOrganisationIds = organisationAuthoriser.GetAuthorisedOrganisations(
+        var permittedOrganisationIds = _organisationAuthoriser.GetAuthorisedOrganisations(
             Operation.ElevatedRead
         );
         IQueryable<UserInformationTrackingProjection> unionQuery = GetProjectedUserInformation();
@@ -260,7 +283,7 @@ internal partial class UserService(
             return GetUserInformationResult.Err(organisationError);
         }
 
-        UserInformationDto? user = await dbContext
+        UserInformationDto? user = await _dbContext
             .UserOrgMemberships.AsNoTracking()
             .Where(m => m.UserId == userId && m.OrganisationId == organisationId)
             .Select(m => new UserInformationDto
@@ -284,7 +307,7 @@ internal partial class UserService(
 
     private IQueryable<UserInformationTrackingProjection> GetProjectedUserInformation()
     {
-        var userOrgMembershipProjection = dbContext.UserOrgMemberships.Select(x => new
+        var userOrgMembershipProjection = _dbContext.UserOrgMemberships.Select(x => new
         {
             UserId = (int?)x.User!.Id,
             RegistrationRequestId = (int?)null,
@@ -316,7 +339,7 @@ internal partial class UserService(
         return userOrgMembershipProjection
             .Union(userRegistrationRequestsProjections)
             .GroupJoin(
-                dbContext.Users,
+                _dbContext.Users,
                 x => x.UserId,
                 x => x.Id,
                 (x, matches) => new { x, matches }
@@ -342,9 +365,9 @@ internal partial class UserService(
     private IQueryable<UserRegistrationRequest> GetMostRecentActiveRegistrationRequests()
     {
         IQueryable<UserRegistrationRequest> mostRecentValues =
-            dbContext.UserRegistrationRequests.Where(x =>
+            _dbContext.UserRegistrationRequests.Where(x =>
                 x.CreatedAt
-                == dbContext
+                == _dbContext
                     .UserRegistrationRequests.Where(y =>
                         y.WorkEmail == x.WorkEmail && y.OrganisationId == x.OrganisationId
                     )
@@ -358,7 +381,7 @@ internal partial class UserService(
 
     private UserMembershipAction[] GetPermittedActions(UserInformationTrackingProjection m)
     {
-        var currentUserInfo = currentUserInfoService.GetCurrentUserInfo();
+        var currentUserInfo = _currentUserInfoService.GetCurrentUserInfo();
 
         if (m.CognitoUsername is not null && currentUserInfo.CognitoUsername == m.CognitoUsername)
         {
@@ -434,14 +457,14 @@ internal partial class UserService(
         {
             // No specific organisation requested, so the caller must be permitted the
             // operation on at least one organisation.
-            return organisationAuthoriser.GetAuthorisedOrganisations(operation).IsNone
+            return _organisationAuthoriser.GetAuthorisedOrganisations(operation).IsNone
                 ? new GetUsersError.NotAllowed(null)
                 : null;
         }
 
-        currentUserInfoService.ThrowIfOrganisationNotSelected(organisationId.Value);
+        _currentUserInfoService.ThrowIfOrganisationNotSelected(organisationId.Value);
 
-        bool actionPermitted = organisationAuthoriser.CanPerformOperationOnOrganisation(
+        bool actionPermitted = _organisationAuthoriser.CanPerformOperationOnOrganisation(
             operation,
             organisationId.Value
         );
@@ -450,7 +473,7 @@ internal partial class UserService(
             return new GetUsersError.NotAllowed(organisationId.Value);
         }
 
-        bool organisationExists = await dbContext.Organisations.AnyAsync(
+        bool organisationExists = await _dbContext.Organisations.AnyAsync(
             o => o.Id == organisationId.Value,
             cancellationToken
         );
@@ -529,48 +552,29 @@ internal partial class UserService(
     )
     {
         await using IDbContextTransaction transaction =
-            await dbContext.Database.BeginTransactionAsync(cancellationToken);
+            await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         try
         {
-            User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
-
+            User? user = await _dbContext.Users.FindAsync([userId], cancellationToken);
             if (user is null)
             {
                 return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.UserDoesNotExist());
             }
-
-            bool isTheCurrentUserModifyingTheirOwnDetails = currentUserInfoService.IsCurrentUser(
-                user.WorkEmail
-            );
-
-            if (!isTheCurrentUserModifyingTheirOwnDetails)
+            UpdateUserDetailsError? error = CheckUserDetailsUpdateIsValid(user, command);
+            if (error is not null)
             {
-                return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.Unauthorised());
-            }
-
-            var modifyingEmail = !user.WorkEmail.Equals(
-                command.WorkEmail,
-                StringComparison.Ordinal
-            );
-            var timeSinceLastAuthentication = currentUserInfoService
-                .GetCurrentUserInfo()
-                .TimeSinceLastAuthentication;
-            if (modifyingEmail && timeSinceLastAuthentication > TimeSpan.FromSeconds(30))
-            {
-                return UpdateUserDetailsResult.Err(
-                    new UpdateUserDetailsError.ReauthenticationRequired()
-                );
+                return UpdateUserDetailsResult.Err(error);
             }
 
             user.UpdateDetails(
                 command.FullName,
                 command.WorkTelephone,
                 command.WorkEmail,
-                timeProvider.GetUtcNow()
+                _timeProvider.GetUtcNow()
             );
 
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
             await HandleUserEvents(user, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
@@ -599,7 +603,7 @@ internal partial class UserService(
 
     public async Task<RemoveUserResult> RemoveUser(int userId, CancellationToken cancellationToken)
     {
-        CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
+        CurrentUser currentUser = _currentUserInfoService.GetCurrentUserInfo();
 
         // Removal is global across all organisations, so only Super users may perform it.
         if (currentUser.UserRole is not UserRole.Super)
@@ -608,11 +612,11 @@ internal partial class UserService(
         }
 
         await using IDbContextTransaction transaction =
-            await dbContext.Database.BeginTransactionAsync(cancellationToken);
+            await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         try
         {
-            User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
+            User? user = await _dbContext.Users.FindAsync([userId], cancellationToken);
 
             if (user is null)
             {
@@ -635,7 +639,7 @@ internal partial class UserService(
             // A Cognito failure rolls back the DB changes. If deletion succeeds but commit fails,
             // DB changes roll back and retry tolerates the absent Cognito user. Committing first
             // blocks endpoint retries because Removed is terminal; reordering needs durable retries.
-            await identityService.DeleteUser(user.CognitoUsername, cancellationToken);
+            await _identityService.DeleteUser(user.CognitoUsername, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             return RemoveUserResult.Ok(new RemovedUserDto { DisplayName = user.FullName });
@@ -648,12 +652,39 @@ internal partial class UserService(
         }
     }
 
+    private UpdateUserDetailsError? CheckUserDetailsUpdateIsValid(
+        User user,
+        UpdateUserDetailsCommand command
+    )
+    {
+        bool isTheCurrentUserModifyingTheirOwnDetails = _currentUserInfoService.IsCurrentUser(
+            user.WorkEmail
+        );
+        if (!isTheCurrentUserModifyingTheirOwnDetails)
+        {
+            return new UpdateUserDetailsError.Unauthorised();
+        }
+        bool modifyingEmail = !user.WorkEmail.Equals(command.WorkEmail, StringComparison.Ordinal);
+        TimeSpan timeSinceLastAuthentication = _currentUserInfoService
+            .GetCurrentUserInfo()
+            .TimeSinceLastAuthentication;
+        if (
+            modifyingEmail
+            && timeSinceLastAuthentication
+                > _securityOptions.MaximumTimeSinceLastAuthenticationToChangeEmail
+        )
+        {
+            return new UpdateUserDetailsError.ReauthenticationRequired();
+        }
+        return null;
+    }
+
     private async Task<RemoveUserError?> RemoveMemberships(
         int userId,
         CancellationToken cancellationToken
     )
     {
-        List<UserOrgMembership> memberships = await dbContext
+        List<UserOrgMembership> memberships = await _dbContext
             .UserOrgMemberships.Where(m => m.UserId == userId)
             .ToListAsync(cancellationToken);
 
@@ -692,7 +723,7 @@ internal partial class UserService(
 
         foreach (int organisationId in championOrganisationIds)
         {
-            bool hasAnotherChampion = await dbContext.UserOrgMemberships.AnyOtherEnabledChampion(
+            bool hasAnotherChampion = await _dbContext.UserOrgMemberships.AnyOtherEnabledChampion(
                 organisationId,
                 removedMembershipIds,
                 cancellationToken
@@ -713,9 +744,9 @@ internal partial class UserService(
         CancellationToken cancellationToken
     )
     {
-        DateTime now = timeProvider.GetUtcNow();
+        DateTime now = _timeProvider.GetUtcNow();
         user.Anonymise(now);
-        List<UserRegistrationRequest> registrationRequests = await dbContext
+        List<UserRegistrationRequest> registrationRequests = await _dbContext
             .UserRegistrationRequests.Where(x =>
                 x.ResultingUserId == user.Id && x.ApprovedAt != null && x.RejectedAt == null
             )
@@ -725,17 +756,17 @@ internal partial class UserService(
             registrationRequest.Anonymise(user.Id);
         }
 
-        UserOnboardingRecord? onboardingRecord = await dbContext
+        UserOnboardingRecord? onboardingRecord = await _dbContext
             .UserOnboardingRecords.Where(x => x.ResultingUserId == user.Id)
             .SingleOrDefaultAsync(cancellationToken);
 
         if (onboardingRecord is not null)
         {
-            dbContext.UserOnboardingRecords.Remove(onboardingRecord);
+            _dbContext.UserOnboardingRecords.Remove(onboardingRecord);
         }
 
         await AddUserRemovedAudit(user.Id, currentUser, now, cancellationToken);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         await AnonymiseUserAuditHistory(user, cancellationToken);
     }
@@ -747,12 +778,12 @@ internal partial class UserService(
         CancellationToken cancellationToken
     )
     {
-        int currentUserId = await dbContext
+        int currentUserId = await _dbContext
             .Users.Where(u => u.CognitoUsername == currentUser.CognitoUsername)
             .Select(u => u.Id)
             .FirstAsync(cancellationToken);
 
-        dbContext.UserAudits.Add(
+        _dbContext.UserAudits.Add(
             new UserAudit
             {
                 UserId = removedUserId,
@@ -765,7 +796,7 @@ internal partial class UserService(
 
     private async Task AnonymiseUserAuditHistory(User user, CancellationToken cancellationToken)
     {
-        await dbContext
+        await _dbContext
             .UserAudits.Where(x =>
                 x.UserId == user.Id
                 && x.FieldPath != null
@@ -798,7 +829,7 @@ internal partial class UserService(
         CancellationToken cancellationToken
     )
     {
-        await identityService.UpdateUserEmail(
+        await _identityService.UpdateUserEmail(
             user.CognitoUsername,
             emailUpdatedEvent.NewWorkEmail,
             cancellationToken

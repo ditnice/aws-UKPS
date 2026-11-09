@@ -3,8 +3,11 @@ using Amazon.CognitoIdentityProvider.Model;
 using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 using Shouldly;
+using UKPS.Api.Application;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Identity;
@@ -66,15 +69,29 @@ public class UserServiceTests : DatabaseTestBase
     private IEnumerable<UserOrgMembership> ViewableMemberships => SeededMemberships;
     private int TotalExpectedValues =>
         ViewableMemberships.Count() + _userRegistrationRequests.Count(x => x.RejectedAt is null);
+    private readonly TimeSpan _maximumTimeSinceLastAuthenticationToChangeEmail =
+        TimeSpan.FromMinutes(10);
 
     public UserServiceTests(PostgresFixture fixture)
         : base(fixture)
     {
         Randomizer.Seed = new Random(342);
 
-        _harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentTime(
-            _currentDateTime
-        );
+        _harness = new ServiceTestHarness<IUserService>(Context)
+            .UpdateCurrentTime(_currentDateTime)
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton(
+                    Options.Create(
+                        new SecurityOptions
+                        {
+                            MaximumSecondsSinceLastAuthenticationToChangeEmail = (int)
+                                _maximumTimeSinceLastAuthenticationToChangeEmail.TotalSeconds,
+                        }
+                    )
+                );
+                return services;
+            });
 
         var organisations = _organisationFaker.Generate(3);
         var userFaker = new UserFaker().RuleFor(
@@ -1104,6 +1121,49 @@ public class UserServiceTests : DatabaseTestBase
             WorkTelephone = value.WorkPhone ?? string.Empty,
         };
         responseValues.ShouldBe(command);
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_WhenUpdatingEmailAndLastAuthenticatedTimeIsLongerThanLimit_ShouldReturnReauthenticationRequired()
+    {
+        var currentUser = await CreateExistingCurrentUser();
+        var command = _updateUserDetailsCommandFaker.Generate();
+        _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                TimeSinceLastAuthentication =
+                    _maximumTimeSinceLastAuthenticationToChangeEmail + TimeSpan.FromMinutes(1),
+            }
+        );
+        var result = await Service.UpdateUserDetails(
+            currentUser.Id,
+            command,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.ReauthenticationRequired>();
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_WhenNotUpdatingEmailAndLastAuthenticatedTimeIsLongerThanLimit_ShouldReturnSuccess()
+    {
+        var currentUser = await CreateExistingCurrentUser();
+        var command = _updateUserDetailsCommandFaker.Generate() with
+        {
+            WorkEmail = currentUser.WorkEmail,
+        };
+        _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                TimeSinceLastAuthentication =
+                    _maximumTimeSinceLastAuthenticationToChangeEmail + TimeSpan.FromMinutes(1),
+            }
+        );
+        var result = await Service.UpdateUserDetails(
+            currentUser.Id,
+            command,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeSuccess();
     }
 
     [Fact]

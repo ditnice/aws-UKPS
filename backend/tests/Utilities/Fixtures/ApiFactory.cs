@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using UKPS.Api.Application;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Seeding;
@@ -64,6 +65,10 @@ public sealed class ApiFactory(string connectionString) : WebApplicationFactory<
         builder.UseSetting(
             $"{DevAuthenticationOptions.SectionName}:{nameof(DevAuthenticationOptions.IsEnabled)}",
             $"{true}"
+        );
+        builder.UseSetting(
+            $"{SecurityOptions.SectionName}:{nameof(SecurityOptions.MaximumSecondsSinceLastAuthenticationToChangeEmail)}",
+            $"{300}"
         );
     }
 }

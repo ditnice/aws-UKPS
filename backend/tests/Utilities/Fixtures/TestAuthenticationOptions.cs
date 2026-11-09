@@ -12,6 +12,7 @@ public class TestAuthenticationOptions
         new Claim(UkpsClaimTypes.OrganisationId, $"{1}"),
         new Claim(UkpsClaimTypes.Email, "example.user@email.com"),
         new Claim(UkpsClaimTypes.Username, "24a97ae0-d7d2-4c6b-88de-d835b13e8038"),
+        new Claim("auth_time", $"{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}"),
     ];
 
     public ICollection<Claim> Claims { get; } = DefaultClaims.ToList();

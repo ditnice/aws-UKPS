@@ -73,7 +73,7 @@ internal class WebApiCurrentUserInfoService : ICurrentUserInfoService
     {
         string? userRoleClaim = claimsPrincipal.FindFirstValue("auth_time");
         if (!long.TryParse(userRoleClaim, CultureInfo.InvariantCulture, out var seconds))
-            throw new InvalidOperationException($"Invalid {UkpsClaimTypes.UserRole} claim value."); // missing claim: treat as not fresh
+            throw new InvalidOperationException("""Invalid or missing "auth_time" claim value.""");
 
         var authTime = DateTimeOffset.FromUnixTimeSeconds(seconds);
         return DateTimeOffset.UtcNow - authTime;

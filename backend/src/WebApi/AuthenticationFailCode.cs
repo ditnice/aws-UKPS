@@ -46,5 +46,8 @@ public enum AuthenticationFailCode
     /// </summary>
     SelectedOrganisationMismatch = 7,
 
+    /// <summary>
+    /// To perform this given action reauthentication is required.
+    /// </summary>
     ReauthenticationRequired = 8,
 }
