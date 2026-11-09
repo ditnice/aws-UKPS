@@ -38,14 +38,6 @@
   width: fit-content;
 }
 
-.singleQuestionPageHeader :global(.page-header) {
-  margin-bottom: 0;
-}
-
-.singleQuestionPageHeader :global(.page-header__heading) {
-  margin-bottom: utils.rem(spacing.$medium);
-}
-
 .childLabel {
   @include typography.h2;
   display: block;

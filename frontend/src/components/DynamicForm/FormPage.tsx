@@ -110,12 +110,7 @@ export function FormPage({ page }: FormPageProps) {
 
   return (
     <>
-      <PageHeader
-        backLink={backLink}
-        className={singleQuestion ? styles.singleQuestionPageHeader : undefined}
-        heading={heading}
-        preheading={preheading}
-      />
+      <PageHeader backLink={backLink} heading={heading} preheading={preheading} />
 
       {saveState.kind === 'conflict' && (
         <Alert type="caution">
@@ -184,7 +179,6 @@ export function FormPage({ page }: FormPageProps) {
               </>
             )}
           </form.Subscribe>
-          <Link href={tasksHref}>Return to task list</Link>
         </div>
       </form>
     </>
