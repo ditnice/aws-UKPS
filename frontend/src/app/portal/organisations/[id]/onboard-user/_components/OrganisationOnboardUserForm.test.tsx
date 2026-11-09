@@ -47,7 +47,7 @@ function renderForm() {
 async function enterValuesIntoForm(validFormValues: FormValues) {
   await fillInput(user, screen.getByLabelText('Full name'), validFormValues.fullName)
   await fillInput(user, screen.getByLabelText('Work email address'), validFormValues.newUserEmail)
-  await fillInput(user, screen.getByLabelText('Phone number'), validFormValues.contactNumber)
+  await fillInput(user, screen.getByLabelText('Contact number'), validFormValues.contactNumber)
 }
 
 async function fillValidForm() {
@@ -91,9 +91,11 @@ describe('OrganisationOnboardUserForm', () => {
     ).toBeInTheDocument()
     expect(screen.getByLabelText('Full name')).toBeInTheDocument()
     expect(screen.getByLabelText('Work email address')).toBeInTheDocument()
-    expect(screen.getByLabelText('Phone number')).toBeInTheDocument()
+    expect(screen.getByLabelText('Contact number')).toBeInTheDocument()
     expect(
-      screen.getByText('For international numbers include the country code.'),
+      screen.getByText(
+        'This number will be visible to horizon scanning organisations. For international numbers include the country code.',
+      ),
     ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Send invite' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Cancel' }).getAttribute('href')).toBe(
@@ -131,7 +133,7 @@ describe('OrganisationOnboardUserForm', () => {
 
     await fillInput(user, screen.getByLabelText('Full name'), 'Test User')
     await fillInput(user, screen.getByLabelText('Work email address'), 'not-an-email-address')
-    await fillInput(user, screen.getByLabelText('Phone number'), '01234567890')
+    await fillInput(user, screen.getByLabelText('Contact number'), '01234567890')
     await user.click(screen.getByRole('button', { name: 'Send invite' }))
 
     expect(
@@ -155,7 +157,7 @@ describe('OrganisationOnboardUserForm', () => {
     await user.tab()
     await fillInput(user, screen.getByLabelText('Work email address'), 'test@test.com')
     await user.tab()
-    await fillInput(user, screen.getByLabelText('Phone number'), '01234567890')
+    await fillInput(user, screen.getByLabelText('Contact number'), '01234567890')
     await user.tab()
 
     await waitFor(() => {

@@ -63,7 +63,7 @@ test.describe('sign-in', () => {
       { timeout: 15_000 },
     )
     await expect(
-      page.getByRole('heading', { name: 'Enter the code from your authenticator app' }),
+      page.getByRole('heading', { name: 'Enter the code from your authenticator device' }),
     ).toBeVisible()
   })
 })

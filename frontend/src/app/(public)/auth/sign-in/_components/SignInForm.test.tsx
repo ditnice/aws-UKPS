@@ -29,6 +29,7 @@ describe('SignInForm', () => {
     expect(screen.getByLabelText('Email address')).toBeInTheDocument()
     expect(screen.getByLabelText('Password')).toBeInTheDocument()
     expect(screen.getByText('Forgotten your password?')).toBeInTheDocument()
+    expect(screen.getByText('I cannot access my account')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
   })
 

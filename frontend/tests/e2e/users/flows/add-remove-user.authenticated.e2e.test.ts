@@ -26,7 +26,7 @@ test.describe('Adding and removing a user', { tag: forRoles(['Super'], mutatesDa
     await expect(page.getByRole('heading', { name: 'Add a new user' })).toBeVisible()
     await page.getByLabel('Full name').fill(testUser.fullName)
     await page.getByLabel('Work email address').fill(testUser.workEmail)
-    await page.getByLabel('Phone number').fill(testUser.phoneNumber)
+    await page.getByLabel('Contact number').fill(testUser.phoneNumber)
 
     await page.getByRole('button', { name: 'Send invite' }).click()
 
@@ -73,9 +73,9 @@ test.describe('Adding and removing a user without saving', () => {
 
       await page.getByLabel('Full name').fill(testUser.fullName)
       await page.getByLabel('Work email address').fill(testUser.workEmail)
-      await page.getByLabel('Phone number').fill(testUser.phoneNumber)
+      await page.getByLabel('Contact number').fill(testUser.phoneNumber)
       // The phone error only clears on blur, and its removal moves Cancel out from under a click.
-      await page.getByLabel('Phone number').blur()
+      await page.getByLabel('Contact number').blur()
       await expect(page.getByText('Enter their phone number')).toBeHidden()
       await usersPage.cancel()
 
@@ -131,7 +131,7 @@ test.describe(
       await expect(page.getByRole('heading', { name: 'Add a new user' })).toBeVisible()
       await page.getByLabel('Full name').fill(testUser.fullName)
       await page.getByLabel('Work email address').fill(workEmail)
-      await page.getByLabel('Phone number').fill(testUser.phoneNumber)
+      await page.getByLabel('Contact number').fill(testUser.phoneNumber)
       await page.getByRole('button', { name: 'Send invite' }).click()
 
       await usersPage.expectLoaded()

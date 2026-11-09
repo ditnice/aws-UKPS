@@ -158,6 +158,12 @@ export function SignInForm({ returnTo }: SignInFormProps) {
         <a href={createResetPasswordHref()}>reset your password</a> page.
       </Details>
 
+      {/* TODO - Update this to point to the correct page once built */}
+      <Details summary="I cannot access my account">
+        If you cannot access your account, visit the{' '}
+        <a href={'#'}>account recovery (opens in a new tab)</a> page.
+      </Details>
+
       <Button type="submit" variant="cta">
         Continue
       </Button>
