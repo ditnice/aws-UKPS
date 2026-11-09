@@ -194,7 +194,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
               title="Record title"
               label="Record title"
               name={field.name}
-              hint="Enter a title to help you to identify this record. You can enter up to 100 characters."
+              hint="Enter a title to help you to identify this record. This information is not shown to horizon scanning users. You can enter up to 100 characters."
               onBlur={field.handleBlur}
               onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
                 field.handleChange(event.target.value)
