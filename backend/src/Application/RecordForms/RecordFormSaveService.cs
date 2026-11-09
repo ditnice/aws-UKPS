@@ -113,7 +113,8 @@ internal sealed class RecordFormSaveService(
         var (parsed, errors) = PageAnswerValidator.Parse(page, command.Answers);
         Dictionary<string, FormAnswer> submitted = Overlay(before, parsed);
         Applicability applicability = FormApplicability.Evaluate(model, submitted);
-        PageAnswerValidator.Check(page, parsed, options, applicability, errors);
+        DateOnly today = DateAnswer.UkToday(dateTimeProvider.GetUtcNow());
+        PageAnswerValidator.Check(page, parsed, options, applicability, today, errors);
 
         // Answers that no longer apply, on this page or any page that depends on it, are cleared
         // in the same save, so stored answers always match what applies.
@@ -286,8 +287,8 @@ internal sealed class RecordFormSaveService(
                 RecordId = loaded.Record.Id,
                 RevisionId = revision.Id,
                 FieldPath = q.Id,
-                OldValue = before[q.Id].ToAuditText(),
-                NewValue = after[q.Id].ToAuditText(),
+                OldValue = q.Binding.AuditText(before[q.Id]),
+                NewValue = q.Binding.AuditText(after[q.Id]),
                 ChangedBy = user.Id,
                 ChangedAt = time,
             })

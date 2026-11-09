@@ -123,7 +123,8 @@ export const fakeFormControl = (options?: Options): FormControl => {
         'Radio',
         'Select',
         'Checkbox',
-        'HierarchicalSelect'
+        'HierarchicalSelect',
+        'PrecisionDate'
     ]);
 };
 

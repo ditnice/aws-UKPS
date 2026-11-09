@@ -881,4 +881,151 @@ describe('FormPage', () => {
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
     })
   })
+
+  describe('date questions', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(new Date(2026, 5, 15, 12))
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    const precisionDate = question({
+      id: 'uk_submission_date',
+      type: 'PrecisionDate',
+      label: 'What is the UK regulatory submission date?',
+      hint: 'Choose the level of detail you are currently able to provide.',
+      rules: [
+        { kind: 'Required', value: null, message: 'Enter the UK regulatory submission date' },
+      ],
+    })
+    const datePage = (answer: string | null = null) =>
+      page({ questions: [precisionDate], answers: { uk_submission_date: answer } })
+
+    it('sends an estimated quarter as the year and quarter', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Estimated quarter' }))
+      await user.click(screen.getByRole('radio', { name: 'April to June' }))
+      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2027')
+      save()
+
+      await waitFor(() => {
+        expect(mocks.saveRecordFormPage).toHaveBeenCalledWith(
+          expect.objectContaining({
+            body: expect.objectContaining({ answers: { uk_submission_date: '2027-Q2' } }),
+          }),
+        )
+      })
+    })
+
+    it('loads a saved actual date into its parts', () => {
+      render(<FormPage page={datePage('2027-05-14')} />)
+
+      expect(screen.getByRole('radio', { name: 'Actual date' })).toBeChecked()
+      expect(screen.getByRole('textbox', { name: 'Day' })).toHaveValue('14')
+      expect(screen.getByRole('textbox', { name: 'Month' })).toHaveValue('5')
+      expect(screen.getByRole('textbox', { name: 'Year' })).toHaveValue('2027')
+    })
+
+    it('rejects a date that is not real without saving', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Actual date' }))
+      await user.type(screen.getByRole('textbox', { name: 'Day' }), '31')
+      await user.type(screen.getByRole('textbox', { name: 'Month' }), '4')
+      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2026')
+      save()
+
+      expect(await screen.findByText('Enter a real date.')).toBeInTheDocument()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('rejects an actual date in the future without saving', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Actual date' }))
+      await user.type(screen.getByRole('textbox', { name: 'Day' }), '16')
+      await user.type(screen.getByRole('textbox', { name: 'Month' }), '6')
+      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2026')
+      save()
+
+      expect(
+        await screen.findByText('An actual date must be today or in the past.'),
+      ).toBeInTheDocument()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('rejects an estimate for a month that has ended without saving', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Estimated month' }))
+      await user.type(screen.getByRole('textbox', { name: 'Month' }), '5')
+      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2026')
+      save()
+
+      expect(
+        await screen.findByText('An estimated date must be in the future.'),
+      ).toBeInTheDocument()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('asks for a date when only the precision is chosen', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Estimated month' }))
+      save()
+
+      expect(await screen.findByText('Enter the UK regulatory submission date')).toBeInTheDocument()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('sends an actual date from a date question beside another question', async () => {
+      const user = userEvent.setup()
+      render(
+        <FormPage
+          page={page({
+            page: { id: 'global', title: 'Global first submission', commercialInConfidence: true },
+            questions: [
+              question({ id: 'region', type: 'Text', label: 'Where?', hint: null, rules: [] }),
+              question({
+                id: 'global_date',
+                type: 'PrecisionDate',
+                label: 'Actual global first submission date',
+                hint: null,
+                rules: [],
+              }),
+            ],
+            answers: { region: null, global_date: null },
+          })}
+        />,
+      )
+
+      expect(
+        screen.getByRole('group', { name: 'Actual global first submission date' }),
+      ).toBeInTheDocument()
+      await user.click(screen.getByRole('radio', { name: 'Actual date' }))
+      await user.type(screen.getByRole('textbox', { name: 'Day' }), '26')
+      await user.type(screen.getByRole('textbox', { name: 'Month' }), '7')
+      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2025')
+      save()
+
+      await waitFor(() => {
+        expect(mocks.saveRecordFormPage).toHaveBeenCalledWith(
+          expect.objectContaining({
+            body: expect.objectContaining({
+              answers: { region: null, global_date: '2025-07-26' },
+            }),
+          }),
+        )
+      })
+    })
+  })
 })

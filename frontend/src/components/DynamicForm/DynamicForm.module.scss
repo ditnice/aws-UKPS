@@ -63,3 +63,14 @@
   gap: utils.rem(spacing.$medium);
   margin-top: utils.rem(spacing.$large);
 }
+
+// Date parts sit side by side, as in the GOV.UK date input.
+.dateInput {
+  display: flex;
+  flex-wrap: wrap;
+  gap: utils.rem(spacing.$medium);
+
+  :global(.input) {
+    margin-bottom: 0;
+  }
+}
