@@ -1,5 +1,7 @@
 import { RuleKind } from '@/client/generated'
 
+import { dateAnswerError, toDateAnswer, toDateValue } from './dates'
+
 import type {
   Answer,
   FormValue,
@@ -38,6 +40,9 @@ export const findEntry = (options: Option[] | null, value: string): Hierarchical
 
 /** Converts a saved answer into the value the form edits. */
 export const toFormValue = (question: Question, answer: unknown): FormValue => {
+  if (question.type === 'PrecisionDate') {
+    return toDateValue(answer)
+  }
   if (question.multiple) {
     const values = Array.isArray(answer)
       ? answer.filter((v): v is string => typeof v === 'string')
@@ -60,6 +65,9 @@ const entryValue = (entry: HierarchicalEntry) => entry.child || entry.parent
 
 /** Converts a form value into its answer on the wire. */
 export const toAnswer = (question: Question, value: FormValue | undefined): Answer => {
+  if (question.type === 'PrecisionDate') {
+    return value && typeof value === 'object' && 'precision' in value ? toDateAnswer(value) : null
+  }
   if (question.multiple) {
     if (!Array.isArray(value)) {
       return []
@@ -69,7 +77,7 @@ export const toAnswer = (question: Question, value: FormValue | undefined): Answ
       .filter((item) => item !== '')
   }
 
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
+  if (value && typeof value === 'object' && 'parent' in value) {
     return entryValue(value) || null
   }
   return typeof value === 'string' && value !== '' ? value : null
@@ -116,7 +124,9 @@ export const validateQuestion = (question: Question, value: FormValue | undefine
   if (Array.isArray(answer) && new Set(answer).size !== answer.length) {
     return duplicateMessage
   }
-  return firstFailure(question.rules, answer)
+  const dateError =
+    question.type === 'PrecisionDate' && typeof answer === 'string' ? dateAnswerError(answer) : null
+  return dateError ?? firstFailure(question.rules, answer)
 }
 
 /** The answer of an unanswered question: null, or an empty array when multi-value. */

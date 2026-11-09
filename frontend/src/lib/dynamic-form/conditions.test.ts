@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { fieldName } from './answers'
 import { isConditionMet, pageLayout, shownQuestionIds } from './conditions'
 
+import type { DateValue } from './dates'
 import type { Question } from './types'
 
 const question = (overrides: Partial<Question>): Question => ({
@@ -93,6 +94,29 @@ describe('pageLayout', () => {
         ['Yes', [1]],
         ['No', [1]],
       ]),
+    )
+  })
+
+  it('compares a date trigger by its precision once a real date is entered', () => {
+    const date = question({ id: 'date', type: 'PrecisionDate', options: null })
+    const global = question({
+      id: 'global',
+      type: 'Text',
+      options: null,
+      showWhen: { kind: 'AnswerIn', questionId: 'date', values: ['ActualDate'] },
+    })
+    const shown = (value: Partial<DateValue>) =>
+      shownQuestionIds([date, global], {
+        [fieldName(0)]: { precision: '', day: '', month: '', quarter: '', year: '', ...value },
+        [fieldName(1)]: '',
+      })
+
+    expect(shown({ precision: 'ActualDate', day: '5', month: '4', year: '2027' })).toContain(
+      'global',
+    )
+    expect(shown({ precision: 'EstimatedMonth', month: '4', year: '2027' })).not.toContain('global')
+    expect(shown({ precision: 'ActualDate', day: '31', month: '4', year: '2027' })).not.toContain(
+      'global',
     )
   })
 })

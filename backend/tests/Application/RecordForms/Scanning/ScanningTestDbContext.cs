@@ -36,5 +36,7 @@ internal sealed class ScanningTestDbContext(DbContextOptions<ScanningTestDbConte
         modelBuilder.Entity<ConditionalEntity>();
         modelBuilder.Entity<ConditionalExtraEntity>();
         modelBuilder.Entity<BrokenConditionEntity>();
+        modelBuilder.Entity<DatedEntity>();
+        modelBuilder.Entity<BrokenDatedEntity>();
     }
 }

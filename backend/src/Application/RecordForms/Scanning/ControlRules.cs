@@ -19,6 +19,7 @@ internal static class ControlRules
             ],
             BindingKind.Flags => [FormControl.Checkbox],
             BindingKind.Junction => [FormControl.Checkbox, FormControl.HierarchicalSelect],
+            BindingKind.RegulatoryDate => [FormControl.PrecisionDate],
             _ => [],
         };
 

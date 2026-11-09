@@ -93,7 +93,7 @@ public class FormModelValidatorTests
         "BrokenConditionEntity.OtherPage [FormShowWhen] names 'broken_condition_entity.trigger', which must be an earlier question on the same page."
     )]
     [InlineData(
-        "BrokenConditionEntity.TextTrigger [FormShowWhen] names 'broken_condition_entity.before_trigger', which must be a Radio, Select or Checkbox on an enum."
+        "BrokenConditionEntity.TextTrigger [FormShowWhen] names 'broken_condition_entity.before_trigger', which must be a Radio, Select or Checkbox on an enum, or a PrecisionDate."
     )]
     [InlineData(
         "BrokenConditionEntity.WrongValue [FormShowWhen] has value 'Unknown', which is not a YesNoUnknown member."
@@ -130,6 +130,42 @@ public class FormModelValidatorTests
         form.FindQuestion("conditional_entity.reason")!
             .ShowWhen!.Description.ShouldBe("AnswerIn conditional_entity.gate [No]");
         form.FindQuestion("conditional_entity.gate")!.ShowWhen.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Scan_DatedEntity_BuildsDateBindingsAndPrecisionConditions()
+    {
+        Problems(typeof(DatedEntity)).ShouldBe(["The Vaccine form has no entry in FormVersions."]);
+
+        var (entities, _) = FormModelScanner.Scan(_model, [typeof(DatedEntity)]);
+        FormModel form = FormModelBuilder.Build(entities, _options)[RecordType.Vaccine];
+
+        FormQuestion submission = form.FindQuestion("dated_entity.submission_date")!;
+        submission.Binding.Description.ShouldBe(
+            "regulatory-date:DatedEntity.SubmissionDateId:UkSubmission"
+        );
+        submission.OptionKey.ShouldBeNull();
+        submission.Entity.Includes.ShouldBe(["SubmissionDate", "ActualDate"], ignoreOrder: true);
+        form.FindPage("actual")!
+            .ShowWhen!.Description.ShouldBe("AnswerIn dated_entity.submission_date [ActualDate]");
+    }
+
+    [Theory]
+    [InlineData(
+        "BrokenDatedEntity.NoEventDateId uses control PrecisionDate, which needs [FormDateEvent]."
+    )]
+    [InlineData(
+        "BrokenDatedEntity.TextEvent has [FormDateEvent], which only a PrecisionDate uses."
+    )]
+    [InlineData(
+        "BrokenDatedEntity.WrongControlDateId uses control Text which does not suit a RegulatoryDate binding."
+    )]
+    [InlineData(
+        "BrokenDatedEntity.WrongValue [FormShowWhen] has value 'Yes', which is not a DatePrecision member."
+    )]
+    public void Validate_BrokenDatedEntity_ReportsTheProblem(string expected)
+    {
+        Problems(typeof(BrokenDatedEntity)).ShouldContain(expected);
     }
 
     [Fact]
