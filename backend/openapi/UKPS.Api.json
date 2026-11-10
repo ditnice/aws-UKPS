@@ -240,6 +240,194 @@
         }
       }
     },
+    "/auth/setup-sms-mfa": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Sets up SMS multi-factor authentication for a user.",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupSmsMfaCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupSmsMfaCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupSmsMfaCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify-sms-mfa": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Verifies the user's SMS multi-factor authentication setup by validating the provided authentication code.",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifySmsMultiFactorAuthenticationCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifySmsMultiFactorAuthenticationCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifySmsMultiFactorAuthenticationCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/validate-setup-token": {
       "get": {
         "tags": [
@@ -7514,6 +7702,25 @@
         },
         "description": "Where to go after saving a page."
       },
+      "SetupSmsMfaCommand": {
+        "required": [
+          "setupToken",
+          "phoneNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "setupToken": {
+            "type": "string",
+            "description": "Gets the unique token used to identify and validate the pending user setup request.",
+            "format": "uuid"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "Gets the phone number to assign to the user account."
+          }
+        },
+        "description": "Represents the command used to complete user setup by validating a setup token\nand assigning a phone number to the user for SMS MFA."
+      },
       "SetupUserCommand": {
         "required": [
           "setupToken",
@@ -7931,6 +8138,30 @@
           }
         },
         "description": "Represents the details required to verify a user's multi-factor authentication setup."
+      },
+      "VerifySmsMultiFactorAuthenticationCommand": {
+        "required": [
+          "setupToken",
+          "code",
+          "authenticationSession"
+        ],
+        "type": "object",
+        "properties": {
+          "setupToken": {
+            "type": "string",
+            "description": "Gets the unique token associated with the user onboarding record.",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "description": "Gets the verification code generated by the user's authenticator application."
+          },
+          "authenticationSession": {
+            "type": "string",
+            "description": "Gets the authentication session identifier required to complete the\nmulti-factor authentication verification flow."
+          }
+        },
+        "description": "Represents the details required to verify a user's SMS multi-factor authentication setup."
       },
       "YesNoUnknown": {
         "enum": [

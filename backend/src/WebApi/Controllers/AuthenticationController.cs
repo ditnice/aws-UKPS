@@ -9,6 +9,10 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.WebApi.CustomResponses;
+using SetupSmsMfaResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.SmsMultiFactorAuthenticationSetupDto,
+    UKPS.Api.Application.Authentication.Errors.SetupSmsMfaError
+>;
 using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
     UKPS.Api.Application.Authentication.Errors.UserSetupError
@@ -17,6 +21,7 @@ using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
 >;
+using VerifySmsMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError>;
 
 namespace UKPS.Api.WebApi.Controllers;
 
@@ -267,6 +272,84 @@ public class AuthenticationController : ControllerBase
                 cancellationToken
             )
         ).Match(HandleLoginSuccess, HandleLoginError);
+    }
+
+    /// <summary>
+    /// Sets up SMS multi-factor authentication for a user.
+    /// </summary>
+    /// <param name="command"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>
+    ///
+    /// </returns>
+    [HttpPost("setup-sms-mfa")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status410Gone)]
+    public async Task<ActionResult> SetupSmsMfa(
+        [FromBody] SetupSmsMfaCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        SetupSmsMfaResult result = await _authorisationAdministrationService.SetupSmsMfa(
+            command,
+            cancellationToken
+        );
+
+        return result.Match(
+            dto => Ok(dto),
+            err =>
+                err.Match<ActionResult>(
+                    invalidPhoneNumber: () => BadRequest("The supplied phone number is invalid."),
+                    doesNotExist: () => NotFound(),
+                    expired: () => StatusCode(StatusCodes.Status410Gone, _setupTokenExpiredDetails),
+                    unauthorised: () => Unauthorized()
+                )
+        );
+    }
+
+    /// <summary>
+    /// Verifies the user's SMS multi-factor authentication setup by validating the provided authentication code.
+    /// </summary>
+    /// <param name="command"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>
+    ///
+    /// </returns>
+    [HttpPost("verify-sms-mfa")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> VerifySmsMultiFactorAuthentication(
+        [FromBody] VerifySmsMultiFactorAuthenticationCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        VerifySmsMultiFactorAuthenticationResult result =
+            await _authorisationAdministrationService.VerifySmsMultiFactorAuthentication(
+                command,
+                cancellationToken
+            );
+
+        return result.Match(
+            () => Ok(),
+            err =>
+                err.Match<ActionResult>(
+                    invalidCode: _ =>
+                        BadRequest(
+                            new ProblemDetails
+                            {
+                                Title = "Invalid multi-factor authentication code.",
+                                Detail =
+                                    "The supplied authentication code is invalid or has expired.",
+                                Status = StatusCodes.Status400BadRequest,
+                            }
+                        ),
+                    doesNotExist: _ => NotFound()
+                )
+        );
     }
 
     /// <summary>
