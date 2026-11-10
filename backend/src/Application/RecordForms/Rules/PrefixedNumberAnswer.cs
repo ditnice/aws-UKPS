@@ -2,7 +2,7 @@ namespace UKPS.Api.Application.RecordForms.Rules;
 
 /// <summary>
 /// The rules for a <c>PrefixedNumber</c> answer: one string made of one of the question's
-/// prefixes followed by digits. The frontend mirrors this in <c>lib/dynamic-form/answers.ts</c>.
+/// prefixes followed by digits. The frontend mirrors this in <c>lib/dynamic-form/prefixedNumber.ts</c>.
 /// </summary>
 internal static class PrefixedNumberAnswer
 {
