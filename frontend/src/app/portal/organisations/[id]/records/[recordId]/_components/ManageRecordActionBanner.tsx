@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import type { RecordDto } from '@/client/generated'
 import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
+import { Alert } from '@/components/Alert/Alert'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 
 import { buildRecordHref } from '../_lib/recordLinks'
@@ -16,7 +17,18 @@ type ManageRecordActionBannerProps = {
    * edit its content. Update record is only shown when this is set.
    */
   updateRecordHref?: string
+  nextUpdateDue?: string | null
 }
+
+const OverdueRecordAlert = () => (
+  <Alert type="info">
+    <h3>Record update overdue</h3>
+    <p>
+      This record needs to be reviewed for any updates. You can edit the record to update published
+      record infomation or confirm the information is up-to-date.
+    </p>
+  </Alert>
+)
 const OnHoldRecordActionBanner = ({ record }: ManageRecordActionBannerProps) => {
   const { actions } = record
 
@@ -76,6 +88,7 @@ const ArchivedRecordActionBanner = ({ record }: ManageRecordActionBannerProps) =
 export const ManageRecordActionBanner = ({
   record,
   updateRecordHref,
+  nextUpdateDue,
 }: ManageRecordActionBannerProps) => {
   const { actions } = record
   if (record.displayStatus === 'Archived' || record.displayStatus == 'QAReview') {
