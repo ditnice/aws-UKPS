@@ -42,6 +42,12 @@ internal static class PageAnswerValidator
             }
 
             var (answer, error) = AnswerParser.Parse(question.Shape, element);
+            if (error is null && question.Prefixes is { } prefixes)
+            {
+                answer = FormAnswer.Single(
+                    PrefixedNumberAnswer.Evaluate(prefixes, answer!.Value).Value
+                );
+            }
             if (error is not null)
             {
                 errors[question.Id] = error;
@@ -77,7 +83,8 @@ internal static class PageAnswerValidator
 
             string? error =
                 CheckOptions(answer, options.GetValueOrDefault(question.Id))
-                ?? RuleEvaluator.FirstFailure(question.Rules, answer);
+                ?? RuleEvaluator.FirstFailure(question.Rules, answer)
+                ?? CheckPrefixedNumber(question, answer);
             if (error is not null)
             {
                 errors[question.Id] = error;
@@ -98,4 +105,9 @@ internal static class PageAnswerValidator
             .ToHashSet(StringComparer.Ordinal);
         return answer.AllValues().All(offered.Contains) ? null : RecordFormMessages.InvalidOption;
     }
+
+    private static string? CheckPrefixedNumber(FormQuestion question, FormAnswer answer) =>
+        question.Prefixes is { } prefixes
+            ? PrefixedNumberAnswer.Evaluate(prefixes, answer.Value).Error
+            : null;
 }

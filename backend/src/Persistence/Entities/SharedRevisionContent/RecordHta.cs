@@ -112,10 +112,11 @@ internal sealed class RecordHta
     [FormField(
         "record_hta.nice_ta_development_id",
         "Enter the NICE technology appraisal development ID for this product (optional)",
-        FormControl.Text,
+        FormControl.PrefixedNumber,
         Order = 10,
-        Hint = "Enter the NICE technology appraisal ID once it has been allocated by NICE, starting GID-TA or GID-HST followed by the number. Leave blank if not yet known."
+        Hint = "Enter the NICE technology appraisal ID once it has been allocated by NICE. Leave blank if not yet known."
     )]
+    [FormValuePrefixes("GID-TA", "GID-HST")]
     public string? NiceTaDevelopmentId { get; set; }
 
     [FormIgnore("Precision dates not supported yet")]

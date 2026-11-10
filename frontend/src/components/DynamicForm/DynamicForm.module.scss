@@ -43,6 +43,14 @@
   width: fit-content;
 }
 
+// A dropdown and a textbox side by side.
+.prefixedNumber {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: utils.rem(spacing.$medium);
+}
+
 .childLabel {
   @include typography.font-size(h3);
   display: block;

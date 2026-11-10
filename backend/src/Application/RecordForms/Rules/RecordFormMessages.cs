@@ -10,4 +10,6 @@ internal static class RecordFormMessages
     public const string WrongShape = "The answer is not in the expected format.";
     public const string InvalidOption = "Select a valid option.";
     public const string Duplicate = "You have selected the same option more than once.";
+    public const string SelectIdType = "Select ID type";
+    public const string IdDigitsOnly = "ID must only contain numbers";
 }

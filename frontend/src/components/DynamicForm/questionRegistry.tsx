@@ -3,6 +3,7 @@ import type { FormValue, HierarchicalEntry } from '@/lib/dynamic-form/types'
 
 import { CheckboxQuestion } from './questions/CheckboxQuestion'
 import { HierarchicalSelectQuestion } from './questions/HierarchicalSelectQuestion'
+import { PrefixedNumberQuestion } from './questions/PrefixedNumberQuestion'
 import { RadioQuestion } from './questions/RadioQuestion'
 import { SelectQuestion } from './questions/SelectQuestion'
 import { TextareaQuestion } from './questions/TextareaQuestion'
@@ -31,4 +32,5 @@ export const questionRegistry: Record<FormControl, (props: QuestionProps) => Rea
   Radio: control<string>(RadioQuestion),
   Checkbox: control<string[]>(CheckboxQuestion),
   HierarchicalSelect: control<HierarchicalEntry | HierarchicalEntry[]>(HierarchicalSelectQuestion),
+  PrefixedNumber: control<string>(PrefixedNumberQuestion),
 }
