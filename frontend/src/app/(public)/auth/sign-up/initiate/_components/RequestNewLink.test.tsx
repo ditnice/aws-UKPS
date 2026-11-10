@@ -6,16 +6,15 @@ import { postAuthResendSetupToken } from '@/client/generated'
 
 import { RequestNewLink } from './RequestNewLink'
 
-const supportEmail = vi.hoisted(() => {
-  // The component reads this at module load, so it must be set before the import above runs
-  const email = 'support@example.com'
-  vi.stubEnv('QA_SUPPORT_EMAIL', email)
-  return email
-})
+const supportEmail = 'support@example.com'
 
 vi.mock('@/client/generated', () => ({
   postAuthResendSetupToken: vi.fn(),
 }))
+
+beforeEach(() => {
+  vi.stubEnv('QA_SUPPORT_EMAIL', supportEmail)
+})
 
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
