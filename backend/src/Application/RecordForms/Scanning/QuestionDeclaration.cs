@@ -14,6 +14,7 @@ internal sealed record QuestionDeclaration
     public required FormFieldAttribute Field { get; init; }
     public FormRequiredAttribute? Required { get; init; }
     public FormMaxLengthAttribute? MaxLength { get; init; }
+    public FormValuePrefixesAttribute? Prefixes { get; init; }
     public FormMaxItemsAttribute? MaxItems { get; init; }
     public FormOptionsAttribute? Options { get; init; }
     public FormShowWhenAttribute? ShowWhen { get; init; }

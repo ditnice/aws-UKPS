@@ -198,7 +198,8 @@ export const FormControl = {
     RADIO: 'Radio',
     SELECT: 'Select',
     CHECKBOX: 'Checkbox',
-    HIERARCHICAL_SELECT: 'HierarchicalSelect'
+    HIERARCHICAL_SELECT: 'HierarchicalSelect',
+    PREFIXED_NUMBER: 'PrefixedNumber'
 } as const;
 
 /**
