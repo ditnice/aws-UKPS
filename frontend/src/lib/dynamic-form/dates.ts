@@ -6,7 +6,7 @@ import type { Answer } from './types'
 export const invalidDateMessage = 'Enter a real date.'
 export const actualDateInFutureMessage = 'An actual date must be today or in the past.'
 export const estimatedDateInPastMessage = 'An estimated date must be in the future.'
-export const actualMonthInFutureMessage = 'This date must be this month or in the past.'
+export const actualMonthInFutureMessage = 'The date must be this month or in the past.'
 
 export type DatePrecision = 'EstimatedQuarter' | 'EstimatedMonth' | 'ActualDate' | 'ActualMonth'
 
