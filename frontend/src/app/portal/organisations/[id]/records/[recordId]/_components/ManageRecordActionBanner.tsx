@@ -7,7 +7,7 @@ import { Button, ButtonGroup } from '@/components/Button/Button'
 import { buildRecordHref } from '../_lib/recordLinks'
 
 type ManageRecordActionBannerProps = {
-  record: Pick<RecordDto, 'organisationId' | 'recordId' | 'recordType' | 'actions'>
+  record: Pick<RecordDto, 'organisationId' | 'recordId' | 'recordType' | 'actions' | 'recordStatus'>
   /**
    * The record's content form, or undefined when its type has no form yet or the user cannot
    * edit its content. Update record is only shown when this is set.
@@ -15,11 +15,35 @@ type ManageRecordActionBannerProps = {
   updateRecordHref?: string
 }
 
+const ArchivedRecordActionBanner = ({ record }: ManageRecordActionBannerProps) => {
+  if (!record.actions.includes('ViewTimeline')) {
+    return null
+  }
+
+  return (
+    <ActionBanner
+      variant="subtle"
+      title="View record timeline"
+      headingLevel={2}
+      cta={
+        <ButtonGroup>
+          <Button variant="cta">View record timeline</Button>
+        </ButtonGroup>
+      }
+    >
+      Review all changes made to this record since it was created.
+    </ActionBanner>
+  )
+}
+
 export const ManageRecordActionBanner = ({
   record,
   updateRecordHref,
 }: ManageRecordActionBannerProps) => {
   const { actions } = record
+  if (record.recordStatus === 'Archived') {
+    return <ArchivedRecordActionBanner record={record} />
+  }
   const discardHref = buildRecordHref(
     record.organisationId,
     record.recordId,
@@ -32,6 +56,9 @@ export const ManageRecordActionBanner = ({
     record.recordType,
     'change-record-status',
   )
+
+  console.log('Record status:', record.recordStatus)
+  console.log('Record actions:', record.actions)
 
   return (
     <ActionBanner
@@ -51,11 +78,6 @@ export const ManageRecordActionBanner = ({
             </Button>
           )}
           {actions.includes('ConfirmCurrent') && <Button>Confirm information as current</Button>}
-          {actions.includes('Discard') && (
-            <Button elementType={Link} href={discardHref}>
-              Discard record
-            </Button>
-          )}
           {actions.includes('ConfirmOnHold') && <Button>Confirm status as current</Button>}
           {actions.includes('ViewTimeline') && (
             <Button variant="secondary">View record timeline</Button>
