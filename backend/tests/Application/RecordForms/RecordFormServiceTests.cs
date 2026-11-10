@@ -44,10 +44,13 @@ public class RecordFormServiceTests : DatabaseTestBase
         "medicines_indication_detail.medicine_technology_status";
 
     private const string LabPrefix = "medicines_laboratory_testing.";
+    private const string HtaPrefix = "record_hta.";
 
     private static readonly DateTime _now = new(2026, 10, 15, 9, 30, 0, DateTimeKind.Utc);
 
     private static readonly string[] _biosimilarAndNewIndication = ["Biosimilar", "NewIndication"];
+    private static readonly string[] _niceAndSmc = ["Nice", "Smc"];
+    private static readonly string[] _smcOnly = ["Smc"];
 
     private Organisation _organisation = null!;
     private User _user = null!;
@@ -856,6 +859,48 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task SavePage_HtaSubmissionIncludingNice_GoesToTheAlignedPathwayPage()
+    {
+        // Arrange
+        Dictionary<string, JsonElement> answers = HtaSubmissionAnswers(_niceAndSmc);
+
+        // Act
+        SaveRecordPageDto saved = await SaveOk("hta-submission", answers);
+
+        // Assert
+        saved.NextPageId.ShouldBe("nice-aligned-pathway");
+    }
+
+    [Fact]
+    public async Task SavePage_HtaSubmissionWithoutNice_EndsTheTask()
+    {
+        // Arrange
+        Dictionary<string, JsonElement> answers = HtaSubmissionAnswers(_smcOnly);
+
+        // Act
+        SaveRecordPageDto saved = await SaveOk("hta-submission", answers);
+
+        // Assert
+        saved.NextPageId.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SavePage_HtaSubmissionYesWithNoBodiesOrDetails_ReportsBothErrors()
+    {
+        // Act
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "hta-submission",
+            Answer($"{HtaPrefix}medicine_hta_submission_intended", "Yes")
+        );
+
+        // Assert
+        errors.Keys.ShouldBe(
+            [$"{HtaPrefix}medicine_hta_bodies", $"{HtaPrefix}hta_additional_details"],
+            ignoreOrder: true
+        );
+    }
+
+    [Fact]
     public async Task SavePage_FirstLaboratoryTestingSave_CreatesTheRow()
     {
         (
@@ -1155,6 +1200,14 @@ public class RecordFormServiceTests : DatabaseTestBase
             .MedicinesIndicationDetails.AsNoTracking()
             .Include(static x => x.TherapeuticAreas)
             .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+
+    private static Dictionary<string, JsonElement> HtaSubmissionAnswers(string[] bodies) =>
+        new(StringComparer.Ordinal)
+        {
+            [$"{HtaPrefix}medicine_hta_submission_intended"] = Json("Yes"),
+            [$"{HtaPrefix}medicine_hta_bodies"] = Json(bodies),
+            [$"{HtaPrefix}hta_additional_details"] = Json("Planned submissions differ by body"),
+        };
 
     private async Task<MedicinesLaboratoryTesting> LaboratoryTestingRow() =>
         await Context

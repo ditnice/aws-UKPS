@@ -5,6 +5,7 @@ using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Application.RecordForms.Scanning;
 using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
+using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Persistence.FormAnnotations;
 
@@ -13,9 +14,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.10";
+    private const string ExpectedVersion = "2026.11.11";
     private const string ExpectedFingerprint =
-        "68899eddd1f76d097af6f707cce3c2fa0fe37ed6378b601e3dd2b9d4e7cfc202";
+        "8d80edce7a3e261cc0c27d4bb9f1929b9dba0f292aeb50548a12c188159105ed";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -92,6 +93,17 @@ public class MedicineFormModelTests
     }
 
     [Fact]
+    public void Model_HasTheHtaAndLaunchPagesInOrder()
+    {
+        Model
+            .Pages.Where(static p =>
+                string.Equals(p.SectionId, "hta-and-launch", StringComparison.Ordinal)
+            )
+            .Select(static p => p.Id)
+            .ShouldBe(["hta-submission", "nice-aligned-pathway", "nice-ta-id"]);
+    }
+
+    [Fact]
     public void Model_DevelopmentBackgroundRevealsFollowUpQuestions()
     {
         const string Prefix = "medicines_development_background.";
@@ -108,6 +120,14 @@ public class MedicineFormModelTests
                     $"AnswerIn {Prefix}is_originator_company [No]"
                 ),
                 ($"{Prefix}co_marketing_company_name", $"AnswerIn {Prefix}is_co_marketed [Yes]"),
+                (
+                    "record_hta.medicine_hta_bodies",
+                    "AnswerIn record_hta.medicine_hta_submission_intended [Yes]"
+                ),
+                (
+                    "record_hta.hta_additional_details",
+                    "AnswerIn record_hta.medicine_hta_submission_intended [Yes]"
+                ),
                 (
                     "medicines_laboratory_testing.genomic_test_notes",
                     "AnswerIn medicines_laboratory_testing.genomic_test_mandatory_status [MandatoryNoAlternatives, MandatoryAlternativesMayExist]"
@@ -133,6 +153,8 @@ public class MedicineFormModelTests
             .Pages.Where(static p => p.ShowWhen is not null)
             .Select(static p => p.Id)
             .ShouldBe([
+                "nice-aligned-pathway",
+                "nice-ta-id",
                 "biomarker-type",
                 "non-genomic-biomarker",
                 "genomic-target",
@@ -215,6 +237,7 @@ public class MedicineFormModelTests
             .TriggerEntities.Select(static e => e.ClrType)
             .ShouldBe([
                 typeof(MedicinesDevelopmentBackground),
+                typeof(RecordHta),
                 typeof(MedicinesLaboratoryTesting),
                 typeof(MedicinesPatientIdentification),
                 typeof(MedicinesServiceImpact),
@@ -312,6 +335,11 @@ public class MedicineFormModelTests
                 FormControl.Text,
                 AnswerShape.Single
             ),
+            ("record_hta.medicine_hta_submission_intended", FormControl.Radio, AnswerShape.Single),
+            ("record_hta.medicine_hta_bodies", FormControl.Checkbox, AnswerShape.Multi),
+            ("record_hta.hta_additional_details", FormControl.Textarea, AnswerShape.Single),
+            ("record_hta.hta_nice_aligned_pathway", FormControl.Radio, AnswerShape.Single),
+            ("record_hta.nice_ta_development_id", FormControl.Text, AnswerShape.Single),
             (
                 "medicines_laboratory_testing.diagnostic_test_required",
                 FormControl.Radio,
@@ -476,6 +504,9 @@ public class MedicineFormModelTests
         Previous("repurposed-medicine").ShouldBeNull();
         Next("repurposed-medicine").ShouldBe("originator");
         Next("co-marketing").ShouldBeNull();
+        Previous("hta-submission").ShouldBeNull();
+        // With no answers the NICE pages do not apply, so the task ends after its first page.
+        Next("hta-submission").ShouldBeNull();
         Previous("diagnostic-test-required").ShouldBeNull();
         // With no answers the conditional pages do not apply, so navigation skips to monitoring.
         Next("diagnostic-test-required").ShouldBe("monitoring-tests");
