@@ -45,6 +45,10 @@
       Include="Application/RecordForms/Fixtures/condition-cases.json"
       CopyToOutputDirectory="PreserveNewest"
     />
+    <None
+      Include="Application/RecordForms/Fixtures/prefixed-number-cases.json"
+      CopyToOutputDirectory="PreserveNewest"
+    />
   </ItemGroup>
 
   <ItemGroup>

@@ -16,7 +16,7 @@ public class MedicineFormModelTests
     // Bump FormVersions.Medicine whenever this changes, then update both values.
     private const string ExpectedVersion = "2026.11.11";
     private const string ExpectedFingerprint =
-        "8d80edce7a3e261cc0c27d4bb9f1929b9dba0f292aeb50548a12c188159105ed";
+        "c89bf700bbd6ede4be4c86bc7eb84df2ac9252d0692296edf911714403271798";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -101,6 +101,15 @@ public class MedicineFormModelTests
             )
             .Select(static p => p.Id)
             .ShouldBe(["hta-submission", "nice-aligned-pathway", "nice-ta-id"]);
+    }
+
+    [Fact]
+    public void Model_NiceTaIdOffersTheGidPrefixes()
+    {
+        FormQuestion question = Model.FindQuestion("record_hta.nice_ta_development_id")!;
+
+        question.Prefixes.ShouldBe(["GID-TA", "GID-HST"]);
+        question.Placeholder.ShouldBe("Choose ID type");
     }
 
     [Fact]
@@ -339,7 +348,7 @@ public class MedicineFormModelTests
             ("record_hta.medicine_hta_bodies", FormControl.Checkbox, AnswerShape.Multi),
             ("record_hta.hta_additional_details", FormControl.Textarea, AnswerShape.Single),
             ("record_hta.hta_nice_aligned_pathway", FormControl.Radio, AnswerShape.Single),
-            ("record_hta.nice_ta_development_id", FormControl.Text, AnswerShape.Single),
+            ("record_hta.nice_ta_development_id", FormControl.PrefixedNumber, AnswerShape.Single),
             (
                 "medicines_laboratory_testing.diagnostic_test_required",
                 FormControl.Radio,

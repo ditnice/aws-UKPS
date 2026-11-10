@@ -77,6 +77,16 @@ const areasQuestion = question({
   options: tree,
 })
 
+const niceTaIdQuestion = question({
+  id: 'record_hta.nice_ta_development_id',
+  type: 'PrefixedNumber',
+  label: 'Enter the NICE technology appraisal development ID for this product (optional)',
+  hint: 'Select the ID format and enter the NICE technology appraisal ID.',
+  placeholder: 'Choose ID type',
+  prefixes: ['GID-TA', 'GID-HST'],
+  rules: [],
+})
+
 const save = () => fireEvent.click(screen.getByRole('button', { name: 'Save and continue' }))
 
 beforeEach(() => {
@@ -878,6 +888,76 @@ describe('FormPage', () => {
       expect(
         await screen.findAllByText('You have selected the same option more than once.'),
       ).not.toHaveLength(0)
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('prefixed number', () => {
+    const idPage = (answer: string | null = null) =>
+      page({
+        questions: [niceTaIdQuestion],
+        answers: { 'record_hta.nice_ta_development_id': answer },
+      })
+
+    it('shows a saved value split across the type and the number', () => {
+      render(<FormPage page={idPage('GID-HST123')} />)
+
+      expect(screen.getByRole('combobox', { name: 'Choose ID type' })).toHaveValue('GID-HST')
+      expect(screen.getByRole('textbox', { name: 'Number' })).toHaveValue('123')
+    })
+
+    it('saves the chosen type and number as one answer', async () => {
+      render(<FormPage page={idPage()} />)
+
+      fireEvent.change(screen.getByRole('combobox', { name: 'Choose ID type' }), {
+        target: { value: 'GID-HST' },
+      })
+      fireEvent.change(screen.getByRole('textbox', { name: 'Number' }), {
+        target: { value: '123' },
+      })
+      save()
+
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({
+        'record_hta.nice_ta_development_id': 'GID-HST123',
+      })
+    })
+
+    it('saves nothing chosen as a blank answer', async () => {
+      render(<FormPage page={idPage()} />)
+
+      save()
+
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({
+        'record_hta.nice_ta_development_id': null,
+      })
+    })
+
+    it('asks for a type when only a number is entered', async () => {
+      render(<FormPage page={idPage()} />)
+
+      fireEvent.change(screen.getByRole('textbox', { name: 'Number' }), {
+        target: { value: '10234' },
+      })
+      save()
+
+      expect(await screen.findByText('Select ID type')).toBeInTheDocument()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('asks for numbers only when the number has other characters', async () => {
+      render(<FormPage page={idPage()} />)
+
+      fireEvent.change(screen.getByRole('combobox', { name: 'Choose ID type' }), {
+        target: { value: 'GID-TA' },
+      })
+      fireEvent.change(screen.getByRole('textbox', { name: 'Number' }), {
+        target: { value: '12a' },
+      })
+      save()
+
+      expect(await screen.findByText('ID must only contain numbers')).toBeInTheDocument()
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
     })
   })

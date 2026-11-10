@@ -131,6 +131,55 @@ internal sealed class BrokenEntity
     [FormField("broken_entity.reserved_page", "Reserved page", FormControl.Text)]
     public string? ReservedPage { get; set; }
 
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("broken-prefixes", "Broken prefixes", Order = 50)]
+    [FormField("broken-entity.prefixes_on_text", "Prefixes on text", FormControl.Text, Order = 1)]
+    [FormValuePrefixes("GID-TA")]
+    public string? PrefixesOnText { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("broken-prefixes", "Broken prefixes", Order = 50)]
+    [FormField(
+        "broken_entity.prefixed_without_prefixes",
+        "Prefixed without prefixes",
+        FormControl.PrefixedNumber,
+        Order = 2
+    )]
+    public string? PrefixedWithoutPrefixes { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("broken-prefixes", "Broken prefixes", Order = 50)]
+    [FormField(
+        "broken_entity.digit_ending_prefix",
+        "Digit ending prefix",
+        FormControl.PrefixedNumber,
+        Order = 3
+    )]
+    [FormValuePrefixes("GID-TA1")]
+    public string? DigitEndingPrefix { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("broken-prefixes", "Broken prefixes", Order = 50)]
+    [FormField(
+        "broken_entity.repeated_prefix",
+        "Repeated prefix",
+        FormControl.PrefixedNumber,
+        Order = 4
+    )]
+    [FormValuePrefixes("GID-TA", "GID-TA")]
+    public string? RepeatedPrefix { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("broken-prefixes", "Broken prefixes", Order = 50)]
+    [FormField(
+        "broken_entity.overlapping_prefix",
+        "Overlapping prefix",
+        FormControl.PrefixedNumber,
+        Order = 5
+    )]
+    [FormValuePrefixes("GID", "GID-TA")]
+    public string? OverlappingPrefix { get; set; }
+
     public RecordRevision? Revision { get; set; }
 }
 

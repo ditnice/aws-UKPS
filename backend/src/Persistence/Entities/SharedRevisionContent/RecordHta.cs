@@ -114,7 +114,8 @@ internal sealed class RecordHta
         "Enter the NICE technology appraisal development ID for this product (optional)",
         FormControl.PrefixedNumber,
         Order = 10,
-        Hint = "Enter the NICE technology appraisal ID once it has been allocated by NICE. Leave blank if not yet known."
+        Hint = "Select the ID format and enter the NICE technology appraisal ID once it has been allocated by NICE. Leave blank if not yet known.",
+        Placeholder = "Choose ID type"
     )]
     [FormValuePrefixes("GID-TA", "GID-HST")]
     public string? NiceTaDevelopmentId { get; set; }
