@@ -27,8 +27,12 @@ const record: RecordDtoMedicineRecordDto = {
 
 // Accordions start collapsed, so their content is hidden from accessibility queries.
 const rowValue = (label: string) =>
-  within(screen.getByText(label).closest('div')!).getAllByRole('definition', { hidden: true })[0]
-    .textContent
+  within(
+    screen
+      .getAllByText(label)
+      .find((element) => element.tagName.toLowerCase() === 'dt')!
+      .closest('div')!,
+  ).getAllByRole('definition', { hidden: true })[0].textContent
 
 describe('MedicineRecordDetails', () => {
   it('shows each clinical trial and whether any are recruiting in the UK', () => {

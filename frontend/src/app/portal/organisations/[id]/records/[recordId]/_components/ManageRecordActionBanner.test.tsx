@@ -15,6 +15,8 @@ const renderBanner = (actions: RecordAction[], href: string | null = updateRecor
         recordId: 42,
         recordType: 'Medicine',
         actions,
+        recordStatus: 'Published',
+        displayStatus: 'Published',
       }}
       updateRecordHref={href ?? undefined}
     />,

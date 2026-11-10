@@ -7,14 +7,51 @@ import { Button, ButtonGroup } from '@/components/Button/Button'
 import { buildRecordHref } from '../_lib/recordLinks'
 
 type ManageRecordActionBannerProps = {
-  record: Pick<RecordDto, 'organisationId' | 'recordId' | 'recordType' | 'actions' | 'recordStatus'>
+  record: Pick<
+    RecordDto,
+    'organisationId' | 'recordId' | 'recordType' | 'actions' | 'recordStatus' | 'displayStatus'
+  >
   /**
    * The record's content form, or undefined when its type has no form yet or the user cannot
    * edit its content. Update record is only shown when this is set.
    */
   updateRecordHref?: string
 }
+const OnHoldRecordActionBanner = ({ record }: ManageRecordActionBannerProps) => {
+  const { actions } = record
 
+  const changeRecordStatusHref = buildRecordHref(
+    record.organisationId,
+    record.recordId,
+    record.recordType,
+    'change-record-status',
+  )
+
+  return (
+    <ActionBanner
+      variant="subtle"
+      title="Manage record"
+      headingLevel={2}
+      cta={
+        <ButtonGroup>
+          {actions.includes('ChangeStatus') && (
+            <Button elementType={Link} href={changeRecordStatusHref} variant="cta">
+              Change record status
+            </Button>
+          )}
+
+          {actions.includes('ConfirmOnHold') && <Button>Confirm status as current</Button>}
+
+          {actions.includes('ViewTimeline') && (
+            <Button variant="secondary">View record timeline</Button>
+          )}
+        </ButtonGroup>
+      }
+    >
+      Update the record status or confirm the status of the record as up to date.
+    </ActionBanner>
+  )
+}
 const ArchivedRecordActionBanner = ({ record }: ManageRecordActionBannerProps) => {
   if (!record.actions.includes('ViewTimeline')) {
     return null
@@ -41,8 +78,11 @@ export const ManageRecordActionBanner = ({
   updateRecordHref,
 }: ManageRecordActionBannerProps) => {
   const { actions } = record
-  if (record.recordStatus === 'Archived') {
+  if (record.displayStatus === 'Archived' || record.displayStatus == 'QAReview') {
     return <ArchivedRecordActionBanner record={record} />
+  }
+  if (record.displayStatus === 'OnHold') {
+    return <OnHoldRecordActionBanner record={record} />
   }
   const discardHref = buildRecordHref(
     record.organisationId,
@@ -56,9 +96,6 @@ export const ManageRecordActionBanner = ({
     record.recordType,
     'change-record-status',
   )
-
-  console.log('Record status:', record.recordStatus)
-  console.log('Record actions:', record.actions)
 
   return (
     <ActionBanner
@@ -78,6 +115,11 @@ export const ManageRecordActionBanner = ({
             </Button>
           )}
           {actions.includes('ConfirmCurrent') && <Button>Confirm information as current</Button>}
+          {actions.includes('Discard') && (
+            <Button elementType={Link} href={discardHref}>
+              Discard record
+            </Button>
+          )}
           {actions.includes('ConfirmOnHold') && <Button>Confirm status as current</Button>}
           {actions.includes('ViewTimeline') && (
             <Button variant="secondary">View record timeline</Button>
