@@ -32,11 +32,6 @@ const getWwwAuthenticateFromResponse = (response: Response): WwwAuthenticateChal
   return parseWwwAuthenticate(response.headers.get('WWW-Authenticate'))
 }
 
-export const isReauthenticationRequiredResponse = (response: Response) => {
-  const parsed = getWwwAuthenticateFromResponse(response)
-  return parsed?.params['error'] !== 'insufficient_user_authentication'
-}
-
 export const getStepUpMaxAge = (response: Response): number | null => {
   const parsed = getWwwAuthenticateFromResponse(response)
   if (parsed?.params['error'] !== 'insufficient_user_authentication') {
@@ -44,6 +39,10 @@ export const getStepUpMaxAge = (response: Response): number | null => {
   }
   const maxAge = Number.parseInt(parsed.params['max_age'] ?? '', 10)
   return Number.isNaN(maxAge) ? null : maxAge
+}
+
+export const isReauthenticationRequiredResponse = (response: Response) => {
+  return getStepUpMaxAge(response) !== null
 }
 
 type ReauthenticationRequiredError = AuthenticationProblemDetails & {
