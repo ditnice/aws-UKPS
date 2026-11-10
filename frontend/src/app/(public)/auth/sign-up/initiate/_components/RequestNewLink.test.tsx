@@ -9,7 +9,7 @@ import { RequestNewLink } from './RequestNewLink'
 const supportEmail = vi.hoisted(() => {
   // The component reads this at module load, so it must be set before the import above runs
   const email = 'support@example.com'
-  vi.stubEnv('NEXT_PUBLIC_QA_SUPPORT_EMAIL', email)
+  vi.stubEnv('QA_SUPPORT_EMAIL', email)
   return email
 })
 

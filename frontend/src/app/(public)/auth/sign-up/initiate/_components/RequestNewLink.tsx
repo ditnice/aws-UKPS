@@ -12,10 +12,10 @@ import { SignUpInitiateError } from './SignUpInitiateError'
 import type { ReactNode } from 'react'
 
 const resendCooldownSeconds = 60
-const supportEmail = process.env.NEXT_PUBLIC_QA_SUPPORT_EMAIL
 
 type RequestNewLinkProps = {
   setupToken: string
+  supportEmail?: string
 }
 
 type Status = 'idle' | 'sent' | 'tooManyAttempts' | 'notFound' | 'genericError'
@@ -25,18 +25,21 @@ type PageContent = {
   title: string
 }
 
-const contactSupport = (
-  <>
-    Please contact the UKPS support team for assistance{' '}
-    <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
-  </>
-)
-
 function getPageContent(
   status: Status,
   remainingSeconds: number,
   countdownRole: 'timer' | 'alert',
+  supportEmail?: string,
 ): PageContent {
+  const contactSupport = supportEmail ? (
+    <>
+      Please contact the UKPS support team for assistance{' '}
+      <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
+    </>
+  ) : (
+    <p>Please contact the UKPS support team for assistance.</p>
+  )
+
   switch (status) {
     case 'idle':
       return {
@@ -81,7 +84,8 @@ function getPageContent(
   }
 }
 
-export function RequestNewLink({ setupToken }: RequestNewLinkProps) {
+export function RequestNewLink({ setupToken, supportEmail }: RequestNewLinkProps) {
+  const resolvedSupportEmail = supportEmail ?? process.env.QA_SUPPORT_EMAIL
   const [status, setStatus] = useState<Status>('idle')
   const [coolingDown, setCoolingDown] = useState(false)
   const [remainingSeconds, setRemainingSeconds] = useState(resendCooldownSeconds)
@@ -147,7 +151,9 @@ export function RequestNewLink({ setupToken }: RequestNewLinkProps) {
 
   return (
     <>
-      <SignUpInitiateError {...getPageContent(status, remainingSeconds, countdownRole)} />
+      <SignUpInitiateError
+        {...getPageContent(status, remainingSeconds, countdownRole, resolvedSupportEmail)}
+      />
       {showResendButton && (
         <div className={styles.actions}>
           <Button
