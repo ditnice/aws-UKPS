@@ -60,12 +60,6 @@
   input {
     flex: 1;
   }
-
-  // Input renders an empty error paragrpah when given `error` without a message, which pushes
-  // the box down, so the outline is drawn from aria-invalid instead.
-  input[aria-invalid='true'] {
-    @include typography.default-error-style;
-  }
 }
 
 .childLabel {

@@ -41,9 +41,9 @@ export function PrefixedNumberQuestion({
           ))}
         </Select>
         <Input
-          aria-invalid={Boolean(error)}
           aria-label="Number"
           autoComplete="off"
+          error={Boolean(error)}
           inputMode="numeric"
           label={null}
           name={`${name}-number`}
