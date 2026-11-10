@@ -4,7 +4,7 @@ import { revalidateLogic, useForm } from '@tanstack/react-form'
 import clsx from 'clsx'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 
 import { saveRecordFormPage } from '@/client/generated'
 import type { RecordPageDto } from '@/client/generated'
@@ -48,6 +48,7 @@ export type FormPageProps = {
 /** Renders a record content form page from its description, and saves it. */
 export function FormPage({ page }: FormPageProps) {
   const router = useRouter()
+  const headingId = useId()
   const { questions } = page
   const [saveState, setSaveState] = useState<SaveState>({ kind: 'idle' })
   const [otherErrors, setOtherErrors] = useState<string[]>([])
@@ -97,7 +98,11 @@ export function FormPage({ page }: FormPageProps) {
     validators: { onDynamic: schema },
   })
 
-  const heading = singleQuestion ? questions[layout.topLevel[0]].label : page.page.title
+  const heading = singleQuestion ? (
+    <span id={headingId}>{questions[layout.topLevel[0]].label}</span>
+  ) : (
+    page.page.title
+  )
   const preheading = page.page.commercialInConfidence ? (
     <>
       {page.task.title}
@@ -164,6 +169,7 @@ export function FormPage({ page }: FormPageProps) {
                       <Component
                         error={getFieldErrorMessage(field.state.meta.errors)}
                         labelAsHeading={labelAsHeading}
+                        headingId={labelAsHeading ? headingId : undefined}
                         name={field.name}
                         onBlur={field.handleBlur}
                         onChange={(next: FormValue) => field.handleChange(next)}

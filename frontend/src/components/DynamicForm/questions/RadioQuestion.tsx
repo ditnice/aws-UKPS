@@ -11,6 +11,8 @@ export function RadioQuestion({
   onChange,
   onBlur,
   error,
+  labelAsHeading,
+  headingId,
   revealed,
 }: QuestionProps<string>) {
   // Labels are bold across the whole group once any option has a hint, matching the designs.
@@ -21,7 +23,8 @@ export function RadioQuestion({
       className={hasOptionHints ? styles.boldLabels : undefined}
       error={error}
       hint={question.hint ?? undefined}
-      legend={question.label}
+      aria-labelledby={labelAsHeading ? headingId : undefined}
+      legend={labelAsHeading ? undefined : question.label}
       name={name}
       onBlur={onBlur}
       onChange={onChange}

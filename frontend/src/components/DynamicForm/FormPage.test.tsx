@@ -198,6 +198,34 @@ describe('FormPage', () => {
       ).toBe(screen.getByRole('textbox'))
     })
 
+    it('names a single-question radio group by the heading, without repeating the question', () => {
+      const label = 'Does the product require a specific biomarker?'
+      render(
+        <FormPage
+          page={page({
+            questions: [
+              question({
+                id: 'biomarker',
+                type: 'Radio',
+                label,
+                options: [
+                  { value: 'Yes', label: 'Yes', hint: null, children: null },
+                  { value: 'No', label: 'No', hint: null, children: null },
+                ],
+              }),
+            ],
+            answers: { biomarker: null },
+          })}
+        />,
+      )
+
+      // The radio group is still announced with the question when a user tabs into it.
+      expect(screen.getByRole('group', { name: label })).toBeInTheDocument()
+
+      // The question text is on the page once (in the heading), so it is not read out twice.
+      expect(screen.getAllByText(label)).toHaveLength(1)
+    })
+
     it('uses the page title as the heading of a page with several questions', () => {
       render(
         <FormPage

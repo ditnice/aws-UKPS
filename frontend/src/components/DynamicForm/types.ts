@@ -14,6 +14,11 @@ export type QuestionProps<TValue extends FormValue = FormValue> = {
   /** True on a single-question page, where the label is already the page heading. */
   labelAsHeading: boolean
   /**
+   * The ID of the page heading that already holds the label, set only on a single question page.
+   * Controls with a group name point `aria-labelledby` at it instead of repeating the label.
+   */
+  headingId?: string
+  /**
    * Questions revealed by an option, keyed by option value. Radio controls show them beneath the
    * option while it is chosen.
    */

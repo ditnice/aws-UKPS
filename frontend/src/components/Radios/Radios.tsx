@@ -31,6 +31,7 @@ function useRadiosContext(): RadiosContextValue {
 
 export type RadiosProps = {
   'aria-describedby'?: string
+  'aria-labelledby'?: string
   children: ReactNode
   className?: string
   /** Initial selection when uncontrolled. */
@@ -47,7 +48,7 @@ export type RadiosProps = {
    * following the GOV.UK Design System guidance.
    */
   inline?: boolean
-  legend: string
+  legend?: string
   name: string
   onBlur?: FocusEventHandler<HTMLInputElement>
   onChange?: (value: string) => void
@@ -62,6 +63,7 @@ export type RadiosProps = {
  */
 export function Radios({
   'aria-describedby': describedBy,
+  'aria-labelledby': labelledBy,
   children,
   className,
   defaultValue,
@@ -99,6 +101,7 @@ export function Radios({
       >
         <FormGroup
           aria-describedby={describedBy}
+          aria-labelledby={labelledBy}
           error={error}
           headingLevel={headingLevel}
           hint={hint}
