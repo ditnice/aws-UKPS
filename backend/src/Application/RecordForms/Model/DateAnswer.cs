@@ -2,14 +2,16 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using UKPS.Api.Application.RecordForms.Rules;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Application.RecordForms.Model;
 
 /// <summary>
-/// The answer of a date question: <c>yyyy-Qn</c> for an estimated quarter, <c>yyyy-MM</c> for an
-/// estimated month and <c>yyyy-MM-dd</c> for an actual date. Quarters and months are stored as
-/// their first day. An actual date is today or earlier; an estimate is for a quarter or month that
-/// has not ended.
+/// The answer of a date question. A <see cref="FormControl.PrecisionDate"/> takes <c>yyyy-Qn</c>
+/// for an estimated quarter, <c>yyyy-MM</c> for an estimated month and <c>yyyy-MM-dd</c> for an
+/// actual date; an <see cref="FormControl.ActualMonth"/> takes <c>yyyy-MM</c> only. Quarters and
+/// months are stored as their first day. An actual date is today or earlier, an actual month this
+/// month or earlier, and an estimate is for a quarter or month that has not ended.
 /// </summary>
 /// <remarks>Mirrored by <c>frontend/src/lib/dynamic-form/dates.ts</c>; <c>date-cases.json</c> keeps the two in step.</remarks>
 internal static partial class DateAnswer
@@ -29,18 +31,30 @@ internal static partial class DateAnswer
                 CultureInfo.InvariantCulture,
                 $"{value.Year:D4}-Q{((value.Month - 1) / 3) + 1}"
             ),
-            DatePrecision.EstimatedMonth => value.ToString("yyyy-MM", CultureInfo.InvariantCulture),
+            DatePrecision.EstimatedMonth or DatePrecision.ActualMonth => value.ToString(
+                "yyyy-MM",
+                CultureInfo.InvariantCulture
+            ),
             DatePrecision.ActualDate => value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             _ => throw new ArgumentOutOfRangeException(nameof(precision), precision, null),
         };
 
-    /// <summary>Parses the answer, or returns false when it is not a real date in one of the formats.</summary>
-    public static bool TryParse(string answer, out DatePrecision precision, out DateOnly value)
+    /// <summary>
+    /// Parses the answer, or returns false when it is not a real date in one of the control's
+    /// formats.
+    /// </summary>
+    public static bool TryParse(
+        FormControl control,
+        string answer,
+        out DatePrecision precision,
+        out DateOnly value
+    )
     {
         precision = default;
         value = default;
         Match match = Pattern().Match(answer);
-        if (!match.Success)
+        bool isMonth = match.Groups["month"].Success && !match.Groups["day"].Success;
+        if (!match.Success || (control == FormControl.ActualMonth && !isMonth))
         {
             return false;
         }
@@ -55,9 +69,12 @@ internal static partial class DateAnswer
         }
 
         int month = int.Parse(match.Groups["month"].Value, CultureInfo.InvariantCulture);
-        if (!match.Groups["day"].Success)
+        if (isMonth)
         {
-            precision = DatePrecision.EstimatedMonth;
+            precision =
+                control == FormControl.ActualMonth
+                    ? DatePrecision.ActualMonth
+                    : DatePrecision.EstimatedMonth;
             value = new DateOnly(year, month, 1);
             return true;
         }
@@ -76,9 +93,9 @@ internal static partial class DateAnswer
     /// <summary>
     /// The error for the answer, or null when it is a real date on the right side of today.
     /// </summary>
-    public static string? Check(string answer, DateOnly today)
+    public static string? Check(FormControl control, string answer, DateOnly today)
     {
-        if (!TryParse(answer, out DatePrecision precision, out DateOnly value))
+        if (!TryParse(control, answer, out DatePrecision precision, out DateOnly value))
         {
             return RecordFormMessages.InvalidDate;
         }
@@ -88,17 +105,23 @@ internal static partial class DateAnswer
             return value > today ? RecordFormMessages.ActualDateInFuture : null;
         }
 
+        if (precision == DatePrecision.ActualMonth)
+        {
+            return value > today ? RecordFormMessages.ActualMonthInFuture : null;
+        }
+
         int months = precision == DatePrecision.EstimatedQuarter ? 3 : 1;
         DateOnly lastDay = value.AddMonths(months).AddDays(-1);
         return lastDay < today ? RecordFormMessages.EstimatedDateInPast : null;
     }
 
     /// <summary>
-    /// The precision of the answer, which is what conditions on a date compare; null when
-    /// unanswered or not a real date.
+    /// The precision of a <see cref="FormControl.PrecisionDate"/> answer, which is what
+    /// conditions on a date compare; null when unanswered or not a real date.
     /// </summary>
     public static string? PrecisionOf(string? answer) =>
-        answer is not null && TryParse(answer, out DatePrecision precision, out _)
+        answer is not null
+        && TryParse(FormControl.PrecisionDate, answer, out DatePrecision precision, out _)
             ? precision.ToString()
             : null;
 

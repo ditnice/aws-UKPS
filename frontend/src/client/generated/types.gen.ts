@@ -166,7 +166,8 @@ export type CreateRecordDto = {
 export const DatePrecision = {
     ESTIMATED_QUARTER: 'EstimatedQuarter',
     ESTIMATED_MONTH: 'EstimatedMonth',
-    ACTUAL_DATE: 'ActualDate'
+    ACTUAL_DATE: 'ActualDate',
+    ACTUAL_MONTH: 'ActualMonth'
 } as const;
 
 /**
@@ -199,7 +200,8 @@ export const FormControl = {
     SELECT: 'Select',
     CHECKBOX: 'Checkbox',
     HIERARCHICAL_SELECT: 'HierarchicalSelect',
-    PRECISION_DATE: 'PrecisionDate'
+    PRECISION_DATE: 'PrecisionDate',
+    ACTUAL_MONTH: 'ActualMonth'
 } as const;
 
 /**

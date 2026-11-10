@@ -1,5 +1,5 @@
 {
-  "description": "Shared date answer cases run by both the backend (DateCasesTests) and the frontend (lib/dynamic-form/dates.ts), checked as if on the day given by today. error is the message for the answer, or null; precision is the DatePrecision of any real date.",
+  "description": "Shared date answer cases run by both the backend (DateCasesTests) and the frontend (lib/dynamic-form/dates.ts), checked as if on the day given by today. control is the FormControl, PrecisionDate when absent; error is the message for the answer, or null; precision is the DatePrecision of any real date.",
   "today": "2026-06-15",
   "cases": [
     { "name": "estimated quarter", "answer": "2027-Q2", "error": null, "precision": "EstimatedQuarter" },
@@ -28,6 +28,13 @@
     { "name": "estimated month in progress", "answer": "2026-06", "error": null, "precision": "EstimatedMonth" },
     { "name": "estimated month just ended", "answer": "2026-05", "error": "An estimated date must be in the future.", "precision": "EstimatedMonth" },
     { "name": "estimated quarter in progress", "answer": "2026-Q2", "error": null, "precision": "EstimatedQuarter" },
-    { "name": "estimated quarter just ended", "answer": "2026-Q1", "error": "An estimated date must be in the future.", "precision": "EstimatedQuarter" }
+    { "name": "estimated quarter just ended", "answer": "2026-Q1", "error": "An estimated date must be in the future.", "precision": "EstimatedQuarter" },
+    { "name": "actual month", "control": "ActualMonth", "answer": "2025-04", "error": null, "precision": "ActualMonth" },
+    { "name": "actual month this month", "control": "ActualMonth", "answer": "2026-06", "error": null, "precision": "ActualMonth" },
+    { "name": "actual month next month", "control": "ActualMonth", "answer": "2026-07", "error": "The date must be this month or in the past.", "precision": "ActualMonth" },
+    { "name": "actual month without a leading zero", "control": "ActualMonth", "answer": "2025-4", "error": "Enter a real date." },
+    { "name": "actual month, no thirteenth month", "control": "ActualMonth", "answer": "2025-13", "error": "Enter a real date." },
+    { "name": "actual month, not a quarter", "control": "ActualMonth", "answer": "2025-Q2", "error": "Enter a real date." },
+    { "name": "actual month, not a day", "control": "ActualMonth", "answer": "2025-04-15", "error": "Enter a real date." }
   ]
 }

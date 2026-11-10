@@ -88,10 +88,14 @@ internal static class PageAnswerValidator
         }
     }
 
-    /// <summary>A date answer must be a real date: an actual date today or earlier, an estimate not yet past.</summary>
+    /// <summary>
+    /// A date answer must be a real date: an actual date or month not after today, an estimate not
+    /// yet past.
+    /// </summary>
     private static string? CheckDate(FormQuestion question, FormAnswer answer, DateOnly today) =>
-        question.Control == FormControl.PrecisionDate && answer.Value is not null
-            ? DateAnswer.Check(answer.Value, today)
+        question.Control is FormControl.PrecisionDate or FormControl.ActualMonth
+        && answer.Value is not null
+            ? DateAnswer.Check(question.Control, answer.Value, today)
             : null;
 
     private static string? CheckOptions(FormAnswer answer, IReadOnlyList<FormOption>? options)

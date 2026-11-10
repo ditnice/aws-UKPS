@@ -67,4 +67,11 @@ public enum FormControl
     /// conditions. Needs <see cref="FormDateEventAttribute"/>.
     /// </summary>
     PrecisionDate = 6,
+
+    /// <summary>
+    /// The actual month and year of an event that has happened, for a foreign key to a regulatory
+    /// date. The answer is <c>yyyy-MM</c>, this month or earlier. Needs
+    /// <see cref="FormDateEventAttribute"/>.
+    /// </summary>
+    ActualMonth = 7,
 }

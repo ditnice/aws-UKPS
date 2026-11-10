@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Shouldly;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Tests.Application.RecordForms;
 
@@ -28,18 +29,22 @@ public class DateCasesTests
             string.Equals(c.Name, name, StringComparison.Ordinal)
         );
 
-        DateAnswer.Check(dateCase.Answer, _file.Today).ShouldBe(dateCase.Error);
+        FormControl control = dateCase.Control ?? FormControl.PrecisionDate;
+        DateAnswer.Check(control, dateCase.Answer, _file.Today).ShouldBe(dateCase.Error);
         if (dateCase.Precision is null)
         {
             return;
         }
 
         DateAnswer
-            .TryParse(dateCase.Answer, out DatePrecision precision, out DateOnly value)
+            .TryParse(control, dateCase.Answer, out DatePrecision precision, out DateOnly value)
             .ShouldBeTrue();
         precision.ShouldBe(dateCase.Precision.Value);
         DateAnswer.Format(precision, value).ShouldBe(dateCase.Answer);
-        DateAnswer.PrecisionOf(dateCase.Answer).ShouldBe(precision.ToString());
+        if (control == FormControl.PrecisionDate)
+        {
+            DateAnswer.PrecisionOf(dateCase.Answer).ShouldBe(precision.ToString());
+        }
     }
 
     [Fact]
@@ -57,12 +62,16 @@ public class DateCasesTests
     [Fact]
     public void Format_StoresQuartersAndMonthsAsTheirFirstDay()
     {
-        DateAnswer.TryParse("2027-Q3", out _, out DateOnly quarter).ShouldBeTrue();
+        DateAnswer
+            .TryParse(FormControl.PrecisionDate, "2027-Q3", out _, out DateOnly quarter)
+            .ShouldBeTrue();
         quarter.ShouldBe(new DateOnly(2027, 7, 1));
         DateAnswer
             .Format(DatePrecision.EstimatedQuarter, new DateOnly(2027, 9, 30))
             .ShouldBe("2027-Q3");
-        DateAnswer.TryParse("2027-11", out _, out DateOnly month).ShouldBeTrue();
+        DateAnswer
+            .TryParse(FormControl.PrecisionDate, "2027-11", out _, out DateOnly month)
+            .ShouldBeTrue();
         month.ShouldBe(new DateOnly(2027, 11, 1));
     }
 
@@ -94,6 +103,7 @@ public class DateCasesTests
         string Name,
         string Answer,
         string? Error,
-        DatePrecision? Precision
+        DatePrecision? Precision,
+        FormControl? Control
     );
 }

@@ -5,8 +5,11 @@ import { describe, expect, it } from 'vitest'
 
 import { dateAnswerError, precisionOf } from './dates'
 
+import type { DateControl } from './dates'
+
 type DateCase = {
   name: string
+  control?: DateControl
   answer: string
   error: string | null
   precision?: string
@@ -24,7 +27,10 @@ const { today, cases } = JSON.parse(readFileSync(fixturePath, 'utf8')) as {
 
 describe('shared date cases', () => {
   it.each(cases.map((c) => [c.name, c] as const))('%s', (_, dateCase) => {
-    expect(dateAnswerError(dateCase.answer, today)).toBe(dateCase.error)
-    expect(precisionOf(dateCase.answer)).toBe(dateCase.precision ?? null)
+    const control = dateCase.control ?? 'PrecisionDate'
+    expect(dateAnswerError(dateCase.answer, control, today)).toBe(dateCase.error)
+    if (control === 'PrecisionDate') {
+      expect(precisionOf(dateCase.answer)).toBe(dateCase.precision ?? null)
+    }
   })
 })

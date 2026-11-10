@@ -5,6 +5,7 @@ using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Application.RecordForms.Bindings;
 
@@ -12,13 +13,15 @@ namespace UKPS.Api.Application.RecordForms.Bindings;
 /// Stores a date answer as a <see cref="RegulatoryDate"/> row that the content row's foreign key
 /// points to. The row is created on the first answer, updated in place, and deleted when the
 /// answer is cleared. The navigation must be loaded with the content row. The answer is audited
-/// as the row's contents.
+/// as the row's contents. The control decides how the answer is read, as in
+/// <see cref="DateAnswer.TryParse"/>.
 /// </summary>
 internal sealed class RegulatoryDateBinding(
     PropertyInfo foreignKey,
     PropertyInfo navigation,
     PropertyInfo revisionId,
-    DateEventType dateEvent
+    DateEventType dateEvent,
+    FormControl control
 ) : IFormBinding
 {
     public AnswerShape Shape => AnswerShape.Single;
@@ -80,10 +83,10 @@ internal sealed class RegulatoryDateBinding(
 
     /// <summary>Estimated dates are commercial in confidence; actual dates are not.</summary>
     private static bool IsConfidential(DatePrecision precision) =>
-        precision != DatePrecision.ActualDate;
+        precision is DatePrecision.EstimatedQuarter or DatePrecision.EstimatedMonth;
 
-    private static (DatePrecision Precision, DateOnly Value) Parse(string answer) =>
-        DateAnswer.TryParse(answer, out DatePrecision precision, out DateOnly value)
+    private (DatePrecision Precision, DateOnly Value) Parse(string answer) =>
+        DateAnswer.TryParse(control, answer, out DatePrecision precision, out DateOnly value)
             ? (precision, value)
             : throw new InvalidOperationException(
                 $"'{answer}' is not a valid date answer; answers are validated before they are used."

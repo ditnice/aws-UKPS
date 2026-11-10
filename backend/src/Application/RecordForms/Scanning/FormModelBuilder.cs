@@ -155,7 +155,8 @@ internal static class FormModelBuilder
                 question.Property,
                 question.Binding.DateNavigation!,
                 entity.RevisionIdProperty,
-                question.DateEvent!.DateEvent
+                question.DateEvent!.DateEvent,
+                question.Control
             ),
             _ => throw new InvalidOperationException(
                 $"Unsupported binding kind {question.Binding.Kind}."
