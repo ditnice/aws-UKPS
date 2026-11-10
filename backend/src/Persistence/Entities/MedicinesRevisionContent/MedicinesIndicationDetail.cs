@@ -24,7 +24,7 @@ internal sealed class MedicinesIndicationDetail
         FormControl.Textarea,
         Hint = "Describe the indication as you intend to apply for licensing in the UK. When you know them, include specific details such as line of therapy and subgroups.\n\nYou can edit these details at any time throughout product development."
     )]
-    [FormRequired("Enter the indication?")]
+    [FormRequired("Enter the indication")]
     [FormMaxLength(2000, "Indication must be 2000 characters or fewer")]
     public string? Indication { get; set; }
 
