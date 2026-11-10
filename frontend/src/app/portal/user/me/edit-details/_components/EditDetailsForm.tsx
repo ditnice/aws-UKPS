@@ -178,7 +178,6 @@ export function EditDetailsForm({ userId, initialValues, sessionKey }: EditDetai
         <form.Field name="workTelephone">
           {(field) => {
             const errorMessage = getFieldErrorMessage(field.state.meta.errors)
-
             return (
               <Input
                 autoComplete="tel"
