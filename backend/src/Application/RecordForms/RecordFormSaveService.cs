@@ -112,7 +112,7 @@ internal sealed class RecordFormSaveService(
 
         var (parsed, errors) = PageAnswerValidator.Parse(page, command.Answers);
         Dictionary<string, FormAnswer> submitted = Overlay(before, parsed);
-        Applicability applicability = FormApplicability.Evaluate(model, submitted);
+        Applicability applicability = FormApplicability.Evaluate(model, submitted, saved.Codes);
         DateOnly today = DateAnswer.Today(dateTimeProvider.GetOffsetUtcNow());
         PageAnswerValidator.Check(page, parsed, options, applicability, today, errors);
 

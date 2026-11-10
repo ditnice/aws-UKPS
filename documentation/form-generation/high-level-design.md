@@ -884,9 +884,9 @@ loaded by the synthetic data seeder; see [Reference data](reference-data.md).
 - **Date rules across questions**, such as a licence date after the submission date. The
   dataset asks for these; they need a rule that reads other answers. (Actual dates in the past
   and estimates in the future are already checked against today.)
-- **Other condition kinds**: compound `All`/`Any`, and triggers on reference data (such as a
-  storage requirement of "Other"), which need stable option codes. Each kind is a new
-  `FormCondition` subclass with fixture cases.
+- **Other condition kinds**: compound `All`/`Any`. Each kind is a new `FormCondition` subclass
+  with fixture cases. Reference data triggers need a `Code` on the entity; only
+  `MhraProcedureType` has one so far.
 - **A question revealed by an earlier page's answer.** This would add a `context` member to the
   page response, holding the earlier answers the page's conditions read.
 - Add-another groups.
