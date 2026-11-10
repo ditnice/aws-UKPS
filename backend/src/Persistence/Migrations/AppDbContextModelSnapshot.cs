@@ -311,6 +311,13 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("timestamptz")
                         .HasColumnName("last_active");
 
+                    b.Property<string>("NormalisedWorkEmail")
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("text")
+                        .HasColumnName("normalised_work_email")
+                        .HasComputedColumnSql("UPPER(TRIM(work_email))", true);
+
                     b.Property<string>("Title")
                         .HasColumnType("text")
                         .HasColumnName("title");
@@ -334,6 +341,10 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_app_user");
+
+                    b.HasIndex("NormalisedWorkEmail")
+                        .IsUnique()
+                        .HasDatabaseName("ix_app_user_normalised_work_email");
 
                     b.HasIndex("WorkEmail")
                         .IsUnique()

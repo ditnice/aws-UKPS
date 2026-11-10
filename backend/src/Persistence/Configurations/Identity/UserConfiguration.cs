@@ -18,6 +18,15 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasConversion((x) => x.Value, (x) => CognitoUsername.Parse(x));
         builder.Property(x => x.WorkEmail).IsRequired();
         builder.HasIndex(x => x.WorkEmail).IsUnique().HasDatabaseName("ix_app_user_work_email");
+        builder
+            .Property(u => u.NormalisedWorkEmail)
+            .HasColumnName("normalised_work_email")
+            .HasComputedColumnSql("UPPER(TRIM(work_email))", stored: true);
+
+        builder
+            .HasIndex(u => u.NormalisedWorkEmail)
+            .IsUnique()
+            .HasDatabaseName("ix_app_user_normalised_work_email");
         builder.Property(x => x.UserType);
         builder.Property(x => x.FullName).IsRequired();
         builder.Property(x => x.CreatedAt).HasColumnType("timestamptz");

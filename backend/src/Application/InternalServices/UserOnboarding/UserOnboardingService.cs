@@ -125,13 +125,7 @@ internal sealed partial class UserOnboardingService
             );
         }
         catch (DbUpdateException updateException)
-            when (updateException.InnerException is PostgresException postgresException
-                && string.Equals(
-                    postgresException.ConstraintName,
-                    ConstraintNames.UserUniqueEmail,
-                    StringComparison.Ordinal
-                )
-            )
+            when (ConstraintExceptions.IsUniqueEmailException(updateException))
         {
             return Result<UserOnboardingOutcome, OnboardUserError>.Err(
                 new OnboardUserError.UserAlreadyInOrganisation()

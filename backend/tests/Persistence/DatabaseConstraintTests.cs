@@ -5,6 +5,7 @@ using Shouldly;
 using UKPS.Api.Persistence.Configurations;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Tests.Application.Common;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
 
@@ -50,11 +51,14 @@ public class DatabaseConstraintTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task SaveChangesAsync_DuplicateWorkEmail_ThrowsDbUpdateException()
+    public async Task SaveChangesAsync_DuplicateWorkEmailWithCaseDifferences_ThrowsDbUpdateException()
     {
         var duplicateEmail = "duplicate@example.com";
-        var user1 = _userFaker.Generate().Update(x => x.WorkEmail = duplicateEmail);
-        var user2 = _userFaker.Generate().Update(x => x.WorkEmail = duplicateEmail);
+        var user1 = _userFaker.RuleFor(x => x.WorkEmail, _ => duplicateEmail);
+        var user2 = _userFaker.RuleFor(
+            x => x.WorkEmail,
+            f => f.GetRandomlyCapitalisedString(duplicateEmail)
+        );
         Context.Users.Add(user1);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -63,7 +67,24 @@ public class DatabaseConstraintTests : DatabaseTestBase
         DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
             Context.SaveChangesAsync()
         );
-        AssertUniqueViolation(exception, ConstraintNames.UserUniqueEmail);
+        AssertUniqueViolation(exception, ConstraintNames.UserUniqueNormalisedEmail);
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_DuplicateWorkEmail_ThrowsDbUpdateException()
+    {
+        var duplicateEmail = "duplicate@example.com";
+        var user1 = _userFaker.RuleFor(x => x.WorkEmail, _ => duplicateEmail);
+        var user2 = _userFaker.RuleFor(x => x.WorkEmail, _ => duplicateEmail);
+        Context.Users.Add(user1);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        Context.Users.Add(user2);
+
+        DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
+            Context.SaveChangesAsync()
+        );
+        ConstraintExceptions.IsUniqueEmailException(exception).ShouldBeTrue();
     }
 
     [Fact]
