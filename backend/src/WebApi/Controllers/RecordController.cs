@@ -12,20 +12,24 @@ using UKPS.Api.Persistence.Enums;
 namespace UKPS.Api.WebApi.Controllers;
 
 /// <summary>
-/// Provides endpoints for retrieving and creating records.
+/// Provides endpoints for retrieving, creating and changing the status of records.
 /// </summary>
 /// <param name="recordService">Service used to search and filter records.</param>
 /// <param name="recordViewService">Service used to retrieve record data for viewing.</param>
 /// <param name="recordCreationService">Service used to create records.</param>
+/// <param name="recordStatusService">Service used to change the status of records.</param>
 [Authorize]
 [ApiController]
 [Route("records")]
 public class RecordController(
     IRecordService recordService,
     IRecordViewService recordViewService,
-    IRecordCreationService recordCreationService
+    IRecordCreationService recordCreationService,
+    IRecordStatusService recordStatusService
 ) : ControllerBase
 {
+    private const string CodeExtension = "code";
+
     /// <summary>
     /// Retrieves a paginated list of records belonging to the user's organisation.
     /// </summary>
@@ -220,5 +224,200 @@ public class RecordController(
             ),
             _ => throw new UnreachableException("Unhandled DiscardRecordError variant."),
         };
+    }
+
+    /// <summary>
+    /// Puts a published record on hold.
+    /// </summary>
+    /// <param name="recordId">The identifier of the record to put on hold.</param>
+    /// <param name="organisationId">The organisation the record is expected to belong to.</param>
+    /// <param name="command">Why the record is being put on hold.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>An <see cref="ActionResult"/> indicating whether the record was put on hold.</returns>
+    /// <response code="200">The record was put on hold.</response>
+    /// <response code="400">
+    /// The reason is missing or is not a reason for putting a record on hold, or the reason is
+    /// <c>Other</c> and no note is given.
+    /// </response>
+    /// <response code="403">The caller can read the record but cannot change its status.</response>
+    /// <response code="404">
+    /// The record was not found in the organisation or is not accessible to the caller.
+    /// </response>
+    /// <response code="409">
+    /// The record's status can't be changed in its current state, or the record was updated by
+    /// another operation. The <c>code</c> member says which.
+    /// </response>
+    [HttpPatch("{recordId:int}/hold", Name = nameof(PutRecordOnHold))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public Task<ActionResult> PutRecordOnHold(
+        int recordId,
+        [FromQuery, Required] int? organisationId,
+        ChangeRecordStatusCommand command,
+        CancellationToken cancellationToken
+    ) =>
+        ChangeRecordStatus(
+            recordId,
+            organisationId!.Value,
+            RecordStatusChangeAction.PutOnHold,
+            command,
+            cancellationToken
+        );
+
+    /// <summary>
+    /// Removes the hold from a record, returning it to published.
+    /// </summary>
+    /// <param name="recordId">The identifier of the record to resume.</param>
+    /// <param name="organisationId">The organisation the record is expected to belong to.</param>
+    /// <param name="command">Why the hold is being removed.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>An <see cref="ActionResult"/> indicating whether the hold was removed.</returns>
+    /// <response code="200">The hold was removed.</response>
+    /// <response code="400">
+    /// The reason is missing or is not a reason for removing a hold, or the reason is
+    /// <c>Other</c> and no note is given.
+    /// </response>
+    /// <response code="403">The caller can read the record but cannot change its status.</response>
+    /// <response code="404">
+    /// The record was not found in the organisation or is not accessible to the caller.
+    /// </response>
+    /// <response code="409">
+    /// The record's status can't be changed in its current state, or the record was updated by
+    /// another operation. The <c>code</c> member says which.
+    /// </response>
+    [HttpPatch("{recordId:int}/resume", Name = nameof(ResumeRecord))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public Task<ActionResult> ResumeRecord(
+        int recordId,
+        [FromQuery, Required] int? organisationId,
+        ChangeRecordStatusCommand command,
+        CancellationToken cancellationToken
+    ) =>
+        ChangeRecordStatus(
+            recordId,
+            organisationId!.Value,
+            RecordStatusChangeAction.Resume,
+            command,
+            cancellationToken
+        );
+
+    /// <summary>
+    /// Archives a published or on hold record.
+    /// </summary>
+    /// <param name="recordId">The identifier of the record to archive.</param>
+    /// <param name="organisationId">The organisation the record is expected to belong to.</param>
+    /// <param name="command">Why the record is being archived.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>An <see cref="ActionResult"/> indicating whether the record was archived.</returns>
+    /// <response code="200">The record was archived.</response>
+    /// <response code="400">
+    /// The reason is missing or is not a reason for archiving a record, or the reason is
+    /// <c>Other</c> and no note is given.
+    /// </response>
+    /// <response code="403">The caller can read the record but cannot change its status.</response>
+    /// <response code="404">
+    /// The record was not found in the organisation or is not accessible to the caller.
+    /// </response>
+    /// <response code="409">
+    /// The record's status can't be changed in its current state, or the record was updated by
+    /// another operation. The <c>code</c> member says which.
+    /// </response>
+    [HttpPatch("{recordId:int}/archive", Name = nameof(ArchiveRecord))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public Task<ActionResult> ArchiveRecord(
+        int recordId,
+        [FromQuery, Required] int? organisationId,
+        ChangeRecordStatusCommand command,
+        CancellationToken cancellationToken
+    ) =>
+        ChangeRecordStatus(
+            recordId,
+            organisationId!.Value,
+            RecordStatusChangeAction.Archive,
+            command,
+            cancellationToken
+        );
+
+    private async Task<ActionResult> ChangeRecordStatus(
+        int recordId,
+        int organisationId,
+        RecordStatusChangeAction change,
+        ChangeRecordStatusCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        Result<ChangeRecordStatusError> result = await recordStatusService.ChangeStatus(
+            recordId,
+            organisationId,
+            change,
+            command,
+            cancellationToken
+        );
+
+        if (result.IsOk)
+        {
+            return Ok();
+        }
+
+        return result.Error switch
+        {
+            // ADR-004: not found and not allowed are indistinguishable.
+            ChangeRecordStatusError.NotFound or ChangeRecordStatusError.NotAllowed => Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Not Found",
+                detail: "Record not found."
+            ),
+            ChangeRecordStatusError.CannotChangeStatus => Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Forbidden",
+                detail: "You are not authorised to change the status of this record."
+            ),
+            ChangeRecordStatusError.InvalidReason => InvalidStatusChange(
+                nameof(ChangeRecordStatusCommand.Reason),
+                "The reason is not valid for this status change."
+            ),
+            ChangeRecordStatusError.NoteRequired => InvalidStatusChange(
+                nameof(ChangeRecordStatusCommand.Note),
+                "Give more detail about the reason."
+            ),
+            ChangeRecordStatusError.TransitionNotPermitted => Conflict(
+                "status_change_not_permitted",
+                "This record's status can't be changed in this way in its current state."
+            ),
+            ChangeRecordStatusError.ConcurrencyError => Conflict(
+                "record_changed",
+                "This record was updated by someone else while its status was being changed."
+            ),
+            _ => throw new UnreachableException("Unhandled ChangeRecordStatusError variant."),
+        };
+    }
+
+    private ActionResult InvalidStatusChange(string field, string message)
+    {
+        ModelState.AddModelError(field, message);
+        return ValidationProblem(ModelState);
+    }
+
+    private ObjectResult Conflict(string code, string detail)
+    {
+        ProblemDetails problem = ProblemDetailsFactory.CreateProblemDetails(
+            HttpContext,
+            statusCode: StatusCodes.Status409Conflict,
+            title: "Conflict",
+            detail: detail
+        );
+        problem.Extensions[CodeExtension] = code;
+        return new ObjectResult(problem) { StatusCode = StatusCodes.Status409Conflict };
     }
 }

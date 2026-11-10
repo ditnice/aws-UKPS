@@ -4,8 +4,25 @@ import {
   organisationUserTableHeaders,
   type OrganisationUserTableHeaderKey,
 } from '../../../src/app/portal/organisations/[id]/_lib/userLabels'
+import { devRoleEmails, type UserRole, userRoles } from '../helpers/roles'
+import {
+  accessSubjects,
+  championSubjects,
+  type ChampionSubject,
+  hasSeededSubjects,
+} from '../helpers/subjects'
+import { signedInEmail } from '../helpers/test-environment'
 
 import type { SortDirection } from '../../../src/client/generated/types.gen'
+
+/* Never select signed-in users or the read-only foreign user and registration request subjects.
+ * Changing them would invalidate other tests running in parallel. */
+const protectedEmails = new Set<string>([
+  accessSubjects.foreignUser,
+  accessSubjects.registrationRequest,
+  ...Object.values(devRoleEmails),
+  ...userRoles.flatMap((role) => signedInEmail(role) ?? []),
+])
 
 // ARIA has no way to select a column, so column cells are the one CSS selector.
 function columnCell(key: OrganisationUserTableHeaderKey): string {
@@ -84,7 +101,8 @@ export class OrganisationUsersPage {
     await this.row(email).getByRole('link', { name: action, exact: true }).click()
   }
 
-  /** Opens the first listed user with the `action` link, or returns undefined if no user has it. */
+  /** Opens the first listed user with the `action` link, or returns undefined if no user has it.
+   * Skips signed-in users and the read-only foreign user and registration request subjects. */
   async openUser(
     organisationId: string,
     query: Record<string, string>,
@@ -94,7 +112,11 @@ export class OrganisationUsersPage {
     await expect(this.noUsersMessage.or(this.cells('email').first())).toBeVisible()
 
     const actionLink = this.page.getByRole('link', { name: action, exact: true })
-    const row = this.table.getByRole('row').filter({ has: actionLink }).first()
+    let rows = this.table.getByRole('row').filter({ has: actionLink })
+    for (const email of protectedEmails) {
+      rows = rows.filter({ hasNot: this.page.getByRole('cell', { name: email, exact: true }) })
+    }
+    const row = rows.first()
     if ((await row.count()) === 0) {
       return undefined
     }
@@ -123,6 +145,70 @@ export class OrganisationUsersPage {
       this.page.getByRole('heading', { name: 'Manage users in your organisation' }),
     ).toBeVisible()
     return email
+  }
+
+  /** Opens a known user's `action` link from the organisation's user list. */
+  async openUserByEmail(organisationId: string, email: string, action: string): Promise<string> {
+    await this.goto(organisationId)
+    await this.openUserAction(email, action)
+    return email
+  }
+
+  /** Opens a known user's manage user's access page. A Champion's row for a deactivated user only
+   * links to Reactivate, not Edit, so this reads the user's id from either link and goes there. */
+  async openManageUserAccess(organisationId: string, email: string) {
+    await this.goto(organisationId)
+    await this.filterByEmail(email)
+    const link = this.row(email)
+      .getByRole('link', { name: 'Edit', exact: true })
+      .or(this.row(email).getByRole('link', { name: 'Reactivate', exact: true }))
+      .first()
+    const href = await link.getAttribute('href')
+    const userId = href?.match(/\/(?:manage-user-access|users)\/(\d+)/)?.[1]
+    if (!userId) throw new Error(`No manage link found for ${email}`)
+
+    await this.page.goto(`/portal/organisations/${organisationId}/manage-user-access/${userId}`)
+    await expect(
+      this.page.getByRole('heading', { name: 'Manage users in your organisation' }),
+    ).toBeVisible()
+  }
+
+  /** Filters to the user and checks their row links to exactly these actions. */
+  async expectRowLinks(email: string, labels: readonly string[]) {
+    await this.filterByEmail(email)
+    const row = this.row(email)
+    await expect(row).toBeVisible()
+    await expect(row.getByRole('link')).toHaveCount(labels.length)
+    for (const name of labels) {
+      await expect(row.getByRole('link', { name, exact: true })).toBeVisible()
+    }
+  }
+
+  /** Checks the manage user's access page offers exactly these actions, none chosen yet. */
+  async expectAccessActions(labels: readonly string[]) {
+    await expect(this.page.getByRole('radio')).toHaveCount(labels.length)
+    for (const name of labels) {
+      const radio = this.page.getByRole('radio', { name, exact: true })
+      await expect(radio).toBeVisible()
+      await expect(radio).not.toBeChecked()
+    }
+    await expect(this.page.getByRole('button', { name: 'Continue' })).toBeVisible()
+  }
+
+  /* A test running as a Champion opens its own seeded subject (helpers/subjects.ts), so it never
+   * picks a user that a test running as another role is changing. Otherwise, or where nothing is
+   * seeded, `claim` picks a seeded user as before. Returns undefined if there is none. */
+  async claimUser(
+    userRole: UserRole | undefined,
+    organisationId: string,
+    subject: ChampionSubject,
+    action: string,
+    claim: () => Promise<string | undefined>,
+  ): Promise<string | undefined> {
+    if (userRole === 'Champion' && hasSeededSubjects()) {
+      return this.openUserByEmail(organisationId, championSubjects[subject], action)
+    }
+    return claim()
   }
 
   /** Chooses an action on the manage user's access page and continues. The NDS radio's label

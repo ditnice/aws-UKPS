@@ -1,4 +1,5 @@
 using UKPS.Api.Application.RecordForms.Bindings;
+using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Application.RecordForms.Model;
@@ -19,6 +20,9 @@ internal sealed record FormQuestion
 
     /// <summary>The rules, in evaluation order.</summary>
     public required IReadOnlyList<FormRule> Rules { get; init; }
+
+    /// <summary>When set, the question applies only while it is met.</summary>
+    public FormCondition? ShowWhen { get; init; }
 
     public string? OptionKey { get; init; }
     public required FormEntity Entity { get; init; }

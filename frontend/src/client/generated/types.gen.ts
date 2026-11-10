@@ -49,6 +49,48 @@ export const BiomarkerType = {
 export type BiomarkerType = typeof BiomarkerType[keyof typeof BiomarkerType];
 
 /**
+ * Contains why a record is being put on hold, resumed or archived.
+ */
+export type ChangeRecordStatusCommand = {
+    reason: null | RecordStatusChangeReason;
+    /**
+     * Gets further details about the change. Required when the reason is
+     * RecordStatusChangeReason.Other.
+     */
+    note?: null | string;
+};
+
+/**
+ * The kind of a condition that decides whether a question applies. Part of the HTTP API
+ * contract: the member names are sent to the frontend, so never rename or remove one.
+ */
+export const ConditionKind = { ANSWER_IN: 'AnswerIn' } as const;
+
+/**
+ * The kind of a condition that decides whether a question applies. Part of the HTTP API
+ * contract: the member names are sent to the frontend, so never rename or remove one.
+ */
+export type ConditionKind = typeof ConditionKind[keyof typeof ConditionKind];
+
+/**
+ * Confirms a password reset and sets the new password.
+ */
+export type ConfirmNewPasswordCommand = {
+    /**
+     * Gets the account email address.
+     */
+    email: string;
+    /**
+     * Gets the password reset confirmation code.
+     */
+    confirmationCode: string;
+    /**
+     * Gets the new password.
+     */
+    newPassword: string;
+};
+
+/**
  * Represents the information required to create a new organisation.
  */
 export type CreateOrganisationDto = {
@@ -223,6 +265,16 @@ export const IndicationPaediatricStatus = {
 } as const;
 
 export type IndicationPaediatricStatus = typeof IndicationPaediatricStatus[keyof typeof IndicationPaediatricStatus];
+
+/**
+ * Represents a request to start the forgotten password flow for a user.
+ */
+export type InitiateForgottenPasswordProcedureCommand = {
+    /**
+     * Gets the email address of the user who has forgotten their password.
+     */
+    email: string;
+};
 
 /**
  * Represents the credentials provided by a user when attempting to authenticate.
@@ -494,7 +546,7 @@ export type MedicinesTreatmentDetailDto = {
     /**
      * Gets the proposed place in therapy.
      */
-    proposedPlaceInTherapy: string;
+    proposedPlaceInTherapy?: null | string;
     /**
      * Gets the estimated duration of treatment.
      */
@@ -1060,6 +1112,25 @@ export type RecordNameAndIdentifierDto = {
 };
 
 /**
+ * A condition that decides whether a question applies, from another question's answer.
+ */
+export type RecordPageConditionDto = {
+    /**
+     * How the condition is evaluated.
+     */
+    kind: ConditionKind;
+    /**
+     * The ID of the trigger question, an earlier question on the same page.
+     */
+    questionId: string;
+    /**
+     * For ConditionKind.AnswerIn: the condition is met when the trigger's answer
+     * includes any of these option values.
+     */
+    values: Array<string>;
+};
+
+/**
  * One page of a record content form: its questions, options and current answers.
  */
 export type RecordPageDto = {
@@ -1194,6 +1265,7 @@ export type RecordPageQuestionDto = {
      * The button text that adds another entry to a multi-value hierarchical select.
      */
     addAnotherLabel: null | string;
+    showWhen: null | RecordPageConditionDto;
     /**
      * The rules, in evaluation order.
      */
@@ -1287,6 +1359,19 @@ export const RecordStatus = {
  * Represents the status of a record in the system.
  */
 export type RecordStatus = typeof RecordStatus[keyof typeof RecordStatus];
+
+export const RecordStatusChangeReason = {
+    DEVELOPMENT_DISCONTINUED: 'DevelopmentDiscontinued',
+    TRIAL_SUSPENDED: 'TrialSuspended',
+    FILING_WITHDRAWN: 'FilingWithdrawn',
+    TRIAL_RESUMED: 'TrialResumed',
+    PLANS_REFILED: 'PlansRefiled',
+    OTHER: 'Other',
+    ARCHIVED_AUTOMATICALLY: 'ArchivedAutomatically',
+    MANUALLY_DISCARDED: 'ManuallyDiscarded'
+} as const;
+
+export type RecordStatusChangeReason = typeof RecordStatusChangeReason[keyof typeof RecordStatusChangeReason];
 
 /**
  * The task list for a record's latest revision.
@@ -1822,7 +1907,8 @@ export const UserMembershipAction = {
     DEACTIVATE_MEMBERSHIP: 'DeactivateMembership',
     REACTIVATE_MEMBERSHIP: 'ReactivateMembership',
     EDIT_USER_ROLE: 'EditUserRole',
-    REMOVE_USER: 'RemoveUser'
+    REMOVE_USER: 'RemoveUser',
+    MANAGE_USER_DETAILS: 'ManageUserDetails'
 } as const;
 
 /**
@@ -2180,6 +2266,65 @@ export type PostAuthVerifyMfaError = PostAuthVerifyMfaErrors[keyof PostAuthVerif
 export type PostAuthVerifyMfaResponses = {
     /**
      * The multi-factor authentication setup was successfully verified.
+     */
+    200: unknown;
+};
+
+export type InitiateForgottenPasswordProcedureData = {
+    /**
+     * A token that can be used to cancel the operation.
+     */
+    body: InitiateForgottenPasswordProcedureCommand;
+    path?: never;
+    query?: never;
+    url: '/auth/initiate-forgotten-password';
+};
+
+export type InitiateForgottenPasswordProcedureErrors = {
+    /**
+     * The number of permitted attempts has been exceeded.
+     */
+    429: ProblemDetails;
+};
+
+export type InitiateForgottenPasswordProcedureError = InitiateForgottenPasswordProcedureErrors[keyof InitiateForgottenPasswordProcedureErrors];
+
+export type InitiateForgottenPasswordProcedureResponses = {
+    /**
+     * The forgotten password procedure was initiated successfully.
+     */
+    200: unknown;
+};
+
+export type ConfirmNewPasswordData = {
+    /**
+     * A token to cancel the operation.
+     */
+    body: ConfirmNewPasswordCommand;
+    path?: never;
+    query?: never;
+    url: '/auth/confirm-new-password';
+};
+
+export type ConfirmNewPasswordErrors = {
+    /**
+     * The request failed validation. This occurs when the confirmation code is incorrect or has expired,
+     * or when the new password does not meet the password requirements.
+     * The response body is a ValidationProblemDetails identifying the invalid field.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Too many requests were made, or too many failed attempts have occurred.
+     * The response body is a ProblemDetails. The client should wait before retrying.
+     */
+    429: ProblemDetails;
+};
+
+export type ConfirmNewPasswordError = ConfirmNewPasswordErrors[keyof ConfirmNewPasswordErrors];
+
+export type ConfirmNewPasswordResponses = {
+    /**
+     * The password was changed successfully.
      */
     200: unknown;
 };
@@ -2777,6 +2922,168 @@ export type DiscardRecordResponses = {
     200: unknown;
 };
 
+export type PutRecordOnHoldData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: ChangeRecordStatusCommand;
+    path: {
+        /**
+         * The identifier of the record to put on hold.
+         */
+        recordId: number;
+    };
+    query: {
+        /**
+         * The organisation the record is expected to belong to.
+         */
+        organisationId: number;
+    };
+    url: '/records/{recordId}/hold';
+};
+
+export type PutRecordOnHoldErrors = {
+    /**
+     * The reason is missing or is not a reason for putting a record on hold, or the reason is
+     * `Other` and no note is given.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but cannot change its status.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found in the organisation or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record's status can't be changed in its current state, or the record was updated by
+     * another operation. The `code` member says which.
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type PutRecordOnHoldError = PutRecordOnHoldErrors[keyof PutRecordOnHoldErrors];
+
+export type PutRecordOnHoldResponses = {
+    /**
+     * The record was put on hold.
+     */
+    200: unknown;
+};
+
+export type ResumeRecordData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: ChangeRecordStatusCommand;
+    path: {
+        /**
+         * The identifier of the record to resume.
+         */
+        recordId: number;
+    };
+    query: {
+        /**
+         * The organisation the record is expected to belong to.
+         */
+        organisationId: number;
+    };
+    url: '/records/{recordId}/resume';
+};
+
+export type ResumeRecordErrors = {
+    /**
+     * The reason is missing or is not a reason for removing a hold, or the reason is
+     * `Other` and no note is given.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but cannot change its status.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found in the organisation or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record's status can't be changed in its current state, or the record was updated by
+     * another operation. The `code` member says which.
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type ResumeRecordError = ResumeRecordErrors[keyof ResumeRecordErrors];
+
+export type ResumeRecordResponses = {
+    /**
+     * The hold was removed.
+     */
+    200: unknown;
+};
+
+export type ArchiveRecordData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: ChangeRecordStatusCommand;
+    path: {
+        /**
+         * The identifier of the record to archive.
+         */
+        recordId: number;
+    };
+    query: {
+        /**
+         * The organisation the record is expected to belong to.
+         */
+        organisationId: number;
+    };
+    url: '/records/{recordId}/archive';
+};
+
+export type ArchiveRecordErrors = {
+    /**
+     * The reason is missing or is not a reason for archiving a record, or the reason is
+     * `Other` and no note is given.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but cannot change its status.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found in the organisation or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record's status can't be changed in its current state, or the record was updated by
+     * another operation. The `code` member says which.
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type ArchiveRecordError = ArchiveRecordErrors[keyof ArchiveRecordErrors];
+
+export type ArchiveRecordResponses = {
+    /**
+     * The record was archived.
+     */
+    200: unknown;
+};
+
 export type GetRecordFormPageData = {
     body?: never;
     path: {
@@ -3047,11 +3354,7 @@ export type GetUserDetailsWithinOrganisationErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * Returned if the caller is not authorised to view the organisation's users.
-     */
-    403: ProblemDetails;
-    /**
-     * Returned if the organisation does not exist or the user is not a member of it.
+     * The user does not exist in this organisation or is not accessible to the caller (ADR-004).
      */
     404: ProblemDetails;
     /**
@@ -3259,11 +3562,7 @@ export type GetUserRegistrationByIdErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The current user is not allowed to view membership requests for the organisation.
-     */
-    403: ProblemDetails;
-    /**
-     * No membership request was found with the supplied identifier.
+     * The membership request does not exist or is not accessible to the caller (ADR-004).
      */
     404: ProblemDetails;
     /**
@@ -3305,11 +3604,7 @@ export type ApproveErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The current user is not allowed to approve the membership request.
-     */
-    403: ProblemDetails;
-    /**
-     * The membership request could not be found.
+     * The membership request does not exist or is not accessible to the caller (ADR-004).
      */
     404: ProblemDetails;
     /**
@@ -3349,11 +3644,7 @@ export type RejectErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The current user is not allowed to reject the membership request.
-     */
-    403: ProblemDetails;
-    /**
-     * The membership request could not be found.
+     * The membership request does not exist or is not accessible to the caller (ADR-004).
      */
     404: ProblemDetails;
     /**

@@ -701,6 +701,137 @@
         }
       }
     },
+    "/auth/initiate-forgotten-password": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Initiates the forgotten password procedure for a user.",
+        "description": "Starts the password recovery flow for the account identified in the command.\nThe number of attempts is limited; once the permitted limit has been exceeded,\nfurther requests are rejected.",
+        "operationId": "InitiateForgottenPasswordProcedure",
+        "requestBody": {
+          "description": "A token that can be used to cancel the operation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateForgottenPasswordProcedureCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateForgottenPasswordProcedureCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateForgottenPasswordProcedureCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The forgotten password procedure was initiated successfully."
+          },
+          "429": {
+            "description": "The number of permitted attempts has been exceeded.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/confirm-new-password": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Confirms a password reset by validating the confirmation code and setting a new password.",
+        "operationId": "ConfirmNewPassword",
+        "requestBody": {
+          "description": "A token to cancel the operation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmNewPasswordCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmNewPasswordCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmNewPasswordCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The password was changed successfully."
+          },
+          "400": {
+            "description": "The request failed validation. This occurs when the confirmation code is incorrect or has expired,\nor when the new password does not meet the password requirements.\nThe response body is a ValidationProblemDetails identifying the invalid field.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests were made, or too many failed attempts have occurred.\nThe response body is a ProblemDetails. The client should wait before retrying.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/me/organisations/current/champions": {
       "get": {
         "tags": [
@@ -2453,6 +2584,477 @@
         }
       }
     },
+    "/records/{recordId}/hold": {
+      "patch": {
+        "tags": [
+          "Record"
+        ],
+        "summary": "Puts a published record on hold.",
+        "operationId": "PutRecordOnHold",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The identifier of the record to put on hold.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "organisationId",
+            "in": "query",
+            "description": "The organisation the record is expected to belong to.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The record was put on hold."
+          },
+          "400": {
+            "description": "The reason is missing or is not a reason for putting a record on hold, or the reason is\n`Other` and no note is given.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller can read the record but cannot change its status.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record was not found in the organisation or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The record's status can't be changed in its current state, or the record was updated by\nanother operation. The `code` member says which.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/records/{recordId}/resume": {
+      "patch": {
+        "tags": [
+          "Record"
+        ],
+        "summary": "Removes the hold from a record, returning it to published.",
+        "operationId": "ResumeRecord",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The identifier of the record to resume.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "organisationId",
+            "in": "query",
+            "description": "The organisation the record is expected to belong to.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The hold was removed."
+          },
+          "400": {
+            "description": "The reason is missing or is not a reason for removing a hold, or the reason is\n`Other` and no note is given.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller can read the record but cannot change its status.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record was not found in the organisation or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The record's status can't be changed in its current state, or the record was updated by\nanother operation. The `code` member says which.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/records/{recordId}/archive": {
+      "patch": {
+        "tags": [
+          "Record"
+        ],
+        "summary": "Archives a published or on hold record.",
+        "operationId": "ArchiveRecord",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The identifier of the record to archive.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "organisationId",
+            "in": "query",
+            "description": "The organisation the record is expected to belong to.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The record was archived."
+          },
+          "400": {
+            "description": "The reason is missing or is not a reason for archiving a record, or the reason is\n`Other` and no note is given.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller can read the record but cannot change its status.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record was not found in the organisation or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The record's status can't be changed in its current state, or the record was updated by\nanother operation. The `code` member says which.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/records/{recordId}/pages/{pageId}": {
       "get": {
         "tags": [
@@ -3167,28 +3769,8 @@
               }
             }
           },
-          "403": {
-            "description": "Returned if the caller is not authorised to view the organisation's users.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "Returned if the organisation does not exist or the user is not a member of it.",
+            "description": "The user does not exist in this organisation or is not accessible to the caller (ADR-004).",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3799,28 +4381,8 @@
               }
             }
           },
-          "403": {
-            "description": "The current user is not allowed to view membership requests for the organisation.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "No membership request was found with the supplied identifier.",
+            "description": "The membership request does not exist or is not accessible to the caller (ADR-004).",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3915,28 +4477,8 @@
           "200": {
             "description": "The membership request was successfully approved."
           },
-          "403": {
-            "description": "The current user is not allowed to approve the membership request.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "The membership request could not be found.",
+            "description": "The membership request does not exist or is not accessible to the caller (ADR-004).",
             "content": {
               "text/plain": {
                 "schema": {
@@ -4031,28 +4573,8 @@
           "200": {
             "description": "The membership request was successfully rejected."
           },
-          "403": {
-            "description": "The current user is not allowed to reject the membership request.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "The membership request could not be found.",
+            "description": "The membership request does not exist or is not accessible to the caller (ADR-004).",
             "content": {
               "text/plain": {
                 "schema": {
@@ -4214,6 +4736,65 @@
           null
         ],
         "type": "string"
+      },
+      "ChangeRecordStatusCommand": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets why the status is changing. Each status change accepts only its own reasons.",
+                "$ref": "#/components/schemas/RecordStatusChangeReason"
+              }
+            ]
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets further details about the change. Required when the reason is\nRecordStatusChangeReason.Other."
+          }
+        },
+        "description": "Contains why a record is being put on hold, resumed or archived."
+      },
+      "ConditionKind": {
+        "enum": [
+          "AnswerIn"
+        ],
+        "type": "string",
+        "description": "The kind of a condition that decides whether a question applies. Part of the HTTP API\ncontract: the member names are sent to the frontend, so never rename or remove one."
+      },
+      "ConfirmNewPasswordCommand": {
+        "required": [
+          "email",
+          "confirmationCode",
+          "newPassword"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Gets the account email address."
+          },
+          "confirmationCode": {
+            "type": "string",
+            "description": "Gets the password reset confirmation code."
+          },
+          "newPassword": {
+            "maxLength": 256,
+            "minLength": 8,
+            "type": "string",
+            "description": "Gets the new password."
+          }
+        },
+        "description": "Confirms a password reset and sets the new password."
       },
       "CreateOrganisationDto": {
         "required": [
@@ -4408,6 +4989,19 @@
           null
         ],
         "type": "string"
+      },
+      "InitiateForgottenPasswordProcedureCommand": {
+        "required": [
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Gets the email address of the user who has forgotten their password."
+          }
+        },
+        "description": "Represents a request to start the forgotten password flow for a user."
       },
       "LoginRequest": {
         "required": [
@@ -5157,13 +5751,13 @@
         "description": "Represents the NHS service impact section of a medicine record."
       },
       "MedicinesTreatmentDetailDto": {
-        "required": [
-          "proposedPlaceInTherapy"
-        ],
         "type": "object",
         "properties": {
           "proposedPlaceInTherapy": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "description": "Gets the proposed place in therapy."
           },
           "estimatedDurationOfTreatment": {
@@ -6162,6 +6756,32 @@
         },
         "description": "Represents a name or identifier for a product."
       },
+      "RecordPageConditionDto": {
+        "required": [
+          "kind",
+          "questionId",
+          "values"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "description": "How the condition is evaluated.",
+            "$ref": "#/components/schemas/ConditionKind"
+          },
+          "questionId": {
+            "type": "string",
+            "description": "The ID of the trigger question, an earlier question on the same page."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "For ConditionKind.AnswerIn: the condition is met when the trigger's answer\nincludes any of these option values."
+          }
+        },
+        "description": "A condition that decides whether a question applies, from another question's answer."
+      },
       "RecordPageDto": {
         "required": [
           "formVersion",
@@ -6302,6 +6922,7 @@
           "childLabel",
           "childPlaceholder",
           "addAnotherLabel",
+          "showWhen",
           "rules",
           "options"
         ],
@@ -6364,6 +6985,17 @@
               "string"
             ],
             "description": "The button text that adds another entry to a multi-value hierarchical select."
+          },
+          "showWhen": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "When set, the question applies only while the condition is met; otherwise it is hidden,\nnot validated, and should be sent as null (or an empty array).",
+                "$ref": "#/components/schemas/RecordPageConditionDto"
+              }
+            ]
           },
           "rules": {
             "type": "array",
@@ -6491,6 +7123,20 @@
         ],
         "type": "string",
         "description": "Represents the status of a record in the system."
+      },
+      "RecordStatusChangeReason": {
+        "enum": [
+          "DevelopmentDiscontinued",
+          "TrialSuspended",
+          "FilingWithdrawn",
+          "TrialResumed",
+          "PlansRefiled",
+          "Other",
+          "ArchivedAutomatically",
+          "ManuallyDiscarded",
+          null
+        ],
+        "type": "string"
       },
       "RecordTaskListDto": {
         "required": [
@@ -7162,7 +7808,8 @@
           "DeactivateMembership",
           "ReactivateMembership",
           "EditUserRole",
-          "RemoveUser"
+          "RemoveUser",
+          "ManageUserDetails"
         ],
         "type": "string",
         "description": "Defines the actions that can be performed on a user or their membership."

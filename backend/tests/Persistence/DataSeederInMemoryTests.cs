@@ -2,6 +2,7 @@ using Shouldly;
 using UKPS.Api.Persistence.Data.Seeding;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.WebApi.InternalServices.Authentication;
 
 namespace UKPS.Api.Tests.Persistence;
 
@@ -23,8 +24,79 @@ public sealed class DataSeederInMemoryTests
 
         payload.Organisations.Count.ShouldBe(50);
         payload.Users.Count.ShouldBe(800);
-        payload.Memberships.Count.ShouldBe(801); //Additional membership for dev user
+        payload.Memberships.Count.ShouldBe(809); // Plus the three dev users and six E2E subjects
         payload.Records.Count.ShouldBe(566); // 500 synthetic records and 66 discarded ones
+    }
+
+    [Theory]
+    [InlineData(UserRole.Super)]
+    [InlineData(UserRole.Champion)]
+    [InlineData(UserRole.Standard)]
+    public void BuildPayload_ShouldSeedAnActiveDevUserForEachRoleInTheFirstOrganisation(
+        UserRole role
+    )
+    {
+        SeedingDataPayload payload = DataSeederInMemory.BuildPayload(new SeedingOptions());
+        DevAuthenticationUser devUser = DevAuthenticationClaims.RoleUsers[role];
+
+        UserOrgMembership membership = payload
+            .Memberships.Where(m => m.User?.CognitoUsername == devUser.CognitoUsername)
+            .ShouldHaveSingleItem();
+        membership.User.ShouldNotBeNull().WorkEmail.ShouldBe(devUser.Email);
+        membership.UserRole.ShouldBe(role);
+        membership.Status.ShouldBe(UserOrgMembershipStatus.Active);
+        membership.Organisation.ShouldBeSameAs(
+            payload.Organisations.ElementAt(devUser.OrganisationId - 1)
+        );
+    }
+
+    [Fact]
+    public void BuildPayload_ShouldSeedReadOnlyAccessControlSubjects()
+    {
+        SeedingDataPayload payload = DataSeederInMemory.BuildPayload(new SeedingOptions());
+        UserOrgMembership foreignUser = payload
+            .Memberships.Where(m =>
+                string.Equals(
+                    m.User?.WorkEmail,
+                    E2eSubjectUsers.ForeignUserEmail,
+                    StringComparison.Ordinal
+                )
+            )
+            .ShouldHaveSingleItem();
+        foreignUser.Organisation.ShouldBeSameAs(
+            payload.Organisations.ElementAt(DevAuthenticationClaims.DefaultOrganisationId - 1)
+        );
+        foreignUser.UserRole.ShouldBe(UserRole.Standard);
+        foreignUser.Status.ShouldBe(UserOrgMembershipStatus.Active);
+
+        UserRegistrationRequest request = payload.RegistrationRequests.ShouldHaveSingleItem();
+        request.WorkEmail.ShouldBe(E2eSubjectUsers.RegistrationRequestEmail);
+        request.Organisation.ShouldBeSameAs(
+            payload.Organisations.ElementAt(E2eSubjectUsers.OrganisationId - 1)
+        );
+        request.GetState().ShouldBe(UserRegistrationRequest.State.Pending);
+    }
+
+    [Fact]
+    public void BuildPayload_ShouldSeedTheE2eSubjectsInTheDevChampionsOrganisation()
+    {
+        SeedingDataPayload payload = DataSeederInMemory.BuildPayload(new SeedingOptions());
+        Organisation championOrganisation = payload.Organisations.ElementAt(
+            DevAuthenticationClaims.RoleUsers[UserRole.Champion].OrganisationId - 1
+        );
+
+        championOrganisation.OrganisationType.ShouldBe(OrganisationType.PharmaCompany);
+        foreach (E2eSubjectUsers.Subject subject in E2eSubjectUsers.All)
+        {
+            UserOrgMembership membership = payload
+                .Memberships.Where(m =>
+                    string.Equals(m.User?.WorkEmail, subject.Email, StringComparison.Ordinal)
+                )
+                .ShouldHaveSingleItem();
+            membership.Organisation.ShouldBeSameAs(championOrganisation);
+            membership.UserRole.ShouldBe(subject.Role);
+            membership.Status.ShouldBe(subject.Status);
+        }
     }
 
     [Fact]

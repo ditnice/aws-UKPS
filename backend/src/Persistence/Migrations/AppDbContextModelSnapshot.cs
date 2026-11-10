@@ -1167,7 +1167,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnName("estimated_duration_of_treatment");
 
                     b.Property<string>("ProposedPlaceInTherapy")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("proposed_place_in_therapy");
 

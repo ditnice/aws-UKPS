@@ -69,7 +69,11 @@ internal sealed class RecordViewService(
         int revisionId = record.LatestRevisionId.Value;
         IReadOnlyCollection<RecordAction> actions = Record.GetPermittedActions(
             new(record.RecordStatus, record.LatestRevisionStatus.Value),
-            record.HasSingleRevision
+            record.HasSingleRevision,
+            organisationAuthoriser.CanPerformOperationOnOrganisation(
+                Operation.ChangeRecordStatus,
+                organisationId
+            )
         );
 
         return GetRecordResult.Ok(

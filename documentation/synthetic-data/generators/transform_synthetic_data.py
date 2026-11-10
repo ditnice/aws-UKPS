@@ -429,13 +429,11 @@ ON_HOLD_NOTES = {
         "Pivotal trial {trial} paused pending independent data monitoring committee review.",
         "Recruitment to {trial} suspended following a protocol amendment.",
     ],
-    "AwaitingExternalClarification": [
-        "Awaiting MHRA confirmation of the eligible regulatory route.",
-        "Awaiting confirmation from the global partner on UK launch sequencing.",
-    ],
     "Other": [
         "Global development timelines under review following portfolio prioritisation.",
         "UK plans paused while manufacturing capacity is reviewed.",
+        "Awaiting MHRA confirmation of the eligible regulatory route.",
+        "Awaiting confirmation from the global partner on UK launch sequencing.",
     ],
 }
 
@@ -682,7 +680,9 @@ class RecordBuilder:
         notes = (ARCHIVE_NOTES if status == "Archived" else ON_HOLD_NOTES)[reason]
         if reason == "TrialSuspended":
             return rng.choice(notes).format(trial=trials[0]["clinicalTrialsGovNumber"])
-        return rng.choice(notes) if rng.random() < 0.9 else None
+        has_note = rng.random() < 0.9
+        # Other is always given with the detail of the reason.
+        return rng.choice(notes) if has_note or reason == "Other" else None
 
     def leave_draft_incomplete(self, rng, record):
         """Unpublished drafts are often missing their optional later sections."""
@@ -1326,10 +1326,8 @@ def record_status(row):
         return "Archived", reason, None
     if metadata["on_hold"]:
         reason = {"Filing has been withdrawn": "FilingWithdrawn",
-                  "Trial has been suspended": "TrialSuspended"}.get(metadata["on_hold_reason"])
-        if reason is None:
-            rng = random.Random(f"ukps-hold-{metadata['id']}")
-            reason = weighted(rng, {"AwaitingExternalClarification": 60, "Other": 40})
+                  "Trial has been suspended": "TrialSuspended"}.get(metadata["on_hold_reason"],
+                                                                    "Other")
         return "OnHold", reason, None
     return "Published", None, None
 

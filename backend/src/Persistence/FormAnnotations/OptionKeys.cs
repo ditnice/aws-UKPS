@@ -89,4 +89,19 @@ internal static class OptionKeys
     /// <c>MedicineTechnologyStatus?</c> property.
     /// </summary>
     public const string MedicineTechnologyStatus = "medicine-technology-status";
+
+    /// <summary>
+    /// The <c>NhsServiceChangesRequired</c> enum: complete transformation, some change, no
+    /// changes and unknown at this stage, with a hint on all but the last. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
+    /// <c>NhsServiceChangesRequired?</c> property.
+    /// </summary>
+    public const string NhsServiceChangesRequired = "nhs-service-changes-required";
+
+    /// <summary>
+    /// The <c>UkPatientPopulationRange</c> reference data as a flat list, ordered by sort order.
+    /// For a <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
+    /// <c>UkPatientPopulationRangeId</c> property. Archived options are hidden unless already saved.
+    /// </summary>
+    public const string UkPatientPopulationRanges = "uk-patient-population-ranges";
 }

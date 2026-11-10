@@ -48,4 +48,3 @@ tests:
           - frontend/playwright.config.*
           - frontend/vitest.config.*
           - "**/*.test.*"
-          - "**/*.spec.*"
