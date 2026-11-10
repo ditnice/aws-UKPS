@@ -879,7 +879,9 @@ export const fakeUserInformationDto = (options?: Options): UserInformationDto =>
         organisationName: f.string.sample(),
         userRole: fakeUserRole(options),
         status: fakeUserOrgStatus(options),
-        hasMultipleOrganisations: f.datatype.boolean()
+        hasMultipleOrganisations: f.datatype.boolean(),
+        mfaMethod: f.string.sample(),
+        mfaPhoneNumber: f.string.sample()
     };
 };
 

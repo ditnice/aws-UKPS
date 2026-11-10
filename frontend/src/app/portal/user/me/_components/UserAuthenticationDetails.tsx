@@ -18,6 +18,18 @@ export const UserAuthenticationDetails = ({
         {errorMessages.failedToRetrieveCurrentUser}
       </ErrorState>
     )
+
+  const mfaMethodLabel =
+    currentUser.mfaMethod === 'Sms'
+      ? 'Text message'
+      : currentUser.mfaMethod === 'AuthenticatorApp'
+        ? 'Authenticator app'
+        : currentUser.mfaMethod
+  const mfaValue =
+    currentUser.mfaMethod === 'Sms' && currentUser.mfaPhoneNumber
+      ? `${mfaMethodLabel} (${currentUser.mfaPhoneNumber})`
+      : mfaMethodLabel
+
   return (
     <div>
       <h2>Sign in method</h2>
@@ -27,7 +39,7 @@ export const UserAuthenticationDetails = ({
             Change
           </SummaryListAction>
         </SummaryListRow>
-        <SummaryListRow label="Primary authentication method" value="Placeholder">
+        <SummaryListRow label="Primary authentication method" value={mfaValue}>
           <SummaryListAction href="#send-recovery-link" visuallyHiddenText="primary-recovery-link">
             Send recovery link
           </SummaryListAction>

@@ -1886,6 +1886,14 @@ export type UserInformationDto = {
      * Gets whether the user can select more than one organisation. Only set for the current user.
      */
     hasMultipleOrganisations: boolean;
+    /**
+     * Gets the MFA method in use for the current user.
+     */
+    mfaMethod: string;
+    /**
+     * Gets the obfuscated phone number used for SMS MFA, if applicable.
+     */
+    mfaPhoneNumber: string;
 };
 
 /**
