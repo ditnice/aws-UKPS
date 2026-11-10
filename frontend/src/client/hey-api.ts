@@ -1,3 +1,4 @@
+import { isReauthenticationRequiredResponse } from '@/lib/auth/authenticationHelpers'
 import { csrfCookieName, csrfHeaderName, getCookie } from '@/lib/auth/cookies'
 import {
   buildSignInHref,
@@ -37,7 +38,7 @@ const browserFetch: typeof fetch = async (input, init) => {
   }
 
   // reauthentication is handled where it is needed.
-  if (isReauthenticationRequired(response)) {
+  if (isReauthenticationRequiredResponse(response)) {
     return response
   }
 
@@ -60,13 +61,6 @@ const browserFetch: typeof fetch = async (input, init) => {
   if (retryResponse.status === 401) redirectToSignIn()
 
   return retryResponse
-}
-
-function isReauthenticationRequired(response: Response): boolean {
-  if (response.status !== 401) return false
-
-  const challenge = response.headers.get('WWW-Authenticate')
-  return challenge?.includes('error="insufficient_user_authentication"') ?? false
 }
 
 function refreshBrowserToken(): Promise<boolean> {

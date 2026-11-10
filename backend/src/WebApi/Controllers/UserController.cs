@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using UKPS.Api.Application;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
@@ -15,8 +17,32 @@ namespace UKPS.Api.WebApi.Controllers;
 [Authorize]
 [ApiController]
 [Route("users")]
-public class UserController(IUserService userService) : ControllerBase
+public class UserController : ControllerBase
 {
+    private readonly IUserService _userService;
+    private readonly SecurityOptions _securityOptions;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UserController"/> class.
+    /// </summary>
+    /// <param name="userService">
+    /// The service used to perform user-related operations.
+    /// </param>
+    /// <param name="securityOptions">
+    /// The security configuration options. The <see cref="IOptions{TOptions}.Value"/>
+    /// is resolved and stored for use by the controller.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="securityOptions"/> is <see langword="null"/>.
+    /// </exception>
+    public UserController(IUserService userService, IOptions<SecurityOptions> securityOptions)
+    {
+        ArgumentNullException.ThrowIfNull(securityOptions);
+
+        _userService = userService;
+        _securityOptions = securityOptions.Value;
+    }
+
     /// <summary>
     /// Gets the information for the currently authenticated user.
     /// </summary>
@@ -35,7 +61,7 @@ public class UserController(IUserService userService) : ControllerBase
         CancellationToken cancellationToken
     )
     {
-        return await userService.GetCurrentUser(cancellationToken);
+        return await _userService.GetCurrentUser(cancellationToken);
     }
 
     /// <summary>
@@ -63,7 +89,7 @@ public class UserController(IUserService userService) : ControllerBase
             return BadRequest();
         }
 
-        var result = await userService.GetUsers(getUsersQuery, cancellationToken);
+        var result = await _userService.GetUsers(getUsersQuery, cancellationToken);
 
         return result.Match<ActionResult<PaginatedResponseDto<UserListItemDto>>>(
             items => Ok(items),
@@ -108,7 +134,7 @@ public class UserController(IUserService userService) : ControllerBase
         CancellationToken cancellationToken
     )
     {
-        var result = await userService.GetUserDetailsWithinOrganisation(
+        var result = await _userService.GetUserDetailsWithinOrganisation(
             userId,
             organisationId,
             cancellationToken
@@ -157,7 +183,7 @@ public class UserController(IUserService userService) : ControllerBase
         CancellationToken cancellationToken
     )
     {
-        var result = await userService.UpdateUserDetails(userId, command, cancellationToken);
+        var result = await _userService.UpdateUserDetails(userId, command, cancellationToken);
 
         return result.Match(
             x => Ok(x),
@@ -179,7 +205,7 @@ public class UserController(IUserService userService) : ControllerBase
                         Response.Headers.WWWAuthenticate =
                             "Bearer error=\"insufficient_user_authentication\", "
                             + "error_description=\"A fresh login is required for this action\", "
-                            + "max_age=300";
+                            + $"max_age={_securityOptions.MaximumSecondsSinceLastAuthenticationToChangeEmail}";
 
                         return Unauthorized(
                             AuthenticationProblemDetails.ReauthenticationRequired()
@@ -211,7 +237,7 @@ public class UserController(IUserService userService) : ControllerBase
         CancellationToken cancellationToken
     )
     {
-        var result = await userService.RemoveUser(userId, cancellationToken);
+        var result = await _userService.RemoveUser(userId, cancellationToken);
 
         return result.Match<ActionResult<RemovedUserDto>>(
             removedUser => Ok(removedUser),

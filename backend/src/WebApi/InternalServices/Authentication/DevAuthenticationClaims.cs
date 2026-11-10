@@ -54,14 +54,15 @@ internal class DevAuthenticationClaims
             ),
         };
 
-    public static IReadOnlyCollection<Claim> DefaultClaims { get; } =
-    [
-        new Claim(UkpsClaimTypes.UserRole, UserRole.Super.ToString()),
-        new Claim(UkpsClaimTypes.OrganisationId, $"{DefaultOrganisationId}"),
-        new Claim(UkpsClaimTypes.Email, DefaultUserEmail),
-        new Claim(UkpsClaimTypes.Username, DefaultUserCognitoUsername.Value),
-        new Claim("auth_time", $"{DateTimeOffset.UtcNow.AddMinutes(-3).ToUnixTimeSeconds()}"),
-    ];
+    public static IReadOnlyCollection<Claim> DefaultClaims =>
+        [
+            new Claim(UkpsClaimTypes.UserRole, UserRole.Super.ToString()),
+            new Claim(UkpsClaimTypes.OrganisationId, $"{DefaultOrganisationId}"),
+            new Claim(UkpsClaimTypes.Email, DefaultUserEmail),
+            new Claim(UkpsClaimTypes.Username, DefaultUserCognitoUsername.Value),
+            new Claim("auth_time", $"{DateTimeOffset.UtcNow.AddMinutes(-1).ToUnixTimeSeconds()}"),
+        ];
+
     public ICollection<Claim> Claims { get; } = DefaultClaims.ToList();
 
     internal DevAuthenticationClaims UpdateClaim(Claim claim)

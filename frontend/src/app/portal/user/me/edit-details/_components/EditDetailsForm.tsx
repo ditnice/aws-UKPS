@@ -1,14 +1,11 @@
 'use client'
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
-import { isValidPhoneNumber } from 'libphonenumber-js/max'
 import { useRouter } from 'next/navigation'
 import { useState, type ChangeEvent } from 'react'
-import { z } from 'zod'
 
 import { patchUsersByUserId } from '@/client/generated'
 import { UpdateUserDetailsCommand } from '@/client/generated/types.gen'
-import { Alert } from '@/components/Alert/Alert'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
@@ -18,39 +15,14 @@ import { updateFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 
+import {
+  getStepUpMaxAge,
+  isReauthenticationRequiredError,
+} from '../../../../../../lib/auth/authenticationHelpers'
 import { buildEditDetailsHref } from '../navigation'
 
-const retrieveUserDetails = (key: string | undefined): UpdateUserDetailsCommand | undefined => {
-  if (!key) return undefined
-  const data = sessionStorage.getItem(key)
-  return data ? (JSON.parse(data) as UpdateUserDetailsCommand) : undefined
-}
-
-const storeUserDetails = (userDetailsCommand: UpdateUserDetailsCommand) => {
-  const key = crypto.randomUUID()
-  sessionStorage.setItem(key, JSON.stringify(userDetailsCommand))
-  return key
-}
-
-const clearUserDetailsSessionData = (key: string | undefined) => {
-  if (key) {
-    sessionStorage.removeItem(key)
-  }
-}
-
-const EditDetails = z.object({
-  fullName: z.string().trim().min(1, errorMessages.personalFullNameRequired),
-  workEmail: z
-    .string()
-    .trim()
-    .min(1, errorMessages.workEmailRequired)
-    .pipe(z.email(errorMessages.emailFormat)),
-  workTelephone: z
-    .string()
-    .trim()
-    .min(1, errorMessages.personalPhoneRequired)
-    .refine((value) => isValidPhoneNumber(value, 'GB'), errorMessages.phoneFormat),
-})
+import { ReauthenticationRequiredBanner } from './ReauthenticationRequiredBanner'
+import { EditDetails, storeUserDetails, useStoredUserDetails } from './userDetailsStore'
 
 export type EditDetailsFormProps = {
   userId: number
@@ -59,10 +31,11 @@ export type EditDetailsFormProps = {
 }
 export function EditDetailsForm({ userId, initialValues, sessionKey }: EditDetailsFormProps) {
   const [error, setError] = useState(false)
-  const [reauthenticationRequired, setReauthenticationRequired] = useState(false)
-
+  const [reauthenticationRequired, setReauthenticationRequired] = useState<
+    undefined | { maxAge: number | null }
+  >(undefined)
   const router = useRouter()
-  const sessionData = retrieveUserDetails(sessionKey)
+  const sessionData = useStoredUserDetails(sessionKey)
   const form = useForm({
     defaultValues: sessionData ?? (initialValues satisfies UpdateUserDetailsCommand),
     validationLogic: revalidateLogic({
@@ -79,21 +52,25 @@ export function EditDetailsForm({ userId, initialValues, sessionKey }: EditDetai
       const { response, error } = await patchUsersByUserId({ path: { userId }, body: data })
 
       if (response?.ok) {
-        clearUserDetailsSessionData(sessionKey)
         router.push('/portal/user/me?updated=true')
         return
       }
 
-      setError(true)
-
-      if (error && 'code' in error && error.code == 'ReauthenticationRequired') {
-        setReauthenticationRequired(true)
+      if (!response) {
+        return
       }
-      if (response && isValidationProblemDetails(error)) {
+      if (isReauthenticationRequiredError(error)) {
+        const maxAge = getStepUpMaxAge(response)
+        setReauthenticationRequired({ maxAge })
+        return
+      }
+      if (isValidationProblemDetails(error)) {
         formApi.setFieldMeta('fullName', updateFormApiErrors(error, 'FullName'))
         formApi.setFieldMeta('workEmail', updateFormApiErrors(error, 'WorkEmail'))
         formApi.setFieldMeta('workTelephone', updateFormApiErrors(error, 'WorkTelephone'))
       }
+
+      setError(true)
     },
   })
 
@@ -104,24 +81,10 @@ export function EditDetailsForm({ userId, initialValues, sessionKey }: EditDetai
   return (
     <>
       {reauthenticationRequired && (
-        <Alert type="error">
-          <h2>You need to sign in again to change your email address</h2>
-          <p>
-            For your security, we need to check it&apos;s you before we can change your email
-            address
-          </p>
-          <ol>
-            <li>Select &quot;Sign in again&quot;.</li>
-            <li>Sign in on the next page.</li>
-            <li>
-              You&apos;ll come back to this form with your details still filled in. Select
-              &quot;Save&quot;.
-            </li>
-          </ol>
-          <Button type="button" onClick={triggerReauthenticationFlow}>
-            Sign in again
-          </Button>
-        </Alert>
+        <ReauthenticationRequiredBanner
+          maxAge={reauthenticationRequired.maxAge}
+          reauthenticationRequested={triggerReauthenticationFlow}
+        />
       )}
 
       <form

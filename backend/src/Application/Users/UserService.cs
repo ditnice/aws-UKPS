@@ -664,7 +664,9 @@ internal partial class UserService : IUserService
         {
             return new UpdateUserDetailsError.Unauthorised();
         }
-        bool modifyingEmail = !user.WorkEmail.Equals(command.WorkEmail, StringComparison.Ordinal);
+        bool modifyingEmail = !user
+            .WorkEmail.Trim()
+            .Equals(command.WorkEmail.Trim(), StringComparison.OrdinalIgnoreCase);
         TimeSpan timeSinceLastAuthentication = _currentUserInfoService
             .GetCurrentUserInfo()
             .TimeSinceLastAuthentication;
