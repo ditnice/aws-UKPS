@@ -14,9 +14,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.11";
+    private const string ExpectedVersion = "2026.11.12";
     private const string ExpectedFingerprint =
-        "38921e1d652362084b852d291420fac5146eeda1fecc34251a6995c30ee7ef6f";
+        "5e14a908de0275e1b467ab6967f55ebc43f817228cfb69b1ac9dc6ae1b39e59d";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -35,7 +35,7 @@ public class MedicineFormModelTests
     {
         Model
             .Pages.Where(static p =>
-                string.Equals(p.SectionId, "indication-details", StringComparison.Ordinal)
+                string.Equals(p.TaskId, "indication-details", StringComparison.Ordinal)
             )
             .Select(static p => p.Id)
             .ShouldBe([
@@ -59,7 +59,7 @@ public class MedicineFormModelTests
     {
         Model
             .Pages.Where(static p =>
-                string.Equals(p.SectionId, "laboratory-testing", StringComparison.Ordinal)
+                string.Equals(p.TaskId, "laboratory-testing", StringComparison.Ordinal)
             )
             .Select(static p => p.Id)
             .ShouldBe([
@@ -86,7 +86,7 @@ public class MedicineFormModelTests
     {
         Model
             .Pages.Where(static p =>
-                string.Equals(p.SectionId, "development-background", StringComparison.Ordinal)
+                string.Equals(p.TaskId, "development-background", StringComparison.Ordinal)
             )
             .Select(static p => p.Id)
             .ShouldBe(["repurposed-medicine", "originator", "co-marketing"]);
@@ -221,7 +221,7 @@ public class MedicineFormModelTests
         Model
             .Pages.Where(static p =>
                 string.Equals(
-                    p.SectionId,
+                    p.TaskId,
                     "patient-and-clinical-requirements",
                     StringComparison.Ordinal
                 )
@@ -236,6 +236,20 @@ public class MedicineFormModelTests
                 "handling-storage",
                 "population-range",
                 "eligible-population",
+            ]);
+    }
+
+    [Fact]
+    public void Model_SectionsFollowTheDatasetOrder()
+    {
+        Model
+            .Sections.Select(static s =>
+                $"{s.Id}: {string.Join(", ", s.Tasks.Select(static t => t.Id))}"
+            )
+            .ShouldBe([
+                "indication-and-development: indication-details, development-background",
+                "hta-and-launch: hta-and-launch",
+                "service-readiness: laboratory-testing, patient-and-clinical-requirements",
             ]);
     }
 

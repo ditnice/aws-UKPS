@@ -27,7 +27,7 @@ internal static class MedicineFormTasks
     public const string DevelopmentBackgroundTitle = "Development background";
 
     /// <summary>The "Development background" task's position within its section.</summary>
-    public const int DevelopmentBackgroundOrder = 10;
+    public const int DevelopmentBackgroundOrder = 20;
 
     /// <summary>The "Laboratory testing" task's ID.</summary>
     public const string LaboratoryTesting = "laboratory-testing";
@@ -54,5 +54,5 @@ internal static class MedicineFormTasks
     public const string PatientAndClinicalRequirementsTitle = "Patient and clinical requirements";
 
     /// <summary>The "Patient and clinical requirements" task's position within its section.</summary>
-    public const int PatientAndClinicalRequirementsOrder = 10;
+    public const int PatientAndClinicalRequirementsOrder = 20;
 }

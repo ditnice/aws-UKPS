@@ -77,7 +77,12 @@ using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
-[FormSection(RecordType.Medicine, "indication-details", "Indication details", Order = 20)]
+[FormSection(
+    RecordType.Medicine,
+    "indication-and-development",
+    "Provide indication and development information",
+    Order = 10
+)]
 internal sealed class MedicinesIndicationDetail
 {
     [FormIgnore("Database identity")]
@@ -238,10 +243,18 @@ Navigation properties are exempt, unless they back a junction question.
 Put `[FormSection]` on the entity if it isn't already there:
 
 ```csharp
-[FormSection(RecordType.Medicine, "indication-details", "Indication details", Order = 20)]
+[FormSection(
+    RecordType.Medicine,
+    "indication-and-development",
+    "Provide indication and development information",
+    Order = 10
+)]
 ```
 
 - **Section ID**: a lowercase slug. Sections are ordered by `Order` within the form.
+- **Section title**: the dataset's section name, such as "Provide indication and development
+  information". It is the heading above the section's tasks in the task list. Each task's title
+  is the dataset's sub-section name, and is also the caption above every page in the task.
 - **Shared entities**: add one `[FormSection]` per record type.
 - **`RowSource`** says how the revision's row for this entity comes to exist:
   - **`FirstSave`** (the default): the first save that writes to the entity creates the row.
@@ -620,7 +633,7 @@ Put `[FormPageShowWhen]` on the entity that declares the page. It covers the pag
 question on it:
 
 ```csharp
-[FormSection(RecordType.Medicine, "development-background", "Development background", Order = 25)]
+[FormSection(RecordType.Medicine, "indication-and-development", "Provide indication and development information", Order = 10)]
 [FormPageShowWhen("originator-details", "medicines_development_background.is_originator_company", YesNoUnknown.No)]
 internal sealed class MedicinesDevelopmentBackground { ... }
 ```

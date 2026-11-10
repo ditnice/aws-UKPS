@@ -708,24 +708,24 @@ class RecordBuilder:
     # Regulatory timeline -----------------------------------------------------------------------
 
     PROCEDURE_DURATIONS = {
-        "MHRA National Procedure": (150, 420),
+        "MHRA national procedure": (150, 420),
         "International Recognition Procedure": (60, 200),
         "Access Consortium": (240, 330),
-        "Project Orbis": (180, 270),
+        "Orbis": (180, 270),
         "Other": (60, 300),
-        "Not yet confirmed": (240, 400),
+        "Unknown at this stage": (240, 400),
     }
 
     def procedure(self, rng, category, row):
         weights = {
             "International Recognition Procedure": 30,
-            "MHRA National Procedure": 30,
+            "MHRA national procedure": 30,
             "Access Consortium": 8,
             "Other": 11,
-            "Not yet confirmed": 11,
+            "Unknown at this stage": 11,
         }
         if category.is_cancer:
-            weights["Project Orbis"] = 12
+            weights["Orbis"] = 12
         return weighted(rng, weights)
 
     def timeline(self, rng, row, status, status_reason, status_note, procedure, record_dates):
@@ -785,7 +785,7 @@ class RecordBuilder:
                 "EC Decision Reliance Procedure following the European Commission decision.",
                 "Mutual recognition reliance procedure using the EU decision.",
             ])
-        elif procedure == "Not yet confirmed":
+        elif procedure == "Unknown at this stage":
             result["procedureDetails"] = rng.choice([
                 "Route to be confirmed following a scientific advice meeting with the MHRA.",
                 "Considering the Innovative Licensing and Access Pathway (ILAP); route not yet "
@@ -801,7 +801,7 @@ class RecordBuilder:
                 "submission.",
             ])
 
-        expedited = procedure == "Project Orbis" or designations["pimDesignationStatus"] == "Granted"
+        expedited = procedure == "Orbis" or designations["pimDesignationStatus"] == "Granted"
         result["ukConditionalApprovalAnticipated"] = (
             yes_no_unknown(rng, 45, 30, 25) if expedited else yes_no_unknown(rng, 10, 65, 25)
         )

@@ -3,7 +3,12 @@ using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
-[FormSection(RecordType.Medicine, "development-background", "Development background", Order = 20)]
+[FormSection(
+    RecordType.Medicine,
+    "indication-and-development",
+    "Provide indication and development information",
+    Order = 10
+)]
 internal sealed class MedicinesDevelopmentBackground
 {
     [FormIgnore("Database identity")]
