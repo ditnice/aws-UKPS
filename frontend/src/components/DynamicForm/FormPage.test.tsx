@@ -987,44 +987,65 @@ describe('FormPage', () => {
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
     })
 
-    it('sends an actual date from a date question beside another question', async () => {
-      const user = userEvent.setup()
-      render(
-        <FormPage
-          page={page({
-            page: { id: 'global', title: 'Global first submission', commercialInConfidence: true },
-            questions: [
-              question({ id: 'region', type: 'Text', label: 'Where?', hint: null, rules: [] }),
-              question({
-                id: 'global_date',
-                type: 'PrecisionDate',
-                label: 'Actual global first submission date',
-                hint: null,
-                rules: [],
-              }),
-            ],
-            answers: { region: null, global_date: null },
-          })}
-        />,
-      )
-
-      expect(
-        screen.getByRole('group', { name: 'Actual global first submission date' }),
-      ).toBeInTheDocument()
-      await user.click(screen.getByRole('radio', { name: 'Actual date' }))
-      await user.type(screen.getByRole('textbox', { name: 'Day' }), '26')
-      await user.type(screen.getByRole('textbox', { name: 'Month' }), '7')
-      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2025')
-      save()
-
-      await waitFor(() => {
-        expect(mocks.saveRecordFormPage).toHaveBeenCalledWith(
-          expect.objectContaining({
-            body: expect.objectContaining({
-              answers: { region: null, global_date: '2025-07-26' },
+    describe('actual month', () => {
+      const monthPage = (answer: string | null = null) =>
+        page({
+          page: { id: 'global', title: 'Global first submission', commercialInConfidence: true },
+          questions: [
+            question({ id: 'region', type: 'Text', label: 'Where?', hint: null, rules: [] }),
+            question({
+              id: 'global_date',
+              type: 'ActualMonth',
+              label: 'Actual global first submission date',
+              hint: null,
+              rules: [],
             }),
-          }),
-        )
+          ],
+          answers: { region: null, global_date: answer },
+        })
+
+      it('sends the month and year beside another question', async () => {
+        const user = userEvent.setup()
+        render(<FormPage page={monthPage()} />)
+
+        expect(
+          screen.getByRole('group', { name: 'Actual global first submission date' }),
+        ).toBeInTheDocument()
+        expect(screen.queryByRole('textbox', { name: 'Day' })).not.toBeInTheDocument()
+        await user.type(screen.getByRole('textbox', { name: 'Month' }), '7')
+        await user.type(screen.getByRole('textbox', { name: 'Year' }), '2025')
+        save()
+
+        await waitFor(() => {
+          expect(mocks.saveRecordFormPage).toHaveBeenCalledWith(
+            expect.objectContaining({
+              body: expect.objectContaining({
+                answers: { region: null, global_date: '2025-07' },
+              }),
+            }),
+          )
+        })
+      })
+
+      it('loads a saved month into its parts', () => {
+        render(<FormPage page={monthPage('2025-07')} />)
+
+        expect(screen.getByRole('textbox', { name: 'Month' })).toHaveValue('7')
+        expect(screen.getByRole('textbox', { name: 'Year' })).toHaveValue('2025')
+      })
+
+      it('rejects a month after this one without saving', async () => {
+        const user = userEvent.setup()
+        render(<FormPage page={monthPage()} />)
+
+        await user.type(screen.getByRole('textbox', { name: 'Month' }), '7')
+        await user.type(screen.getByRole('textbox', { name: 'Year' }), '2026')
+        save()
+
+        expect(
+          await screen.findByText('The date must be this month or in the past.'),
+        ).toBeInTheDocument()
+        expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
       })
     })
   })

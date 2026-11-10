@@ -2,6 +2,7 @@ import type { FormControl } from '@/client/generated'
 import type { DateValue } from '@/lib/dynamic-form/dates'
 import type { FormValue, HierarchicalEntry } from '@/lib/dynamic-form/types'
 
+import { ActualMonthQuestion } from './questions/ActualMonthQuestion'
 import { CheckboxQuestion } from './questions/CheckboxQuestion'
 import { HierarchicalSelectQuestion } from './questions/HierarchicalSelectQuestion'
 import { PrecisionDateQuestion } from './questions/PrecisionDateQuestion'
@@ -34,4 +35,5 @@ export const questionRegistry: Record<FormControl, (props: QuestionProps) => Rea
   Checkbox: control<string[]>(CheckboxQuestion),
   HierarchicalSelect: control<HierarchicalEntry | HierarchicalEntry[]>(HierarchicalSelectQuestion),
   PrecisionDate: control<DateValue>(PrecisionDateQuestion),
+  ActualMonth: control<DateValue>(ActualMonthQuestion),
 }

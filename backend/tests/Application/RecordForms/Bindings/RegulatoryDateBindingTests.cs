@@ -8,6 +8,7 @@ using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Persistence.FormAnnotations;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using Record = UKPS.Api.Persistence.Entities.RecordWorkflow.Record;
 
@@ -24,7 +25,8 @@ public class RegulatoryDateBindingTests : DatabaseTestBase
         typeof(RecordMhraDate).GetProperty(nameof(RecordMhraDate.UkLicenceDateId))!,
         typeof(RecordMhraDate).GetProperty(nameof(RecordMhraDate.UkLicenceDate))!,
         typeof(RecordMhraDate).GetProperty(nameof(RecordMhraDate.RevisionId))!,
-        DateEventType.UkLicence
+        DateEventType.UkLicence,
+        FormControl.PrecisionDate
     );
 
     private RecordRevision _revision = null!;
@@ -137,6 +139,24 @@ public class RegulatoryDateBindingTests : DatabaseTestBase
                 """{"date_precision":"ActualDate","date_value":"2027-05-14","is_confidential":false}"""
             );
         _binding.AuditText(FormAnswer.Single(null)).ShouldBeNull();
+    }
+
+    [Fact]
+    public void AuditText_ActualMonthControl_ReadsAMonthAsActual()
+    {
+        RegulatoryDateBinding binding = new(
+            typeof(RecordMhraDate).GetProperty(nameof(RecordMhraDate.UkLicenceDateId))!,
+            typeof(RecordMhraDate).GetProperty(nameof(RecordMhraDate.UkLicenceDate))!,
+            typeof(RecordMhraDate).GetProperty(nameof(RecordMhraDate.RevisionId))!,
+            DateEventType.UkLicence,
+            FormControl.ActualMonth
+        );
+
+        binding
+            .AuditText(FormAnswer.Single("2025-04"))
+            .ShouldBe(
+                """{"date_precision":"ActualMonth","date_value":"2025-04-01","is_confidential":false}"""
+            );
     }
 
     private async Task Write(string? answer)

@@ -258,7 +258,7 @@ in the entity and a missing one is a compile error. The scanner checks it suits 
 | `int` / `int?` foreign key to reference data | `Radio`, `Select`, `HierarchicalSelect` |
 | `[Flags]` enum | `Checkbox` |
 | navigation collection to a junction entity | `Checkbox`, `HierarchicalSelect` |
-| `int?` foreign key to `RegulatoryDate` | `PrecisionDate` (with `[FormDateEvent]`) |
+| `int?` foreign key to `RegulatoryDate` | `PrecisionDate`, `ActualMonth` (with `[FormDateEvent]`) |
 
 Choice controls (`Radio`, `Select`, `Checkbox`, `HierarchicalSelect`) need an option provider,
 found by the property's type or named with `[FormOptions]`; `Text` and `Textarea` must not have
@@ -874,8 +874,6 @@ loaded by the synthetic data seeder; see [Reference data](reference-data.md).
 - **Date rules across questions**, such as a licence date after the submission date. The
   dataset asks for these; they need a rule that reads other answers. (Actual dates in the past
   and estimates in the future are already checked against today.)
-- **An actual-only date control**, for a question that never takes an estimate. `PrecisionDate`
-  covers it for now.
 - **Other condition kinds**: compound `All`/`Any`, and triggers on reference data (such as a
   storage requirement of "Other"), which need stable option codes. Each kind is a new
   `FormCondition` subclass with fixture cases.

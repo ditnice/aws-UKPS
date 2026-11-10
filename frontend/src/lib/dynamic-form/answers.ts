@@ -1,6 +1,6 @@
 import { RuleKind } from '@/client/generated'
 
-import { dateAnswerError, toDateAnswer, toDateValue } from './dates'
+import { dateAnswerError, isDateControl, toDateAnswer, toDateValue } from './dates'
 
 import type {
   Answer,
@@ -40,8 +40,8 @@ export const findEntry = (options: Option[] | null, value: string): Hierarchical
 
 /** Converts a saved answer into the value the form edits. */
 export const toFormValue = (question: Question, answer: unknown): FormValue => {
-  if (question.type === 'PrecisionDate') {
-    return toDateValue(answer)
+  if (isDateControl(question.type)) {
+    return toDateValue(answer, question.type)
   }
   if (question.multiple) {
     const values = Array.isArray(answer)
@@ -65,7 +65,7 @@ const entryValue = (entry: HierarchicalEntry) => entry.child || entry.parent
 
 /** Converts a form value into its answer on the wire. */
 export const toAnswer = (question: Question, value: FormValue | undefined): Answer => {
-  if (question.type === 'PrecisionDate') {
+  if (isDateControl(question.type)) {
     return value && typeof value === 'object' && 'precision' in value ? toDateAnswer(value) : null
   }
   if (question.multiple) {
@@ -125,7 +125,9 @@ export const validateQuestion = (question: Question, value: FormValue | undefine
     return duplicateMessage
   }
   const dateError =
-    question.type === 'PrecisionDate' && typeof answer === 'string' ? dateAnswerError(answer) : null
+    isDateControl(question.type) && typeof answer === 'string'
+      ? dateAnswerError(answer, question.type)
+      : null
   return dateError ?? firstFailure(question.rules, answer)
 }
 

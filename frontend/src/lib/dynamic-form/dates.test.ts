@@ -32,6 +32,17 @@ describe('toDateValue', () => {
   it('starts an unanswered date on no precision', () => {
     expect(toDateValue(null)).toEqual(empty)
   })
+
+  it('reads an actual month only as a month', () => {
+    expect(toDateValue('2025-07', 'ActualMonth')).toEqual({
+      ...empty,
+      precision: 'ActualMonth',
+      month: '7',
+      year: '2025',
+    })
+    expect(toDateValue('2025-07-26', 'ActualMonth')).toEqual({ ...empty, precision: 'ActualMonth' })
+    expect(toDateValue(null, 'ActualMonth')).toEqual({ ...empty, precision: 'ActualMonth' })
+  })
 })
 
 describe('localToday', () => {
@@ -58,11 +69,13 @@ describe('toDateAnswer', () => {
     expect(toDateAnswer(value)).toBe('2027-04-05')
     expect(toDateAnswer({ ...value, precision: 'EstimatedMonth' })).toBe('2027-04')
     expect(toDateAnswer({ ...value, precision: 'EstimatedQuarter' })).toBe('2027-Q3')
+    expect(toDateAnswer({ ...value, precision: 'ActualMonth' })).toBe('2027-04')
   })
 
   it('is unanswered with no precision, or a precision with nothing entered', () => {
     expect(toDateAnswer({ ...empty, year: '2027' })).toBeNull()
     expect(toDateAnswer({ ...empty, precision: 'ActualDate', quarter: '2' })).toBeNull()
+    expect(toDateAnswer({ ...empty, precision: 'ActualMonth' })).toBeNull()
   })
 
   it('leaves an incomplete date for validation to reject', () => {

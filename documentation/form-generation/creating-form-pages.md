@@ -49,12 +49,12 @@ describes. You only touch the frontend to add a new control.
 | `[FormMaxItems(max, message)]`                      | property |                                                                                                | `Checkbox`                                                                                                                                                                                                                                          |
 | `[FormOptions(key)]`                                | property |                                                                                                | Chooses a provider other than the default for the property's type. Only needed when several providers offer the same type                                                                                                                           |
 | `[FormIgnore(reason)]`                              | property |                                                                                                | Not a question. The reason is required                                                                                                                                                                                                              |
-| `[FormDateEvent(dateEvent)]`                        | property |                                                                                                | Required on `PrecisionDate`: the `DateEventType` the regulatory date row is stored with. See [Dates](#dates)                                                                                                                                        |
+| `[FormDateEvent(dateEvent)]`                        | property |                                                                                                | Required on `PrecisionDate` and `ActualMonth`: the `DateEventType` the regulatory date row is stored with. See [Dates](#dates)                                                                                                                      |
 | `[FormShowWhen(questionId, values...)]`             | property |                                                                                                | The question applies only when an earlier question on the same page has one of the values. See [Conditional questions and pages](#conditional-questions-and-pages)                                                                                  |
 | `[FormPageShowWhen(pageId, questionId, values...)]` | class    |                                                                                                | The page applies only when a question on an earlier page has one of the values. One per page                                                                                                                                                        |
 
 `FormControl`: `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect`,
-`PrecisionDate`.
+`PrecisionDate`, `ActualMonth`.
 `FormRowSource`: `FirstSave` (default), `RecordCreation`.
 
 The form hierarchy is **section → task → page → question**. Put `[FormTask]` and `[FormPage]`
@@ -313,14 +313,14 @@ once it has been released.**
 Every `[FormField]` names its control as the third argument. It must be one of the allowed
 controls for the property type:
 
-| Property type                 | Allowed                                 | Answer on the wire                     | Frontend component                                   |
-| ----------------------------- | --------------------------------------- | -------------------------------------- | ---------------------------------------------------- |
-| `string`                      | `Text`, `Textarea`                      | `string \| null`                       | `Input` / `Textarea`                                 |
-| non-flags enum                | `Radio`, `Select`                       | `string \| null` (member name)         | NDS radios / `Select`                                |
-| `int?` reference FK           | `Radio`, `Select`, `HierarchicalSelect` | `string \| null` (ID)                  | NDS radios / `Select` / parent and child `Select`s   |
-| `[Flags]` enum                | `Checkbox`                              | `string[]` (member names)              | NDS checkboxes                                       |
-| junction navigation           | `Checkbox`, `HierarchicalSelect`        | `string[]` (IDs)                       | NDS checkboxes / repeated parent and child `Select`s |
-| `int?` FK to `RegulatoryDate` | `PrecisionDate`                         | `string \| null` (see [Dates](#dates)) | Precision radios revealing the parts                 |
+| Property type                 | Allowed                                 | Answer on the wire                     | Frontend component                                    |
+| ----------------------------- | --------------------------------------- | -------------------------------------- | ----------------------------------------------------- |
+| `string`                      | `Text`, `Textarea`                      | `string \| null`                       | `Input` / `Textarea`                                  |
+| non-flags enum                | `Radio`, `Select`                       | `string \| null` (member name)         | NDS radios / `Select`                                 |
+| `int?` reference FK           | `Radio`, `Select`, `HierarchicalSelect` | `string \| null` (ID)                  | NDS radios / `Select` / parent and child `Select`s    |
+| `[Flags]` enum                | `Checkbox`                              | `string[]` (member names)              | NDS checkboxes                                        |
+| junction navigation           | `Checkbox`, `HierarchicalSelect`        | `string[]` (IDs)                       | NDS checkboxes / repeated parent and child `Select`s  |
+| `int?` FK to `RegulatoryDate` | `PrecisionDate`, `ActualMonth`          | `string \| null` (see [Dates](#dates)) | Precision radios revealing the parts / month and year |
 
 `HierarchicalSelect` is for reference data with a `ParentId`: the user picks a parent, then
 optionally a child, and the answer is the most specific choice. It needs a tree provider (see
@@ -356,18 +356,23 @@ public int? UkLicenceDateId { get; set; }
 
 - **`PrecisionDate`** asks for the type of date first (estimated quarter, estimated month or
   actual date) and reveals the parts it needs.
+- **`ActualMonth`** asks for the month and year of an event that has happened, such as the
+  global first submission. It is stored with `date_precision` `ActualMonth`, and cannot
+  trigger a condition.
 - **Stored** as a real date with its precision: Q2 2027 is `date_value` `2027-04-01` with
   `date_precision` `EstimatedQuarter`, so dates can be compared and reported on whatever their
-  precision. `is_confidential` is set for estimated dates and cleared for actual dates.
+  precision. `is_confidential` is set for estimated dates and cleared for actual dates and
+  months.
 - **Audited** as the row's contents in JSON, for example
   `{"date_precision":"EstimatedQuarter","date_value":"2027-04-01","is_confidential":true}`.
 - **On the wire** between the page and the API, the answer is one string: `yyyy-Qn`, `yyyy-MM`
-  or `yyyy-MM-dd`. `DateAnswer` and the frontend's `lib/dynamic-form/dates.ts` both parse
-  it; `date-cases.json` keeps them in step. A date that is not real (31 April, month 13,
-  quarter 5) is rejected with "Enter a real date."
+  or `yyyy-MM-dd` for a `PrecisionDate`, and `yyyy-MM` for an `ActualMonth`. `DateAnswer` and
+  the frontend's `lib/dynamic-form/dates.ts` both parse it; `date-cases.json` keeps them in
+  step. A date that is not real (31 April, month 13, quarter 5) is rejected with "Enter a real
+  date."
 - **Checked against today** in the UK (the user's time zone on the page): an actual date must
-  be today or earlier, and an estimate must be for a quarter or month that has not ended, so
-  the current quarter or month is allowed.
+  be today or earlier, an actual month this month or earlier, and an estimate must be for a
+  quarter or month that has not ended, so the current quarter or month is allowed.
 - The question ID drops the `_id` suffix, because the answer is a date, not an ID.
 - The entity needs a navigation to `RegulatoryDate` for the foreign key; the form loads the date
   through it. The row is created by the first answer, updated in place, and deleted when the
@@ -640,7 +645,7 @@ reports every problem in one exception.
 | Agreement    | Declarations of one section ID disagree on title or order; declarations of one task ID disagree on title, order or section; declarations of one page ID disagree on title, order or `CommercialInConfidence`. A page spans tasks                                                                                                                                                                                                                                                                                                                               |
 | Order        | Two sections, two tasks in a section, two pages in a task, or two questions on a page have the same `Order`                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | Structure    | A section has no pages, or a page has no questions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| Controls     | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]`. A `PrecisionDate` has no `[FormDateEvent]`, or another control has one                                                                                                                                                                                                                                                                                                                                                                   |
+| Controls     | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]`. A `PrecisionDate` or `ActualMonth` has no `[FormDateEvent]`, or another control has one                                                                                                                                                                                                                                                                                                                                                  |
 | Presentation | `Placeholder` on a control other than `Select` or `HierarchicalSelect`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`; a `HierarchicalSelect` without `ChildLabel`                                                                                                                                                                                                                                                                                     |
 | Options      | A choice control has no provider registered for its type, or several and no `[FormOptions]`. A text control has `[FormOptions]`. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId`                                                                                                                                                                                                  |
 | Rules        | A rule is on a control it does not apply to, or a rule kind appears twice                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
@@ -686,7 +691,7 @@ through to your page.
 
 ## Adding a new control
 
-Needed when a page uses an input that no existing control covers. `PrecisionDate` is the
+Needed when a page uses an input that no existing control covers. `ActualMonth` is the
 latest example. This touches both backend and frontend.
 
 **Backend**
