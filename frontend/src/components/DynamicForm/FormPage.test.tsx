@@ -957,7 +957,7 @@ describe('FormPage', () => {
       })
       save()
 
-      expect(await screen.findByText('ID must only contain numbers')).toBeInTheDocument()
+      expect(await screen.findByText('ID must be a whole positive number')).toBeInTheDocument()
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
     })
   })

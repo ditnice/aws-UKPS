@@ -6,6 +6,8 @@ namespace UKPS.Api.Application.RecordForms.Rules;
 /// </summary>
 internal static class PrefixedNumberAnswer
 {
+    private const int MaxDigits = 5;
+
     /// <summary>
     /// The value to save and the message describing why it is invalid. A prefix with no digits is
     /// saved as blank, so it is never an error.
@@ -34,6 +36,11 @@ internal static class PrefixedNumberAnswer
             return (null, null);
         }
 
-        return (value, number.All(char.IsAsciiDigit) ? null : RecordFormMessages.IdDigitsOnly);
+        if (!number.All(char.IsAsciiDigit) || number.All(c => c == '0'))
+        {
+            return (value, RecordFormMessages.IdDigitsOnly);
+        }
+
+        return (value, number.Length > MaxDigits ? RecordFormMessages.IdOutOfRange : null);
     }
 }

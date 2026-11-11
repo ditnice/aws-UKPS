@@ -1,20 +1,152 @@
 {
   "description": "Shared prefixed-number cases run by both the backend (PrefixedNumberCasesTests) and the frontend (lib/dynamic-form). answer is the wire answer before normalisation; value is what the server saves (a prefix with no digits is saved as blank); error is the message, or null.",
   "cases": [
-    { "name": "null answer", "prefixes": ["GID-TA", "GID-HST"], "answer": null, "value": null, "error": null },
-    { "name": "blank answer", "prefixes": ["GID-TA", "GID-HST"], "answer": "", "value": null, "error": null },
-    { "name": "whitespace only", "prefixes": ["GID-TA", "GID-HST"], "answer": "   ", "value": null, "error": null },
-    { "name": "first prefix only is saved as blank", "prefixes": ["GID-TA", "GID-HST"], "answer": "GID-TA", "value": null, "error": null },
-    { "name": "second prefix only is saved as blank", "prefixes": ["GID-TA", "GID-HST"], "answer": "GID-HST", "value": null, "error": null },
-    { "name": "first prefix with digits", "prefixes": ["GID-TA", "GID-HST"], "answer": "GID-TA10234", "value": "GID-TA10234", "error": null },
-    { "name": "second prefix with digits", "prefixes": ["GID-TA", "GID-HST"], "answer": "GID-HST123", "value": "GID-HST123", "error": null },
-    { "name": "surrounding whitespace is trimmed", "prefixes": ["GID-TA", "GID-HST"], "answer": " GID-TA123 ", "value": "GID-TA123", "error": null },
-    { "name": "digits without a prefix", "prefixes": ["GID-TA", "GID-HST"], "answer": "10234", "value": "10234", "error": "Select ID type" },
-    { "name": "letters without a prefix", "prefixes": ["GID-TA", "GID-HST"], "answer": "abc", "value": "abc", "error": "Select ID type" },
-    { "name": "prefix is case sensitive", "prefixes": ["GID-TA", "GID-HST"], "answer": "gid-ta123", "value": "gid-ta123", "error": "Select ID type" },
-    { "name": "prefix must start the value", "prefixes": ["GID-TA", "GID-HST"], "answer": "12GID-TA", "value": "12GID-TA", "error": "Select ID type" },
-    { "name": "letters after a prefix", "prefixes": ["GID-TA", "GID-HST"], "answer": "GID-TA12a", "value": "GID-TA12a", "error": "ID must only contain numbers" },
-    { "name": "space after a prefix", "prefixes": ["GID-TA", "GID-HST"], "answer": "GID-TA 12", "value": "GID-TA 12", "error": "ID must only contain numbers" },
-    { "name": "non-ASCII digits after a prefix", "prefixes": ["GID-TA", "GID-HST"], "answer": "GID-TA١٢٣", "value": "GID-TA١٢٣", "error": "ID must only contain numbers" }
+    {
+      "name": "null answer",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": null,
+      "value": null,
+      "error": null
+    },
+    {
+      "name": "blank answer",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "",
+      "value": null,
+      "error": null
+    },
+    {
+      "name": "whitespace only",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "   ",
+      "value": null,
+      "error": null
+    },
+    {
+      "name": "first prefix only is saved as blank",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "GID-TA",
+      "value": null,
+      "error": null
+    },
+    {
+      "name": "second prefix only is saved as blank",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "GID-HST",
+      "value": null,
+      "error": null
+    },
+    {
+      "name": "first prefix with digits",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "GID-TA10234",
+      "value": "GID-TA10234",
+      "error": null
+    },
+    {
+      "name": "second prefix with digits",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "GID-HST123",
+      "value": "GID-HST123",
+      "error": null
+    },
+    {
+      "name": "surrounding whitespace is trimmed",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": " GID-TA123 ",
+      "value": "GID-TA123",
+      "error": null
+    },
+    {
+      "name": "digits without a prefix",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "10234",
+      "value": "10234",
+      "error": "Select ID type"
+    },
+    {
+      "name": "letters without a prefix",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "abc",
+      "value": "abc",
+      "error": "Select ID type"
+    },
+    {
+      "name": "prefix is case sensitive",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "gid-ta123",
+      "value": "gid-ta123",
+      "error": "Select ID type"
+    },
+    {
+      "name": "prefix must start the value",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "12GID-TA",
+      "value": "12GID-TA",
+      "error": "Select ID type"
+    },
+    {
+      "name": "letters after a prefix",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "GID-TA12a",
+      "value": "GID-TA12a",
+      "error": "ID must be a whole positive number"
+    },
+    {
+      "name": "space after a prefix",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "GID-TA 12",
+      "value": "GID-TA 12",
+      "error": "ID must be a whole positive number"
+    },
+    {
+      "name": "non-ASCII digits after a prefix",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "GID-TA١٢٣",
+      "value": "GID-TA١٢٣",
+      "error": "ID must be a whole positive number"
+    },
+    {
+      "name": "lowest valid id",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "GID-TA1",
+      "value": "GID-TA1",
+      "error": null
+    },
+    {
+      "name": "highest valid id",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "GID-TA99999",
+      "value": "GID-TA99999",
+      "error": null
+    },
+    {
+      "name": "leading zeros within five digits",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "GID-TA00123",
+      "value": "GID-TA00123",
+      "error": null
+    },
+    {
+      "name": "zero",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "GID-TA0",
+      "value": "GID-TA0",
+      "error": "ID must be a whole positive number"
+    },
+    {
+      "name": "all zeros",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "GID-TA00000",
+      "value": "GID-TA00000",
+      "error": "ID must be a whole positive number"
+    },
+    {
+      "name": "six digits",
+      "prefixes": ["GID-TA", "GID-HST"],
+      "answer": "GID-TA100000",
+      "value": "GID-TA100000",
+      "error": "ID must not be longer than 5 digits"
+    }
   ]
 }

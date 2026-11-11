@@ -1,6 +1,7 @@
-/** Server messages for a prefixed number; mirror RecordFormMessages.SelectIdType and IdDigitsOnly. */
+/** Server messages for a prefixed number; mirror RecordFormMessages.SelectIdType, IdDigitsOnly and IdOutOfRange. */
 export const selectIdTypeMessage = 'Select ID type'
-export const idDigitsOnlyMessage = 'ID must only contain numbers'
+export const idDigitsOnlyMessage = 'ID must be a whole positive number'
+export const idOutOfRangeMessage = 'ID must not be longer than 5 digits'
 
 /** Splits a value into the prefix it starts with, or '' when it starts with none, and the rest. */
 export const splitPrefixedNumber = (prefixes: string[], value: string) => {
@@ -26,5 +27,9 @@ export const evaluatePrefixedNumber = (
   if (number === '') {
     return { value: null, error: null }
   }
-  return { value, error: /^[0-9]+$/.test(number) ? null : idDigitsOnlyMessage }
+  if (!/^[0-9]+$/.test(number)) {
+    return { value, error: idDigitsOnlyMessage }
+  }
+  const outOfRange = number.length > 5 || /^0+$/.test(number)
+  return { value, error: outOfRange ? idOutOfRangeMessage : null }
 }
