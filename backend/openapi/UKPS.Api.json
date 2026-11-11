@@ -4902,7 +4902,8 @@
         "enum": [
           "EstimatedQuarter",
           "EstimatedMonth",
-          "ActualDate"
+          "ActualDate",
+          "ActualMonth"
         ],
         "type": "string",
         "description": "Represents the level of precision for a date."
@@ -4934,6 +4935,8 @@
           "Select",
           "Checkbox",
           "HierarchicalSelect",
+          "PrecisionDate",
+          "ActualMonth",
           "PrefixedNumber"
         ],
         "type": "string",

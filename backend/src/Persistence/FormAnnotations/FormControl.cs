@@ -61,10 +61,25 @@ public enum FormControl
     HierarchicalSelect = 5,
 
     /// <summary>
+    ///  A date at a chosen precision, for a foreign key to a regulatory date: an estimated quarter
+    /// and year, an estimated month and year, or an actual day, month and year. The answer is
+    /// <c>yyyy-Qn</c>, <c>yyyy-MM</c> or <c>yyyy-MM-dd</c>, and its precision can trigger
+    /// conditions. Needs <see cref="FormDateEventAttribute"/>.
+    /// </summary>
+    PrecisionDate = 6,
+
+    /// <summary>
+    /// The actual month and year of an event that has happened, for a foreign key to a regulatory
+    /// date. The answer is <c>yyyy-MM</c>, this month or earlier. Needs
+    /// <see cref="FormDateEventAttribute"/>.
+    /// </summary>
+    ActualMonth = 7,
+
+    /// <summary>
     /// A dropdown of fixed prefixes beside a text box for the number after it, for a string
     /// property. The answer is the prefix and digits joined, for example <c>GID-TA10234</c>, or
     /// null when blank. Needs <see cref="FormValuePrefixesAttribute"/>; must not have
     /// <see cref="FormOptionsAttribute"/>.
     /// </summary>
-    PrefixedNumber = 6,
+    PrefixedNumber = 8,
 }

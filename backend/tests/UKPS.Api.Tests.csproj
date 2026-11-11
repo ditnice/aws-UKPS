@@ -46,7 +46,7 @@
       CopyToOutputDirectory="PreserveNewest"
     />
     <None
-      Include="Application/RecordForms/Fixtures/prefixed-number-cases.json"
+      Include="Application/RecordForms/Fixtures/date-cases.json"
       CopyToOutputDirectory="PreserveNewest"
     />
   </ItemGroup>

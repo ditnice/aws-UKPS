@@ -40,9 +40,17 @@ internal static class FormModelBuilder
             ? FormRowSource.RecordCreation
             : FormRowSource.FirstSave;
 
+        // Junction and regulatory date questions read their answers through a navigation.
         string[] includes = entity
-            .Questions.Where(static q => q.Binding.Kind == BindingKind.Junction)
-            .Select(static q => q.Property.Name)
+            .Questions.Select(static q =>
+                q.Binding.Kind switch
+                {
+                    BindingKind.Junction => q.Property.Name,
+                    BindingKind.RegulatoryDate => q.Binding.DateNavigation!.Name,
+                    _ => null,
+                }
+            )
+            .OfType<string>()
             .ToArray();
 
         FormEntity formEntity = new(
@@ -97,7 +105,7 @@ internal static class FormModelBuilder
                 : null,
             OptionKey = OptionKey(question, options),
             Entity = entity,
-            Binding = BuildBinding(question),
+            Binding = BuildBinding(question, entity),
         };
     }
 
@@ -129,7 +137,7 @@ internal static class FormModelBuilder
         return options.FindBySource(kind, source!).Single().Key;
     }
 
-    private static IFormBinding BuildBinding(QuestionDeclaration question) =>
+    private static IFormBinding BuildBinding(QuestionDeclaration question, FormEntity entity) =>
         question.Binding.Kind switch
         {
             BindingKind.Text => new ColumnBinding(question.Property, ColumnValueKind.Text),
@@ -143,6 +151,13 @@ internal static class FormModelBuilder
                 question.Property,
                 question.Binding.JunctionType!,
                 question.Binding.JunctionReferenceIdProperty!
+            ),
+            BindingKind.RegulatoryDate => new RegulatoryDateBinding(
+                question.Property,
+                question.Binding.DateNavigation!,
+                entity.RevisionIdProperty,
+                question.DateEvent!.DateEvent,
+                question.Control
             ),
             _ => throw new InvalidOperationException(
                 $"Unsupported binding kind {question.Binding.Kind}."

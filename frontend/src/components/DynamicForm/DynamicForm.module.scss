@@ -82,3 +82,17 @@
   gap: utils.rem(spacing.$medium);
   margin-top: utils.rem(spacing.$large);
 }
+
+// Date parts sit side by side, as in the GOV.UK date input. A quarter dropdown sits beside the
+// year in the same way.
+.dateInput {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: utils.rem(spacing.$medium);
+
+  > [data-component='select'],
+  :global(.input) {
+    margin-bottom: 0;
+  }
+}

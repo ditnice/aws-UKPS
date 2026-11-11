@@ -50,11 +50,12 @@ describes. You only touch the frontend to add a new control.
 | `[FormOptions(key)]`                                | property |                                                                                                | Chooses a provider other than the default for the property's type. Only needed when several providers offer the same type                                                                                                                           |
 | `[FormIgnore(reason)]`                              | property |                                                                                                | Not a question. The reason is required                                                                                                                                                                                                              |
 | `[FormValuePrefixes(prefixes...)]`                  | property |                                                                                                | Required on `PrefixedNumber`, not allowed on any other control. The fixed prefixes offered before the digits, in order. See [Prefixed numbers](#prefixed-numbers)                                                                                   |
+| `[FormDateEvent(dateEvent)]`                        | property |                                                                                                | Required on `PrecisionDate` and `ActualMonth`: the `DateEventType` the regulatory date row is stored with. See [Dates](#dates)                                                                                                                      |
 | `[FormShowWhen(questionId, values...)]`             | property |                                                                                                | The question applies only when an earlier question on the same page has one of the values. See [Conditional questions and pages](#conditional-questions-and-pages)                                                                                  |
 | `[FormPageShowWhen(pageId, questionId, values...)]` | class    |                                                                                                | The page applies only when a question on an earlier page has one of the values. One per page                                                                                                                                                        |
 
 `FormControl`: `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect`,
-`PrefixedNumber`.
+`PrecisionDate`, `ActualMonth`, `PrefixedNumber`.
 `FormRowSource`: `FirstSave` (default), `RecordCreation`.
 
 The form hierarchy is **section → task → page → question**. Put `[FormTask]` and `[FormPage]`
@@ -312,14 +313,17 @@ once it has been released.**
 
 Every `[FormField]` names its control as the third argument. It must be one of the allowed
 controls for the property type:
-
-| Property type       | Allowed                                 | Answer on the wire             | Frontend component                                   |
-| ------------------- | --------------------------------------- | ------------------------------ | ---------------------------------------------------- |
-| `string`            | `Text`, `Textarea`, `PrefixedNumber`    | `string \| null`               | `Input` / `Textarea` / `Select` plus `Input`         |
-| non-flags enum      | `Radio`, `Select`                       | `string \| null` (member name) | NDS radios / `Select`                                |
-| `int?` reference FK | `Radio`, `Select`, `HierarchicalSelect` | `string \| null` (ID)          | NDS radios / `Select` / parent and child `Select`s   |
-| `[Flags]` enum      | `Checkbox`                              | `string[]` (member names)      | NDS checkboxes                                       |
-| junction navigation | `Checkbox`, `HierarchicalSelect`        | `string[]` (IDs)               | NDS checkboxes / repeated parent and child `Select`s |
+documentation/form-generation/creating-form-pages.md:674: leftover conflict marker
+documentation/form-generation/creating-form-pages.md:689: leftover conflict marker
+vagrant@vagrant:~/code/aws-UKPS$
+| Property type | Allowed | Answer on the wire | Frontend component |
+| ----------------------------- | --------------------------------------- | -------------------------------------- | ----------------------------------------------------- |
+| `string` | `Text`, `Textarea`, `PrefixedNumber` | `string \| null` | `Input` / `Textarea` / `Select` plus `Input` |
+| non-flags enum | `Radio`, `Select` | `string \| null` (member name) | NDS radios / `Select` |
+| `int?` reference FK | `Radio`, `Select`, `HierarchicalSelect` | `string \| null` (ID) | NDS radios / `Select` / parent and child `Select`s |
+| `[Flags]` enum | `Checkbox` | `string[]` (member names) | NDS checkboxes |
+| junction navigation | `Checkbox`, `HierarchicalSelect` | `string[]` (IDs) | NDS checkboxes / repeated parent and child `Select`s |
+| `int?` FK to `RegulatoryDate` | `PrecisionDate`, `ActualMonth` | `string \| null` (see [Dates](#dates)) | Precision radios revealing the parts / month and year |
 
 `HierarchicalSelect` is for reference data with a `ParentId`: the user picks a parent, then
 optionally a child, and the answer is the most specific choice. It needs a tree provider (see
@@ -361,6 +365,54 @@ public string? NiceTaDevelopmentId { get; set; }
 - A radio option can carry its own hint. Register the enum with the three-part overload of `AddEnum`, `(Value, Label, Hint)`; see the `BiomarkerType` provider in `MedicineOptionProviders`. The hint shows under that option, and it is part of the form fingerprint, so changing it needs a version bump.
 - On a single-question page, the label is visually hidden on the field because it is already
   the page heading. Screen readers still announce it.
+
+### Dates
+
+A date is stored as a `RegulatoryDate` row that the entity's `int?` foreign key points to. Put
+the question on the foreign key column (not the navigation), and name the event with
+`[FormDateEvent]`. For example (illustrative; the MHRA pages are not annotated yet):
+
+```csharp
+[FormField(
+    "record_mhra_date.uk_licence_date",
+    "What is the UK regulatory licence date?",
+    FormControl.PrecisionDate)]
+[FormDateEvent(DateEventType.UkLicence)]
+[FormRequired("Enter the UK regulatory licence date")]
+public int? UkLicenceDateId { get; set; }
+```
+
+- **`PrecisionDate`** asks for the type of date first (estimated quarter, estimated month or
+  actual date) and reveals the parts it needs.
+- **`ActualMonth`** asks for the month and year of an event that has happened, such as the
+  global first submission. It is stored with `date_precision` `ActualMonth`, and cannot
+  trigger a condition.
+- **Stored** as a real date with its precision: Q2 2027 is `date_value` `2027-04-01` with
+  `date_precision` `EstimatedQuarter`, so dates can be compared and reported on whatever their
+  precision. `is_confidential` is set for estimated dates and cleared for actual dates and
+  months.
+- **Audited** as the row's contents in JSON, for example
+  `{"date_precision":"EstimatedQuarter","date_value":"2027-04-01","is_confidential":true}`.
+- **On the wire** between the page and the API, the answer is one string: `yyyy-Qn`, `yyyy-MM`
+  or `yyyy-MM-dd` for a `PrecisionDate`, and `yyyy-MM` for an `ActualMonth`. `DateAnswer` and
+  the frontend's `lib/dynamic-form/dates.ts` both parse it; `date-cases.json` keeps them in
+  step. A date that is not real (31 April, month 13, quarter 5) is rejected with "Enter a real
+  date."
+- **Checked against today in UTC**, on both the server (`DateAnswer.Today`) and the page
+  (`utcToday`), so the two always agree: an actual date must be today or earlier, an actual
+  month this month or earlier, and an estimate must be for a quarter or month that has not
+  ended, so the current quarter or month is allowed. During British Summer Time, between 00:00
+  and 01:00 UK time, today is still the previous day.
+- **Never converted between time zones.** A date answer is a calendar date with no time of day,
+  so it is stored as a `DateOnly`, sent as ISO `yyyy-MM-dd` (or the month and quarter forms
+  above) and shown as entered; display code formats it in UTC (see `recordValueFormatters.ts`).
+  Only timestamps, such as audit times, are UTC instants converted to local time in the UI.
+- The question ID drops the `_id` suffix, because the answer is a date, not an ID.
+- The entity needs a navigation to `RegulatoryDate` for the foreign key; the form loads the date
+  through it. The row is created by the first answer, updated in place, and deleted when the
+  answer is cleared. A stored date is read at a precision the control offers: an `ActualMonth` reads any date
+  as its month, and a `PrecisionDate` reads an actual month as an actual date on its first day.
+  The row keeps its precision until the answer is changed.
 
 ## Step 5: Add options
 
@@ -588,9 +640,12 @@ internal sealed class MedicinesDevelopmentBackground { ... }
 
 ### Rules for conditions
 
-- The trigger is a `Radio`, `Select` or `Checkbox` on an enum or flags enum property. Reference
-  data triggers are not supported yet.
-- The values are members of the trigger's enum: at least one, with no duplicates.
+- The trigger is one of:
+  - a `Radio`, `Select` or `Checkbox` on an enum or flags enum property. The values are members
+    of the enum. Reference data triggers are not supported yet;
+  - a `PrecisionDate`. The values are `DatePrecision` members, compared with the
+    precision of the date entered.
+- At least one value, with no duplicates.
 - A `[FormShowWhen]` trigger is an earlier question on the **same page** (a lower
   `FormField.Order`).
 - A `[FormPageShowWhen]` trigger is on an **earlier page** in form order (section, task, then
@@ -618,20 +673,36 @@ Changing reference data **rows** or labels does not.
 `FormModelValidator` runs when the API starts and in `MedicineFormModelTests.Model_IsValid`. It
 reports every problem in one exception.
 
-| Area         | Fails when                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Coverage     | A mapped scalar property has neither `[FormField]` nor `[FormIgnore]`, or has both. A `[FormIgnore]` reason is blank. A form attribute is on an unmapped property or a non-junction navigation                                                                                                                                                                                                                                                                                                                      |
-| Pairing      | `[FormField]` has no `[FormTask]` or `[FormPage]`, or either annotation appears without `[FormField]`                                                                                                                                                                                                                                                                                                                                                                                                               |
-| IDs          | A task, page or question ID is badly formed or duplicated within the form. A page uses the reserved ID `task-list`                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Agreement    | Declarations of one section ID disagree on title or order; declarations of one task ID disagree on title, order or section; declarations of one page ID disagree on title, order or `CommercialInConfidence`. A page spans tasks                                                                                                                                                                                                                                                                                    |
-| Order        | Two sections, two tasks in a section, two pages in a task, or two questions on a page have the same `Order`                                                                                                                                                                                                                                                                                                                                                                                                         |
-| Structure    | A section has no pages, or a page has no questions                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Controls     | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]`                                                                                                                                                                                                                                                                                                                                                                                                |
-| Presentation | `PrefixedNumber` without `[FormValuePrefixes]`, or the attribute on another control, with a blank prefix, a prefix ending in a digit, a repeated prefix or a prefix that starts another; `Placeholder` on a control other than `Select`, `HierarchicalSelect` or `PrefixedNumber`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`; a `HierarchicalSelect` without `ChildLabel`                                                                                                                                                                                                                                          |
-| Options      | A choice control has no provider registered for its type, or several and no `[FormOptions]`. A text control has `[FormOptions]`. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId`                                                                                                                                                       |
-| Rules        | A rule is on a control it does not apply to, or a rule kind appears twice                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| Rows         | The entity has no `int RevisionId` FK to `RecordRevision`. `RowSource = FirstSave` on an entity with other non-nullable columns                                                                                                                                                                                                                                                                                                                                                                                     |
-| Conditions   | The trigger question is unknown, is not earlier on the same page (`[FormShowWhen]`) or on an earlier page (`[FormPageShowWhen]`), or is not a `Radio`, `Select` or `Checkbox` on an enum. A value is not a member of the trigger's enum, is repeated, or there are none. A `[FormShowWhen]` question is on a non-nullable column. A `[FormPageShowWhen]` names a page its entity does not declare or the first page of a task, or a page has more than one. `[FormPageShowWhen]` on a class without `[FormSection]` |
+| Area         | Fails when                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Coverage     | A mapped scalar property has neither `[FormField]` nor `[FormIgnore]`, or has both. A `[FormIgnore]` reason is blank. A form attribute is on an unmapped property or a non-junction navigation                                                                                                                                                                                                                                                                                                                                                                 |
+| Pairing      | `[FormField]` has no `[FormTask]` or `[FormPage]`, or either annotation appears without `[FormField]`                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| IDs          | A task, page or question ID is badly formed or duplicated within the form. A page uses the reserved ID `task-list`                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Agreement    | Declarations of one section ID disagree on title or order; declarations of one task ID disagree on title, order or section; declarations of one page ID disagree on title, order or `CommercialInConfidence`. A page spans tasks                                                                                                                                                                                                                                                                                                                               |
+| Order        | Two sections, two tasks in a section, two pages in a task, or two questions on a page have the same `Order`                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Structure    | A section has no pages, or a page has no questions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Controls     | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]`                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Presentation | `PrefixedNumber` without `[FormValuePrefixes]`, or the attribute on another control, with a blank prefix, a prefix ending in a digit, a repeated prefix or a prefix that starts another; `Placeholder` on a control other than `Select`, `HierarchicalSelect` or `PrefixedNumber`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`; a `HierarchicalSelect` without `ChildLabel`                                                                          |
+| Options      | A choice control has no provider registered for its type, or several and no `[FormOptions]`. A text control has `[FormOptions]`. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId`                                                                                                                                                                                                  |
+| Rules        | A rule is on a control it does not apply to, or a rule kind appears twice                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Rows         | The entity has no `int RevisionId` FK to `RecordRevision`. `RowSource = FirstSave` on an entity with other non-nullable columns                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Conditions   | The trigger question is unknown, is not earlier on the same page (`[FormShowWhen]`) or on an earlier page (`[FormPageShowWhen]`), or is not a `Radio`, `Select` or `Checkbox` on an enum. A value is not a member of the trigger's enum, is repeated, or there are none. A `[FormShowWhen]` question is on a non-nullable column. A `[FormPageShowWhen]` names a page its entity does not declare or the first page of a task, or a page has more than one. `[FormPageShowWhen]` on a class without `[FormSection]`                                            |
+| Area         | Fails when                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Coverage     | A mapped scalar property has neither `[FormField]` nor `[FormIgnore]`, or has both. A `[FormIgnore]` reason is blank. A form attribute is on an unmapped property or a non-junction navigation                                                                                                                                                                                                                                                                                                                                                                 |
+| Pairing      | `[FormField]` has no `[FormTask]` or `[FormPage]`, or either annotation appears without `[FormField]`                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| IDs          | A task, page or question ID is badly formed or duplicated within the form. A page uses the reserved ID `task-list`                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Agreement    | Declarations of one section ID disagree on title or order; declarations of one task ID disagree on title, order or section; declarations of one page ID disagree on title, order or `CommercialInConfidence`. A page spans tasks                                                                                                                                                                                                                                                                                                                               |
+| Order        | Two sections, two tasks in a section, two pages in a task, or two questions on a page have the same `Order`                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Structure    | A section has no pages, or a page has no questions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Controls     | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]`. A `PrecisionDate` or `ActualMonth` has no `[FormDateEvent]`, or another control has one. Two date questions in one form use the same `[FormDateEvent]`                                                                                                                                                                                                                                                                                   |
+| Presentation | `Placeholder` on a control other than `Select` or `HierarchicalSelect`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`; a `HierarchicalSelect` without `ChildLabel`                                                                                                                                                                                                                                                                                     |
+| Options      | A choice control has no provider registered for its type, or several and no `[FormOptions]`. A text control has `[FormOptions]`. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId`                                                                                                                                                                                                  |
+| Rules        | A rule is on a control it does not apply to, or a rule kind appears twice                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Rows         | The entity has no `int RevisionId` FK to `RecordRevision`. `RowSource = FirstSave` on an entity with other non-nullable columns                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Conditions   | The trigger question is unknown, is not earlier on the same page (`[FormShowWhen]`) or on an earlier page (`[FormPageShowWhen]`), or is not a `Radio`, `Select` or `Checkbox` on an enum, or a `PrecisionDate`. A value is not a member of the trigger's enum (or `DatePrecision`), is repeated, or there are none. A `[FormShowWhen]` question is on a non-nullable column. A `[FormPageShowWhen]` names a page its entity does not declare or the first page of a task, or a page has more than one. `[FormPageShowWhen]` on a class without `[FormSection]` |
+
+> > > > > > > origin/main
 
 ## Step 8: Test
 
@@ -645,6 +716,10 @@ reports every problem in one exception.
   (`Scanning/ScanningTestEntities.cs`) against a test EF model.
 - **`FormApplicabilityTests`** and **`ConditionCasesTests`**: if you change how conditions are
   evaluated or add a condition kind (add cases to `condition-cases.json` too).
+- **`DateCasesTests`**: if you change the date format or the check against today (add cases to
+  `date-cases.json` too).
+- **`RegulatoryDateBindingTests`**: database tests of how a date answer is stored, updated,
+  cleared and audited.
 - **`RecordFormServiceTests`**: database tests of the page query and save services, following
   the [walkthrough](record-creation-walkthrough.md).
 - **`MedicineOptionProviderTests`**: if you added a provider.
@@ -668,8 +743,8 @@ through to your page.
 
 ## Adding a new control
 
-Needed when a page uses an input that no existing control covers, for example a date. This
-touches both backend and frontend.
+Needed when a page uses an input that no existing control covers. `ActualMonth` is the
+latest example. This touches both backend and frontend.
 
 **Backend**
 
