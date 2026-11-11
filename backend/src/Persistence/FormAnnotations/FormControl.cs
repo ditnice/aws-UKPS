@@ -61,7 +61,7 @@ public enum FormControl
     HierarchicalSelect = 5,
 
     /// <summary>
-    ///  A date at a chosen precision, for a foreign key to a regulatory date: an estimated quarter
+    /// A date at a chosen precision, for a foreign key to a regulatory date: an estimated quarter
     /// and year, an estimated month and year, or an actual day, month and year. The answer is
     /// <c>yyyy-Qn</c>, <c>yyyy-MM</c> or <c>yyyy-MM-dd</c>, and its precision can trigger
     /// conditions. Needs <see cref="FormDateEventAttribute"/>.
