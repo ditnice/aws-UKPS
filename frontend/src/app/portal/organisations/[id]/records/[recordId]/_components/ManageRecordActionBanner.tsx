@@ -2,7 +2,6 @@ import Link from 'next/link'
 
 import type { RecordDto } from '@/client/generated'
 import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
-import { Alert } from '@/components/Alert/Alert'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 
 import { buildRecordHref } from '../_lib/recordLinks'
@@ -17,18 +16,8 @@ type ManageRecordActionBannerProps = {
    * edit its content. Update record is only shown when this is set.
    */
   updateRecordHref?: string
-  nextUpdateDue?: string | null
 }
 
-const OverdueRecordAlert = () => (
-  <Alert type="info">
-    <h3>Record update overdue</h3>
-    <p>
-      This record needs to be reviewed for any updates. You can edit the record to update published
-      record infomation or confirm the information is up-to-date.
-    </p>
-  </Alert>
-)
 const OnHoldRecordActionBanner = ({ record }: ManageRecordActionBannerProps) => {
   const { actions } = record
 
@@ -91,12 +80,6 @@ export const ManageRecordActionBanner = ({
   nextUpdateDue,
 }: ManageRecordActionBannerProps) => {
   const { actions } = record
-  if (record.displayStatus === 'Archived' || record.displayStatus == 'QAReview') {
-    return <ArchivedRecordActionBanner record={record} />
-  }
-  if (record.displayStatus === 'OnHold') {
-    return <OnHoldRecordActionBanner record={record} />
-  }
   const discardHref = buildRecordHref(
     record.organisationId,
     record.recordId,
@@ -110,38 +93,47 @@ export const ManageRecordActionBanner = ({
     'change-record-status',
   )
 
+  if (record.displayStatus === 'Archived' || record.displayStatus == 'QAReview') {
+    return <ArchivedRecordActionBanner record={record} />
+  }
+  if (record.displayStatus === 'OnHold') {
+    return <OnHoldRecordActionBanner record={record} />
+  }
+
   return (
-    <ActionBanner
-      variant="subtle"
-      title="Manage record"
-      headingLevel={2}
-      cta={
-        <ButtonGroup>
-          {actions.includes('Update') && updateRecordHref && (
-            <Button elementType={Link} href={updateRecordHref} variant="cta">
-              Update record
-            </Button>
-          )}
-          {actions.includes('ChangeStatus') && (
-            <Button elementType={Link} href={changeRecordStatusHref}>
-              Change record status
-            </Button>
-          )}
-          {actions.includes('ConfirmCurrent') && <Button>Confirm information as current</Button>}
-          {actions.includes('Discard') && (
-            <Button elementType={Link} href={discardHref}>
-              Discard record
-            </Button>
-          )}
-          {actions.includes('ConfirmOnHold') && <Button>Confirm status as current</Button>}
-          {actions.includes('ViewTimeline') && (
-            <Button variant="secondary">View record timeline</Button>
-          )}
-        </ButtonGroup>
-      }
-    >
-      Update record information, change the status of a record, or confirm the record information is
-      up to date. You can also review all changes made to this record since it was created.
-    </ActionBanner>
+    <>
+      <ActionBanner
+        variant="subtle"
+        title="Manage record"
+        headingLevel={2}
+        cta={
+          <ButtonGroup>
+            {actions.includes('Update') && updateRecordHref && (
+              <Button elementType={Link} href={updateRecordHref} variant="cta">
+                Update record
+              </Button>
+            )}
+            {actions.includes('ChangeStatus') && (
+              <Button elementType={Link} href={changeRecordStatusHref}>
+                Change record status
+              </Button>
+            )}
+            {actions.includes('ConfirmCurrent') && <Button>Confirm information as current</Button>}
+            {actions.includes('Discard') && (
+              <Button elementType={Link} href={discardHref}>
+                Discard record
+              </Button>
+            )}
+            {actions.includes('ConfirmOnHold') && <Button>Confirm status as current</Button>}
+            {actions.includes('ViewTimeline') && (
+              <Button variant="secondary">View record timeline</Button>
+            )}
+          </ButtonGroup>
+        }
+      >
+        Update record information, change the status of a record, or confirm the record information
+        is up to date. You can also review all changes made to this record since it was created.
+      </ActionBanner>
+    </>
   )
 }
