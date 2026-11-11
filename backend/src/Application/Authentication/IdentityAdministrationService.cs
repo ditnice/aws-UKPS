@@ -133,11 +133,9 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         CancellationToken cancellationToken
     )
     {
-        var username = _currentUserInfoService.GetCurrentCognitoUsername();
         try
         {
             await _identityService.VerifySoftwareTokenWithAccessToken(
-                username,
                 accessToken,
                 command.Code,
                 cancellationToken
@@ -252,7 +250,13 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
             cancellationToken
         );
 
-        return SetupUserResult.Ok(ConvertAssociateSoftwareTokenResultToOtp(userEmail, result));
+        return SetupUserResult.Ok(
+            new MultiFactorAuthenticationSetupDto()
+            {
+                OtpAuthUri = new OptAuthUri(userEmail, result.Secret).ToUri(),
+                AuthenticationSession = result.AuthenticationSession,
+            }
+        );
     }
 
     public async Task<SetupTokenValidationResult> Validate(
@@ -345,18 +349,9 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
             new SessionIdentifier.AccessToken(accessToken),
             cancellationToken
         );
-        return ConvertAssociateSoftwareTokenResultToOtp(currentUserInfo.Email, result);
-    }
-
-    private static MultiFactorAuthenticationSetupDto ConvertAssociateSoftwareTokenResultToOtp(
-        string userEmail,
-        AssociateSoftwareTokenResult result
-    )
-    {
-        return new MultiFactorAuthenticationSetupDto()
+        return new MultiFactorAuthenticationUpdateDto()
         {
-            OtpAuthUri = new OptAuthUri(userEmail, result.Secret).ToUri(),
-            AuthenticationSession = result.AuthenticationSession,
+            OtpAuthUri = new OptAuthUri(currentUserInfo.Email, result.Secret).ToUri(),
         };
     }
 

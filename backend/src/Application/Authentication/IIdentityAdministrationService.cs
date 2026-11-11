@@ -1,4 +1,4 @@
-global using InitiateUpdateMultiFactorAuthenticationResult = UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto;
+global using InitiateUpdateMultiFactorAuthenticationResult = UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationUpdateDto;
 global using VerifyMultiFactorAuthenticationUpdateResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationUpdateError>;
 using UKPS.Api.Application.Authentication.Dtos;
 using ResendSetupTokenResult = UKPS.Api.Application.Common.Result<

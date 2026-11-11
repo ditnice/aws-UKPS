@@ -18,10 +18,14 @@ export const getOtpCookieData = async () => {
   const cookieCollection = await cookies()
   const challenge = cookieCollection.get(otpChallengeKey)?.value
 
-  // No challenge (expired after 10 mins, or the user landed here directly)
   if (!challenge) {
     return null
   }
 
   return JSON.parse(challenge) as MultiFactorAuthenticationSetupDto
+}
+
+export const clearOtpCookieData = async () => {
+  const cookieCollection = await cookies()
+  cookieCollection.delete(otpChallengeKey)
 }

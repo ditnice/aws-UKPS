@@ -57,7 +57,6 @@ internal interface IIdentityService
     );
 
     Task VerifySoftwareTokenWithAccessToken(
-        CognitoUsername cognitoUsername,
         string accessToken,
         string code,
         CancellationToken cancellationToken

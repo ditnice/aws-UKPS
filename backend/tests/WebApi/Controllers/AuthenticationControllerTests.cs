@@ -1001,19 +1001,18 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     [Fact]
     public async Task InitiateUpdateMultiFactorAuthentication_ShouldReturnValuesFromServiceMethod()
     {
-        var expectedValues = new MultiFactorAuthenticationSetupDto()
+        var expectedValues = new MultiFactorAuthenticationUpdateDto()
         {
             OtpAuthUri = new Uri(
                 "otpauth://totp/MyApp:test@example.com?secret=JBSWY3DPEHPK3PXP&issuer=MyApp"
             ),
-            AuthenticationSession = "auth-session",
         };
         _mockedAuthorisationService
             .InitiateUpdateMultiFactorAuthentication(AccessToken, Arg.Any<CancellationToken>())
             .Returns(expectedValues);
         var response = await SendInitiateUpdateMultiFactorAuthenticationRequest();
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var content = await response.Content.ReadFromJsonAsync<MultiFactorAuthenticationSetupDto>(
+        var content = await response.Content.ReadFromJsonAsync<MultiFactorAuthenticationUpdateDto>(
             TestContext.Current.CancellationToken
         );
         content.ShouldBe(expectedValues);

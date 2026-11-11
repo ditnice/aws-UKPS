@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authentication;
 using UKPS.Api.WebApi.Controllers;
 
 namespace UKPS.Api.WebApi.InternalServices.Authentication;
@@ -9,10 +8,13 @@ internal class HttpContextAccessTokenProvider : IAccessTokenProvider
 
     public HttpContextAccessTokenProvider(IHttpContextAccessor accessor) => _accessor = accessor;
 
-    public async Task<string> GetAccessTokenAsync()
+    public Task<string> GetAccessTokenAsync()
     {
         var context = _accessor.HttpContext ?? throw new InvalidOperationException();
-        return await context.GetTokenAsync(CookieNames.AccessCookieName)
-            ?? throw new InvalidOperationException();
+
+        return Task.FromResult(
+            context.Request.Cookies[CookieNames.AccessCookieName]
+                ?? throw new InvalidOperationException()
+        );
     }
 }

@@ -247,7 +247,6 @@ internal sealed partial class CognitoIdentityService : IIdentityService
     }
 
     public async Task VerifySoftwareTokenWithAccessToken(
-        CognitoUsername cognitoUsername,
         string accessToken,
         string code,
         CancellationToken cancellationToken
