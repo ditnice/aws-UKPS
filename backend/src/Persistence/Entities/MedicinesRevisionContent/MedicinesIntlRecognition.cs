@@ -80,8 +80,8 @@ internal sealed class MedicinesIntlRecognition
         FormControl.PrecisionDate,
         Hint = "Choose the level of detail you are currently able to provide. Estimate the date you plan to file this product with the reference regulator, or enter the actual date the dossier was formally accepted for review."
     )]
-    [FormDateEvent(DateEventType.IntlSubmission)]
-    [FormRequired("Enter the international regulatory submission date")]
+    [FormDateEvent(DateEventType.IntlSubmission, Name = "submission")]
+    [FormRequired("Select an option")]
     public int? IntlSubmissionDateId { get; set; }
 
     [FormTask(
@@ -101,8 +101,8 @@ internal sealed class MedicinesIntlRecognition
         FormControl.PrecisionDate,
         Hint = "Choose the level of detail you are currently able to provide. Estimate the date you expect the reference regulator will grant marketing authorisation for this indication, or enter the actual date the reference regulator granted marketing authorisation for the specific indication in scope."
     )]
-    [FormDateEvent(DateEventType.IntlLicence)]
-    [FormRequired("Enter the international regulatory licence date")]
+    [FormDateEvent(DateEventType.IntlLicence, Name = "licence")]
+    [FormRequired("Select an option")]
     public int? IntlLicenceDateId { get; set; }
 
     [FormTask(

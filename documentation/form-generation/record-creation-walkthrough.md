@@ -247,7 +247,7 @@ choice: the condition if one is picked, otherwise the area.
 
 Selections are sorted as text before they are compared and audited, so choosing `["7","10"]`
 would be stored in the audit as `["10","7"]`. Choosing the same option twice is rejected with
-"You have selected the same option more than once.". If nothing is ticked (the question is optional), no
+"You have selected the same option more than once". If nothing is ticked (the question is optional), no
 junction rows are written; a first save with nothing ticked is not a change, so it writes no
 audit rows and does not touch the revision.
 

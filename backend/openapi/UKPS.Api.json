@@ -6925,6 +6925,7 @@
           "childLabel",
           "childPlaceholder",
           "addAnotherLabel",
+          "dateName",
           "showWhen",
           "rules",
           "options"
@@ -6998,6 +6999,13 @@
               "type": "string"
             },
             "description": "The prefixes a `PrefixedNumber` question offers before its digits, in order, or\nnull for any other control. Not `required`, so existing clients and fixtures are\nunaffected."
+          },
+          "dateName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "What a FormControl.PrecisionDate question's date is of, for its error\nmessages, for example `submission`; null for other questions."
           },
           "showWhen": {
             "oneOf": [

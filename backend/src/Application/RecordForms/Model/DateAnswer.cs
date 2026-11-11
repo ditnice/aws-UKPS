@@ -90,18 +90,32 @@ internal static partial class DateAnswer
     }
 
     /// <summary>
-    /// The error for the answer, or null when it is a real date on the right side of today.
+    /// The error for the answer, or null when it is a real date on the right side of today. A
+    /// <see cref="FormControl.PrecisionDate"/>'s errors name its date (<paramref name="dateName"/>);
+    /// one that is not real is taken as actual when it has a day, as the page sends it.
     /// </summary>
-    public static string? Check(FormControl control, string answer, DateOnly today)
+    public static string? Check(
+        FormControl control,
+        string answer,
+        DateOnly today,
+        string? dateName
+    )
     {
+        if (control == FormControl.PrecisionDate)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(dateName);
+        }
+
         if (!TryParse(control, answer, out DatePrecision precision, out DateOnly value))
         {
-            return RecordFormMessages.InvalidDate;
+            return control == FormControl.PrecisionDate
+                ? RecordFormMessages.DateNotReal(answer.Count(static c => c == '-') == 2, dateName!)
+                : RecordFormMessages.InvalidDate;
         }
 
         if (precision == DatePrecision.ActualDate)
         {
-            return value > today ? RecordFormMessages.ActualDateInFuture : null;
+            return value > today ? RecordFormMessages.ActualDateInFuture(dateName!) : null;
         }
 
         if (precision == DatePrecision.ActualMonth)
@@ -112,7 +126,7 @@ internal static partial class DateAnswer
         // The last day is found within the period, as the day after it may be past DateOnly.MaxValue.
         int lastMonth = value.Month + (precision == DatePrecision.EstimatedQuarter ? 2 : 0);
         DateOnly lastDay = new(value.Year, lastMonth, DateTime.DaysInMonth(value.Year, lastMonth));
-        return lastDay < today ? RecordFormMessages.EstimatedDateInPast : null;
+        return lastDay < today ? RecordFormMessages.EstimatedDateInPast(dateName!) : null;
     }
 
     /// <summary>

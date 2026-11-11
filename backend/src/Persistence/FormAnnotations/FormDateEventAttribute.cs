@@ -13,4 +13,11 @@ internal sealed class FormDateEventAttribute(DateEventType dateEvent) : Attribut
 {
     /// <summary>The event the date is for.</summary>
     public DateEventType DateEvent { get; } = dateEvent;
+
+    /// <summary>
+    /// What the date is of, as its error messages name it, for example <c>"submission"</c> in
+    /// "Enter the actual submission date" and "Actual date of submission must be in the past".
+    /// Required on a <see cref="FormControl.PrecisionDate"/>.
+    /// </summary>
+    public string? Name { get; init; }
 }

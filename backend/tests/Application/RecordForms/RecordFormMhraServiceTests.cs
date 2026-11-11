@@ -259,16 +259,17 @@ public class RecordFormMhraServiceTests : DatabaseTestBase
     }
 
     [Theory]
-    [InlineData("uk-submission-date", UkSubmission, "2027-02-29")]
-    [InlineData("uk-submission-date", UkSubmission, "2027-13")]
-    [InlineData("uk-submission-date", UkSubmission, "2027-Q5")]
-    [InlineData("uk-submission-date", UkSubmission, "27-01-01")]
-    [InlineData("uk-submission-date", UkSubmission, "next spring")]
-    [InlineData("international-submission-date", IntlSubmission, "2027-1")]
+    [InlineData("uk-submission-date", UkSubmission, "2027-02-29", true)]
+    [InlineData("uk-submission-date", UkSubmission, "2027-13", false)]
+    [InlineData("uk-submission-date", UkSubmission, "2027-Q5", false)]
+    [InlineData("uk-submission-date", UkSubmission, "27-01-01", true)]
+    [InlineData("uk-submission-date", UkSubmission, "next spring", false)]
+    [InlineData("international-submission-date", IntlSubmission, "2027-1", false)]
     public async Task SavePage_DateThatIsNotReal_IsRejected(
         string pageId,
         string questionId,
-        string answer
+        string answer,
+        bool actual
     )
     {
         if (string.Equals(pageId, "international-submission-date", StringComparison.Ordinal))
@@ -279,7 +280,7 @@ public class RecordFormMhraServiceTests : DatabaseTestBase
         (await SaveInvalid(pageId, Answer(questionId, answer))).ShouldBe(
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
-                [questionId] = RecordFormMessages.InvalidDate,
+                [questionId] = RecordFormMessages.DateNotReal(actual, "submission"),
             }
         );
     }

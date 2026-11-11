@@ -35,7 +35,7 @@ internal sealed class RecordMhraDate
         FormControl.PrecisionDate,
         Hint = "Choose the level of detail you are currently able to provide. Estimate the date you plan to submit this product to the MHRA, or enter the actual date the dossier was formally accepted for review by the MHRA."
     )]
-    [FormDateEvent(DateEventType.UkSubmission)]
+    [FormDateEvent(DateEventType.UkSubmission, Name = "submission")]
     [FormRequired("Select an option")]
     public int? UkSubmissionDateId { get; set; }
 
@@ -56,8 +56,8 @@ internal sealed class RecordMhraDate
         FormControl.PrecisionDate,
         Hint = "Choose the level of detail you are currently able to provide. Estimate the date you expect MHRA will grant marketing authorisation for this indication, or enter the actual date MHRA granted marketing authorisation for the specific indication in scope. This refers to the regulatory approval date, not NICE recommendation or commercial launch."
     )]
-    [FormDateEvent(DateEventType.UkLicence)]
-    [FormRequired("Enter the UK regulatory licence date")]
+    [FormDateEvent(DateEventType.UkLicence, Name = "licence")]
+    [FormRequired("Select an option")]
     public int? UkLicenceDateId { get; set; }
 
     [FormTask(

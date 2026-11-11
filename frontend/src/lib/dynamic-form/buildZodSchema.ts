@@ -1,6 +1,6 @@
 import z from 'zod'
 
-import { fieldName, validateQuestion } from './answers'
+import { fieldName, questionError } from './answers'
 import { shownQuestionIds } from './conditions'
 
 import type { FormValue, Question } from './types'
@@ -20,9 +20,15 @@ export const buildZodSchema = (questions: Question[]) =>
         if (!shown.has(question.id)) {
           return
         }
-        const message = validateQuestion(question, values[fieldName(index)])
-        if (message) {
-          ctx.addIssue({ code: 'custom', message, path: [fieldName(index)] })
+        const error = questionError(question, values[fieldName(index)])
+        if (error) {
+          // The parts let a date question highlight only the inputs at fault.
+          ctx.addIssue({
+            code: 'custom',
+            message: error.message,
+            path: [fieldName(index)],
+            params: error.parts && { parts: error.parts },
+          })
         }
       })
     })

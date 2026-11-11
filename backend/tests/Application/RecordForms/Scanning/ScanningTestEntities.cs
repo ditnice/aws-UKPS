@@ -435,13 +435,13 @@ internal sealed class DatedEntity
     [FormTask("dated-task", "Dated task", Order = 10)]
     [FormPage("submission", "Submission", Order = 10)]
     [FormField("dated_entity.submission_date", "Submission", FormControl.PrecisionDate)]
-    [FormDateEvent(DateEventType.UkSubmission)]
+    [FormDateEvent(DateEventType.UkSubmission, Name = "submission")]
     public int? SubmissionDateId { get; set; }
 
     [FormTask("dated-task", "Dated task", Order = 10)]
     [FormPage("actual", "Actual", Order = 20)]
     [FormField("dated_entity.actual_date", "Actual", FormControl.PrecisionDate)]
-    [FormDateEvent(DateEventType.GlobalFirstSubmission)]
+    [FormDateEvent(DateEventType.GlobalFirstSubmission, Name = "first submission")]
     public int? ActualDateId { get; set; }
 
     public RecordRevision? Revision { get; set; }
@@ -489,10 +489,17 @@ internal sealed class BrokenDatedEntity
     [FormDateEvent(DateEventType.IntlLicence)]
     public int? SameEventDateId { get; set; }
 
+    [FormTask("broken-dated-task", "Broken dated task", Order = 10)]
+    [FormPage("no-name", "No name", Order = 60)]
+    [FormField("broken_dated_entity.no_name_date", "No name", FormControl.PrecisionDate)]
+    [FormDateEvent(DateEventType.EamsSubmission)]
+    public int? NoNameDateId { get; set; }
+
     public RecordRevision? Revision { get; set; }
     public RegulatoryDate? NoEventDate { get; set; }
     public RegulatoryDate? WrongControlDate { get; set; }
     public RegulatoryDate? SameEventDate { get; set; }
+    public RegulatoryDate? NoNameDate { get; set; }
 }
 
 /// <summary>A question revealed by a reference data code.</summary>

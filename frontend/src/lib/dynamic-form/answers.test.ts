@@ -40,6 +40,7 @@ const question = (overrides: Partial<Question>): Question => ({
   childLabel: null,
   childPlaceholder: null,
   addAnotherLabel: null,
+  dateName: null,
   showWhen: null,
   rules: [],
   options: null,

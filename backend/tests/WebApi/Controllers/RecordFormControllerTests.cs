@@ -147,7 +147,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
                 new Dictionary<string, string>(StringComparer.Ordinal)
                 {
                     [Indication] = "Enter the indication",
-                    ["stray"] = "This is not a question on this page.",
+                    ["stray"] = "This is not a question on this page",
                 }
             )
         );
@@ -159,7 +159,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
             await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(Ct)
         )!;
         problem.Errors[Indication].ShouldBe(["Enter the indication"]);
-        problem.Errors["stray"].ShouldBe(["This is not a question on this page."]);
+        problem.Errors["stray"].ShouldBe(["This is not a question on this page"]);
     }
 
     [Fact]
@@ -292,6 +292,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
                     ChildLabel = null,
                     ChildPlaceholder = null,
                     AddAnotherLabel = null,
+                    DateName = null,
                     ShowWhen = null,
                     Rules =
                     [

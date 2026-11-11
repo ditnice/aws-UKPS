@@ -101,6 +101,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             ChildPlaceholder = question.ChildPlaceholder,
             AddAnotherLabel = question.AddAnotherLabel,
             Prefixes = question.Prefixes,
+            DateName = question.DateName,
             ShowWhen = question.ShowWhen is null ? null : ToDto(question.ShowWhen, model, codes),
             Rules = question
                 .Rules.Select(static r => new RecordPageRuleDto

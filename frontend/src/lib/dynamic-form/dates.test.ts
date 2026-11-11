@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { toDateAnswer, toDateValue, utcToday } from './dates'
+import { precisionDateProblem, toDateAnswer, toDateValue, utcToday } from './dates'
 
 import type { DateValue } from './dates'
 
@@ -89,5 +89,66 @@ describe('toDateAnswer', () => {
       '2027-04-',
     )
     expect(toDateAnswer({ ...empty, precision: 'EstimatedQuarter', year: '27' })).toBe('27-Q')
+  })
+})
+
+describe('precisionDateProblem', () => {
+  const today = '2026-06-15'
+  const problem = (value: Partial<DateValue>) =>
+    precisionDateProblem({ ...empty, ...value }, 'submission', today)
+
+  it('has no problem until a precision is chosen, or with a real date on the right side', () => {
+    expect(problem({})).toBeNull()
+    expect(problem({ precision: 'EstimatedQuarter', quarter: '3', year: '2026' })).toBeNull()
+    expect(problem({ precision: 'ActualDate', day: '15', month: '06', year: '2026' })).toBeNull()
+    expect(problem({ precision: 'ActualDate', day: ' 29 ', month: '2', year: '2024' })).toBeNull()
+  })
+
+  it('asks for the date when a part is blank, about the blank parts only', () => {
+    expect(problem({ precision: 'ActualDate', month: '13', year: ' ' })).toEqual({
+      message: 'Enter the actual submission date',
+      parts: ['day', 'year'],
+    })
+    expect(problem({ precision: 'EstimatedQuarter', year: '2027' })).toEqual({
+      message: 'Enter the estimated submission date',
+      parts: ['quarter'],
+    })
+  })
+
+  it('rejects parts that are not real, about those parts only', () => {
+    const notReal = (value: Partial<DateValue>) => problem(value)?.parts
+    expect(notReal({ precision: 'EstimatedMonth', month: 'AB', year: '2027' })).toEqual(['month'])
+    expect(notReal({ precision: 'EstimatedMonth', month: '0', year: '2027' })).toEqual(['month'])
+    expect(notReal({ precision: 'EstimatedMonth', month: '7', year: '20AB' })).toEqual(['year'])
+    expect(notReal({ precision: 'EstimatedMonth', month: '7', year: '0999' })).toEqual(['year'])
+    expect(notReal({ precision: 'EstimatedMonth', month: '7', year: '27' })).toEqual(['year'])
+    expect(notReal({ precision: 'EstimatedQuarter', quarter: '5', year: '2027' })).toEqual([
+      'quarter',
+    ])
+    expect(notReal({ precision: 'ActualDate', day: '32', month: '13', year: '2025' })).toEqual([
+      'day',
+      'month',
+    ])
+    expect(problem({ precision: 'ActualDate', day: '29', month: '2', year: '2025' })).toEqual({
+      message: 'Actual date of submission must be a real date',
+      parts: ['day'],
+    })
+  })
+
+  it('checks the day against its month only once the month and year are real', () => {
+    expect(problem({ precision: 'ActualDate', day: '31', month: '4', year: 'x' })?.parts).toEqual([
+      'year',
+    ])
+  })
+
+  it('rejects a date on the wrong side of today, about every part', () => {
+    expect(problem({ precision: 'EstimatedQuarter', quarter: '1', year: '2026' })).toEqual({
+      message: 'Estimated date of submission must be in the future',
+      parts: ['quarter', 'year'],
+    })
+    expect(problem({ precision: 'ActualDate', day: '16', month: '6', year: '2026' })).toEqual({
+      message: 'Actual date of submission must be in the past',
+      parts: ['day', 'month', 'year'],
+    })
   })
 })
