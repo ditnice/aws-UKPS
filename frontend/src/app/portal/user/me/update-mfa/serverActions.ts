@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { initiateUpdateMultiFactorAuthentication } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 
-import { setOtpCookieData } from './mfaHelpers'
+import { clearOtpCookieData, setOtpCookieData } from './mfaHelpers'
 
 export const generateOtp = async () => {
   const { data, error } = await initiateUpdateMultiFactorAuthentication({
@@ -17,4 +17,9 @@ export const generateOtp = async () => {
 
   await setOtpCookieData(data)
   redirect(`?verify=verify`)
+}
+
+export const completeMfaSetup = async (redirectOnSuccess: string) => {
+  clearOtpCookieData()
+  redirect(redirectOnSuccess)
 }

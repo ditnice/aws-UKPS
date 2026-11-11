@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { initiateUpdateMultiFactorAuthentication } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 
-import { generateOtp } from './generateOtpAction'
 import { setOtpCookieData } from './mfaHelpers'
+import { generateOtp } from './serverActions'
 
 vi.mock('@/client/generated', () => ({
   initiateUpdateMultiFactorAuthentication: vi.fn(),

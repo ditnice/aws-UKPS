@@ -7,8 +7,8 @@ import { ErrorState } from '@/components/Placeholder/ErrorState'
 
 import { buildMyDetailsHref } from '../navigation'
 
-import { generateOtp } from './generateOtpAction'
 import { getOtpCookieData } from './mfaHelpers'
+import { generateOtp } from './serverActions'
 import SetupMfaFormWrapper from './SetupMfaFormWrapper'
 
 type SearchParams = { error?: string; verify?: string }
