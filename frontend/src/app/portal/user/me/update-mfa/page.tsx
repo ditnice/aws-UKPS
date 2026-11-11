@@ -1,12 +1,12 @@
 import { redirect } from 'next/navigation'
 
 import { BackLink } from '@/components/BackLink/BackLink'
-import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 
 import { buildMyDetailsHref } from '../navigation'
 
+import GenerateOtpButton from './GenerateOtpButton'
 import { getOtpCookieData } from './mfaHelpers'
 import { generateOtp } from './serverActions'
 import SetupMfaFormWrapper from './SetupMfaFormWrapper'
@@ -62,9 +62,7 @@ const Page = async ({ searchParams }: PageProps) => {
         <ErrorState>{errorMessages[error] ?? 'Something went wrong. Please try again.'}</ErrorState>
       )}
       <form action={generateOtp}>
-        <Button buttonType="submit" type="cta">
-          Generate OTP
-        </Button>
+        <GenerateOtpButton />
       </form>
     </PageWrapper>
   )
