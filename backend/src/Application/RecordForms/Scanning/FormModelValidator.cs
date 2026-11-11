@@ -434,6 +434,36 @@ internal static partial class FormModelValidator
         {
             problems.Add($"{form} uses question ID '{duplicate.Key}' more than once.");
         }
+
+        ValidateDateEvents(form, questions, problems);
+    }
+
+    /// <summary>
+    /// A revision holds one regulatory date per event and precision, so two date questions in a
+    /// form with the same event would overwrite each other's row or break its unique index.
+    /// </summary>
+    private static void ValidateDateEvents(
+        string form,
+        (QuestionDeclaration Question, string SectionId)[] questions,
+        List<string> problems
+    )
+    {
+        foreach (
+            var duplicate in questions
+                .Where(static x => x.Question.Binding.Kind == BindingKind.RegulatoryDate)
+                .Where(static x => x.Question.DateEvent is not null)
+                .GroupBy(static x => x.Question.DateEvent!.DateEvent)
+                .Where(static g => g.Count() > 1)
+        )
+        {
+            string ids = string.Join(
+                ", ",
+                duplicate.Select(static x => $"'{x.Question.Field.Id}'")
+            );
+            problems.Add(
+                $"{form} uses date event {duplicate.Key} on more than one question: {ids}."
+            );
+        }
     }
 
     private static void ValidateTasks(

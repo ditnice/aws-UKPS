@@ -163,6 +163,9 @@ public class FormModelValidatorTests
     [InlineData(
         "BrokenDatedEntity.WrongValue [FormShowWhen] has value 'Yes', which is not a DatePrecision member."
     )]
+    [InlineData(
+        "The Vaccine form uses date event IntlLicence on more than one question: 'broken_dated_entity.wrong_control_date', 'broken_dated_entity.same_event_date'."
+    )]
     public void Validate_BrokenDatedEntity_ReportsTheProblem(string expected)
     {
         Problems(typeof(BrokenDatedEntity)).ShouldContain(expected);

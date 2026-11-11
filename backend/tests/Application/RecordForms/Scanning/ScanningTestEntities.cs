@@ -434,7 +434,14 @@ internal sealed class BrokenDatedEntity
     [FormDateEvent(DateEventType.IntlLicence)]
     public int? WrongControlDateId { get; set; }
 
+    [FormTask("broken-dated-task", "Broken dated task", Order = 10)]
+    [FormPage("same-event", "Same event", Order = 50)]
+    [FormField("broken_dated_entity.same_event_date", "Same event", FormControl.PrecisionDate)]
+    [FormDateEvent(DateEventType.IntlLicence)]
+    public int? SameEventDateId { get; set; }
+
     public RecordRevision? Revision { get; set; }
     public RegulatoryDate? NoEventDate { get; set; }
     public RegulatoryDate? WrongControlDate { get; set; }
+    public RegulatoryDate? SameEventDate { get; set; }
 }

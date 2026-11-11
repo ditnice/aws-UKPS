@@ -2,7 +2,7 @@ using System.Text.Json;
 using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
-using UKPS.Api.Persistence.FormAnnotations;
+using UKPS.Api.Application.RecordForms.Scanning;
 
 namespace UKPS.Api.Application.RecordForms.Rules;
 
@@ -93,8 +93,7 @@ internal static class PageAnswerValidator
     /// yet past.
     /// </summary>
     private static string? CheckDate(FormQuestion question, FormAnswer answer, DateOnly today) =>
-        question.Control is FormControl.PrecisionDate or FormControl.ActualMonth
-        && answer.Value is not null
+        ControlRules.IsDate(question.Control) && answer.Value is not null
             ? DateAnswer.Check(question.Control, answer.Value, today)
             : null;
 
