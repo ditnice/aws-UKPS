@@ -132,6 +132,7 @@ internal static class FormModelScanner
                 Required = property.GetCustomAttribute<FormRequiredAttribute>(),
                 MaxLength = property.GetCustomAttribute<FormMaxLengthAttribute>(),
                 MaxItems = property.GetCustomAttribute<FormMaxItemsAttribute>(),
+                Prefixes = property.GetCustomAttribute<FormValuePrefixesAttribute>(),
                 Options = property.GetCustomAttribute<FormOptionsAttribute>(),
                 ShowWhen = property.GetCustomAttribute<FormShowWhenAttribute>(),
                 DateEvent = property.GetCustomAttribute<FormDateEventAttribute>(),
@@ -233,6 +234,7 @@ internal static class FormModelScanner
         || property.IsDefined(typeof(FormTaskAttribute), false)
         || property.IsDefined(typeof(FormRequiredAttribute), false)
         || property.IsDefined(typeof(FormMaxLengthAttribute), false)
+        || property.IsDefined(typeof(FormValuePrefixesAttribute), false)
         || property.IsDefined(typeof(FormMaxItemsAttribute), false)
         || property.IsDefined(typeof(FormOptionsAttribute), false)
         || property.IsDefined(typeof(FormShowWhenAttribute), false)

@@ -5,6 +5,7 @@ using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Application.RecordForms.Scanning;
 using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
+using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Persistence.FormAnnotations;
 
@@ -13,9 +14,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.11";
+    private const string ExpectedVersion = "2026.11.12";
     private const string ExpectedFingerprint =
-        "e2e4a0e9203df08699ef1be20eeea4c529d9e6a832fb25b29d0c025aeefcf41a";
+        "6028beaf04956ac2932e5477687733b9452a177b3ad4cff3af42c9026c559356";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -103,6 +104,26 @@ public class MedicineFormModelTests
     }
 
     [Fact]
+    public void Model_HasTheHtaAndLaunchPagesInOrder()
+    {
+        Model
+            .Pages.Where(static p =>
+                string.Equals(p.SectionId, "hta-and-launch", StringComparison.Ordinal)
+            )
+            .Select(static p => p.Id)
+            .ShouldBe(["hta-submission", "nice-aligned-pathway", "nice-ta-id", "uk-launch-date"]);
+    }
+
+    [Fact]
+    public void Model_NiceTaIdOffersTheGidPrefixes()
+    {
+        FormQuestion question = Model.FindQuestion("record_hta.nice_ta_development_id")!;
+
+        question.Prefixes.ShouldBe(["GID-TA", "GID-HST"]);
+        question.Placeholder.ShouldBe("Choose ID type");
+    }
+
+    [Fact]
     public void Model_DevelopmentBackgroundRevealsFollowUpQuestions()
     {
         const string Prefix = "medicines_development_background.";
@@ -119,6 +140,14 @@ public class MedicineFormModelTests
                     $"AnswerIn {Prefix}is_originator_company [No]"
                 ),
                 ($"{Prefix}co_marketing_company_name", $"AnswerIn {Prefix}is_co_marketed [Yes]"),
+                (
+                    "record_hta.medicine_hta_bodies",
+                    "AnswerIn record_hta.medicine_hta_submission_intended [Yes]"
+                ),
+                (
+                    "record_hta.hta_additional_details",
+                    "AnswerIn record_hta.medicine_hta_submission_intended [Yes]"
+                ),
                 (
                     "medicines_eams_pim.will_submit_to_eams",
                     "AnswerIn medicines_eams_pim.pim_designation_status [Granted]"
@@ -148,6 +177,8 @@ public class MedicineFormModelTests
             .Pages.Where(static p => p.ShowWhen is not null)
             .Select(static p => p.Id)
             .ShouldBe([
+                "nice-aligned-pathway",
+                "nice-ta-id",
                 "eams-opinion-decision",
                 "biomarker-type",
                 "non-genomic-biomarker",
@@ -231,6 +262,7 @@ public class MedicineFormModelTests
             .TriggerEntities.Select(static e => e.ClrType)
             .ShouldBe([
                 typeof(MedicinesDevelopmentBackground),
+                typeof(RecordHta),
                 typeof(MedicinesEamsPim),
                 typeof(MedicinesLaboratoryTesting),
                 typeof(MedicinesPatientIdentification),
@@ -329,6 +361,12 @@ public class MedicineFormModelTests
                 FormControl.Text,
                 AnswerShape.Single
             ),
+            ("record_hta.medicine_hta_submission_intended", FormControl.Radio, AnswerShape.Single),
+            ("record_hta.medicine_hta_bodies", FormControl.Checkbox, AnswerShape.Multi),
+            ("record_hta.hta_additional_details", FormControl.Textarea, AnswerShape.Single),
+            ("record_hta.hta_nice_aligned_pathway", FormControl.Radio, AnswerShape.Single),
+            ("record_hta.nice_ta_development_id", FormControl.PrefixedNumber, AnswerShape.Single),
+            ("record_hta.uk_launch_date", FormControl.PrecisionDate, AnswerShape.Single),
             ("medicines_eams_pim.pim_designation_status", FormControl.Radio, AnswerShape.Single),
             ("medicines_eams_pim.will_submit_to_eams", FormControl.Radio, AnswerShape.Single),
             ("medicines_eams_pim.eams_opinion_decision", FormControl.Radio, AnswerShape.Single),
@@ -496,6 +534,11 @@ public class MedicineFormModelTests
         Previous("repurposed-medicine").ShouldBeNull();
         Next("repurposed-medicine").ShouldBe("originator");
         Next("co-marketing").ShouldBeNull();
+        Previous("hta-submission").ShouldBeNull();
+        // With no answers the NICE pages do not apply, so the launch date follows the first page.
+        Next("hta-submission").ShouldBe("uk-launch-date");
+        Previous("uk-launch-date").ShouldBe("hta-submission");
+        Next("uk-launch-date").ShouldBeNull();
         Previous("diagnostic-test-required").ShouldBeNull();
         // With no answers the conditional pages do not apply, so navigation skips to monitoring.
         Next("diagnostic-test-required").ShouldBe("monitoring-tests");

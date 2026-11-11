@@ -70,6 +70,19 @@ public class FormModelValidatorTests
     [InlineData(
         "BrokenEntity.ReservedPage declares page 'task-list', which is reserved for the task list."
     )]
+    [InlineData(
+        "BrokenEntity.PrefixesOnText has [FormValuePrefixes], which only a PrefixedNumber uses."
+    )]
+    [InlineData(
+        "BrokenEntity.PrefixedWithoutPrefixes uses PrefixedNumber, which needs [FormValuePrefixes] with at least one prefix."
+    )]
+    [InlineData(
+        "BrokenEntity.DigitEndingPrefix has a blank prefix, or one ending in a digit, which would make the number ambiguous."
+    )]
+    [InlineData("BrokenEntity.RepeatedPrefix repeats a prefix in [FormValuePrefixes].")]
+    [InlineData(
+        "BrokenEntity.OverlappingPrefix has a prefix that starts another, which makes the split ambiguous."
+    )]
     public void Validate_BrokenEntity_ReportsTheProblem(string expected)
     {
         Problems(typeof(BrokenEntity)).ShouldContain(expected);

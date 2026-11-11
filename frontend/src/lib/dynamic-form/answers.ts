@@ -1,6 +1,7 @@
 import { RuleKind } from '@/client/generated'
 
 import { dateAnswerError, isDateControl, toDateAnswer, toDateValue } from './dates'
+import { evaluatePrefixedNumber } from './prefixedNumber'
 
 import type {
   Answer,
@@ -123,6 +124,11 @@ export const validateQuestion = (question: Question, value: FormValue | undefine
   const answer = normaliseAnswer(toAnswer(question, value))
   if (Array.isArray(answer) && new Set(answer).size !== answer.length) {
     return duplicateMessage
+  }
+  if (question.prefixes && !Array.isArray(answer)) {
+    // The server saves a prefix with no digits as blank before running the rules.
+    const { value: saved, error } = evaluatePrefixedNumber(question.prefixes, answer)
+    return firstFailure(question.rules, saved) ?? error ?? undefined
   }
   const dateError =
     isDateControl(question.type) && typeof answer === 'string'

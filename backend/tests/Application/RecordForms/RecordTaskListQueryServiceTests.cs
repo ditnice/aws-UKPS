@@ -94,6 +94,7 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             .ShouldBe([
                 ("indication-details", "Indication details"),
                 ("development-background", "Development background"),
+                ("hta-and-launch", "Health technology assessment and launch"),
                 (
                     "pim-and-eams",
                     "Promising Innovative Medicine (PIM) and Early Access to Medicines Scheme (EAMS)"
@@ -115,6 +116,12 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
                     "development-background",
                     "Development background",
                     "repurposed-medicine",
+                    RecordTaskStatus.NotStarted
+                ),
+                (
+                    "hta-and-launch",
+                    "Health Technology Assessment (HTA) and launch",
+                    "hta-submission",
                     RecordTaskStatus.NotStarted
                 ),
                 (

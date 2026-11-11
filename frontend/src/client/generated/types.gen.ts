@@ -201,7 +201,8 @@ export const FormControl = {
     CHECKBOX: 'Checkbox',
     HIERARCHICAL_SELECT: 'HierarchicalSelect',
     PRECISION_DATE: 'PrecisionDate',
-    ACTUAL_MONTH: 'ActualMonth'
+    ACTUAL_MONTH: 'ActualMonth',
+    PREFIXED_NUMBER: 'PrefixedNumber'
 } as const;
 
 /**
@@ -1267,6 +1268,12 @@ export type RecordPageQuestionDto = {
      * The button text that adds another entry to a multi-value hierarchical select.
      */
     addAnotherLabel: null | string;
+    /**
+     * The prefixes a `PrefixedNumber` question offers before its digits, in order, or
+     * null for any other control. Not `required`, so existing clients and fixtures are
+     * unaffected.
+     */
+    prefixes?: null | Array<string>;
     showWhen: null | RecordPageConditionDto;
     /**
      * The rules, in evaluation order.

@@ -38,6 +38,15 @@ internal static class MedicineFormTasks
     /// <summary>The "Laboratory testing" task's position within its section.</summary>
     public const int LaboratoryTestingOrder = 10;
 
+    /// <summary>The "Health Technology Assessment (HTA) and launch" task's ID.</summary>
+    public const string HtaAndLaunch = "hta-and-launch";
+
+    /// <summary>The "Health Technology Assessment (HTA) and launch" task's title.</summary>
+    public const string HtaAndLaunchTitle = "Health Technology Assessment (HTA) and launch";
+
+    /// <summary>The "Health Technology Assessment (HTA) and launch" task's position within its section.</summary>
+    public const int HtaAndLaunchOrder = 10;
+
     /// <summary>The "PIM and EAMS" task's ID.</summary>
     public const string PimAndEams = "pim-and-eams";
 

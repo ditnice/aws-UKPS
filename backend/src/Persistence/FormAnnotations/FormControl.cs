@@ -74,4 +74,12 @@ public enum FormControl
     /// <see cref="FormDateEventAttribute"/>.
     /// </summary>
     ActualMonth = 7,
+
+    /// <summary>
+    /// A dropdown of fixed prefixes beside a text box for the number after it, for a string
+    /// property. The answer is the prefix and digits joined, for example <c>GID-TA10234</c>, or
+    /// null when blank. Needs <see cref="FormValuePrefixesAttribute"/>; must not have
+    /// <see cref="FormOptionsAttribute"/>.
+    /// </summary>
+    PrefixedNumber = 8,
 }

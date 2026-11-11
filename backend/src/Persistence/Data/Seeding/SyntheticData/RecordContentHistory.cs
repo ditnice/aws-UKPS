@@ -284,6 +284,16 @@ internal static class RecordContentHistory
                 "record_hta.medicine_hta_submission_intended",
                 hta.MedicineHtaSubmissionIntended?.ToString()
             ),
+            (
+                "record_hta.medicine_hta_bodies",
+                hta.MedicineHtaBodies is null || hta.MedicineHtaBodies.Count == 0
+                    ? null
+                    : FieldAuditJson.Serialize(
+                        hta.MedicineHtaBodies.Select(body => body.ToString())
+                            .Order(StringComparer.Ordinal)
+                    )
+            ),
+            ("record_hta.hta_additional_details", hta.HtaAdditionalDetails),
             ("record_hta.hta_nice_aligned_pathway", hta.HtaNiceAlignedPathway?.ToString()),
             ("record_hta.nice_ta_development_id", hta.NiceTaDevelopmentId),
             ("record_hta.uk_launch_date", Format(hta.UkLaunchDate)),

@@ -6,6 +6,7 @@ import { ActualMonthQuestion } from './questions/ActualMonthQuestion'
 import { CheckboxQuestion } from './questions/CheckboxQuestion'
 import { HierarchicalSelectQuestion } from './questions/HierarchicalSelectQuestion'
 import { PrecisionDateQuestion } from './questions/PrecisionDateQuestion'
+import { PrefixedNumberQuestion } from './questions/PrefixedNumberQuestion'
 import { RadioQuestion } from './questions/RadioQuestion'
 import { SelectQuestion } from './questions/SelectQuestion'
 import { TextareaQuestion } from './questions/TextareaQuestion'
@@ -35,5 +36,6 @@ export const questionRegistry: Record<FormControl, (props: QuestionProps) => Rea
   Checkbox: control<string[]>(CheckboxQuestion),
   HierarchicalSelect: control<HierarchicalEntry | HierarchicalEntry[]>(HierarchicalSelectQuestion),
   PrecisionDate: control<DateValue>(PrecisionDateQuestion),
+  PrefixedNumber: control<string>(PrefixedNumberQuestion),
   ActualMonth: control<DateValue>(ActualMonthQuestion),
 }
