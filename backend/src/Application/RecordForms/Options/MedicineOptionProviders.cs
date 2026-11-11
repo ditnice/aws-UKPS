@@ -13,7 +13,29 @@ internal static class MedicineOptionProviders
         RegisterIndicationDetailsProviders(registry);
         RegisterLaboratoryTestingProviders(registry);
         RegisterPatientAndClinicalRequirementsProviders(registry);
+        RegisterPimAndEamsProviders(registry);
         RegisterProductProviders(registry);
+    }
+
+    private static void RegisterPimAndEamsProviders(OptionProviderRegistry registry)
+    {
+        registry.AddEnum(
+            OptionKeys.PimDesignationStatus,
+            (DesignationStatus.Granted, "Granted"),
+            (DesignationStatus.NotGranted, "Not granted"),
+            (DesignationStatus.DecisionToSubmitOngoing, "Decision to submit is ongoing"),
+            (
+                DesignationStatus.ApplicationSubmittedDecisionPending,
+                "Application submitted and decision pending"
+            ),
+            (DesignationStatus.NoSubmissionIntended, "No submission intended")
+        );
+
+        registry.AddEnum(
+            OptionKeys.EamsOpinionDecision,
+            (EamsOpinionDecision.Positive, "Positive"),
+            (EamsOpinionDecision.Negative, "Negative")
+        );
     }
 
     private static void RegisterPatientAndClinicalRequirementsProviders(

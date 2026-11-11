@@ -91,6 +91,21 @@ internal static class OptionKeys
     public const string MedicineTechnologyStatus = "medicine-technology-status";
 
     /// <summary>
+    /// The <c>DesignationStatus</c> enum worded for MHRA PIM designation: granted, not granted,
+    /// decision to submit is ongoing, application submitted and decision pending, and no
+    /// submission intended. For a <see cref="FormControl.Radio"/> on a
+    /// <c>DesignationStatus?</c> property. Other designations that share the enum need their own
+    /// key, so name this one with <c>[FormOptions]</c>.
+    /// </summary>
+    public const string PimDesignationStatus = "pim-designation-status";
+
+    /// <summary>
+    /// The <c>EamsOpinionDecision</c> enum: positive and negative. For a
+    /// <see cref="FormControl.Radio"/> on an <c>EamsOpinionDecision?</c> property.
+    /// </summary>
+    public const string EamsOpinionDecision = "eams-opinion-decision";
+
+    /// <summary>
     /// The <c>NhsServiceChangesRequired</c> enum: complete transformation, some change, no
     /// changes and unknown at this stage, with a hint on all but the last. For a
     /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a

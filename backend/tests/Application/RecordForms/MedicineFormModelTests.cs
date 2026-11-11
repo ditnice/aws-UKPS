@@ -13,9 +13,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.10";
+    private const string ExpectedVersion = "2026.11.11";
     private const string ExpectedFingerprint =
-        "68899eddd1f76d097af6f707cce3c2fa0fe37ed6378b601e3dd2b9d4e7cfc202";
+        "e2e4a0e9203df08699ef1be20eeea4c529d9e6a832fb25b29d0c025aeefcf41a";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -81,6 +81,17 @@ public class MedicineFormModelTests
     }
 
     [Fact]
+    public void Model_HasThePimAndEamsPagesInOrder()
+    {
+        Model
+            .Pages.Where(static p =>
+                string.Equals(p.SectionId, "pim-and-eams", StringComparison.Ordinal)
+            )
+            .Select(static p => (p.Id, p.CommercialInConfidence))
+            .ShouldBe([("pim-designation", true), ("eams-opinion-decision", true)]);
+    }
+
+    [Fact]
     public void Model_HasTheDevelopmentBackgroundPagesInOrder()
     {
         Model
@@ -109,6 +120,10 @@ public class MedicineFormModelTests
                 ),
                 ($"{Prefix}co_marketing_company_name", $"AnswerIn {Prefix}is_co_marketed [Yes]"),
                 (
+                    "medicines_eams_pim.will_submit_to_eams",
+                    "AnswerIn medicines_eams_pim.pim_designation_status [Granted]"
+                ),
+                (
                     "medicines_laboratory_testing.genomic_test_notes",
                     "AnswerIn medicines_laboratory_testing.genomic_test_mandatory_status [MandatoryNoAlternatives, MandatoryAlternativesMayExist]"
                 ),
@@ -133,6 +148,7 @@ public class MedicineFormModelTests
             .Pages.Where(static p => p.ShowWhen is not null)
             .Select(static p => p.Id)
             .ShouldBe([
+                "eams-opinion-decision",
                 "biomarker-type",
                 "non-genomic-biomarker",
                 "genomic-target",
@@ -215,6 +231,7 @@ public class MedicineFormModelTests
             .TriggerEntities.Select(static e => e.ClrType)
             .ShouldBe([
                 typeof(MedicinesDevelopmentBackground),
+                typeof(MedicinesEamsPim),
                 typeof(MedicinesLaboratoryTesting),
                 typeof(MedicinesPatientIdentification),
                 typeof(MedicinesServiceImpact),
@@ -312,6 +329,9 @@ public class MedicineFormModelTests
                 FormControl.Text,
                 AnswerShape.Single
             ),
+            ("medicines_eams_pim.pim_designation_status", FormControl.Radio, AnswerShape.Single),
+            ("medicines_eams_pim.will_submit_to_eams", FormControl.Radio, AnswerShape.Single),
+            ("medicines_eams_pim.eams_opinion_decision", FormControl.Radio, AnswerShape.Single),
             (
                 "medicines_laboratory_testing.diagnostic_test_required",
                 FormControl.Radio,
