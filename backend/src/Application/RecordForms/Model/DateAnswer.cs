@@ -110,8 +110,9 @@ internal static partial class DateAnswer
             return value > today ? RecordFormMessages.ActualMonthInFuture : null;
         }
 
-        int months = precision == DatePrecision.EstimatedQuarter ? 3 : 1;
-        DateOnly lastDay = value.AddMonths(months).AddDays(-1);
+        // The last day is found within the period, as the day after it may be past DateOnly.MaxValue.
+        int lastMonth = value.Month + (precision == DatePrecision.EstimatedQuarter ? 2 : 0);
+        DateOnly lastDay = new(value.Year, lastMonth, DateTime.DaysInMonth(value.Year, lastMonth));
         return lastDay < today ? RecordFormMessages.EstimatedDateInPast : null;
     }
 

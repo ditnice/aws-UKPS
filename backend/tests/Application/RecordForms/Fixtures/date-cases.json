@@ -29,6 +29,8 @@
     { "name": "estimated month just ended", "answer": "2026-05", "error": "An estimated date must be in the future.", "precision": "EstimatedMonth" },
     { "name": "estimated quarter in progress", "answer": "2026-Q2", "error": null, "precision": "EstimatedQuarter" },
     { "name": "estimated quarter just ended", "answer": "2026-Q1", "error": "An estimated date must be in the future.", "precision": "EstimatedQuarter" },
+    { "name": "last quarter of the last year", "answer": "9999-Q4", "error": null, "precision": "EstimatedQuarter" },
+    { "name": "last month of the last year", "answer": "9999-12", "error": null, "precision": "EstimatedMonth" },
     { "name": "actual month", "control": "ActualMonth", "answer": "2025-04", "error": null, "precision": "ActualMonth" },
     { "name": "actual month this month", "control": "ActualMonth", "answer": "2026-06", "error": null, "precision": "ActualMonth" },
     { "name": "actual month next month", "control": "ActualMonth", "answer": "2026-07", "error": "The date must be this month or in the past.", "precision": "ActualMonth" },
