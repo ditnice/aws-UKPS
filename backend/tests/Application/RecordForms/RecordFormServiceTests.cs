@@ -47,6 +47,7 @@ public class RecordFormServiceTests : DatabaseTestBase
     private const string LabPrefix = "medicines_laboratory_testing.";
     private const string HtaPrefix = "record_hta.";
     private const string NiceTaId = "record_hta.nice_ta_development_id";
+    private const string UkLaunchDate = "record_hta.uk_launch_date";
 
     private static readonly DateTime _now = new(2026, 10, 15, 9, 30, 0, DateTimeKind.Utc);
 
@@ -871,13 +872,47 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task SavePage_HtaSubmissionWithoutNice_EndsTheTask()
+    public async Task SavePage_HtaSubmissionWithoutNice_GoesToTheLaunchDatePage()
     {
         Dictionary<string, JsonElement> answers = HtaSubmissionAnswers(_smcOnly);
 
         SaveRecordPageDto saved = await SaveOk("hta-submission", answers);
 
+        saved.NextPageId.ShouldBe("uk-launch-date");
+    }
+
+    [Fact]
+    public async Task SavePage_UkLaunchDate_StoresAnActualDateForTheLaunchEvent()
+    {
+        await SaveOk("hta-submission", HtaSubmissionAnswers(_smcOnly));
+
+        SaveRecordPageDto saved = await SaveOk(
+            "uk-launch-date",
+            Answer(UkLaunchDate, "2025-03-14")
+        );
+
         saved.NextPageId.ShouldBeNull();
+        int dateId = (await HtaRow()).UkLaunchDateId!.Value;
+        RegulatoryDate date = await Context
+            .RegulatoryDates.AsNoTracking()
+            .SingleAsync(d => d.Id == dateId, Ct);
+        date.DateEvent.ShouldBe(DateEventType.UkLaunch);
+        date.DatePrecision.ShouldBe(DatePrecision.ActualDate);
+        date.DateValue.ShouldBe(new DateOnly(2025, 3, 14));
+        date.IsConfidential.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task SavePage_UkLaunchDateBlank_ReportsTheRequiredMessage()
+    {
+        await SaveOk("hta-submission", HtaSubmissionAnswers(_smcOnly));
+
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "uk-launch-date",
+            Answer<string?>(UkLaunchDate, null)
+        );
+
+        errors[UkLaunchDate].ShouldBe("Enter the UK commercial launch date");
     }
 
     [Fact]

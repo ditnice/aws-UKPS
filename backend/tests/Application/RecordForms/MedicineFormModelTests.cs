@@ -16,7 +16,7 @@ public class MedicineFormModelTests
     // Bump FormVersions.Medicine whenever this changes, then update both values.
     private const string ExpectedVersion = "2026.11.11";
     private const string ExpectedFingerprint =
-        "c89bf700bbd6ede4be4c86bc7eb84df2ac9252d0692296edf911714403271798";
+        "e9c296f7099d0aaddb4916161d4d32d32a2292aebe2040ac76bd79ff09aa1e70";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -100,7 +100,7 @@ public class MedicineFormModelTests
                 string.Equals(p.SectionId, "hta-and-launch", StringComparison.Ordinal)
             )
             .Select(static p => p.Id)
-            .ShouldBe(["hta-submission", "nice-aligned-pathway", "nice-ta-id"]);
+            .ShouldBe(["hta-submission", "nice-aligned-pathway", "nice-ta-id", "uk-launch-date"]);
     }
 
     [Fact]
@@ -349,6 +349,7 @@ public class MedicineFormModelTests
             ("record_hta.hta_additional_details", FormControl.Textarea, AnswerShape.Single),
             ("record_hta.hta_nice_aligned_pathway", FormControl.Radio, AnswerShape.Single),
             ("record_hta.nice_ta_development_id", FormControl.PrefixedNumber, AnswerShape.Single),
+            ("record_hta.uk_launch_date", FormControl.PrecisionDate, AnswerShape.Single),
             (
                 "medicines_laboratory_testing.diagnostic_test_required",
                 FormControl.Radio,
@@ -514,8 +515,10 @@ public class MedicineFormModelTests
         Next("repurposed-medicine").ShouldBe("originator");
         Next("co-marketing").ShouldBeNull();
         Previous("hta-submission").ShouldBeNull();
-        // With no answers the NICE pages do not apply, so the task ends after its first page.
-        Next("hta-submission").ShouldBeNull();
+        // With no answers the NICE pages do not apply, so the launch date follows the first page.
+        Next("hta-submission").ShouldBe("uk-launch-date");
+        Previous("uk-launch-date").ShouldBe("hta-submission");
+        Next("uk-launch-date").ShouldBeNull();
         Previous("diagnostic-test-required").ShouldBeNull();
         // With no answers the conditional pages do not apply, so navigation skips to monitoring.
         Next("diagnostic-test-required").ShouldBe("monitoring-tests");
