@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 
-import { getRecord, RecordType } from '@/client/generated'
+import { getOrganisationRecords, getRecord, RecordType } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
@@ -85,6 +85,13 @@ const RecordView = async ({ organisationId, recordId, recordType, alert }: Recor
     )
   }
 
+  const { data: recordList } = await getOrganisationRecords({
+    client: await createServerApiClient(),
+    path: { organisationId },
+  })
+  const recordListItem = recordList?.items?.find((item) => item.id === recordId)
+  const nextUpdateDue = recordListItem?.nextUpdateDue
+
   //TODO: needs updating when we add vaccine DTOs
   const productDetail = record.recordType === 'Medicine' ? record.recordProductDetail : undefined
 
@@ -109,6 +116,7 @@ const RecordView = async ({ organisationId, recordId, recordType, alert }: Recor
 
       <ManageRecordActionBanner
         record={record}
+        nextUpdateDue={nextUpdateDue}
         updateRecordHref={
           record.canEditContent ? `/portal/records/${record.recordId}/task-list` : undefined
         }
