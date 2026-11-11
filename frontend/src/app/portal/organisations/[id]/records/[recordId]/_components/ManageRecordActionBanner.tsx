@@ -77,7 +77,6 @@ const ArchivedRecordActionBanner = ({ record }: ManageRecordActionBannerProps) =
 export const ManageRecordActionBanner = ({
   record,
   updateRecordHref,
-  nextUpdateDue,
 }: ManageRecordActionBannerProps) => {
   const { actions } = record
   const discardHref = buildRecordHref(
