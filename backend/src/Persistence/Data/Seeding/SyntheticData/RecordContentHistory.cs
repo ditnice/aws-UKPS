@@ -249,6 +249,7 @@ internal static class RecordContentHistory
         [
             ("record_mhra_procedure.mhra_procedure_type_id", mhra.MhraProcedureType),
             ("record_mhra_procedure.irp_reference_regulator_id", mhra.IrpReferenceRegulator),
+            ("record_mhra_procedure.procedure_details", mhra.ProcedureDetails),
             ("record_mhra_date.uk_submission_date", Format(mhra.UkSubmissionDate)),
             ("record_mhra_date.uk_licence_date", Format(mhra.UkLicenceDate)),
             (

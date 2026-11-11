@@ -383,7 +383,7 @@ public string? NiceTaDevelopmentId { get; set; }
 
 A date is stored as a `RegulatoryDate` row that the entity's `int?` foreign key points to. Put
 the question on the foreign key column (not the navigation), and name the event with
-`[FormDateEvent]`. For example (illustrative; the MHRA pages are not annotated yet):
+`[FormDateEvent]`. For example:
 
 ```csharp
 [FormField(
@@ -730,6 +730,8 @@ reports every problem in one exception.
   `date-cases.json` too).
 - **`RegulatoryDateBindingTests`**: database tests of how a date answer is stored, updated,
   cleared and audited.
+- **`RecordFormMhraServiceTests`**: database tests of the MHRA procedure and dates pages,
+  including conditions on a reference code and on a date's precision.
 - **`RecordFormServiceTests`**: database tests of the page query and save services, following
   the [walkthrough](record-creation-walkthrough.md).
 - **`MedicineOptionProviderTests`**: if you added a provider.

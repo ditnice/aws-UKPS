@@ -29,6 +29,16 @@ internal static class MedicineFormTasks
     /// <summary>The "Development background" task's position within its section.</summary>
     public const int DevelopmentBackgroundOrder = 20;
 
+    /// <summary>The "MHRA procedure and dates" task's ID.</summary>
+    public const string MhraProcedureAndDates = "mhra-procedure-and-dates";
+
+    /// <summary>The "MHRA procedure and dates" task's title.</summary>
+    public const string MhraProcedureAndDatesTitle =
+        "Medicines and Healthcare products Regulatory Agency (MHRA) procedure and dates";
+
+    /// <summary>The "MHRA procedure and dates" task's position within its section.</summary>
+    public const int MhraProcedureAndDatesOrder = 10;
+
     /// <summary>The "Laboratory testing" task's ID.</summary>
     public const string LaboratoryTesting = "laboratory-testing";
 

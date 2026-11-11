@@ -2,7 +2,8 @@
 
 > **Status: first delivery implemented** (Medicine form, Indication details section), with
 > conditional questions and pages (Development background, Laboratory testing and Patient and
-> clinical requirements sections), and date questions. The
+> clinical requirements sections), date questions and reference data triggers (MHRA procedure
+> and dates section). The
 > decision is recorded in
 > [ADR-006](../ADR/ADR-006-attribute-annotated-record-content-forms.md).
 
