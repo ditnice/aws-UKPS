@@ -34,6 +34,7 @@ using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
 >;
+using VerifyMultiFactorAuthenticationUpdateResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationUpdateError>;
 
 namespace UKPS.Api.Tests.WebApi.Controllers;
 
@@ -51,6 +52,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     private const string ResendSetupTokenUrl = "/auth/resend-setup-token";
     private const string SetupUserUrl = "/auth/setup-user";
     private const string VerifyMultiFactorAuthenticationUrl = "/auth/verify-mfa";
+    private const string AccessToken = "access-token";
 
     private readonly DateTime _currentDateTime = new(2024, 6, 1, 12, 0, 0, DateTimeKind.Utc);
     private DateTimeOffset CurrentDateTimOffset => new(_currentDateTime, TimeSpan.Zero);
@@ -97,6 +99,9 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
     {
         ArgumentNullException.ThrowIfNull(factory);
 
+        var accessTokenProviderMock = Substitute.For<IAccessTokenProvider>();
+        accessTokenProviderMock.GetAccessTokenAsync().Returns(AccessToken);
+
         _client = factory
             .WithWebHostBuilder(builder =>
             {
@@ -109,6 +114,7 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
                     services.AddSingleton<IDateTimeProvider>(
                         new FakeDateTimeProvider(_currentDateTime)
                     );
+                    services.AddSingleton(_ => accessTokenProviderMock);
                 });
                 builder.ConfigureNoDatabase();
                 builder.UseSetting("AWS:LoadSecrets", $"{false}");
@@ -990,6 +996,101 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         var response = await SendConfirmPasswordRequest();
 
         response.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+    }
+
+    [Fact]
+    public async Task InitiateUpdateMultiFactorAuthentication_ShouldReturnValuesFromServiceMethod()
+    {
+        var expectedValues = new MultiFactorAuthenticationSetupDto()
+        {
+            OtpAuthUri = new Uri(
+                "otpauth://totp/MyApp:test@example.com?secret=JBSWY3DPEHPK3PXP&issuer=MyApp"
+            ),
+            AuthenticationSession = "auth-session",
+        };
+        _mockedAuthorisationService
+            .InitiateUpdateMultiFactorAuthentication(AccessToken, Arg.Any<CancellationToken>())
+            .Returns(expectedValues);
+        var response = await SendInitiateUpdateMultiFactorAuthenticationRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<MultiFactorAuthenticationSetupDto>(
+            TestContext.Current.CancellationToken
+        );
+        content.ShouldBe(expectedValues);
+    }
+
+    [Fact]
+    public async Task VerifyMultiFactorAuthenticationUpdate_ShouldPassParametersToServiceMethod()
+    {
+        MockVerifyMultiFactorAuthenticationUpdate(VerifyMultiFactorAuthenticationUpdateResult.Ok());
+        var code = "123456";
+        _ = await SendVerifyMultiFactorAuthenticationUpdateRequest(x => x with { Code = code });
+        await _mockedAuthorisationService
+            .Received(1)
+            .VerifyMultiFactorAuthenticationUpdate(
+                AccessToken,
+                new VerifyMultiFactorAuthenticationUpdateCommand() { Code = code },
+                Arg.Any<CancellationToken>()
+            );
+    }
+
+    [Fact]
+    public async Task VerifyMultiFactorAuthenticationUpdate_WhenSuccess_ShouldReturn200()
+    {
+        MockVerifyMultiFactorAuthenticationUpdate(VerifyMultiFactorAuthenticationUpdateResult.Ok());
+        var response = await SendVerifyMultiFactorAuthenticationUpdateRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task VerifyMultiFactorAuthenticationUpdate_WhenInvalidCode_ShouldReturn400()
+    {
+        MockVerifyMultiFactorAuthenticationUpdate(
+            VerifyMultiFactorAuthenticationUpdateResult.Err(
+                new VerifyMultiFactorAuthenticationUpdateError.InvalidCode()
+            )
+        );
+        var response = await SendVerifyMultiFactorAuthenticationUpdateRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    private void MockVerifyMultiFactorAuthenticationUpdate(
+        VerifyMultiFactorAuthenticationUpdateResult expectedValues
+    )
+    {
+        _mockedAuthorisationService
+            .VerifyMultiFactorAuthenticationUpdate(
+                AccessToken,
+                Arg.Any<VerifyMultiFactorAuthenticationUpdateCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(expectedValues);
+    }
+
+    private async Task<HttpResponseMessage> SendInitiateUpdateMultiFactorAuthenticationRequest()
+    {
+        using var content = new StringContent(string.Empty);
+        return await _client.PostAsync(
+            new Uri("/auth/update-mfa", UriKind.Relative),
+            content,
+            TestContext.Current.CancellationToken
+        );
+    }
+
+    private Task<HttpResponseMessage> SendVerifyMultiFactorAuthenticationUpdateRequest(
+        Func<
+            VerifyMultiFactorAuthenticationUpdateCommand,
+            VerifyMultiFactorAuthenticationUpdateCommand
+        >? overrides = null
+    )
+    {
+        var defaultCommand = new VerifyMultiFactorAuthenticationUpdateCommand() { Code = "123456" };
+        var command = overrides is null ? defaultCommand : overrides(defaultCommand);
+        return _client.PostAsJsonAsync(
+            new Uri("/auth/verify-mfa-update", UriKind.Relative),
+            command,
+            TestContext.Current.CancellationToken
+        );
     }
 
     private static async Task AssertValidationProblem(

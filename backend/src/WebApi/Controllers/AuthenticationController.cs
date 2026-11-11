@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using UKPS.Api.Application.Authentication;
@@ -9,6 +10,7 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.WebApi.CustomResponses;
+using UKPS.Api.WebApi.InternalServices.Authentication;
 using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
     UKPS.Api.Application.Authentication.Errors.UserSetupError
@@ -31,10 +33,8 @@ namespace UKPS.Api.WebApi.Controllers;
 [Route("auth")]
 public class AuthenticationController : ControllerBase
 {
-    private const string CsrfCookieName = "csrf_token";
     private const string CsrfHeaderName = "X-CSRF-Token";
-    private const string RefreshCookieName = "refresh_token";
-    private const string AccessCookieName = "access_token";
+
     private const string RootCookiePath = "/";
     private const string AuthCookiePath = "/auth";
 
@@ -45,6 +45,7 @@ public class AuthenticationController : ControllerBase
     private readonly ILoginService _loginService;
     private readonly IIdentityAdministrationService _authorisationAdministrationService;
     private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly IAccessTokenProvider _accessTokenProvider;
     private readonly ProblemDetails _setupTokenExpiredDetails = new ProblemDetails
     {
         Title = "Setup token has expired.",
@@ -84,6 +85,12 @@ public class AuthenticationController : ControllerBase
             "The request could not be authenticated because the CSRF token was missing or invalid.",
         Status = StatusCodes.Status401Unauthorized,
     };
+    private readonly ProblemDetails _invalidMfaSetupCode = new ProblemDetails
+    {
+        Title = "Invalid multi-factor authentication code.",
+        Detail = "The supplied authentication code is invalid or has expired.",
+        Status = StatusCodes.Status400BadRequest,
+    };
 
     /// <summary>
     /// Initialises a new instance of the <see cref="AuthenticationController"/> class.
@@ -95,16 +102,25 @@ public class AuthenticationController : ControllerBase
     /// The service responsible for managing authorisation administration operations,
     /// such as user onboarding, setup token validation, and password management.
     /// </param>
-    /// <param name="dateTimeProvider"></param>
+    /// <param name="dateTimeProvider">
+    /// The provider used to obtain the current date and time, allowing time-dependent
+    /// logic (such as token expiry) to be abstracted and tested.
+    /// </param>
+    /// <param name="accessTokenProvider">
+    /// The provider responsible for generating and issuing access tokens
+    /// for authenticated users.
+    /// </param>
     public AuthenticationController(
         ILoginService loginService,
         IIdentityAdministrationService authorisationAdministrationService,
-        IDateTimeProvider dateTimeProvider
+        IDateTimeProvider dateTimeProvider,
+        IAccessTokenProvider accessTokenProvider
     )
     {
         _loginService = loginService;
         _authorisationAdministrationService = authorisationAdministrationService;
         _dateTimeProvider = dateTimeProvider;
+        _accessTokenProvider = accessTokenProvider;
     }
 
     /// <summary>
@@ -191,7 +207,7 @@ public class AuthenticationController : ControllerBase
         }
         var command = new RefreshAuthenticationTokenCommand
         {
-            RefreshToken = Request.Cookies[RefreshCookieName] ?? string.Empty,
+            RefreshToken = Request.Cookies[CookieNames.RefreshCookieName] ?? string.Empty,
         };
         return (await _loginService.RefreshAuthenticationToken(command, cancellationToken)).Match(
             HandleLoginSuccess,
@@ -220,7 +236,7 @@ public class AuthenticationController : ControllerBase
 
         ClearAuthenticationCookies();
         await _loginService.SignOut(
-            Request.Cookies[RefreshCookieName] ?? string.Empty,
+            Request.Cookies[CookieNames.RefreshCookieName] ?? string.Empty,
             cancellationToken
         );
 
@@ -436,6 +452,33 @@ public class AuthenticationController : ControllerBase
     }
 
     /// <summary>
+    /// Initiates the process of updating the authenticated user's multi-factor authentication settings.
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// A token to monitor for cancellation requests.
+    /// </param>
+    /// <returns>
+    /// An <see cref="ActionResult"/> containing a <see cref="MultiFactorAuthenticationSetupDto"/>
+    /// with the details required to configure multi-factor authentication.
+    /// </returns>
+    [Authorize]
+    [HttpPost("update-mfa", Name = nameof(InitiateUpdateMultiFactorAuthentication))]
+    [ProducesResponseType<MultiFactorAuthenticationSetupDto>(StatusCodes.Status200OK)]
+    public async Task<ActionResult> InitiateUpdateMultiFactorAuthentication(
+        CancellationToken cancellationToken
+    )
+    {
+        string accessToken = await _accessTokenProvider.GetAccessTokenAsync();
+        InitiateUpdateMultiFactorAuthenticationResult result =
+            await _authorisationAdministrationService.InitiateUpdateMultiFactorAuthentication(
+                accessToken,
+                cancellationToken
+            );
+
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Verifies the user's multi-factor authentication setup by validating the
     /// provided authentication code.
     /// </summary>
@@ -478,18 +521,49 @@ public class AuthenticationController : ControllerBase
             HandleLoginSuccess,
             err =>
                 err.Match<ActionResult>(
-                    invalidCode: _ =>
-                        BadRequest(
-                            new ProblemDetails
-                            {
-                                Title = "Invalid multi-factor authentication code.",
-                                Detail =
-                                    "The supplied authentication code is invalid or has expired.",
-                                Status = StatusCodes.Status400BadRequest,
-                            }
-                        ),
+                    invalidCode: _ => BadRequest(_invalidMfaSetupCode),
                     doesNotExist: _ => NotFound()
                 )
+        );
+    }
+
+    /// <summary>
+    /// Verifies the multi-factor authentication code provided by the authenticated user
+    /// to complete the update of their multi-factor authentication settings.
+    /// </summary>
+    /// <param name="command">
+    /// The command containing the multi-factor authentication verification code.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token to monitor for cancellation requests.
+    /// </param>
+    /// <returns>
+    /// An <see cref="ActionResult"/> indicating whether the multi-factor authentication
+    /// update was successful. Returns <see cref="StatusCodes.Status400BadRequest"/>
+    /// if the verification code is invalid, or <see cref="StatusCodes.Status404NotFound"/>
+    /// if the requested resource cannot be found.
+    /// </returns>
+    [Authorize]
+    [HttpPost("verify-mfa-update", Name = nameof(VerifyMultiFactorAuthenticationUpdate))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> VerifyMultiFactorAuthenticationUpdate(
+        [FromBody] VerifyMultiFactorAuthenticationUpdateCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        string accessToken = await _accessTokenProvider.GetAccessTokenAsync();
+        VerifyMultiFactorAuthenticationUpdateResult result =
+            await _authorisationAdministrationService.VerifyMultiFactorAuthenticationUpdate(
+                accessToken,
+                command,
+                cancellationToken
+            );
+
+        return result.Match(
+            Ok,
+            err => err.Match<ActionResult>(invalidCode: _ => BadRequest(_invalidMfaSetupCode))
         );
     }
 
@@ -627,7 +701,7 @@ public class AuthenticationController : ControllerBase
 
     private bool PassesCsrfValidation()
     {
-        string? csrfCookie = Request.Cookies[CsrfCookieName];
+        string? csrfCookie = Request.Cookies[CookieNames.CsrfCookieName];
         StringValues csrfHeader = Request.Headers[CsrfHeaderName];
 
         return !string.IsNullOrWhiteSpace(csrfCookie)
@@ -638,7 +712,7 @@ public class AuthenticationController : ControllerBase
     {
         TimeSpan accessTokenLifetime = _accessTokenValidity + _accessTokenRefreshThreshold;
         Response.Cookies.Append(
-            AccessCookieName,
+            CookieNames.AccessCookieName,
             dto.AccessToken,
             new CookieOptions
             {
@@ -651,7 +725,7 @@ public class AuthenticationController : ControllerBase
         );
 
         Response.Cookies.Append(
-            RefreshCookieName,
+            CookieNames.RefreshCookieName,
             dto.RefreshToken,
             new CookieOptions
             {
@@ -665,7 +739,7 @@ public class AuthenticationController : ControllerBase
 
         var csrfToken = Guid.NewGuid().ToString("N");
         Response.Cookies.Append(
-            CsrfCookieName,
+            CookieNames.CsrfCookieName,
             csrfToken,
             new CookieOptions
             {
@@ -684,9 +758,9 @@ public class AuthenticationController : ControllerBase
     {
         DateTimeOffset expires = _dateTimeProvider.GetOffsetUtcNow().AddDays(-1);
 
-        ExpireCookie(AccessCookieName, RootCookiePath, httpOnly: true, expires);
-        ExpireCookie(RefreshCookieName, AuthCookiePath, httpOnly: true, expires);
-        ExpireCookie(CsrfCookieName, RootCookiePath, httpOnly: false, expires);
+        ExpireCookie(CookieNames.AccessCookieName, RootCookiePath, httpOnly: true, expires);
+        ExpireCookie(CookieNames.RefreshCookieName, AuthCookiePath, httpOnly: true, expires);
+        ExpireCookie(CookieNames.CsrfCookieName, RootCookiePath, httpOnly: false, expires);
     }
 
     private void ExpireCookie(string name, string path, bool httpOnly, DateTimeOffset expires)

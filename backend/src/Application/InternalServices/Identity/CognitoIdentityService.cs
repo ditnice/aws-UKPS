@@ -226,12 +226,16 @@ internal sealed partial class CognitoIdentityService : IIdentityService
     }
 
     public async Task<AssociateSoftwareTokenResult> AssociateSoftwareToken(
-        string authenticationSessionId,
+        SessionIdentifier sessionIdentifier,
         CancellationToken cancellationToken
     )
     {
+        var request = sessionIdentifier.Match(
+            onSession: static x => new AssociateSoftwareTokenRequest { Session = x.Value },
+            onToken: static x => new AssociateSoftwareTokenRequest { AccessToken = x.Value }
+        );
         var associateResponse = await _cognito.AssociateSoftwareTokenAsync(
-            new AssociateSoftwareTokenRequest { Session = authenticationSessionId },
+            request,
             cancellationToken
         );
 
@@ -242,15 +246,31 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         };
     }
 
-    public async Task<AuthenticationCredentialsDto> VerifySoftwareToken(
+    public async Task VerifySoftwareTokenWithAccessToken(
         CognitoUsername cognitoUsername,
-        string authenticationSessionId,
+        string accessToken,
         string code,
         CancellationToken cancellationToken
     )
     {
         VerifySoftwareTokenResponse verifyResponse = await _cognito.VerifySoftwareTokenAsync(
-            new VerifySoftwareTokenRequest { Session = authenticationSessionId, UserCode = code },
+            new VerifySoftwareTokenRequest { AccessToken = accessToken, UserCode = code },
+            cancellationToken
+        );
+
+        if (verifyResponse.Status != VerifySoftwareTokenResponseType.SUCCESS)
+            throw new CodeMismatchException("Invalid verification code.");
+    }
+
+    public async Task<AuthenticationCredentialsDto> VerifySoftwareTokenWithSession(
+        CognitoUsername cognitoUsername,
+        string authenticationSession,
+        string code,
+        CancellationToken cancellationToken
+    )
+    {
+        VerifySoftwareTokenResponse verifyResponse = await _cognito.VerifySoftwareTokenAsync(
+            new VerifySoftwareTokenRequest { Session = authenticationSession, UserCode = code },
             cancellationToken
         );
         AdminRespondToAuthChallengeResponse challengeResponse =

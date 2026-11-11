@@ -1,3 +1,5 @@
+global using InitiateUpdateMultiFactorAuthenticationResult = UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto;
+global using VerifyMultiFactorAuthenticationUpdateResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationUpdateError>;
 using UKPS.Api.Application.Authentication.Dtos;
 using ResendSetupTokenResult = UKPS.Api.Application.Common.Result<
     System.Guid,
@@ -60,6 +62,31 @@ public interface IIdentityAdministrationService
     Task<SetupUserResult> SetupUser(SetupUserCommand command, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Initiates the process of updating the multi-factor authentication (MFA)
+    /// configuration for the user identified by the supplied access token.
+    /// </summary>
+    /// <param name="accessToken">
+    /// A valid access token identifying the authenticated user whose MFA
+    /// configuration is to be updated.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result is an
+    /// <see cref="InitiateUpdateMultiFactorAuthenticationResult"/> containing the
+    /// outcome of the initiation, including any information needed to complete the
+    /// MFA update.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="accessToken"/> is <c>null</c>, empty, or whitespace.
+    /// </exception>
+    Task<InitiateUpdateMultiFactorAuthenticationResult> InitiateUpdateMultiFactorAuthentication(
+        string accessToken,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
     /// Verifies the user's multi-factor authentication setup by validating the
     /// provided authentication code and completing the MFA configuration process.
     /// </summary>
@@ -75,6 +102,31 @@ public interface IIdentityAdministrationService
     /// </returns>
     Task<VerifyMultiFactorAuthenticationResult> VerifyMultiFactorAuthentication(
         VerifyMultiFactorAuthenticationCommand command,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
+    /// Verifies a pending multi-factor authentication (MFA) update for the user identified by the supplied access token.
+    /// </summary>
+    /// <param name="accessToken">
+    /// The access token identifying and authorizing the user whose MFA update is being verified.
+    /// </param>
+    /// <param name="command">
+    /// The command containing the details required to verify the MFA update, such as the verification code.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result is a
+    /// <see cref="VerifyMultiFactorAuthenticationUpdateResult"/> describing the outcome of the verification.
+    /// </returns>
+    /// <exception cref="OperationCanceledException">
+    /// Thrown when the operation is canceled via <paramref name="cancellationToken"/>.
+    /// </exception>
+    Task<VerifyMultiFactorAuthenticationUpdateResult> VerifyMultiFactorAuthenticationUpdate(
+        string accessToken,
+        VerifyMultiFactorAuthenticationUpdateCommand command,
         CancellationToken cancellationToken
     );
 }

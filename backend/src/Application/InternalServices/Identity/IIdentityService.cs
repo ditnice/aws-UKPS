@@ -12,7 +12,7 @@ namespace UKPS.Api.Application.InternalServices.Identity;
 internal interface IIdentityService
 {
     Task<AssociateSoftwareTokenResult> AssociateSoftwareToken(
-        string authenticationSessionId,
+        SessionIdentifier sessionIdentifier,
         CancellationToken cancellationToken
     );
 
@@ -56,9 +56,16 @@ internal interface IIdentityService
         CancellationToken cancellationToken
     );
 
-    Task<AuthenticationCredentialsDto> VerifySoftwareToken(
+    Task VerifySoftwareTokenWithAccessToken(
         CognitoUsername cognitoUsername,
-        string authenticationSessionId,
+        string accessToken,
+        string code,
+        CancellationToken cancellationToken
+    );
+
+    Task<AuthenticationCredentialsDto> VerifySoftwareTokenWithSession(
+        CognitoUsername cognitoUsername,
+        string authenticationSession,
         string code,
         CancellationToken cancellationToken
     );
