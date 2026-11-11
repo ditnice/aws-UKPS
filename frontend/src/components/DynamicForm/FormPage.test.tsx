@@ -909,7 +909,7 @@ describe('FormPage', () => {
       render(<FormPage page={datePage()} />)
 
       await user.click(screen.getByRole('radio', { name: 'Estimated quarter' }))
-      await user.click(screen.getByRole('radio', { name: 'April to June' }))
+      await user.selectOptions(screen.getByRole('combobox', { name: 'Quarter' }), '2')
       await user.type(screen.getByRole('textbox', { name: 'Year' }), '2027')
       save()
 
@@ -985,6 +985,91 @@ describe('FormPage', () => {
 
       expect(await screen.findByText('Enter the UK regulatory submission date')).toBeInTheDocument()
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('shows the error above the chosen precision, not on the radios', async () => {
+      const user = userEvent.setup()
+      const { container } = render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Estimated quarter' }))
+      await user.selectOptions(screen.getByRole('combobox', { name: 'Quarter' }), '1')
+      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2025')
+      save()
+
+      const message = await screen.findByText('An estimated date must be in the future.')
+      expect(message.closest('[data-component="radios-conditional"]')).not.toBeNull()
+      expect(container.querySelector('.radio--error')).toBeNull()
+      for (const control of [
+        screen.getByRole('combobox', { name: 'Quarter' }),
+        screen.getByRole('textbox', { name: 'Year' }),
+      ]) {
+        expect(control).toBeInvalid()
+        expect(control).toHaveAccessibleDescription(expect.stringContaining(message.textContent!))
+      }
+      for (const part of ['Day', 'Month']) {
+        for (const input of screen.getAllByLabelText(part)) {
+          expect(input).not.toBeInvalid()
+        }
+      }
+    })
+
+    it('starts a newly chosen precision empty', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Estimated quarter' }))
+      await user.selectOptions(screen.getByRole('combobox', { name: 'Quarter' }), '2')
+      await user.click(screen.getByRole('radio', { name: 'Actual date' }))
+      await user.type(screen.getByRole('textbox', { name: 'Day' }), '14')
+      await user.type(screen.getByRole('textbox', { name: 'Month' }), '5')
+      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2027')
+      await user.click(screen.getByRole('radio', { name: 'Estimated quarter' }))
+
+      expect(screen.getByRole('combobox', { name: 'Quarter' })).toHaveValue('')
+      expect(screen.getByRole('textbox', { name: 'Year' })).toHaveValue('')
+
+      await user.click(screen.getByRole('radio', { name: 'Actual date' }))
+
+      for (const part of ['Day', 'Month', 'Year']) {
+        expect(screen.getByRole('textbox', { name: part })).toHaveValue('')
+      }
+    })
+
+    it('clears the error when another precision is chosen until focus leaves the question', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Actual date' }))
+      await user.type(screen.getByRole('textbox', { name: 'Day' }), '31')
+      await user.type(screen.getByRole('textbox', { name: 'Month' }), '4')
+      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2026')
+      save()
+      expect(await screen.findByText('Enter a real date.')).toBeInTheDocument()
+
+      await user.click(screen.getByRole('radio', { name: 'Estimated month' }))
+      expect(screen.queryByText('Enter a real date.')).not.toBeInTheDocument()
+
+      // Moving into and between the parts does not revalidate.
+      await user.click(screen.getByRole('textbox', { name: 'Month' }))
+      await user.keyboard('7')
+      await user.tab()
+      expect(screen.queryByText('Enter a real date.')).not.toBeInTheDocument()
+      expect(screen.getByRole('textbox', { name: 'Month' })).not.toBeInvalid()
+
+      // Leaving the question does.
+      await user.tab()
+      expect(await screen.findByText('Enter a real date.')).toBeInTheDocument()
+      expect(screen.getByRole('textbox', { name: 'Month' })).toBeInvalid()
+    })
+
+    it('shows the error on the radios when no precision is chosen', async () => {
+      const { container } = render(<FormPage page={datePage()} />)
+
+      save()
+
+      const message = await screen.findByText('Enter the UK regulatory submission date')
+      expect(message.closest('[data-component="radios-conditional"]')).toBeNull()
+      expect(container.querySelectorAll('.radio--error')).toHaveLength(3)
     })
 
     describe('actual month', () => {

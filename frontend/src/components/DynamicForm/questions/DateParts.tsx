@@ -5,10 +5,10 @@ import styles from '../DynamicForm.module.scss'
 
 type Part = 'day' | 'month' | 'year'
 
-const partInputs: Record<Part, { label: string; width: 2 | 4 }> = {
+const partInputs: Record<Part, { label: string; width: 2 | 5 }> = {
   day: { label: 'Day', width: 2 },
   month: { label: 'Month', width: 2 },
-  year: { label: 'Year', width: 4 },
+  year: { label: 'Year', width: 5 },
 }
 
 export type DatePartsProps = {
@@ -16,18 +16,30 @@ export type DatePartsProps = {
   name: string
   value: DateValue
   onChange: (value: DateValue) => void
-  onBlur: () => void
-  invalid: boolean
+  onBlur?: () => void
+  /** Styles the inputs as invalid; the message itself is shown by the caller. */
+  error: boolean
+  /** The ID of an error message shown outside a fieldset that would otherwise describe them. */
+  'aria-describedby'?: string
   parts: Part[]
 }
 
 /** Day, month and year inputs side by side, following the GOV.UK date input pattern. */
-export function DateParts({ name, parts, value, onChange, onBlur, invalid }: DatePartsProps) {
+export function DateParts({
+  'aria-describedby': describedBy,
+  name,
+  parts,
+  value,
+  onChange,
+  onBlur,
+  error,
+}: DatePartsProps) {
   return (
     <div className={styles.dateInput}>
       {parts.map((part) => (
         <Input
-          aria-invalid={invalid || undefined}
+          aria-describedby={describedBy}
+          error={error}
           id={`${name}-${part}`}
           inputMode="numeric"
           key={part}

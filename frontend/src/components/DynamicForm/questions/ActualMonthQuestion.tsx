@@ -22,7 +22,7 @@ export function ActualMonthQuestion({
       legend={question.label}
     >
       <DateParts
-        invalid={Boolean(error)}
+        error={Boolean(error)}
         name={name}
         onBlur={onBlur}
         onChange={onChange}

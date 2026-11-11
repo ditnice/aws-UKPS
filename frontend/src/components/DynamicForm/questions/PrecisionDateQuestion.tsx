@@ -1,10 +1,14 @@
 import { Radio, Radios } from '@/components/Radios/Radios'
+import { Select, SelectOption } from '@/components/Select/Select'
 import type { DatePrecision, DateValue } from '@/lib/dynamic-form/dates'
+
+import styles from '../DynamicForm.module.scss'
 
 import { DateParts } from './DateParts'
 
 import type { QuestionProps } from '../types'
 import type { DatePartsProps } from './DateParts'
+import type { ReactNode } from 'react'
 
 const quarters = [
   { value: '1', label: 'January to March' },
@@ -13,31 +17,36 @@ const quarters = [
   { value: '4', label: 'October to December' },
 ]
 
-/** A quarter of the year as radios, with the year beneath. */
-function QuarterAndYear(props: Omit<DatePartsProps, 'parts'>) {
-  const { name, value, onChange, onBlur } = props
+type ControlsProps = Omit<DatePartsProps, 'name' | 'onBlur' | 'parts'>
+
+/** A quarter of the year as a dropdown, with the year beside it. */
+function QuarterAndYear(props: Omit<DatePartsProps, 'onBlur' | 'parts'>) {
+  const { 'aria-describedby': describedBy, name, value, onChange, error } = props
   return (
-    <>
-      <Radios
-        legend="Quarter"
+    <div className={styles.dateInput}>
+      <Select
+        aria-describedby={describedBy}
+        error={error}
+        label="Quarter"
         name={`${name}-quarter`}
-        onBlur={onBlur}
-        onChange={(quarter) => onChange({ ...value, quarter })}
-        value={value.quarter || null}
+        onChange={(event) => onChange({ ...value, quarter: event.target.value })}
+        value={value.quarter}
       >
+        <SelectOption value="">Select a quarter</SelectOption>
         {quarters.map((quarter) => (
-          <Radio key={quarter.value} label={quarter.label} value={quarter.value} />
+          <SelectOption key={quarter.value} value={quarter.value}>
+            {quarter.label}
+          </SelectOption>
         ))}
-      </Radios>
+      </Select>
       <DateParts {...props} parts={['year']} />
-    </>
+    </div>
   )
 }
 
 /**
  * A date at the precision the user can give: an estimated quarter or month, or an actual date.
- * Choosing a precision reveals the parts it needs; parts typed under another precision are kept
- * but not sent.
+ * Choosing a precision reveals the parts it needs, empty and without the previous error.
  */
 export function PrecisionDateQuestion({
   question,
@@ -46,35 +55,78 @@ export function PrecisionDateQuestion({
   onChange,
   onBlur,
   error,
+  clearError,
 }: QuestionProps<DateValue>) {
-  const parts = { onBlur, onChange, value, invalid: Boolean(error) }
+  const errorId = `${name}-error`
+  // Once a precision is chosen, the error sits just above its controls and only they are marked
+  // as invalid; until then it is on the radios.
+  const reveal = (precision: DatePrecision, controls: (props: ControlsProps) => ReactNode) => {
+    const ownError = value.precision === precision ? error : undefined
+    return (
+      <>
+        {ownError && (
+          <p className="form-group__error-message" id={errorId}>
+            <span className="visually-hidden">Error:</span> {ownError}
+          </p>
+        )}
+        {controls({
+          'aria-describedby': ownError ? errorId : undefined,
+          error: Boolean(ownError),
+          onChange,
+          value,
+        })}
+      </>
+    )
+  }
   return (
-    <Radios
-      error={error}
-      hint={question.hint ?? undefined}
-      legend={question.label}
-      name={name}
-      onBlur={onBlur}
-      onChange={(precision) => onChange({ ...value, precision: precision as DatePrecision })}
-      value={value.precision || null}
-    >
-      <Radio
-        conditional={<QuarterAndYear name={`${name}-quarter`} {...parts} />}
-        label="Estimated quarter"
-        value="EstimatedQuarter"
-      />
-      <Radio
-        conditional={<DateParts name={`${name}-month`} parts={['month', 'year']} {...parts} />}
-        label="Estimated month"
-        value="EstimatedMonth"
-      />
-      <Radio
-        conditional={
-          <DateParts name={`${name}-actual`} parts={['day', 'month', 'year']} {...parts} />
+    // Revalidate only when focus leaves the question, so moving from a newly chosen precision
+    // into its parts, or between the parts, does not flag them before they are filled in.
+    <div
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          onBlur()
         }
-        label="Actual date"
-        value="ActualDate"
-      />
-    </Radios>
+      }}
+    >
+      <Radios
+        error={value.precision ? undefined : error}
+        hint={question.hint ?? undefined}
+        legend={question.label}
+        name={name}
+        onChange={(precision) => {
+          onChange({
+            precision: precision as DatePrecision,
+            day: '',
+            month: '',
+            quarter: '',
+            year: '',
+          })
+          clearError()
+        }}
+        value={value.precision || null}
+      >
+        <Radio
+          conditional={reveal('EstimatedQuarter', (props) => (
+            <QuarterAndYear name={`${name}-quarter`} {...props} />
+          ))}
+          label="Estimated quarter"
+          value="EstimatedQuarter"
+        />
+        <Radio
+          conditional={reveal('EstimatedMonth', (props) => (
+            <DateParts name={`${name}-month`} parts={['month', 'year']} {...props} />
+          ))}
+          label="Estimated month"
+          value="EstimatedMonth"
+        />
+        <Radio
+          conditional={reveal('ActualDate', (props) => (
+            <DateParts name={`${name}-actual`} parts={['day', 'month', 'year']} {...props} />
+          ))}
+          label="Actual date"
+          value="ActualDate"
+        />
+      </Radios>
+    </div>
   )
 }
