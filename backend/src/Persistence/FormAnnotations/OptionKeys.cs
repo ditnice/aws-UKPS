@@ -91,6 +91,12 @@ internal static class OptionKeys
     public const string MedicineTechnologyStatus = "medicine-technology-status";
 
     /// <summary>
+    /// The <c>MedicineHtaAssessor</c> flags enum: NICE, SMC and AWMSG. For a
+    /// <see cref="FormControl.Checkbox"/> on a <c>MedicineHtaAssessor?</c> property.
+    /// </summary>
+    public const string MedicineHtaAssessor = "medicine-hta-assessor";
+
+    /// <summary>
     /// The <c>NhsServiceChangesRequired</c> enum: complete transformation, some change, no
     /// changes and unknown at this stage, with a hint on all but the last. For a
     /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a

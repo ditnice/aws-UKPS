@@ -14,9 +14,11 @@ internal sealed record QuestionDeclaration
     public required FormFieldAttribute Field { get; init; }
     public FormRequiredAttribute? Required { get; init; }
     public FormMaxLengthAttribute? MaxLength { get; init; }
+    public FormValuePrefixesAttribute? Prefixes { get; init; }
     public FormMaxItemsAttribute? MaxItems { get; init; }
     public FormOptionsAttribute? Options { get; init; }
     public FormShowWhenAttribute? ShowWhen { get; init; }
+    public FormDateEventAttribute? DateEvent { get; init; }
     public required BindingInfo Binding { get; init; }
 
     public string Where => $"{EntityType.Name}.{Property.Name}";

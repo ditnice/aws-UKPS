@@ -94,6 +94,7 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             .ShouldBe([
                 ("indication-details", "Indication details"),
                 ("development-background", "Development background"),
+                ("hta-and-launch", "Health technology assessment and launch"),
                 ("laboratory-testing", "Laboratory testing"),
                 ("patient-and-clinical-requirements", "Patient and clinical requirements"),
             ]);
@@ -111,6 +112,12 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
                     "development-background",
                     "Development background",
                     "repurposed-medicine",
+                    RecordTaskStatus.NotStarted
+                ),
+                (
+                    "hta-and-launch",
+                    "Health Technology Assessment (HTA) and launch",
+                    "hta-submission",
                     RecordTaskStatus.NotStarted
                 ),
                 (

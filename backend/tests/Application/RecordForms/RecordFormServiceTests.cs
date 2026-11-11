@@ -12,6 +12,7 @@ using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Entities.ReferenceData;
+using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Fixtures;
@@ -44,10 +45,15 @@ public class RecordFormServiceTests : DatabaseTestBase
         "medicines_indication_detail.medicine_technology_status";
 
     private const string LabPrefix = "medicines_laboratory_testing.";
+    private const string HtaPrefix = "record_hta.";
+    private const string NiceTaId = "record_hta.nice_ta_development_id";
+    private const string UkLaunchDate = "record_hta.uk_launch_date";
 
     private static readonly DateTime _now = new(2026, 10, 15, 9, 30, 0, DateTimeKind.Utc);
 
     private static readonly string[] _biosimilarAndNewIndication = ["Biosimilar", "NewIndication"];
+    private static readonly string[] _niceAndSmc = ["Nice", "Smc"];
+    private static readonly string[] _smcOnly = ["Smc"];
 
     private Organisation _organisation = null!;
     private User _user = null!;
@@ -856,6 +862,121 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task SavePage_HtaSubmissionIncludingNice_GoesToTheAlignedPathwayPage()
+    {
+        Dictionary<string, JsonElement> answers = HtaSubmissionAnswers(_niceAndSmc);
+
+        SaveRecordPageDto saved = await SaveOk("hta-submission", answers);
+
+        saved.NextPageId.ShouldBe("nice-aligned-pathway");
+    }
+
+    [Fact]
+    public async Task SavePage_HtaSubmissionWithoutNice_GoesToTheLaunchDatePage()
+    {
+        Dictionary<string, JsonElement> answers = HtaSubmissionAnswers(_smcOnly);
+
+        SaveRecordPageDto saved = await SaveOk("hta-submission", answers);
+
+        saved.NextPageId.ShouldBe("uk-launch-date");
+    }
+
+    [Fact]
+    public async Task SavePage_UkLaunchDate_StoresAnActualDateForTheLaunchEvent()
+    {
+        await SaveOk("hta-submission", HtaSubmissionAnswers(_smcOnly));
+
+        SaveRecordPageDto saved = await SaveOk(
+            "uk-launch-date",
+            Answer(UkLaunchDate, "2025-03-14")
+        );
+
+        saved.NextPageId.ShouldBeNull();
+        int dateId = (await HtaRow()).UkLaunchDateId!.Value;
+        RegulatoryDate date = await Context
+            .RegulatoryDates.AsNoTracking()
+            .SingleAsync(d => d.Id == dateId, Ct);
+        date.DateEvent.ShouldBe(DateEventType.UkLaunch);
+        date.DatePrecision.ShouldBe(DatePrecision.ActualDate);
+        date.DateValue.ShouldBe(new DateOnly(2025, 3, 14));
+        date.IsConfidential.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task SavePage_UkLaunchDateBlank_ReportsTheRequiredMessage()
+    {
+        await SaveOk("hta-submission", HtaSubmissionAnswers(_smcOnly));
+
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "uk-launch-date",
+            Answer<string?>(UkLaunchDate, null)
+        );
+
+        errors[UkLaunchDate].ShouldBe("Select an option");
+    }
+
+    [Fact]
+    public async Task SavePage_HtaSubmissionYesWithNoBodiesOrDetails_ReportsBothErrors()
+    {
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "hta-submission",
+            Answer($"{HtaPrefix}medicine_hta_submission_intended", "Yes")
+        );
+
+        errors.Keys.ShouldBe(
+            [$"{HtaPrefix}medicine_hta_bodies", $"{HtaPrefix}hta_additional_details"],
+            ignoreOrder: true
+        );
+    }
+
+    [Fact]
+    public async Task SavePage_NiceTaIdWithTypeAndNumber_StoresTheJoinedValue()
+    {
+        await SaveOk("hta-submission", HtaSubmissionAnswers(_niceAndSmc));
+
+        await SaveOk("nice-ta-id", Answer(NiceTaId, "GID-TA10234"));
+
+        (await HtaRow()).NiceTaDevelopmentId.ShouldBe("GID-TA10234");
+    }
+
+    [Fact]
+    public async Task SavePage_NiceTaIdWithTypeOnly_ClearsAnEarlierValue()
+    {
+        await SaveOk("hta-submission", HtaSubmissionAnswers(_niceAndSmc));
+        await SaveOk("nice-ta-id", Answer(NiceTaId, "GID-TA10234"));
+
+        await SaveOk("nice-ta-id", Answer(NiceTaId, "GID-TA"));
+
+        (await HtaRow()).NiceTaDevelopmentId.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SavePage_NiceTaIdWithNumberOnly_ReportsThatATypeIsNeeded()
+    {
+        await SaveOk("hta-submission", HtaSubmissionAnswers(_niceAndSmc));
+
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "nice-ta-id",
+            Answer(NiceTaId, "10234")
+        );
+
+        errors[NiceTaId].ShouldBe(RecordFormMessages.SelectIdType);
+    }
+
+    [Fact]
+    public async Task SavePage_NiceTaIdWithLettersAfterTheType_ReportsThatOnlyNumbersAreAllowed()
+    {
+        await SaveOk("hta-submission", HtaSubmissionAnswers(_niceAndSmc));
+
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "nice-ta-id",
+            Answer(NiceTaId, "GID-TA12a")
+        );
+
+        errors[NiceTaId].ShouldBe(RecordFormMessages.IdDigitsOnly);
+    }
+
+    [Fact]
     public async Task SavePage_FirstLaboratoryTestingSave_CreatesTheRow()
     {
         (
@@ -1155,6 +1276,17 @@ public class RecordFormServiceTests : DatabaseTestBase
             .MedicinesIndicationDetails.AsNoTracking()
             .Include(static x => x.TherapeuticAreas)
             .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+
+    private static Dictionary<string, JsonElement> HtaSubmissionAnswers(string[] bodies) =>
+        new(StringComparer.Ordinal)
+        {
+            [$"{HtaPrefix}medicine_hta_submission_intended"] = Json("Yes"),
+            [$"{HtaPrefix}medicine_hta_bodies"] = Json(bodies),
+            [$"{HtaPrefix}hta_additional_details"] = Json("Planned submissions differ by body"),
+        };
+
+    private async Task<RecordHta> HtaRow() =>
+        await Context.RecordHtas.AsNoTracking().SingleAsync(x => x.RevisionId == _revision.Id, Ct);
 
     private async Task<MedicinesLaboratoryTesting> LaboratoryTestingRow() =>
         await Context

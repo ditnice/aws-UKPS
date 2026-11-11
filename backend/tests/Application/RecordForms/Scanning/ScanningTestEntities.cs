@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Entities.ReferenceData;
+using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Persistence.FormAnnotations;
 
@@ -130,6 +131,55 @@ internal sealed class BrokenEntity
     [FormPage("task-list", "Task list", Order = 40)]
     [FormField("broken_entity.reserved_page", "Reserved page", FormControl.Text)]
     public string? ReservedPage { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("broken-prefixes", "Broken prefixes", Order = 50)]
+    [FormField("broken_entity.prefixes_on_text", "Prefixes on text", FormControl.Text, Order = 1)]
+    [FormValuePrefixes("GID-TA")]
+    public string? PrefixesOnText { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("broken-prefixes", "Broken prefixes", Order = 50)]
+    [FormField(
+        "broken_entity.prefixed_without_prefixes",
+        "Prefixed without prefixes",
+        FormControl.PrefixedNumber,
+        Order = 2
+    )]
+    public string? PrefixedWithoutPrefixes { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("broken-prefixes", "Broken prefixes", Order = 50)]
+    [FormField(
+        "broken_entity.digit_ending_prefix",
+        "Digit ending prefix",
+        FormControl.PrefixedNumber,
+        Order = 3
+    )]
+    [FormValuePrefixes("GID-TA1")]
+    public string? DigitEndingPrefix { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("broken-prefixes", "Broken prefixes", Order = 50)]
+    [FormField(
+        "broken_entity.repeated_prefix",
+        "Repeated prefix",
+        FormControl.PrefixedNumber,
+        Order = 4
+    )]
+    [FormValuePrefixes("GID-TA", "GID-TA")]
+    public string? RepeatedPrefix { get; set; }
+
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("broken-prefixes", "Broken prefixes", Order = 50)]
+    [FormField(
+        "broken_entity.overlapping_prefix",
+        "Overlapping prefix",
+        FormControl.PrefixedNumber,
+        Order = 5
+    )]
+    [FormValuePrefixes("GID", "GID-TA")]
+    public string? OverlappingPrefix { get; set; }
 
     public RecordRevision? Revision { get; set; }
 }
@@ -368,4 +418,79 @@ internal sealed class ConditionalExtraEntity
     public string? Other { get; set; }
 
     public RecordRevision? Revision { get; set; }
+}
+
+/// <summary>Valid date questions, and a condition on a date's precision.</summary>
+[FormSection(RecordType.Vaccine, "dated", "Dated", Order = 10)]
+[FormPageShowWhen("actual", "dated_entity.submission_date", DatePrecision.ActualDate)]
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class DatedEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    [FormTask("dated-task", "Dated task", Order = 10)]
+    [FormPage("submission", "Submission", Order = 10)]
+    [FormField("dated_entity.submission_date", "Submission", FormControl.PrecisionDate)]
+    [FormDateEvent(DateEventType.UkSubmission)]
+    public int? SubmissionDateId { get; set; }
+
+    [FormTask("dated-task", "Dated task", Order = 10)]
+    [FormPage("actual", "Actual", Order = 20)]
+    [FormField("dated_entity.actual_date", "Actual", FormControl.PrecisionDate)]
+    [FormDateEvent(DateEventType.GlobalFirstSubmission)]
+    public int? ActualDateId { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+    public RegulatoryDate? SubmissionDate { get; set; }
+    public RegulatoryDate? ActualDate { get; set; }
+}
+
+/// <summary>Breaks the date checks.</summary>
+[FormSection(RecordType.Vaccine, "broken-dated", "Broken dated", Order = 20)]
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class BrokenDatedEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    [FormTask("broken-dated-task", "Broken dated task", Order = 10)]
+    [FormPage("no-event", "No event", Order = 10)]
+    [FormField("broken_dated_entity.no_event_date", "No event", FormControl.PrecisionDate)]
+    public int? NoEventDateId { get; set; }
+
+    [FormTask("broken-dated-task", "Broken dated task", Order = 10)]
+    [FormPage("no-event", "No event", Order = 10)]
+    [FormField("broken_dated_entity.wrong_value", "Wrong value", FormControl.Text, Order = 10)]
+    [FormShowWhen("broken_dated_entity.no_event_date", YesNoUnknown.Yes)]
+    public string? WrongValue { get; set; }
+
+    [FormTask("broken-dated-task", "Broken dated task", Order = 10)]
+    [FormPage("text-event", "Text event", Order = 20)]
+    [FormField("broken_dated_entity.text_event", "Text event", FormControl.Text)]
+    [FormDateEvent(DateEventType.UkLicence)]
+    public string? TextEvent { get; set; }
+
+    [FormTask("broken-dated-task", "Broken dated task", Order = 10)]
+    [FormPage("wrong-date-control", "Wrong date control", Order = 40)]
+    [FormField("broken_dated_entity.wrong_control_date", "Wrong control", FormControl.Text)]
+    [FormDateEvent(DateEventType.IntlLicence)]
+    public int? WrongControlDateId { get; set; }
+
+    [FormTask("broken-dated-task", "Broken dated task", Order = 10)]
+    [FormPage("same-event", "Same event", Order = 50)]
+    [FormField("broken_dated_entity.same_event_date", "Same event", FormControl.PrecisionDate)]
+    [FormDateEvent(DateEventType.IntlLicence)]
+    public int? SameEventDateId { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+    public RegulatoryDate? NoEventDate { get; set; }
+    public RegulatoryDate? WrongControlDate { get; set; }
+    public RegulatoryDate? SameEventDate { get; set; }
 }

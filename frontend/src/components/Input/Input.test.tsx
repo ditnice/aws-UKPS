@@ -65,6 +65,16 @@ describe('Input', () => {
     expect(asFragment()).toMatchSnapshot()
   })
 
+  it('styles an input as invalid without a message when error has none', () => {
+    render(<Input error label="Age" name="age" />)
+
+    const input = screen.getByLabelText('Age')
+    expect(input.getAttribute('aria-invalid')).toBe('true')
+    expect(input.closest('[data-component="input"]')).toHaveClass('input--error')
+    expect(input.getAttribute('aria-describedby')).toBeNull()
+    expect(document.getElementById('age-error')).toBeNull()
+  })
+
   it('merges consumer descriptions with hint and error ids', () => {
     const { asFragment } = render(
       <Input

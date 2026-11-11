@@ -18,6 +18,9 @@ internal sealed record FormQuestion
     public string? ChildPlaceholder { get; init; }
     public string? AddAnotherLabel { get; init; }
 
+    /// <summary>The prefixes a <see cref="FormControl.PrefixedNumber"/> offers, in order.</summary>
+    public IReadOnlyList<string>? Prefixes { get; init; }
+
     /// <summary>The rules, in evaluation order.</summary>
     public required IReadOnlyList<FormRule> Rules { get; init; }
 

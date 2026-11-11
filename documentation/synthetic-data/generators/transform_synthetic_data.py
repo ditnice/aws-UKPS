@@ -88,6 +88,15 @@ def regulatory_date(value, as_of, rng):
     }
 
 
+def actual_month(value):
+    """A month the record knew had happened, for a question that collects the month only."""
+    return {
+        "dateValue": month_start(value).isoformat(),
+        "datePrecision": "ActualMonth",
+        "isConfidential": False,
+    }
+
+
 def yes_no_unknown(rng, yes, no, unknown):
     return weighted(rng, {"Yes": yes, "No": no, "Unknown": unknown})
 
@@ -824,9 +833,11 @@ class RecordBuilder:
         else:
             global_date = None
 
-        # Only the actual global first submission date is collected.
+        # Only the actual global first submission is collected, to the month. The draw matches
+        # regulatory_date's, so the random sequence for the remaining fields is unaffected.
         if global_date is not None and global_date <= as_of:
-            result["globalSubmissionActualDate"] = regulatory_date(global_date, as_of, rng)
+            rng.random()
+            result["globalSubmissionActualDate"] = actual_month(global_date)
 
         return result
 
