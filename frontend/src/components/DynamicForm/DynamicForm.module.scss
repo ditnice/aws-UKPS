@@ -13,7 +13,7 @@
   }
 }
 
-.question + .question:not([data-component='radios-conditional'] *) {
+.question + .question {
   margin-top: utils.rem(spacing.$x_large);
 }
 
