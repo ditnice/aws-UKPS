@@ -162,6 +162,7 @@ export function FormPage({ page }: FormPageProps) {
                       data-question-id={question.id}
                     >
                       <Component
+                        clearError={() => field.setMeta((meta) => ({ ...meta, errorMap: {} }))}
                         error={getFieldErrorMessage(field.state.meta.errors)}
                         labelAsHeading={labelAsHeading}
                         name={field.name}

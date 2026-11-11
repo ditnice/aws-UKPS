@@ -95,7 +95,8 @@ export const fakeDatePrecision = (options?: Options): DatePrecision => {
     return f.helpers.arrayElement([
         'EstimatedQuarter',
         'EstimatedMonth',
-        'ActualDate'
+        'ActualDate',
+        'ActualMonth'
     ]);
 };
 
@@ -123,7 +124,9 @@ export const fakeFormControl = (options?: Options): FormControl => {
         'Radio',
         'Select',
         'Checkbox',
-        'HierarchicalSelect'
+        'HierarchicalSelect',
+        'PrecisionDate',
+        'ActualMonth'
     ]);
 };
 

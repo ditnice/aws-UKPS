@@ -49,9 +49,9 @@ internal sealed partial class UserOnboardingService
             return await AddMembershipToExistingUser(existingUser, command, cancellationToken);
         }
 
-        Task<Result<UserOnboardingOutcome, OnboardUserError>> HandleIdentityUserCreationFailed(
-            CreateNewUserError error
-        )
+        static Task<
+            Result<UserOnboardingOutcome, OnboardUserError>
+        > HandleIdentityUserCreationFailed(CreateNewUserError error)
         {
             return error switch
             {
