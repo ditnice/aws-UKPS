@@ -192,4 +192,29 @@ describe('RecordPage', () => {
       'There was a problem retrieving the record',
     )
   })
+
+  it.each([
+    ['Published', 'View record details'],
+    ['Archived', 'Archived record details'],
+    ['OnHold', 'Published record details'],
+    ['QAReview', 'Published record details'],
+  ] as const)('displays "%s" record with heading "%s"', async (status, expectedHeading) => {
+    mockRecord({
+      data: {
+        ...medicineRecord,
+        displayStatus: status,
+      },
+      error: undefined,
+      response: new Response(),
+    })
+
+    await renderPage()
+
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: expectedHeading,
+      }),
+    ).toBeDefined()
+  })
 })

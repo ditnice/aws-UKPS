@@ -52,6 +52,7 @@ describe('ManageRecordActionBanner', () => {
       ['Change record status', 'Confirm status as current', 'View record timeline'],
     ],
     ['in QA review', ['ViewTimeline'], ['View record timeline']],
+    ['archived', ['ViewTimeline'], ['View record timeline']],
   ])('shows the permitted actions for a record that is %s', (_, actions, expected) => {
     renderBanner(actions)
 
