@@ -120,6 +120,14 @@ const RecordView = async ({ organisationId, recordId, recordType, alert }: Recor
   //TODO: needs updating when we add vaccine DTOs
   const productDetail = record.recordType === 'Medicine' ? record.recordProductDetail : undefined
 
+  const statusHeadings = {
+    Archived: 'Archived record details',
+    OnHold: 'Published record details',
+    QAReview: 'Published record details',
+    Published: 'View record details',
+    Draft: 'View record details',
+  }
+
   return (
     <>
       {alert && <RecordViewAlert action={alert} />}
@@ -147,7 +155,7 @@ const RecordView = async ({ organisationId, recordId, recordType, alert }: Recor
         }
       />
 
-      <h2>View record details</h2>
+      <h2>{statusHeadings[record.displayStatus]}</h2>
       <Button variant="secondary">Export record to PDF</Button>
       {record.recordType === 'Medicine' ? (
         <MedicineRecordDetails record={record} />
