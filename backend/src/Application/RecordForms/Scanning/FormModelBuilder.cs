@@ -98,6 +98,7 @@ internal static class FormModelBuilder
             ChildLabel = field.ChildLabel,
             ChildPlaceholder = field.ChildPlaceholder,
             AddAnotherLabel = field.AddAnotherLabel,
+            Prefixes = question.Prefixes?.Prefixes,
             Rules = [.. rules.OrderBy(static r => r.Kind)],
             ShowWhen = question.ShowWhen is { } showWhen
                 ? Condition(showWhen.QuestionId, showWhen.Values)

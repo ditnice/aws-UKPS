@@ -43,6 +43,25 @@
   width: fit-content;
 }
 
+// A dropdown and a textbox side by side.
+.prefixedNumber {
+  display: flex;
+  flex-wrap: wrap;
+  gap: utils.rem(spacing.$medium);
+
+  // The select and input differ slightly in height by default. Each wrapper becomes a column
+  // whose box fills it, and the row stretches both wrappers to the taller one.
+  > * {
+    display: flex;
+    flex-direction: column;
+  }
+
+  select,
+  input {
+    flex: 1;
+  }
+}
+
 .childLabel {
   @include typography.font-size(h3);
   display: block;

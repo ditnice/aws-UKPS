@@ -49,12 +49,13 @@ describes. You only touch the frontend to add a new control.
 | `[FormMaxItems(max, message)]`                      | property |                                                                                                | `Checkbox`                                                                                                                                                                                                                                          |
 | `[FormOptions(key)]`                                | property |                                                                                                | Chooses a provider other than the default for the property's type. Only needed when several providers offer the same type                                                                                                                           |
 | `[FormIgnore(reason)]`                              | property |                                                                                                | Not a question. The reason is required                                                                                                                                                                                                              |
+| `[FormValuePrefixes(prefixes...)]`                  | property |                                                                                                | Required on `PrefixedNumber`, not allowed on any other control. The fixed prefixes offered before the digits, in order. See [Prefixed numbers](#prefixed-numbers)                                                                                   |
 | `[FormDateEvent(dateEvent)]`                        | property |                                                                                                | Required on `PrecisionDate` and `ActualMonth`: the `DateEventType` the regulatory date row is stored with. See [Dates](#dates)                                                                                                                      |
 | `[FormShowWhen(questionId, values...)]`             | property |                                                                                                | The question applies only when an earlier question on the same page has one of the values. See [Conditional questions and pages](#conditional-questions-and-pages)                                                                                  |
 | `[FormPageShowWhen(pageId, questionId, values...)]` | class    |                                                                                                | The page applies only when a question on an earlier page has one of the values. One per page                                                                                                                                                        |
 
 `FormControl`: `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect`,
-`PrecisionDate`, `ActualMonth`.
+`PrecisionDate`, `ActualMonth`, `PrefixedNumber`.
 `FormRowSource`: `FirstSave` (default), `RecordCreation`.
 
 The form hierarchy is **section → task → page → question**. Put `[FormTask]` and `[FormPage]`
@@ -315,7 +316,7 @@ controls for the property type:
 
 | Property type                 | Allowed                                 | Answer on the wire                     | Frontend component                                    |
 | ----------------------------- | --------------------------------------- | -------------------------------------- | ----------------------------------------------------- |
-| `string`                      | `Text`, `Textarea`                      | `string \| null`                       | `Input` / `Textarea`                                  |
+| `string`                      | `Text`, `Textarea`, `PrefixedNumber`    | `string \| null`                       | `Input` / `Textarea` / `Select` plus `Input`          |
 | non-flags enum                | `Radio`, `Select`                       | `string \| null` (member name)         | NDS radios / `Select`                                 |
 | `int?` reference FK           | `Radio`, `Select`, `HierarchicalSelect` | `string \| null` (ID)                  | NDS radios / `Select` / parent and child `Select`s    |
 | `[Flags]` enum                | `Checkbox`                              | `string[]` (member names)              | NDS checkboxes                                        |
@@ -329,6 +330,31 @@ step 5). On a junction it repeats, with an **Add another** button up to the `Max
 
 `Display = "combobox"` asks the frontend for a searchable combobox. Until that is built, it is
 ignored and the control renders as plain dropdowns or checkboxes.
+
+### Prefixed numbers
+
+`PrefixedNumber` is a dropdown of fixed prefixes beside a text box for the digits, for one
+`string` column. Name the prefixes with `[FormValuePrefixes]` and, optionally, the empty dropdown
+text with `Placeholder`. For example (the NICE technology appraisal ID):
+
+```csharp
+[FormField(
+    "record_hta.nice_ta_development_id",
+    "Enter the NICE technology appraisal development ID for this product (optional)",
+    FormControl.PrefixedNumber,
+    Placeholder = "Choose ID type")]
+[FormValuePrefixes("GID-TA", "GID-HST")]
+public string? NiceTaDevelopmentId { get; set; }
+```
+
+- **Stored and sent** as one string, the prefix followed by the digits, for example
+  `GID-TA10234`. No migration is needed for an existing text column.
+- **Rules:** blank is fine. A prefix with no digits is saved as blank. Digits with no known
+  prefix give "Select ID type". Anything other than `0` to `9` after the prefix gives "ID must
+  only contain numbers". A prefix may not end in a digit or start another prefix.
+- `PrefixedNumberAnswer` (backend) and `lib/dynamic-form/prefixedNumber.ts` (frontend) hold the
+  rules; `prefixed-number-cases.json` keeps them in step.
+- The prefixes reach the page as `prefixes` on the question.
 
 ### Hints
 
@@ -654,7 +680,7 @@ reports every problem in one exception.
 | Order        | Two sections, two tasks in a section, two pages in a task, or two questions on a page have the same `Order`                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | Structure    | A section has no pages, or a page has no questions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | Controls     | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]`. A `PrecisionDate` or `ActualMonth` has no `[FormDateEvent]`, or another control has one. Two date questions in one form use the same `[FormDateEvent]`                                                                                                                                                                                                                                                                                   |
-| Presentation | `Placeholder` on a control other than `Select` or `HierarchicalSelect`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`; a `HierarchicalSelect` without `ChildLabel`                                                                                                                                                                                                                                                                                     |
+| Presentation | `PrefixedNumber` without `[FormValuePrefixes]`, or the attribute on another control, with a blank prefix, a prefix ending in a digit, a repeated prefix or a prefix that starts another; `Placeholder` on a control other than `Select`, `HierarchicalSelect` or `PrefixedNumber`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`; a `HierarchicalSelect` without `ChildLabel`                                                                          |
 | Options      | A choice control has no provider registered for its type, or several and no `[FormOptions]`. A text control has `[FormOptions]`. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId`                                                                                                                                                                                                  |
 | Rules        | A rule is on a control it does not apply to, or a rule kind appears twice                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | Rows         | The entity has no `int RevisionId` FK to `RecordRevision`. `RowSource = FirstSave` on an entity with other non-nullable columns                                                                                                                                                                                                                                                                                                                                                                                                                                |

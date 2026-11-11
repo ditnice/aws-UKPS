@@ -9,7 +9,12 @@ internal static class ControlRules
     public static IReadOnlyList<FormControl> Allowed(BindingKind kind) =>
         kind switch
         {
-            BindingKind.Text => [FormControl.Text, FormControl.Textarea],
+            BindingKind.Text =>
+            [
+                FormControl.Text,
+                FormControl.Textarea,
+                FormControl.PrefixedNumber,
+            ],
             BindingKind.Enum => [FormControl.Radio, FormControl.Select],
             BindingKind.ReferenceId =>
             [
