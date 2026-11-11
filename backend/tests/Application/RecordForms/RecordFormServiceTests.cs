@@ -912,7 +912,7 @@ public class RecordFormServiceTests : DatabaseTestBase
             Answer<string?>(UkLaunchDate, null)
         );
 
-        errors[UkLaunchDate].ShouldBe("Enter the UK commercial launch date");
+        errors[UkLaunchDate].ShouldBe("Select an option");
     }
 
     [Fact]
