@@ -27,9 +27,19 @@ export const evaluatePrefixedNumber = (
   if (number === '') {
     return { value: null, error: null }
   }
-  if (!/^[0-9]+$/.test(number)) {
+  if (!/^[0-9]+$/.test(number) || /^0+$/.test(number)) {
     return { value, error: idDigitsOnlyMessage }
   }
-  const outOfRange = number.length > 5 || /^0+$/.test(number)
-  return { value, error: outOfRange ? idOutOfRangeMessage : null }
+  return { value, error: number.length > 5 ? idOutOfRangeMessage : null }
+}
+
+/** Which boxes an error is about: the type for "Select ID type", the number for digit and length errors, both for anything else. */
+export const prefixedNumberErrorParts = (error?: string) => {
+  if (error === selectIdTypeMessage) {
+    return { prefix: true, number: false }
+  }
+  if (error === idDigitsOnlyMessage || error === idOutOfRangeMessage) {
+    return { prefix: false, number: true }
+  }
+  return { prefix: Boolean(error), number: Boolean(error) }
 }

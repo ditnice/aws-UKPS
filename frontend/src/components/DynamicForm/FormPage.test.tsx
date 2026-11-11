@@ -960,10 +960,12 @@ describe('FormPage', () => {
       save()
 
       expect(await screen.findByText('Select ID type')).toBeInTheDocument()
+      expect(screen.getByRole('combobox', { name: 'Choose ID type' })).toBeInvalid()
+      expect(screen.getByRole('textbox', { name: 'Number' })).toBeValid()
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
     })
 
-    it('asks for numbers only when the number has other characters', async () => {
+    it('asks for positive whole numbers only when the number has other characters', async () => {
       render(<FormPage page={idPage()} />)
 
       fireEvent.change(screen.getByRole('combobox', { name: 'Choose ID type' }), {
@@ -975,6 +977,25 @@ describe('FormPage', () => {
       save()
 
       expect(await screen.findByText('ID must be a whole positive number')).toBeInTheDocument()
+      expect(screen.getByRole('combobox', { name: 'Choose ID type' })).toBeValid()
+      expect(screen.getByRole('textbox', { name: 'Number' })).toBeInvalid()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('asks for no more than 5 digits when the number is too long', async () => {
+      render(<FormPage page={idPage()} />)
+
+      fireEvent.change(screen.getByRole('combobox', { name: 'Choose ID type' }), {
+        target: { value: 'GID-TA' },
+      })
+      fireEvent.change(screen.getByRole('textbox', { name: 'Number' }), {
+        target: { value: '123456' },
+      })
+      save()
+
+      expect(await screen.findByText('ID must not be longer than 5 digits')).toBeInTheDocument()
+      expect(screen.getByRole('combobox', { name: 'Choose ID type' })).toBeValid()
+      expect(screen.getByRole('textbox', { name: 'Number' })).toBeInvalid()
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
     })
   })

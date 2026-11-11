@@ -1,7 +1,7 @@
 import { FormGroup } from '@/components/FormGroup/FormGroup'
 import { Input } from '@/components/Input/Input'
 import { Select, SelectOption } from '@/components/Select/Select'
-import { splitPrefixedNumber } from '@/lib/dynamic-form/prefixedNumber'
+import { prefixedNumberErrorParts, splitPrefixedNumber } from '@/lib/dynamic-form/prefixedNumber'
 
 import styles from '../DynamicForm.module.scss'
 
@@ -19,6 +19,7 @@ export function PrefixedNumberQuestion({
   const prefixes = question.prefixes ?? []
   const { prefix, number } = splitPrefixedNumber(prefixes, value)
   const placeholder = question.placeholder ?? 'Select an option'
+  const errorParts = prefixedNumberErrorParts(error)
   // A whole ID pasted or typed into the number box replaces both parts rather than being
   // appended after the chosen prefix, so "GID-TA123" never becomes "GID-TAGID-TA123".
   const changeNumber = (typed: string) =>
@@ -29,7 +30,7 @@ export function PrefixedNumberQuestion({
       <div className={styles.prefixedNumber}>
         <Select
           aria-label={placeholder}
-          error={Boolean(error)}
+          error={errorParts.prefix}
           label={null}
           name={name}
           onBlur={onBlur}
@@ -47,7 +48,7 @@ export function PrefixedNumberQuestion({
         <Input
           aria-label="Number"
           autoComplete="off"
-          error={Boolean(error)}
+          error={errorParts.number}
           inputMode="numeric"
           label={null}
           name={`${name}-number`}
