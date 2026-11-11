@@ -14,6 +14,9 @@ internal sealed record BindingInfo(BindingKind Kind)
     /// <summary>The reference data entity of a reference ID or junction binding.</summary>
     public Type? ReferenceType { get; init; }
 
+    /// <summary>The navigation that loads the regulatory date of a regulatory date binding.</summary>
+    public PropertyInfo? DateNavigation { get; init; }
+
     public Type? JunctionType { get; init; }
     public PropertyInfo? JunctionReferenceIdProperty { get; init; }
 }
