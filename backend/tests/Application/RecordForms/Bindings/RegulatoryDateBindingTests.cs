@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
@@ -21,13 +22,7 @@ namespace UKPS.Api.Tests.Application.RecordForms.Bindings;
 [Collection(DatabaseCollection.Name)]
 public class RegulatoryDateBindingTests : DatabaseTestBase
 {
-    private readonly RegulatoryDateBinding _binding = new(
-        typeof(RecordMhraDate).GetProperty(nameof(RecordMhraDate.UkLicenceDateId))!,
-        typeof(RecordMhraDate).GetProperty(nameof(RecordMhraDate.UkLicenceDate))!,
-        typeof(RecordMhraDate).GetProperty(nameof(RecordMhraDate.RevisionId))!,
-        DateEventType.UkLicence,
-        FormControl.PrecisionDate
-    );
+    private readonly RegulatoryDateBinding _binding = Binding(FormControl.PrecisionDate);
 
     private RecordRevision _revision = null!;
 
@@ -144,20 +139,55 @@ public class RegulatoryDateBindingTests : DatabaseTestBase
     [Fact]
     public void AuditText_ActualMonthControl_ReadsAMonthAsActual()
     {
-        RegulatoryDateBinding binding = new(
-            typeof(RecordMhraDate).GetProperty(nameof(RecordMhraDate.UkLicenceDateId))!,
-            typeof(RecordMhraDate).GetProperty(nameof(RecordMhraDate.UkLicenceDate))!,
-            typeof(RecordMhraDate).GetProperty(nameof(RecordMhraDate.RevisionId))!,
-            DateEventType.UkLicence,
-            FormControl.ActualMonth
-        );
-
-        binding
+        Binding(FormControl.ActualMonth)
             .AuditText(FormAnswer.Single("2025-04"))
             .ShouldBe(
                 """{"date_precision":"ActualMonth","date_value":"2025-04-01","is_confidential":false}"""
             );
     }
+
+    [Theory]
+    [InlineData(FormControl.ActualMonth, DatePrecision.ActualDate, "2025-04-15", "2025-04")]
+    [InlineData(FormControl.ActualMonth, DatePrecision.EstimatedQuarter, "2027-04-01", "2027-04")]
+    [InlineData(FormControl.ActualMonth, DatePrecision.EstimatedMonth, "2027-05-01", "2027-05")]
+    [InlineData(FormControl.PrecisionDate, DatePrecision.ActualMonth, "2025-04-01", "2025-04-01")]
+    public async Task Read_PrecisionTheControlDoesNotOffer_ReadsAnAnswerTheControlAccepts(
+        FormControl control,
+        DatePrecision stored,
+        string value,
+        string expected
+    )
+    {
+        RegulatoryDate date = await AddEntity(
+            new RegulatoryDate
+            {
+                RevisionId = _revision.Id,
+                DateEvent = DateEventType.UkLicence,
+                DatePrecision = stored,
+                DateValue = DateOnly.Parse(value, CultureInfo.InvariantCulture),
+            },
+            Ct
+        );
+        RecordMhraDate row = await Row(track: true);
+        row.UkLicenceDateId = date.Id;
+        await Context.SaveChangesAsync(Ct);
+        RegulatoryDateBinding binding = Binding(control);
+
+        FormAnswer answer = binding.Read(await Row(track: false));
+
+        answer.Value.ShouldBe(expected);
+        DateAnswer.TryParse(control, expected, out _, out _).ShouldBeTrue();
+        binding.AuditText(answer).ShouldNotBeNull();
+    }
+
+    private static RegulatoryDateBinding Binding(FormControl control) =>
+        new(
+            typeof(RecordMhraDate).GetProperty(nameof(RecordMhraDate.UkLicenceDateId))!,
+            typeof(RecordMhraDate).GetProperty(nameof(RecordMhraDate.UkLicenceDate))!,
+            typeof(RecordMhraDate).GetProperty(nameof(RecordMhraDate.RevisionId))!,
+            DateEventType.UkLicence,
+            control
+        );
 
     private async Task Write(string? answer)
     {

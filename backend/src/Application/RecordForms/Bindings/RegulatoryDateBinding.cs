@@ -14,7 +14,8 @@ namespace UKPS.Api.Application.RecordForms.Bindings;
 /// points to. The row is created on the first answer, updated in place, and deleted when the
 /// answer is cleared. The navigation must be loaded with the content row. The answer is audited
 /// as the row's contents. The control decides how the answer is read, as in
-/// <see cref="DateAnswer.TryParse"/>.
+/// <see cref="DateAnswer.TryParse"/>, and a stored date is read at a precision the control offers
+/// (see <see cref="ReadPrecision"/>).
 /// </summary>
 internal sealed class RegulatoryDateBinding(
     PropertyInfo foreignKey,
@@ -32,7 +33,7 @@ internal sealed class RegulatoryDateBinding(
     public FormAnswer Read(object? row) =>
         FormAnswer.Single(
             row is not null && navigation.GetValue(row) is RegulatoryDate date
-                ? DateAnswer.Format(date.DatePrecision, date.DateValue)
+                ? DateAnswer.Format(ReadPrecision(date.DatePrecision), date.DateValue)
                 : null
         );
 
@@ -80,6 +81,23 @@ internal sealed class RegulatoryDateBinding(
 
     public Expression HasAnswerExpression(ParameterExpression row) =>
         Expression.Property(Expression.Property(row, foreignKey), nameof(Nullable<int>.HasValue));
+
+    /// <summary>
+    /// The precision a stored date is read at, so the answer is always one the control accepts.
+    /// A date stored at a precision the control does not offer (an older row, or one from before
+    /// the control changed) would otherwise load as blank and could not be saved. An
+    /// <see cref="FormControl.ActualMonth"/> reads any date as its month; a
+    /// <see cref="FormControl.PrecisionDate"/> reads an actual month as an actual date on its first
+    /// day, so it stays actual, not confidential and in the past. The row itself is unchanged until
+    /// the answer is.
+    /// </summary>
+    private DatePrecision ReadPrecision(DatePrecision stored) =>
+        (control, stored) switch
+        {
+            (FormControl.ActualMonth, _) => DatePrecision.ActualMonth,
+            (_, DatePrecision.ActualMonth) => DatePrecision.ActualDate,
+            _ => stored,
+        };
 
     /// <summary>Estimated dates are commercial in confidence; actual dates are not.</summary>
     private static bool IsConfidential(DatePrecision precision) =>

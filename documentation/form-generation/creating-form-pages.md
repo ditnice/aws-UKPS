@@ -382,7 +382,9 @@ public int? UkLicenceDateId { get; set; }
 - The question ID drops the `_id` suffix, because the answer is a date, not an ID.
 - The entity needs a navigation to `RegulatoryDate` for the foreign key; the form loads the date
   through it. The row is created by the first answer, updated in place, and deleted when the
-  answer is cleared.
+  answer is cleared. A stored date is read at a precision the control offers: an `ActualMonth` reads any date
+  as its month, and a `PrecisionDate` reads an actual month as an actual date on its first day.
+  The row keeps its precision until the answer is changed.
 
 ## Step 5: Add options
 
