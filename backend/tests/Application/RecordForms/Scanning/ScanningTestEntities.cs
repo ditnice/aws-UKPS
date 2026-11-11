@@ -133,7 +133,7 @@ internal sealed class BrokenEntity
 
     [FormTask("broken-task", "Broken task", Order = 10)]
     [FormPage("broken-prefixes", "Broken prefixes", Order = 50)]
-    [FormField("broken-entity.prefixes_on_text", "Prefixes on text", FormControl.Text, Order = 1)]
+    [FormField("broken_entity.prefixes_on_text", "Prefixes on text", FormControl.Text, Order = 1)]
     [FormValuePrefixes("GID-TA")]
     public string? PrefixesOnText { get; set; }
 

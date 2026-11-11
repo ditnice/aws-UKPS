@@ -923,6 +923,23 @@ describe('FormPage', () => {
       })
     })
 
+    it('replaces both parts when a whole ID is pasted into the number', async () => {
+      render(<FormPage page={idPage('GID-TA1')} />)
+
+      fireEvent.change(screen.getByRole('textbox', { name: 'Number' }), {
+        target: { value: 'GID-HST123' },
+      })
+
+      expect(screen.getByRole('combobox', { name: 'Choose ID type' })).toHaveValue('GID-HST')
+      expect(screen.getByRole('textbox', { name: 'Number' })).toHaveValue('123')
+      save()
+
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({
+        'record_hta.nice_ta_development_id': 'GID-HST123',
+      })
+    })
+
     it('saves nothing chosen as a blank answer', async () => {
       render(<FormPage page={idPage()} />)
 

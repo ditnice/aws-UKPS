@@ -11,7 +11,7 @@ export const splitPrefixedNumber = (prefixes: string[], value: string) => {
 
 /**
  * The value the server would save and the message it would reject it with. A prefix with no
- * digits is saved as blank, so it is never an error. Mirrors PrefixedNumberAnswer.Evalua
+ * digits is saved as blank, so it is never an error. Mirrors PrefixedNumberAnswer.Evaluate.
  */
 export const evaluatePrefixedNumber = (
   prefixes: string[],

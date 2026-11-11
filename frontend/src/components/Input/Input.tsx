@@ -63,7 +63,9 @@ export function Input({
 }: InputProps) {
   const inputId = id ?? name
   const hintId = hint ? `${inputId}-hint` : undefined
-  const errorId = error ? `${inputId}-error` : undefined
+  // `error` alone styles the field; the message is shown only when one is given, so grouped
+  // inputs can share a single message.
+  const errorId = error && errorMessage ? `${inputId}-error` : undefined
   const ariaDescribedBy = [describedBy, hintId, errorId].filter(Boolean).join(' ') || undefined
   const inputStyle = width ? { ...style, ...inputWidthStyles[width] } : style
 
@@ -80,7 +82,7 @@ export function Input({
           {hint}
         </p>
       )}
-      {error && (
+      {errorId && (
         <p className="input__error" id={errorId}>
           <span className="visually-hidden">Error:</span> {errorMessage}
         </p>

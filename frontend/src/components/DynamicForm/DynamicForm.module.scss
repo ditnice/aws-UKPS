@@ -49,8 +49,8 @@
   flex-wrap: wrap;
   gap: utils.rem(spacing.$medium);
 
-  // Select and input differ in height slightly by default, each wrapper becomes a column
-  // and its box fills it. The row stretches both wrappers to the taller one
+  // The select and input differ slightly in height by default. Each wrapper becomes a column
+  // whose box fills it, and the row stretches both wrappers to the taller one.
   > * {
     display: flex;
     flex-direction: column;
@@ -59,12 +59,6 @@
   select,
   input {
     flex: 1;
-  }
-
-  // Input renders an empty error paragrpah when given `error` without a message, which pushes
-  // the box down, so the outline is drawn from aria-invalid instead.
-  input[aria-invalid='true'] {
-    @include typography.default-error-style;
   }
 }
 

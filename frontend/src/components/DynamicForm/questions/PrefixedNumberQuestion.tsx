@@ -19,6 +19,10 @@ export function PrefixedNumberQuestion({
   const prefixes = question.prefixes ?? []
   const { prefix, number } = splitPrefixedNumber(prefixes, value)
   const placeholder = question.placeholder ?? 'Select an option'
+  // A whole ID pasted or typed into the number box replaces both parts rather than being
+  // appended after the chosen prefix, so "GID-TA123" never becomes "GID-TAGID-TA123".
+  const changeNumber = (typed: string) =>
+    onChange(splitPrefixedNumber(prefixes, typed).prefix ? typed : prefix + typed)
 
   return (
     <FormGroup error={error} hint={question.hint ?? undefined} legend={question.label}>
@@ -41,14 +45,14 @@ export function PrefixedNumberQuestion({
           ))}
         </Select>
         <Input
-          aria-invalid={Boolean(error)}
           aria-label="Number"
           autoComplete="off"
+          error={Boolean(error)}
           inputMode="numeric"
           label={null}
           name={`${name}-number`}
           onBlur={onBlur}
-          onChange={(event) => onChange(prefix + event.target.value)}
+          onChange={(event) => changeNumber(event.target.value)}
           value={number}
           width={20}
         />

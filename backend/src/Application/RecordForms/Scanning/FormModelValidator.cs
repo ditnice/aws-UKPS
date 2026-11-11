@@ -345,7 +345,7 @@ internal static partial class FormModelValidator
             return;
         }
 
-        if (prefixes.Any(static p => string.IsNullOrWhiteSpace(p) || char.IsDigit(p[^1])))
+        if (prefixes.Any(static p => string.IsNullOrWhiteSpace(p) || char.IsAsciiDigit(p[^1])))
         {
             problems.Add(
                 $"{where} has a blank prefix, or one ending in a digit, which would make the number ambiguous."
