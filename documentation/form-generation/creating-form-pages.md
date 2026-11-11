@@ -370,9 +370,15 @@ public int? UkLicenceDateId { get; set; }
   the frontend's `lib/dynamic-form/dates.ts` both parse it; `date-cases.json` keeps them in
   step. A date that is not real (31 April, month 13, quarter 5) is rejected with "Enter a real
   date."
-- **Checked against today** in the UK (the user's time zone on the page): an actual date must
-  be today or earlier, an actual month this month or earlier, and an estimate must be for a
-  quarter or month that has not ended, so the current quarter or month is allowed.
+- **Checked against today in UTC**, on both the server (`DateAnswer.Today`) and the page
+  (`utcToday`), so the two always agree: an actual date must be today or earlier, an actual
+  month this month or earlier, and an estimate must be for a quarter or month that has not
+  ended, so the current quarter or month is allowed. During British Summer Time, between 00:00
+  and 01:00 UK time, today is still the previous day.
+- **Never converted between time zones.** A date answer is a calendar date with no time of day,
+  so it is stored as a `DateOnly`, sent as ISO `yyyy-MM-dd` (or the month and quarter forms
+  above) and shown as entered; display code formats it in UTC (see `recordValueFormatters.ts`).
+  Only timestamps, such as audit times, are UTC instants converted to local time in the UI.
 - The question ID drops the `_id` suffix, because the answer is a date, not an ID.
 - The entity needs a navigation to `RegulatoryDate` for the foreign key; the form loads the date
   through it. The row is created by the first answer, updated in place, and deleted when the

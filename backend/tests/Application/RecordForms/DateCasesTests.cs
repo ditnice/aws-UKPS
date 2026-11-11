@@ -48,15 +48,20 @@ public class DateCasesTests
     }
 
     [Fact]
-    public void UkToday_IsTheDateInTheUk()
+    public void Today_IsTheDateInUtc()
     {
-        // 23:30 UTC is already the next day in British Summer Time, but not in winter.
+        // 23:30 UTC is already the next day in British Summer Time, but dates use the UTC date.
         DateAnswer
-            .UkToday(new DateTime(2026, 6, 15, 23, 30, 0, DateTimeKind.Utc))
-            .ShouldBe(new DateOnly(2026, 6, 16));
+            .Today(new DateTimeOffset(2026, 6, 15, 23, 30, 0, TimeSpan.Zero))
+            .ShouldBe(new DateOnly(2026, 6, 15));
         DateAnswer
-            .UkToday(new DateTime(2026, 12, 15, 23, 30, 0, DateTimeKind.Utc))
+            .Today(new DateTimeOffset(2026, 12, 15, 23, 30, 0, TimeSpan.Zero))
             .ShouldBe(new DateOnly(2026, 12, 15));
+
+        // A time with an offset is converted to UTC first: 00:30 BST is 23:30 UTC the day before.
+        DateAnswer
+            .Today(new DateTimeOffset(2026, 6, 16, 0, 30, 0, TimeSpan.FromHours(1)))
+            .ShouldBe(new DateOnly(2026, 6, 15));
     }
 
     [Fact]

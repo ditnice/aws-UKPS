@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { localToday, toDateAnswer, toDateValue } from './dates'
+import { toDateAnswer, toDateValue, utcToday } from './dates'
 
 import type { DateValue } from './dates'
 
@@ -45,15 +45,21 @@ describe('toDateValue', () => {
   })
 })
 
-describe('localToday', () => {
+describe('utcToday', () => {
   afterEach(() => {
     vi.useRealTimers()
   })
 
-  it('is the date in the user’s time zone, padded', () => {
+  it('is the date in UTC, padded', () => {
     vi.useFakeTimers({ toFake: ['Date'] })
-    vi.setSystemTime(new Date(2026, 2, 5, 23, 30))
-    expect(localToday()).toBe('2026-03-05')
+    vi.setSystemTime(new Date(Date.UTC(2026, 2, 5, 23, 30)))
+    expect(utcToday()).toBe('2026-03-05')
+  })
+
+  it('is the UTC date when British Summer Time is already on the next day', () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(Date.UTC(2026, 5, 15, 23, 30)))
+    expect(utcToday()).toBe('2026-06-15')
   })
 })
 

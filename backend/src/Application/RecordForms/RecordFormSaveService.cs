@@ -113,7 +113,7 @@ internal sealed class RecordFormSaveService(
         var (parsed, errors) = PageAnswerValidator.Parse(page, command.Answers);
         Dictionary<string, FormAnswer> submitted = Overlay(before, parsed);
         Applicability applicability = FormApplicability.Evaluate(model, submitted);
-        DateOnly today = DateAnswer.UkToday(dateTimeProvider.GetUtcNow());
+        DateOnly today = DateAnswer.Today(dateTimeProvider.GetOffsetUtcNow());
         PageAnswerValidator.Check(page, parsed, options, applicability, today, errors);
 
         // Answers that no longer apply, on this page or any page that depends on it, are cleared

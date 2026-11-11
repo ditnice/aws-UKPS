@@ -10,19 +10,18 @@ namespace UKPS.Api.Application.RecordForms.Model;
 /// The answer of a date question. A <see cref="FormControl.PrecisionDate"/> takes <c>yyyy-Qn</c>
 /// for an estimated quarter, <c>yyyy-MM</c> for an estimated month and <c>yyyy-MM-dd</c> for an
 /// actual date; an <see cref="FormControl.ActualMonth"/> takes <c>yyyy-MM</c> only. Quarters and
-/// months are stored as their first day. An actual date is today or earlier, an actual month this
-/// month or earlier, and an estimate is for a quarter or month that has not ended.
+/// months are stored as their first day. Against today in UTC, an actual date is today or
+/// earlier, an actual month this month or earlier, and an estimate is for a quarter or month that
+/// has not ended.
 /// </summary>
 /// <remarks>Mirrored by <c>frontend/src/lib/dynamic-form/dates.ts</c>; <c>date-cases.json</c> keeps the two in step.</remarks>
 internal static partial class DateAnswer
 {
-    private static readonly TimeZoneInfo _ukTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
-        "Europe/London"
-    );
-
-    /// <summary>Today's date in the UK, which dates are checked against.</summary>
-    public static DateOnly UkToday(DateTime utcNow) =>
-        DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(utcNow, _ukTimeZone));
+    /// <summary>
+    /// Today's date in UTC, which dates are checked against. The frontend's <c>utcToday</c> uses
+    /// the same date, so the page and the server agree whatever their time zones.
+    /// </summary>
+    public static DateOnly Today(DateTimeOffset now) => DateOnly.FromDateTime(now.UtcDateTime);
 
     public static string Format(DatePrecision precision, DateOnly value) =>
         precision switch

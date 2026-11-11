@@ -51,10 +51,10 @@ const isoDate = (year: number, month: number, day: number) =>
 
 const endOfMonth = (year: number, month: number) => isoDate(year, month, daysInMonth(year, month))
 
-/** Today's date as yyyy-MM-dd, in the user's time zone. */
-export const localToday = () => {
+/** Today's date as yyyy-MM-dd in UTC, whatever the user's time zone; mirrors DateAnswer.Today. */
+export const utcToday = () => {
   const now = new Date()
-  return isoDate(now.getFullYear(), now.getMonth() + 1, now.getDate())
+  return isoDate(now.getUTCFullYear(), now.getUTCMonth() + 1, now.getUTCDate())
 }
 
 /** Parses a date answer, or returns null when it is not a real date in one of the control's formats. */
@@ -84,7 +84,7 @@ const parseDateAnswer = (answer: string, control: DateControl): ParsedDate | nul
 export const dateAnswerError = (
   answer: string,
   control: DateControl = 'PrecisionDate',
-  today: string = localToday(),
+  today: string = utcToday(),
 ): string | null => {
   const parsed = parseDateAnswer(answer, control)
   if (!parsed) {
