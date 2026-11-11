@@ -1,4 +1,5 @@
 using UKPS.Api.Application.RecordForms.Model;
+using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Application.RecordForms.Conditions;
 
@@ -10,7 +11,7 @@ namespace UKPS.Api.Application.RecordForms.Conditions;
 /// A page applies when it has no condition or its condition is met. A question applies when its
 /// page applies and its own condition, if any, is met. A trigger that does not apply reads as
 /// unanswered, so chains of conditions cascade. Triggers always come earlier, so the recursion
-/// ends.
+/// ends. A date trigger is compared by its precision.
 /// </remarks>
 internal sealed class Applicability(
     FormModel model,
@@ -43,7 +44,10 @@ internal sealed class Applicability(
         return applies;
     }
 
-    /// <summary>A trigger's answer, or unanswered when the trigger does not apply.</summary>
+    /// <summary>
+    /// What a condition compares: the trigger's answer (a date's precision), or unanswered when the
+    /// trigger does not apply.
+    /// </summary>
     private FormAnswer AnswerOf(string questionId)
     {
         FormQuestion trigger = model.FindQuestion(questionId)!;
@@ -52,10 +56,15 @@ internal sealed class Applicability(
             return FormAnswer.Empty(trigger.Shape);
         }
 
-        return answers.TryGetValue(questionId, out FormAnswer? answer)
-            ? answer
-            : throw new InvalidOperationException(
+        if (!answers.TryGetValue(questionId, out FormAnswer? answer))
+        {
+            throw new InvalidOperationException(
                 $"The answer to trigger question '{questionId}' was not loaded."
             );
+        }
+
+        return trigger.Control == FormControl.PrecisionDate
+            ? FormAnswer.Single(DateAnswer.PrecisionOf(answer.Value))
+            : answer;
     }
 }

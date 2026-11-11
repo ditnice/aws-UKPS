@@ -17,4 +17,7 @@ internal enum BindingKind
 
     /// <summary>A collection navigation to a junction entity.</summary>
     Junction = 4,
+
+    /// <summary>An integer foreign key to a regulatory date row.</summary>
+    RegulatoryDate = 5,
 }

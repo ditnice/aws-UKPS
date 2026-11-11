@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -30,6 +31,29 @@ internal static class FieldAuditJson
         IEnumerable<string> genericNames,
         IEnumerable<string> otherIdentifiers
     ) => Serialize(new NamesAndIdentifiersValue([.. genericNames], [.. otherIdentifiers]));
+
+    /// <summary>
+    /// The audit value of a regulatory date: its precision, value and confidentiality, for example
+    /// <c>{"date_precision":"EstimatedQuarter","date_value":"2027-04-01","is_confidential":true}</c>.
+    /// </summary>
+    public static string RegulatoryDate(
+        DatePrecision precision,
+        DateOnly value,
+        bool isConfidential
+    ) =>
+        Serialize(
+            new RegulatoryDateValue(
+                precision.ToString(),
+                value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                isConfidential
+            )
+        );
+
+    private sealed record RegulatoryDateValue(
+        [property: JsonPropertyName("date_precision")] string DatePrecision,
+        [property: JsonPropertyName("date_value")] string DateValue,
+        [property: JsonPropertyName("is_confidential")] bool IsConfidential
+    );
 
     private sealed record NamesAndIdentifiersValue(
         [property: JsonPropertyName(nameof(NameAndIdentifierType.GenericName))]

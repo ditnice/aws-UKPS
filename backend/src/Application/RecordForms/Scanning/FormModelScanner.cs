@@ -1,5 +1,6 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore.Metadata;
+using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Application.RecordForms.Scanning;
@@ -133,6 +134,7 @@ internal static class FormModelScanner
                 MaxItems = property.GetCustomAttribute<FormMaxItemsAttribute>(),
                 Options = property.GetCustomAttribute<FormOptionsAttribute>(),
                 ShowWhen = property.GetCustomAttribute<FormShowWhenAttribute>(),
+                DateEvent = property.GetCustomAttribute<FormDateEventAttribute>(),
                 Binding = binding,
             };
     }
@@ -233,7 +235,8 @@ internal static class FormModelScanner
         || property.IsDefined(typeof(FormMaxLengthAttribute), false)
         || property.IsDefined(typeof(FormMaxItemsAttribute), false)
         || property.IsDefined(typeof(FormOptionsAttribute), false)
-        || property.IsDefined(typeof(FormShowWhenAttribute), false);
+        || property.IsDefined(typeof(FormShowWhenAttribute), false)
+        || property.IsDefined(typeof(FormDateEventAttribute), false);
 
     private static BindingInfo? DescribeColumn(
         string where,
@@ -250,6 +253,9 @@ internal static class FormModelScanner
             { IsEnum: true } when valueType.IsDefined(typeof(FlagsAttribute), false) =>
                 BindingKind.Flags,
             { IsEnum: true } => BindingKind.Enum,
+            _ when valueType == typeof(int)
+                    && foreignKey?.PrincipalEntityType.ClrType == typeof(RegulatoryDate) =>
+                BindingKind.RegulatoryDate,
             _ when valueType == typeof(int) && foreignKey is not null => BindingKind.ReferenceId,
             _ => null,
         };
@@ -257,9 +263,22 @@ internal static class FormModelScanner
         if (kind is null)
         {
             problems.Add(
-                $"{where} has type {valueType.Name}, which no form control supports. Use string, an enum, or an int foreign key to reference data."
+                $"{where} has type {valueType.Name}, which no form control supports. Use string, an enum, or an int foreign key to reference data or a regulatory date."
             );
             return null;
+        }
+
+        PropertyInfo? dateNavigation = null;
+        if (kind == BindingKind.RegulatoryDate)
+        {
+            dateNavigation = foreignKey!.DependentToPrincipal?.PropertyInfo;
+            if (dateNavigation is null)
+            {
+                problems.Add(
+                    $"{where} is a foreign key to RegulatoryDate with no navigation to load the date through."
+                );
+                return null;
+            }
         }
 
         return new BindingInfo(kind.Value)
@@ -268,6 +287,7 @@ internal static class FormModelScanner
             EnumType = valueType.IsEnum ? valueType : null,
             ReferenceType =
                 kind == BindingKind.ReferenceId ? foreignKey!.PrincipalEntityType.ClrType : null,
+            DateNavigation = dateNavigation,
         };
     }
 
