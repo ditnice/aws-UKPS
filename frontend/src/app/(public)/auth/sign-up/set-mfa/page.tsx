@@ -169,7 +169,7 @@ export default function SignUpSetMfa() {
         chosen authenticator.
       </p>
       <QRCodeSVG
-        aria-label="QR code for authenticator app setup"
+        aria-label="QR code for authenticator setup"
         value={setup.otpAuthUri}
         size={192}
         level="M"
@@ -196,7 +196,7 @@ export default function SignUpSetMfa() {
                 autoComplete="one-time-code"
                 error={Boolean(errorMessage)}
                 errorMessage={errorMessage}
-                hint="Enter the 6-digit authentication code shown in your authenticator app."
+                hint="Enter the 6-digit authentication code shown in your authenticator."
                 inputMode="numeric"
                 label="Enter your authentication code"
                 name={field.name}

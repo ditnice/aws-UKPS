@@ -34,7 +34,7 @@ beforeEach(() => {
 const requiredErrors = [
   { label: 'Full name', message: 'Enter your full name' },
   { label: 'Work email address', message: 'Enter your work email address' },
-  { label: 'Contact number', message: 'Enter your phone number' },
+  { label: 'Contact number', message: 'Enter your contact number' },
 ]
 
 function renderForm(override?: Partial<EditDetailsFormProps>) {
@@ -188,7 +188,7 @@ describe('EditDetailsForm', () => {
       ),
     ).toBeInTheDocument()
     expect(screen.queryByText('Enter your full name')).toBeNull()
-    expect(screen.queryByText('Enter your phone number')).toBeNull()
+    expect(screen.queryByText('Enter your contact number')).toBeNull()
   })
 
   it('revalidates an invalid field on blur after submission', async () => {

@@ -11,7 +11,7 @@ export const errorMessages = {
   personalFullNameRequired: 'Enter your full name',
   personalEmailRequired: 'Enter your email address',
   workEmailRequired: 'Enter your work email address',
-  personalPhoneRequired: 'Enter your phone number',
+  personalPhoneRequired: 'Enter your contact number',
   phoneRequired: 'Enter a phone number',
   passwordRequired: 'Enter your password',
   securityCodeRequired: 'Enter your security code',
