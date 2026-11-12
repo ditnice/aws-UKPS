@@ -6,18 +6,11 @@ import { ChangeEvent, useActionState } from 'react'
 import { EditableUserDetail } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
+import FormLevelErrors from '@/lib/form/FormLevelErrors'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
-
-import { UserDetail } from '../navigation'
 
 import { updateUserDetailsAction } from './serverActions'
 import { updateUserDetailOptions } from './shared'
-
-export const userDetailLabels: Record<UserDetail, string> = {
-  fullName: 'Full name',
-  contactNumber: 'Contact number',
-  email: 'Email',
-}
 
 type EditUserDetailFormProps = {
   userId: number
@@ -54,6 +47,7 @@ const EditUserDetailForm = ({ initialValue, userId, property, label }: EditUserD
   })
   return (
     <form action={action as never} onSubmit={() => form.handleSubmit()}>
+      <FormLevelErrors errors={state?.errors ?? []} />
       <form.Field name="property">
         {(field) => <input type="hidden" name={field.name} value={field.state.value} />}
       </form.Field>

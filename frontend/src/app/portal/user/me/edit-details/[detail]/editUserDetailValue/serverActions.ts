@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 
 import { updateUserDetails } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
+import { errorMessages } from '@/lib/form/errorMessages'
 import { getFormStateServerErrors } from '@/lib/form/formErrorHandling'
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 
@@ -34,9 +35,7 @@ export const updateUserDetailsAction = async (
     if (error || !response?.ok) {
       return {
         ...initialFormState,
-        errors: [
-          'An unexpected error occurred while attempting to reset your password. Please try again.',
-        ],
+        errors: [errorMessages.genericWithRetry],
       }
     }
   } catch (e) {

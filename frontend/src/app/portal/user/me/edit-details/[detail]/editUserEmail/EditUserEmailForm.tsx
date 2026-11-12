@@ -5,6 +5,7 @@ import { ChangeEvent, useActionState } from 'react'
 
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
+import FormLevelErrors from '@/lib/form/FormLevelErrors'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import { updateUserEmailAction } from './serverActions'
@@ -14,7 +15,7 @@ type EditUserDetailFormProps = {
   userId: number
   initialValue: string
 }
-const EditUserDetailForm = ({ initialValue, userId }: EditUserDetailFormProps) => {
+const EditUserEmailForm = ({ initialValue, userId }: EditUserDetailFormProps) => {
   const boundAction = updateUserEmailAction.bind(null, userId)
   const [state, action] = useActionState(boundAction, initialFormState)
   const defaultValues = {
@@ -38,6 +39,7 @@ const EditUserDetailForm = ({ initialValue, userId }: EditUserDetailFormProps) =
   })
   return (
     <form action={action as never} onSubmit={() => form.handleSubmit()}>
+      <FormLevelErrors errors={state?.errors ?? []} />
       <form.Field name="value">
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
@@ -66,4 +68,4 @@ const EditUserDetailForm = ({ initialValue, userId }: EditUserDetailFormProps) =
   )
 }
 
-export default EditUserDetailForm
+export default EditUserEmailForm
