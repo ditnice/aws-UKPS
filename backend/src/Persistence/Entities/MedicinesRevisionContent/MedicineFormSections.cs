@@ -21,6 +21,16 @@ internal static class MedicineFormSections
     /// <summary>The "Provide indication and development information" section's position.</summary>
     public const int IndicationAndDevelopmentOrder = 10;
 
+    /// <summary>The "Provide regulatory, access, and launch information" section's ID.</summary>
+    public const string RegulatoryAccessAndLaunch = "regulatory-access-and-launch";
+
+    /// <summary>The "Provide regulatory, access, and launch information" section's title.</summary>
+    public const string RegulatoryAccessAndLaunchTitle =
+        "Provide regulatory, access, and launch information";
+
+    /// <summary>The "Provide regulatory, access, and launch information" section's position.</summary>
+    public const int RegulatoryAccessAndLaunchOrder = 30;
+
     /// <summary>The "Provide service readiness information" section's ID.</summary>
     public const string ServiceReadiness = "service-readiness";
 

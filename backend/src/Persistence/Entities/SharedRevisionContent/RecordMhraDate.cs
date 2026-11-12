@@ -6,9 +6,9 @@ namespace UKPS.Api.Persistence.Entities.SharedRevisionContent;
 
 [FormSection(
     RecordType.Medicine,
-    "regulatory-access-and-launch",
-    "Provide regulatory, access, and launch information",
-    Order = 30
+    MedicineFormSections.RegulatoryAccessAndLaunch,
+    MedicineFormSections.RegulatoryAccessAndLaunchTitle,
+    Order = MedicineFormSections.RegulatoryAccessAndLaunchOrder
 )]
 internal sealed class RecordMhraDate
 {

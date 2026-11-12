@@ -7,9 +7,9 @@ namespace UKPS.Api.Persistence.Entities.SharedRevisionContent;
 /// <summary>Health technology assessment and UK launch.</summary>
 [FormSection(
     RecordType.Medicine,
-    "regulatory-access-and-launch",
-    "Provide regulatory, access, and launch information",
-    Order = 30
+    MedicineFormSections.RegulatoryAccessAndLaunch,
+    MedicineFormSections.RegulatoryAccessAndLaunchTitle,
+    Order = MedicineFormSections.RegulatoryAccessAndLaunchOrder
 )]
 [FormPageShowWhen(
     "nice-aligned-pathway",

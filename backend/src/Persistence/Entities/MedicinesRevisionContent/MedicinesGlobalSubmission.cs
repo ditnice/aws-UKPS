@@ -6,9 +6,9 @@ namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 /// <summary>Medicines only — the global first submission of this product.</summary>
 [FormSection(
     RecordType.Medicine,
-    "regulatory-access-and-launch",
-    "Provide regulatory, access, and launch information",
-    Order = 30
+    MedicineFormSections.RegulatoryAccessAndLaunch,
+    MedicineFormSections.RegulatoryAccessAndLaunchTitle,
+    Order = MedicineFormSections.RegulatoryAccessAndLaunchOrder
 )]
 [FormPageShowWhen(
     "global-first-submission",
