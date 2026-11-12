@@ -34,6 +34,8 @@ const currentUser: UserInformationDto = {
   userRole: 'Champion',
   status: 'Active',
   hasMultipleOrganisations: false,
+  mfaMethod: 'Unknown',
+  mfaPhoneNumber: '',
 }
 
 const params = Promise.resolve({ id: '2' })
