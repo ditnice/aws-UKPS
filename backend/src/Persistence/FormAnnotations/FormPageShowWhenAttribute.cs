@@ -12,11 +12,11 @@ namespace UKPS.Api.Persistence.FormAnnotations;
 /// <param name="questionId">
 /// The ID of the trigger question. It must be on an earlier page of the same form, and be a
 /// <see cref="FormControl.Radio"/>, <see cref="FormControl.Select"/> or
-/// <see cref="FormControl.Checkbox"/> on an enum or flags enum property, or a
-/// <see cref="FormControl.PrecisionDate"/>.
+/// <see cref="FormControl.Checkbox"/> on an enum, flags enum or reference data with a string
+/// <c>Code</c>, or a <see cref="FormControl.PrecisionDate"/>.
 /// </param>
 /// <param name="values">
-/// Members of the trigger's enum, for example <c>YesNoUnknown.Yes</c>, or
+/// Members of the trigger's enum, for example <c>YesNoUnknown.Yes</c>; reference data codes; or
 /// <see cref="Enums.DatePrecision"/> members for a date. The condition is met when the trigger's
 /// answer includes any of them. At least one, with no duplicates.
 /// </param>

@@ -494,3 +494,68 @@ internal sealed class BrokenDatedEntity
     public RegulatoryDate? WrongControlDate { get; set; }
     public RegulatoryDate? SameEventDate { get; set; }
 }
+
+/// <summary>A question revealed by a reference data code.</summary>
+[FormSection(RecordType.Vaccine, "coded", "Coded", Order = 10)]
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class CodedEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    [FormTask("coded-task", "Coded task", Order = 10)]
+    [FormPage("procedure", "Procedure", Order = 10)]
+    [FormField("coded_entity.procedure_id", "Procedure", FormControl.Radio, Order = 10)]
+    [FormOptions(ScanningTestOptions.ProcedureTypes)]
+    public int? ProcedureId { get; set; }
+
+    [FormTask("coded-task", "Coded task", Order = 10)]
+    [FormPage("procedure", "Procedure", Order = 10)]
+    [FormField("coded_entity.irp_details", "Details", FormControl.Text, Order = 20)]
+    [FormShowWhen("coded_entity.procedure_id", MhraProcedureTypeCodes.InternationalRecognition)]
+    public string? IrpDetails { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+    public MhraProcedureType? Procedure { get; set; }
+}
+
+/// <summary>A condition on reference data that has no code.</summary>
+[FormSection(RecordType.Vaccine, "broken-coded", "Broken coded", Order = 20)]
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class BrokenCodedEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    [FormTask("broken-coded-task", "Broken coded task", Order = 10)]
+    [FormPage("route", "Route", Order = 10)]
+    [FormField("broken_coded_entity.route_id", "Route", FormControl.Radio, Order = 10)]
+    public int? RouteId { get; set; }
+
+    [FormTask("broken-coded-task", "Broken coded task", Order = 10)]
+    [FormPage("route", "Route", Order = 10)]
+    [FormField("broken_coded_entity.uncoded", "Uncoded", FormControl.Text, Order = 20)]
+    [FormShowWhen("broken_coded_entity.route_id", "route-a")]
+    public string? Uncoded { get; set; }
+
+    [FormTask("broken-coded-task", "Broken coded task", Order = 10)]
+    [FormPage("route", "Route", Order = 10)]
+    [FormField("broken_coded_entity.procedure_id", "Procedure", FormControl.Radio, Order = 30)]
+    public int? ProcedureId { get; set; }
+
+    [FormTask("broken-coded-task", "Broken coded task", Order = 10)]
+    [FormPage("route", "Route", Order = 10)]
+    [FormField("broken_coded_entity.blank_code", "Blank code", FormControl.Text, Order = 40)]
+    [FormShowWhen("broken_coded_entity.procedure_id", " ")]
+    public string? BlankCode { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+    public IrpRoute? Route { get; set; }
+    public MhraProcedureType? Procedure { get; set; }
+}

@@ -775,8 +775,9 @@ internal static partial class FormModelValidator
     }
 
     /// <summary>
-    /// A trigger is a choice on an enum (values are its members), or a date (values are
-    /// <see cref="DatePrecision"/> members).
+    /// A trigger is a choice on an enum (values are its members), a choice on reference data with
+    /// a <c>string Code</c> (values are codes), or a date (values are <see cref="DatePrecision"/>
+    /// members).
     /// </summary>
     private static void ValidateTrigger(
         string where,
@@ -789,7 +790,7 @@ internal static partial class FormModelValidator
         if (valueType is null)
         {
             problems.Add(
-                $"{where} names '{trigger.Field.Id}', which must be a Radio, Select or Checkbox on an enum, or a PrecisionDate."
+                $"{where} names '{trigger.Field.Id}', which must be a Radio, Select or Checkbox on an enum or on reference data with a string Code, or a PrecisionDate."
             );
             return;
         }
@@ -801,7 +802,16 @@ internal static partial class FormModelValidator
 
         foreach (object value in values)
         {
-            if (value.GetType() != valueType || !Enum.IsDefined(valueType, value))
+            if (valueType == typeof(string))
+            {
+                if (value is not string code || string.IsNullOrWhiteSpace(code))
+                {
+                    problems.Add(
+                        $"{where} has value '{value}', which is not a {trigger.Binding.ReferenceType!.Name} code."
+                    );
+                }
+            }
+            else if (value.GetType() != valueType || !Enum.IsDefined(valueType, value))
             {
                 problems.Add(
                     $"{where} has value '{value}', which is not a {valueType.Name} member."
@@ -823,8 +833,20 @@ internal static partial class FormModelValidator
             return typeof(DatePrecision);
         }
 
-        return trigger.Control is FormControl.Radio or FormControl.Select or FormControl.Checkbox
-            ? trigger.Binding.EnumType
+        if (
+            trigger.Control is not (FormControl.Radio or FormControl.Select or FormControl.Checkbox)
+        )
+        {
+            return null;
+        }
+
+        if (trigger.Binding.EnumType is { } enumType)
+        {
+            return enumType;
+        }
+
+        return trigger.Binding.ReferenceType?.GetProperty("Code")?.PropertyType == typeof(string)
+            ? typeof(string)
             : null;
     }
 
