@@ -12,9 +12,6 @@ internal class UserOnboardingRecord
     public DateTime? ConsumedAt { get; private set; }
     public int ResendCount { get; init; }
 
-    public string? EncryptedPassword { get; set; }
-    public DateTime? PasswordExpiresAt { get; set; }
-
     public int SmsSetupAttemptCount { get; private set; }
     public DateTime? LastSmsSetupAttemptAt { get; private set; }
 
@@ -31,18 +28,6 @@ internal class UserOnboardingRecord
     internal void MarkAsConsumed(DateTime dateTime)
     {
         ConsumedAt = dateTime;
-    }
-
-    internal void StorePassword(string encryptedPassword, DateTime expiresAt)
-    {
-        EncryptedPassword = encryptedPassword;
-        PasswordExpiresAt = expiresAt;
-    }
-
-    internal void ClearStoredPassword()
-    {
-        EncryptedPassword = null;
-        PasswordExpiresAt = null;
     }
 
     internal SetupTokenState GetCurrentState(DateTime currentTime, TimeSpan expiryTime)

@@ -84,10 +84,8 @@ erDiagram
             uuid correlation_id UK "nullable"
             timestamptz created_at
             integer created_by_user_id FK
-            text encrypted_password "nullable"
             timestamptz last_sms_setup_attempt_at "nullable"
             integer onboarding_flow
-            timestamptz password_expires_at "nullable"
             integer resend_count
             integer resulting_user_id FK, UK
             integer sms_setup_attempt_count

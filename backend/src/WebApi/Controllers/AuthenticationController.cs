@@ -309,7 +309,6 @@ public class AuthenticationController : ControllerBase
                     doesNotExist: () => NotFound(),
                     expired: () => StatusCode(StatusCodes.Status410Gone, _setupTokenExpiredDetails),
                     unauthorised: () => Unauthorized(),
-                    passwordUnavailable: () => Unauthorized(),
                     alreadyCompleted: () => Conflict(),
                     tooManyAttempts: () => StatusCode(StatusCodes.Status429TooManyRequests),
                     tooSoon: () => StatusCode(StatusCodes.Status429TooManyRequests),

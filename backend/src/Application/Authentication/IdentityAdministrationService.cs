@@ -1,6 +1,4 @@
 using System.Diagnostics;
-using System.Security.Cryptography;
-using System.Text;
 using Amazon.CognitoIdentityProvider.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -106,7 +104,7 @@ internal partial class IdentityAdministrationService : IIdentityAdministrationSe
         }
 
         DateTime now = _dateTimeProvider.GetUtcNow();
-        await PersistConsumedSetupAsync(userRecord, now, command.NewPassword, cancellationToken);
+        await PersistConsumedSetupAsync(userRecord, now, cancellationToken);
 
         return await CompletePasswordSetupAsync(userRecord, command.NewPassword, cancellationToken);
     }
@@ -371,17 +369,6 @@ internal partial class IdentityAdministrationService : IIdentityAdministrationSe
 
         CognitoUsername cognitoUsername = userRecord.ResultingUser!.CognitoUsername;
 
-        string? storedPassword = DecryptPassword(
-            userRecord.EncryptedPassword,
-            userRecord.PasswordExpiresAt,
-            now,
-            _options.Value.PasswordStorageKey
-        );
-        if (storedPassword is null)
-        {
-            return SetupSmsMfaResult.Err(new SetupSmsMfaError.PasswordUnavailable());
-        }
-
         if (!PhoneNumberValidator.IsValidSmsNumber(command.PhoneNumber, out string? e164Number))
         {
             return SetupSmsMfaResult.Err(new SetupSmsMfaError.InvalidPhoneNumber());
@@ -397,10 +384,13 @@ internal partial class IdentityAdministrationService : IIdentityAdministrationSe
             return attemptError.Value;
         }
 
+        // TODO(URP-725)
+        string password = string.Empty;
+
         return await EnableSmsMfaAndRestartAsync(
             cognitoUsername,
             e164Number!,
-            storedPassword,
+            password,
             cancellationToken
         );
     }
@@ -450,7 +440,7 @@ internal partial class IdentityAdministrationService : IIdentityAdministrationSe
     private async Task<SetupSmsMfaResult> EnableSmsMfaAndRestartAsync(
         CognitoUsername cognitoUsername,
         string e164Number,
-        string storedPassword,
+        string password,
         CancellationToken cancellationToken
     )
     {
@@ -471,7 +461,7 @@ internal partial class IdentityAdministrationService : IIdentityAdministrationSe
 
             SetupSmsMfaResult restartResult = await RestartAuthenticationForSmsMfaAsync(
                 cognitoUsername,
-                storedPassword,
+                password,
                 cancellationToken
             );
 
@@ -510,13 +500,13 @@ internal partial class IdentityAdministrationService : IIdentityAdministrationSe
 
     private async Task<SetupSmsMfaResult> RestartAuthenticationForSmsMfaAsync(
         CognitoUsername cognitoUsername,
-        string storedPassword,
+        string password,
         CancellationToken cancellationToken
     )
     {
         InitiateAuthenticationResult restartResult = await _identityService.InitiateAuthentication(
             cognitoUsername,
-            storedPassword,
+            password,
             cancellationToken
         );
 
@@ -575,15 +565,10 @@ internal partial class IdentityAdministrationService : IIdentityAdministrationSe
     private async Task PersistConsumedSetupAsync(
         UserOnboardingRecord userRecord,
         DateTime now,
-        string newPassword,
         CancellationToken cancellationToken
     )
     {
         userRecord.MarkAsConsumed(now);
-        userRecord.StorePassword(
-            EncryptPassword(newPassword, _options.Value.PasswordStorageKey),
-            now.AddSeconds(_options.Value.StoredPasswordExpirySeconds)
-        );
         await _appDbContext.SaveChangesAsync(cancellationToken);
     }
 
@@ -693,75 +678,10 @@ internal partial class IdentityAdministrationService : IIdentityAdministrationSe
 
         await _identityService.MarkEmailAsVerified(cognitoUsername, cancellationToken);
 
-        userRecord.ClearStoredPassword();
         userRecord.ResultingUser!.FinaliseSetup();
         await _appDbContext.SaveChangesAsync(cancellationToken);
 
         return VerifySmsMultiFactorAuthenticationResult.Ok(credentials);
-    }
-
-    private static string EncryptPassword(string password, string key)
-    {
-        using var aes = Aes.Create();
-        aes.Key = SHA256.HashData(Encoding.UTF8.GetBytes(key));
-        aes.GenerateIV();
-
-        using var encryptor = aes.CreateEncryptor();
-        byte[] plainBytes = Encoding.UTF8.GetBytes(password);
-        byte[] cipherBytes = encryptor.TransformFinalBlock(plainBytes, 0, plainBytes.Length);
-
-        byte[] result = new byte[aes.IV.Length + cipherBytes.Length];
-        Buffer.BlockCopy(aes.IV, 0, result, 0, aes.IV.Length);
-        Buffer.BlockCopy(cipherBytes, 0, result, aes.IV.Length, cipherBytes.Length);
-        return Convert.ToBase64String(result);
-    }
-
-    private static string? DecryptPassword(
-        string? encryptedPassword,
-        DateTime? passwordExpiresAt,
-        DateTime now,
-        string key
-    )
-    {
-        if (
-            string.IsNullOrWhiteSpace(encryptedPassword)
-            || passwordExpiresAt is null
-            || passwordExpiresAt < now
-        )
-        {
-            return null;
-        }
-
-        try
-        {
-            byte[] data = Convert.FromBase64String(encryptedPassword);
-            if (data.Length < 16)
-            {
-                return null;
-            }
-
-            using var aes = Aes.Create();
-            aes.Key = SHA256.HashData(Encoding.UTF8.GetBytes(key));
-
-            byte[] iv = new byte[16];
-            Buffer.BlockCopy(data, 0, iv, 0, iv.Length);
-            aes.IV = iv;
-
-            byte[] cipherBytes = new byte[data.Length - iv.Length];
-            Buffer.BlockCopy(data, iv.Length, cipherBytes, 0, cipherBytes.Length);
-
-            using var decryptor = aes.CreateDecryptor();
-            byte[] plainBytes = decryptor.TransformFinalBlock(cipherBytes, 0, cipherBytes.Length);
-            return Encoding.UTF8.GetString(plainBytes);
-        }
-        catch (CryptographicException)
-        {
-            return null;
-        }
-        catch (FormatException)
-        {
-            return null;
-        }
     }
 #pragma warning restore CA1031
 }

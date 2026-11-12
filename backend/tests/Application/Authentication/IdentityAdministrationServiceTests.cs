@@ -708,19 +708,6 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task SetupSmsMfa_WhenStoredPasswordIsMissing_ReturnsPasswordUnavailableError()
-    {
-        UserOnboardingRecord entity = await OnboardUserViaInviteWithTimeOffset(minutesInPast: 15);
-
-        SetupSmsMfaResult result = await _harness.Service.SetupSmsMfa(
-            new SetupSmsMfaCommand { SetupToken = entity.SetupToken, PhoneNumber = "07400123456" },
-            TestContext.Current.CancellationToken
-        );
-
-        result.ShouldBeError().ShouldBeOfType<SetupSmsMfaError.PasswordUnavailable>();
-    }
-
-    [Fact]
     public async Task SetupSmsMfa_WhenPhoneNumberIsInvalid_ReturnsInvalidPhoneNumberError()
     {
         var (setupToken, _, _) = await CreateAndDoInitialUserSetup();
@@ -1069,8 +1056,6 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
                     {
                         options.SetupTokenExpiryTimeSeconds = (int)
                             _testExpiryTokenTime.TotalSeconds;
-                        options.PasswordStorageKey = "test-password-storage-key";
-                        options.StoredPasswordExpirySeconds = 600;
                         options.MaxSmsSetupAttempts = 3;
                         options.SmsSetupCooldownSeconds = 30;
                     });
