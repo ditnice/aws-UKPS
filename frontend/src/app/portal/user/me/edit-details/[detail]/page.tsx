@@ -7,6 +7,8 @@ import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { errorMessages } from '@/lib/form/errorMessages'
 
+import EditUserDetailForm from './editUserDetailValue/EditUserDetailForm'
+import EditUserEmailForm from './editUserEmail/EditUserEmailForm'
 import { findTypedPageProps, PageProps, UserDetail } from './navigation'
 
 const PageWrapper = (props: React.PropsWithChildren & { label: string }) => {
@@ -14,7 +16,7 @@ const PageWrapper = (props: React.PropsWithChildren & { label: string }) => {
     <>
       <PageHeader
         backLink={<BackLink href={'/portal/user/me'} />}
-        heading={`Edit ${props.label}`}
+        heading={`Update ${props.label}`}
       />
       {props.children}
     </>
@@ -24,20 +26,20 @@ const PageWrapper = (props: React.PropsWithChildren & { label: string }) => {
 export const userDetailLabels: Record<UserDetail, string> = {
   fullName: 'Full name',
   contactNumber: 'Contact number',
-  email: 'Email',
+  email: 'Email address',
 }
 
 const Page = async (props: PageProps) => {
   const { params } = await findTypedPageProps(props)
-  const { sku } = params
+  const { detail } = params
 
-  if (!sku) {
+  if (!detail) {
     notFound()
   }
 
   const client = await createServerApiClient()
   const { data: me, error } = await getUsersMe({ client })
-  const label = userDetailLabels[sku]
+  const label = userDetailLabels[detail]
 
   if (!me || error) {
     return (
@@ -48,20 +50,33 @@ const Page = async (props: PageProps) => {
   }
 
   const getForm = () => {
-    switch (sku) {
-      case 'email':
-        return <></>
+    switch (detail) {
       case 'fullName':
-        return <></>
+        return (
+          <EditUserDetailForm
+            label={label}
+            userId={me.userId}
+            property="FullName"
+            initialValue={me.fullName}
+          />
+        )
+      case 'email':
+        return <EditUserEmailForm userId={me.userId} initialValue={me.workEmail} />
       case 'contactNumber':
-        return <></>
+        return (
+          <EditUserDetailForm
+            label={label}
+            userId={me.userId}
+            property="WorkPhone"
+            initialValue={me.workTelephone}
+          />
+        )
     }
   }
 
   return (
     <>
-      <PageHeader heading="Update details" />
-      {getForm()}
+      <PageWrapper label={label}>{getForm()}</PageWrapper>
     </>
   )
 }

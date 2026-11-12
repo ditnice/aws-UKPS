@@ -138,15 +138,23 @@ internal sealed class User
         }
     }
 
-    internal void UpdateDetails(
-        string fullName,
-        string? workTelephone,
-        string workEmail,
-        DateTime dateTime
-    )
+    internal void UpdateDetails(string fullName, string? workTelephone, DateTime dateTime)
     {
+        if (
+            string.Equals(FullName, fullName, StringComparison.Ordinal)
+            && string.Equals(WorkTelephone, workTelephone, StringComparison.Ordinal)
+        )
+        {
+            return;
+        }
+
         FullName = fullName;
         WorkTelephone = workTelephone;
+        UpdatedAt = dateTime;
+    }
+
+    internal void UpdateEmail(string workEmail, DateTime dateTime)
+    {
         if (!string.Equals(WorkEmail, workEmail, StringComparison.Ordinal))
         {
             _events.Add(

@@ -1,0 +1,87 @@
+'use client'
+
+import { initialFormState, mergeForm, useForm, useTransform } from '@tanstack/react-form-nextjs'
+import { ChangeEvent, useActionState } from 'react'
+
+import { EditableUserDetail } from '@/client/generated'
+import { Button } from '@/components/Button/Button'
+import { Input } from '@/components/Input/Input'
+import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
+
+import { UserDetail } from '../navigation'
+
+import { updateUserDetailsAction } from './serverActions'
+import { updateUserDetailOptions } from './shared'
+
+export const userDetailLabels: Record<UserDetail, string> = {
+  fullName: 'Full name',
+  contactNumber: 'Contact number',
+  email: 'Email',
+}
+
+type EditUserDetailFormProps = {
+  userId: number
+  initialValue: string
+  property: EditableUserDetail
+  label: string
+}
+const EditUserDetailForm = ({ initialValue, userId, property, label }: EditUserDetailFormProps) => {
+  const boundAction = updateUserDetailsAction.bind(null, userId)
+  const [state, action] = useActionState(boundAction, initialFormState)
+  const defaultValues = {
+    ...updateUserDetailOptions.defaultValues,
+    value: initialValue,
+    property,
+  }
+  const form = useForm({
+    ...updateUserDetailOptions,
+    defaultValues,
+    transform: useTransform(
+      (baseForm) => {
+        console.log({ defaultValues })
+        console.log({ state })
+        return mergeForm(baseForm, {
+          ...state!,
+          values: {
+            ...defaultValues,
+            ...state?.values,
+            property,
+          },
+        })
+      },
+      [state, initialValue, property],
+    ),
+  })
+  return (
+    <form action={action as never} onSubmit={() => form.handleSubmit()}>
+      <form.Field name="property">
+        {(field) => <input type="hidden" name={field.name} value={field.state.value} />}
+      </form.Field>
+      <form.Field name="value">
+        {(field) => {
+          const errorMessage = getFieldErrorMessage(field.state.meta.errors)
+          return (
+            <Input
+              error={Boolean(errorMessage)}
+              errorMessage={errorMessage}
+              label={label}
+              name={field.name}
+              onBlur={field.handleBlur}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                field.handleChange(event.target.value)
+              }
+              type="text"
+              value={field.state.value}
+              width="two-thirds"
+            />
+          )
+        }}
+      </form.Field>
+      <Button type="submit" variant="cta" disabled={form.state.isSubmitting}>
+        Submit
+      </Button>
+    </form>
+  )
+}
+
+export default EditUserDetailForm

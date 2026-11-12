@@ -180,11 +180,13 @@ public class UserEndpointTests : DatabaseTestBase
         HttpResponseMessage otherUserResponse = await _httpClient.PatchAsJsonAsync(
             new Uri($"/users/{otherUser.Id}", UriKind.Relative),
             command,
+            options: TestJsonOptions.Default,
             TestContext.Current.CancellationToken
         );
         HttpResponseMessage missingUserResponse = await _httpClient.PatchAsJsonAsync(
             new Uri("/users/999999", UriKind.Relative),
             command,
+            options: TestJsonOptions.Default,
             TestContext.Current.CancellationToken
         );
 

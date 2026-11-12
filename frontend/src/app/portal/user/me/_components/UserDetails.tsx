@@ -2,12 +2,11 @@ import Link from 'next/link'
 import { ReactNode } from 'react'
 
 import { UserInformationDto } from '@/client/generated'
-import { Button, ButtonGroup } from '@/components/Button/Button'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryList'
 import { errorMessages } from '@/lib/form/errorMessages'
 
-import { buildUpdateUserDetailsHref, UserDetail } from '../edit-details/[sku]/navigation'
+import { buildUpdateUserDetailsHref, UserDetail } from '../edit-details/[detail]/navigation'
 
 export const UserDetails = ({ currentUser }: { currentUser: UserInformationDto | undefined }) => {
   if (!currentUser)
@@ -17,11 +16,15 @@ export const UserDetails = ({ currentUser }: { currentUser: UserInformationDto |
       </ErrorState>
     )
 
-  const details: { label: string; value: ReactNode; changeLinkSku?: UserDetail }[] = [
+  const details: { label: string; value: ReactNode; changeLinkDetailValue?: UserDetail }[] = [
     { label: 'Organisation', value: currentUser.organisationName },
-    { label: 'Full name', value: currentUser.fullName, changeLinkSku: 'fullName' },
-    { label: 'Email address', value: currentUser.workEmail, changeLinkSku: 'email' },
-    { label: 'Contact Number', value: currentUser.workTelephone, changeLinkSku: 'contactNumber' },
+    { label: 'Full name', value: currentUser.fullName, changeLinkDetailValue: 'fullName' },
+    { label: 'Email address', value: currentUser.workEmail, changeLinkDetailValue: 'email' },
+    {
+      label: 'Contact Number',
+      value: currentUser.workTelephone,
+      changeLinkDetailValue: 'contactNumber',
+    },
   ]
 
   return (
@@ -31,18 +34,15 @@ export const UserDetails = ({ currentUser }: { currentUser: UserInformationDto |
         <>
           {details.map((d) => (
             <SummaryListRow key={d.label} label={d.label} value={d.value}>
-              {d.changeLinkSku && (
-                <Link href={buildUpdateUserDetailsHref({ sku: d.changeLinkSku })}>Change</Link>
+              {d.changeLinkDetailValue && (
+                <Link href={buildUpdateUserDetailsHref({ detail: d.changeLinkDetailValue })}>
+                  Change
+                </Link>
               )}
             </SummaryListRow>
           ))}
         </>
       </SummaryList>
-      {/* <ButtonGroup>
-        <Button elementType={Link} href={`/portal/user/me/edit-details`} variant="cta">
-          Edit Details
-        </Button>
-      </ButtonGroup> */}
     </div>
   )
 }

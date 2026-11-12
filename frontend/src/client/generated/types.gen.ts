@@ -190,6 +190,16 @@ export const EamsOpinionDecision = { NEGATIVE: 'Negative', POSITIVE: 'Positive' 
 export type EamsOpinionDecision = typeof EamsOpinionDecision[keyof typeof EamsOpinionDecision];
 
 /**
+ * Specifies the user details that can be edited.
+ */
+export const EditableUserDetail = { FULL_NAME: 'FullName', WORK_PHONE: 'WorkPhone' } as const;
+
+/**
+ * Specifies the user details that can be edited.
+ */
+export type EditableUserDetail = typeof EditableUserDetail[keyof typeof EditableUserDetail];
+
+/**
  * The input a record content question is rendered with. Part of the HTTP API contract: the
  * member names are sent to the frontend, so never rename or remove one.
  */
@@ -1784,17 +1794,23 @@ export type UpdateStatus = typeof UpdateStatus[keyof typeof UpdateStatus];
  */
 export type UpdateUserDetailsCommand = {
     /**
-     * Gets the user's full name.
+     * Gets the user detail that should be updated.
      */
-    fullName: string;
+    property: EditableUserDetail;
     /**
-     * Gets the user's work email address.
+     * Gets the new value to assign to the specified EditableUserDetail UpdateUserDetailsCommand.Property.
      */
-    workEmail: string;
+    value: string;
+};
+
+/**
+ * Represents the command to update the email address of an existing user.
+ */
+export type UpdateUserEmailCommand = {
     /**
-     * Gets the user's work telephone number.
+     * Gets the new email address for the user.
      */
-    workTelephone: string;
+    value: string;
 };
 
 /**
@@ -3429,7 +3445,7 @@ export type RemoveUserResponses = {
 
 export type RemoveUserResponse = RemoveUserResponses[keyof RemoveUserResponses];
 
-export type PatchUsersByUserIdData = {
+export type UpdateUserDetailsData = {
     /**
      * A token to monitor for cancellation requests.
      */
@@ -3444,7 +3460,7 @@ export type PatchUsersByUserIdData = {
     url: '/users/{userId}';
 };
 
-export type PatchUsersByUserIdErrors = {
+export type UpdateUserDetailsErrors = {
     /**
      * The supplied user details are invalid.
      */
@@ -3463,16 +3479,61 @@ export type PatchUsersByUserIdErrors = {
     409: AuthenticationProblemDetails;
 };
 
-export type PatchUsersByUserIdError = PatchUsersByUserIdErrors[keyof PatchUsersByUserIdErrors];
+export type UpdateUserDetailsError = UpdateUserDetailsErrors[keyof UpdateUserDetailsErrors];
 
-export type PatchUsersByUserIdResponses = {
+export type UpdateUserDetailsResponses = {
     /**
      * The user's details were successfully updated.
      */
     200: UserDetailsDto;
 };
 
-export type PatchUsersByUserIdResponse = PatchUsersByUserIdResponses[keyof PatchUsersByUserIdResponses];
+export type UpdateUserDetailsResponse = UpdateUserDetailsResponses[keyof UpdateUserDetailsResponses];
+
+export type UpdateUserEmailData = {
+    /**
+     * A token that can be used to cancel the request.
+     */
+    body: UpdateUserEmailCommand;
+    path: {
+        /**
+         * The unique identifier of the user whose email address is to be updated.
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/users/{userId}/email';
+};
+
+export type UpdateUserEmailErrors = {
+    /**
+     * Bad Request
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type UpdateUserEmailError = UpdateUserEmailErrors[keyof UpdateUserEmailErrors];
+
+export type UpdateUserEmailResponses = {
+    /**
+     * OK
+     */
+    200: UserDetailsDto;
+};
+
+export type UpdateUserEmailResponse = UpdateUserEmailResponses[keyof UpdateUserEmailResponses];
 
 export type PostUsersOnboardData = {
     /**

@@ -147,15 +147,18 @@ public class UserController(IUserService userService) : ControllerBase
     [ProducesResponseType<UserDetailsDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    [HttpPatch("{userId:int}")]
+    [HttpPatch("{userId:int}", Name = nameof(UpdateUserDetails))]
     public async Task<ActionResult<UserDetailsDto>> UpdateUserDetails(
         [FromRoute] int userId,
         [FromBody] UpdateUserDetailsCommand command,
         CancellationToken cancellationToken
     )
     {
-        var result = await userService.UpdateUserDetails(userId, command, cancellationToken);
+        Result<UserDetailsDto, UpdateUserDetailsError> result = await userService.UpdateUserDetails(
+            userId,
+            command,
+            cancellationToken
+        );
 
         return result.Match(
             x => Ok(x),
@@ -166,14 +169,61 @@ public class UserController(IUserService userService) : ControllerBase
                 return err.Match<ActionResult<UserDetailsDto>>(
                     unauthorised: () => UserNotFound(),
                     userDoesNotExist: () => UserNotFound(),
+                    validationError: error =>
+                        ValidationProblem(
+                            new ValidationProblemDetails(
+                                new Dictionary<string, string[]>(StringComparer.Ordinal)
+                                {
+                                    [nameof(command.Value)] = [error.ErrorMessage],
+                                }
+                            )
+                        )
+                );
+            }
+        );
+    }
+
+    /// <summary>
+    /// Updates the email address of the specified user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user whose email address is to be updated.</param>
+    /// <param name="command">The command containing the new email address.</param>
+    /// <param name="cancellationToken">A token that can be used to cancel the request.</param>
+    /// <returns>
+    /// An <see cref="ActionResult"/> that is:
+    /// <list type="bullet">
+    /// <item><description><c>200 OK</c> with the updated <see cref="UserDetailsDto"/> if the email was updated successfully.</description></item>
+    /// <item><description><c>400 Bad Request</c> with a <see cref="ValidationProblemDetails"/> if the request body fails validation.</description></item>
+    /// <item><description><c>404 Not Found</c> if the user does not exist or the caller is not permitted to access it.</description></item>
+    /// <item><description><c>409 Conflict</c> if the specified email is already in use by another user.</description></item>
+    /// </list>
+    /// </returns>
+    [ProducesResponseType<UserDetailsDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [HttpPatch("{userId:int}/email", Name = nameof(UpdateUserEmail))]
+    public async Task<ActionResult> UpdateUserEmail(
+        [FromRoute] int userId,
+        [FromBody] UpdateUserEmailCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await userService.UpdateUserEmail(userId, command, cancellationToken);
+
+        return result.Match(
+            Ok,
+            err =>
+                err.Match<ActionResult>(
+                    unauthorised: () => UserNotFound(),
+                    userDoesNotExist: () => UserNotFound(),
                     conflictingEmail: () =>
                         Problem(
                             statusCode: StatusCodes.Status409Conflict,
                             title: "Conflict",
                             detail: "The specified email conflicts with an existing email."
                         )
-                );
-            }
+                )
         );
     }
 
