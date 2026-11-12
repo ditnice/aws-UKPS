@@ -76,7 +76,7 @@ internal sealed class MedicinesIntlRecognition
     )]
     [FormField(
         "medicines_intl_recognition.intl_submission_date",
-        "What is the international regulatory submission date?",
+        "What is the International Recognition Procedure submission date?",
         FormControl.PrecisionDate,
         Hint = "Choose the level of detail you are currently able to provide. Estimate the date you plan to file this product with the reference regulator, or enter the actual date the dossier was formally accepted for review."
     )]
@@ -97,9 +97,9 @@ internal sealed class MedicinesIntlRecognition
     )]
     [FormField(
         "medicines_intl_recognition.intl_licence_date",
-        "What is the international regulatory licence date?",
+        "What is the International Recognition Procedure regulatory licence date?",
         FormControl.PrecisionDate,
-        Hint = "Choose the level of detail you are currently able to provide. Estimate the date you expect the reference regulator will grant marketing authorisation for this indication, or enter the actual date the reference regulator granted marketing authorisation for the specific indication in scope."
+        Hint = "Choose the level of detail you are currently able to provide. Estimate the date you expect the reference authority will grant marketing authorisation for this indication, or enter the actual date the reference authority granted marketing authorisation for the specific indication in scope."
     )]
     [FormDateEvent(DateEventType.IntlLicence, Name = "licence")]
     [FormRequired("Select an option")]
