@@ -2,6 +2,8 @@
 @use '@/styles/media-queries';
 @use '@/styles/spacing';
 @use '@/styles/utils';
+@use '@/styles/focus';
+@use '@/styles/typography';
 
 // Mirrors GOV.UK's "text input with a prefix" (govuk-input__wrapper / govuk-input__prefix):
 // https://design-system.service.gov.uk/components/text-input/#prefixes-and-suffixes
@@ -14,6 +16,20 @@
   :global(.input__input):focus {
     position: relative;
     z-index: 1;
+  }
+
+  // Error state: outline the prefix and input as one field, not just the input.
+  :global(.input--error) & {
+    @include typography.default-error-style;
+    width: fit-content;
+
+    :global(.input__input) {
+      outline: 0;
+
+      &:focus {
+        @include focus.default-focus-style;
+      }
+    }
   }
 
   @include media-queries.mq($from: sm) {
