@@ -1096,6 +1096,24 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task GetPage_PimPageWithNothingSaved_OffersTheDecisionPageAsNext()
+    {
+        RecordPageDto page = await GetPage("pim-designation");
+
+        page.NextPageId.ShouldBe("eams-opinion-decision");
+    }
+
+    [Fact]
+    public async Task GetPage_PimPageSavedAsNotGranted_StillOffersTheDecisionPageAsNext()
+    {
+        await SaveOk("pim-designation", PimAnswers("NotGranted", null));
+
+        RecordPageDto page = await GetPage("pim-designation");
+
+        page.NextPageId.ShouldBe("eams-opinion-decision");
+    }
+
+    [Fact]
     public async Task SavePage_PimGrantedAndWillSubmitToEams_StepsOnToTheDecisionPage()
     {
         SaveRecordPageDto pim = await SaveOk("pim-designation", PimAnswers("Granted", "Yes"));

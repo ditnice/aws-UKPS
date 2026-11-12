@@ -66,7 +66,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
                 CommercialInConfidence = page.CommercialInConfidence,
             },
             PreviousPageId = model.PreviousPage(page, applicability)?.Id,
-            NextPageId = model.NextPage(page, applicability)?.Id,
+            NextPageId = model.PossibleNextPage(page, applicability)?.Id,
             Questions = page
                 .Questions.Select(q => ToDto(q, options.GetValueOrDefault(q.Id)))
                 .ToArray(),
