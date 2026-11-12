@@ -70,6 +70,19 @@ public class FormModelValidatorTests
     [InlineData(
         "BrokenEntity.ReservedPage declares page 'task-list', which is reserved for the task list."
     )]
+    [InlineData(
+        "BrokenEntity.PrefixesOnText has [FormValuePrefixes], which only a PrefixedNumber uses."
+    )]
+    [InlineData(
+        "BrokenEntity.PrefixedWithoutPrefixes uses PrefixedNumber, which needs [FormValuePrefixes] with at least one prefix."
+    )]
+    [InlineData(
+        "BrokenEntity.DigitEndingPrefix has a blank prefix, or one ending in a digit, which would make the number ambiguous."
+    )]
+    [InlineData("BrokenEntity.RepeatedPrefix repeats a prefix in [FormValuePrefixes].")]
+    [InlineData(
+        "BrokenEntity.OverlappingPrefix has a prefix that starts another, which makes the split ambiguous."
+    )]
     public void Validate_BrokenEntity_ReportsTheProblem(string expected)
     {
         Problems(typeof(BrokenEntity)).ShouldContain(expected);
@@ -93,7 +106,7 @@ public class FormModelValidatorTests
         "BrokenConditionEntity.OtherPage [FormShowWhen] names 'broken_condition_entity.trigger', which must be an earlier question on the same page."
     )]
     [InlineData(
-        "BrokenConditionEntity.TextTrigger [FormShowWhen] names 'broken_condition_entity.before_trigger', which must be a Radio, Select or Checkbox on an enum."
+        "BrokenConditionEntity.TextTrigger [FormShowWhen] names 'broken_condition_entity.before_trigger', which must be a Radio, Select or Checkbox on an enum, or a PrecisionDate."
     )]
     [InlineData(
         "BrokenConditionEntity.WrongValue [FormShowWhen] has value 'Unknown', which is not a YesNoUnknown member."
@@ -130,6 +143,45 @@ public class FormModelValidatorTests
         form.FindQuestion("conditional_entity.reason")!
             .ShowWhen!.Description.ShouldBe("AnswerIn conditional_entity.gate [No]");
         form.FindQuestion("conditional_entity.gate")!.ShowWhen.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Scan_DatedEntity_BuildsDateBindingsAndPrecisionConditions()
+    {
+        Problems(typeof(DatedEntity)).ShouldBe(["The Vaccine form has no entry in FormVersions."]);
+
+        var (entities, _) = FormModelScanner.Scan(_model, [typeof(DatedEntity)]);
+        FormModel form = FormModelBuilder.Build(entities, _options)[RecordType.Vaccine];
+
+        FormQuestion submission = form.FindQuestion("dated_entity.submission_date")!;
+        submission.Binding.Description.ShouldBe(
+            "regulatory-date:DatedEntity.SubmissionDateId:UkSubmission"
+        );
+        submission.OptionKey.ShouldBeNull();
+        submission.Entity.Includes.ShouldBe(["SubmissionDate", "ActualDate"], ignoreOrder: true);
+        form.FindPage("actual")!
+            .ShowWhen!.Description.ShouldBe("AnswerIn dated_entity.submission_date [ActualDate]");
+    }
+
+    [Theory]
+    [InlineData(
+        "BrokenDatedEntity.NoEventDateId uses control PrecisionDate, which needs [FormDateEvent]."
+    )]
+    [InlineData(
+        "BrokenDatedEntity.TextEvent has [FormDateEvent], which only a PrecisionDate or ActualMonth uses."
+    )]
+    [InlineData(
+        "BrokenDatedEntity.WrongControlDateId uses control Text which does not suit a RegulatoryDate binding."
+    )]
+    [InlineData(
+        "BrokenDatedEntity.WrongValue [FormShowWhen] has value 'Yes', which is not a DatePrecision member."
+    )]
+    [InlineData(
+        "The Vaccine form uses date event IntlLicence on more than one question: 'broken_dated_entity.wrong_control_date', 'broken_dated_entity.same_event_date'."
+    )]
+    public void Validate_BrokenDatedEntity_ReportsTheProblem(string expected)
+    {
+        Problems(typeof(BrokenDatedEntity)).ShouldContain(expected);
     }
 
     [Fact]

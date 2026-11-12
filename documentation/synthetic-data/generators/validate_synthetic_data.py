@@ -264,9 +264,9 @@ def main():
                 and not mhra["procedureDetails"]:
             error("other or unconfirmed procedure needs details", record)
         if mhra["globalSubmissionActualDate"] and (
-                mhra["globalSubmissionActualDate"]["datePrecision"] != "ActualDate"
+                mhra["globalSubmissionActualDate"]["datePrecision"] != "ActualMonth"
                 or not mhra["globalFirstSubmissionRegion"]):
-            error("global first submission date is actual and has a region", record)
+            error("global first submission date is an actual month and has a region", record)
         for earlier, later in (
             (mhra["ukSubmissionDate"], mhra["ukLicenceDate"]),
             (mhra["ukLicenceDate"], hta["ukLaunchDate"]),
@@ -282,9 +282,10 @@ def main():
 
         for value in regulatory_dates(regulatory):
             start, end = period(value)
-            if value["datePrecision"] == "ActualDate" and start > updated:
+            is_actual = value["datePrecision"] in ("ActualDate", "ActualMonth")
+            if is_actual and start > updated:
                 error("actual dates are on or before the last update", record)
-            if value["datePrecision"] != "ActualDate" and end < updated:
+            if not is_actual and end < updated:
                 error("estimated dates are after the last update", record)
 
         launch = hta["ukLaunchDate"]

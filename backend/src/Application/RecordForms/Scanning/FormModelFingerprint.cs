@@ -75,6 +75,15 @@ internal static class FormModelFingerprint
             CultureInfo.InvariantCulture,
             $"      binding {question.Binding.Description} | {question.Entity.RowSource}"
         );
+
+        if (question.Prefixes is not null)
+        {
+            text.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"      prefixes {string.Join(" | ", question.Prefixes)}"
+            );
+        }
+
         if (question.ShowWhen is not null)
         {
             text.AppendLine(

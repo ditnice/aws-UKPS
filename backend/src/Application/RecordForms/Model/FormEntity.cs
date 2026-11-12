@@ -25,12 +25,13 @@ internal sealed class FormEntity
         Task<object?>
     > _load;
 
-    private readonly PropertyInfo _revisionIdProperty;
-
     public Type ClrType { get; }
     public FormRowSource RowSource { get; }
 
-    /// <summary>Navigations loaded with the row, because junction questions read them.</summary>
+    /// <summary>The foreign key to the revision that owns the row.</summary>
+    public PropertyInfo RevisionIdProperty { get; }
+
+    /// <summary>Navigations loaded with the row, because junction and date questions read them.</summary>
     public IReadOnlyList<string> Includes { get; }
 
     public string Name => ClrType.Name;
@@ -45,7 +46,7 @@ internal sealed class FormEntity
         ClrType = clrType;
         RowSource = rowSource;
         Includes = includes;
-        _revisionIdProperty = revisionIdProperty;
+        RevisionIdProperty = revisionIdProperty;
         _load = _loadMethod
             .MakeGenericMethod(clrType)
             .CreateDelegate<
@@ -75,7 +76,7 @@ internal sealed class FormEntity
     public object AddRow(AppDbContext dbContext, int revisionId)
     {
         object row = Activator.CreateInstance(ClrType)!;
-        _revisionIdProperty.SetValue(row, revisionId);
+        RevisionIdProperty.SetValue(row, revisionId);
         dbContext.Add(row);
         return row;
     }

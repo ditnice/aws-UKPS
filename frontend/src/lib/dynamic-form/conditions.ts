@@ -1,6 +1,7 @@
 import { ConditionKind } from '@/client/generated'
 
 import { fieldName, normaliseAnswer, toAnswer } from './answers'
+import { precisionOf } from './dates'
 
 import type { Answer, Condition, FormValues, Question } from './types'
 
@@ -31,11 +32,15 @@ export const isConditionMet = (
 export const shownQuestionIds = (questions: Question[], values: FormValues): Set<string> => {
   const indexById = new Map(questions.map((q, i) => [q.id, i]))
   const shown = new Set<string>()
+  // What a condition compares: the trigger's answer, or a date's precision.
   const answerOf = (questionId: string): Answer => {
     const index = indexById.get(questionId)
-    return index !== undefined && shown.has(questionId)
-      ? normaliseAnswer(toAnswer(questions[index], values[fieldName(index)]))
-      : null
+    if (index === undefined || !shown.has(questionId)) {
+      return null
+    }
+    const trigger = questions[index]
+    const answer = normaliseAnswer(toAnswer(trigger, values[fieldName(index)]))
+    return trigger.type === 'PrecisionDate' ? precisionOf(answer) : answer
   }
 
   for (const question of questions) {
