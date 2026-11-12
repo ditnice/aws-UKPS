@@ -97,7 +97,6 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
                     "regulatory-access-and-launch",
                     "Provide regulatory, access, and launch information"
                 ),
-                ("hta-and-launch", "Health technology assessment and launch"),
                 ("service-readiness", "Provide service readiness information (optional)"),
             ]);
         taskList

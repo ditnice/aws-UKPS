@@ -17,7 +17,7 @@ public class MedicineFormModelTests
     // Bump FormVersions.Medicine whenever this changes, then update both values.
     private const string ExpectedVersion = "2026.11.13";
     private const string ExpectedFingerprint =
-        "059da35cd6af3f91e2b4002d93fee57e91ffdce7283be57e0177582fff338e05";
+        "f1f8ae87b26163fb404ca8e1b2ed876f742bebe68b3dd382ad0d74240ab128b1";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -98,7 +98,7 @@ public class MedicineFormModelTests
     {
         Model
             .Pages.Where(static p =>
-                string.Equals(p.SectionId, "hta-and-launch", StringComparison.Ordinal)
+                string.Equals(p.TaskId, "hta-and-launch", StringComparison.Ordinal)
             )
             .Select(static p => p.Id)
             .ShouldBe(["hta-submission", "nice-aligned-pathway", "nice-ta-id", "uk-launch-date"]);
@@ -230,8 +230,7 @@ public class MedicineFormModelTests
             )
             .ShouldBe([
                 "indication-and-development: indication-details, development-background",
-                "regulatory-access-and-launch: mhra-procedure-and-dates",
-                "hta-and-launch: hta-and-launch",
+                "regulatory-access-and-launch: mhra-procedure-and-dates, hta-and-launch",
                 "service-readiness: laboratory-testing, patient-and-clinical-requirements",
             ]);
     }
@@ -437,10 +436,10 @@ public class MedicineFormModelTests
             ),
             (
                 "record_mhra_procedure.irp_reference_regulator_id",
-                FormControl.Select,
+                FormControl.Radio,
                 AnswerShape.Single
             ),
-            ("medicines_intl_recognition.irp_route_id", FormControl.Select, AnswerShape.Single),
+            ("medicines_intl_recognition.irp_route_id", FormControl.Radio, AnswerShape.Single),
             (
                 "medicines_intl_recognition.intl_submission_date",
                 FormControl.PrecisionDate,

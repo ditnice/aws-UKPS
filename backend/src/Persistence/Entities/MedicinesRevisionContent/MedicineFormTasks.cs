@@ -55,7 +55,7 @@ internal static class MedicineFormTasks
     public const string HtaAndLaunchTitle = "Health Technology Assessment (HTA) and launch";
 
     /// <summary>The "Health Technology Assessment (HTA) and launch" task's position within its section.</summary>
-    public const int HtaAndLaunchOrder = 10;
+    public const int HtaAndLaunchOrder = 20;
 
     /// <summary>The "Patient and clinical requirements" task's ID.</summary>
     public const string PatientAndClinicalRequirements = "patient-and-clinical-requirements";
