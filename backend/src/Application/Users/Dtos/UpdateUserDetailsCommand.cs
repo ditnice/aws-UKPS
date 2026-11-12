@@ -12,6 +12,7 @@ public sealed record UpdateUserDetailsCommand
     /// Gets the user's full name.
     /// </summary>
     [Required(AllowEmptyStrings = false)]
+    [MaxLength(255)]
     public required string FullName { get; init; }
 
     /// <summary>
@@ -19,6 +20,7 @@ public sealed record UpdateUserDetailsCommand
     /// </summary>
     [Required(AllowEmptyStrings = false)]
     [EmailAddress]
+    [MaxLength(255)]
     public required string WorkEmail { get; init; }
 
     /// <summary>

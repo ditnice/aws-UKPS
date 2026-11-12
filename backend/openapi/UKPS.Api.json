@@ -7634,10 +7634,12 @@
         "type": "object",
         "properties": {
           "fullName": {
+            "maxLength": 255,
             "type": "string",
             "description": "Gets the user's full name."
           },
           "workEmail": {
+            "maxLength": 255,
             "type": "string",
             "description": "Gets the user's work email address."
           },
