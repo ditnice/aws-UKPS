@@ -872,6 +872,8 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             RuleFor(x => x.OrganisationName, f => f.Company.CompanyName());
             RuleFor(x => x.UserRole, f => f.PickRandom<UserRole>());
             RuleFor(x => x.HasMultipleOrganisations, f => f.Random.Bool());
+            RuleFor(x => x.MfaMethod, f => f.PickRandom("Sms", "AuthenticatorApp", "Unknown"));
+            RuleFor(x => x.MfaPhoneNumber, f => f.Phone.PhoneNumber("07#########"));
             RuleFor(
                 x => x.Status,
                 f =>

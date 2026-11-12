@@ -40,6 +40,8 @@ const currentUser: UserInformationDto = {
   userRole: 'Standard',
   status: 'Active',
   hasMultipleOrganisations: true,
+  mfaMethod: 'Unknown',
+  mfaPhoneNumber: '',
 }
 
 const organisations = [

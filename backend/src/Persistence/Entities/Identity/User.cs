@@ -22,6 +22,11 @@ internal sealed class User
 
     public UserOnboardingRecord? OnboardingRecord { get; init; }
 
+    internal bool IsSetupComplete =>
+        UserOrgMemberships is not null
+        && UserOrgMemberships.Count > 0
+        && UserOrgMemberships.All(m => m.Status != UserOrgMembershipStatus.AwaitingSetup);
+
     // Navigation
     public ICollection<UserOrgMembership>? UserOrgMemberships { get; set; }
     public ICollection<UserAudit> UserAudits { get; set; } = [];

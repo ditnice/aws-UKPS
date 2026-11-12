@@ -63,6 +63,27 @@ internal partial class UserService(
                 "Current user did not have the membership as expected."
             );
 
+        string mfaMethod = "Unknown";
+        string mfaPhoneNumber = string.Empty;
+#pragma warning disable CA1031
+        try
+        {
+            UserMfaDetails? mfaDetails = await identityService.GetUserMfaDetails(
+                user.CognitoUsername,
+                cancellationToken
+            );
+            if (mfaDetails is not null)
+            {
+                mfaMethod = mfaDetails.MfaMethod;
+                mfaPhoneNumber = mfaDetails.MfaPhoneNumber;
+            }
+        }
+        catch
+        {
+            // Leave the default values when MFA details cannot be retrieved.
+        }
+#pragma warning restore CA1031
+
         return new UserInformationDto
         {
             UserId = user.Id,
@@ -75,6 +96,8 @@ internal partial class UserService(
             UserRole = currentUser.UserRole,
             Status = membership.Status.ConvertToUserOrgStatus(),
             HasMultipleOrganisations = user.HasMultipleSelectableOrganisations(),
+            MfaMethod = mfaMethod,
+            MfaPhoneNumber = mfaPhoneNumber,
         };
     }
 
@@ -274,6 +297,8 @@ internal partial class UserService(
                 OrganisationName = m.Organisation!.OrganisationName,
                 UserRole = m.UserRole,
                 Status = (UserOrgStatus)m.Status,
+                MfaMethod = "Unknown",
+                MfaPhoneNumber = string.Empty,
             })
             .FirstOrDefaultAsync(cancellationToken);
 

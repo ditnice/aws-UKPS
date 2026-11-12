@@ -212,7 +212,9 @@ export default function SignUpSetMfa() {
           }}
         </form.Field>
 
-        <Link href="/">I want to use a different way to sign in</Link>
+        <Link href="/auth/sign-up/set-mfa/sms/enter-phone-number">
+          I want a different way to sign in
+        </Link>
 
         {submitError ? <p>{submitError}</p> : null}
 

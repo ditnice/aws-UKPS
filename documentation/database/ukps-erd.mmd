@@ -84,9 +84,11 @@ erDiagram
             uuid correlation_id UK "nullable"
             timestamptz created_at
             integer created_by_user_id FK
+            timestamptz last_sms_setup_attempt_at "nullable"
             integer onboarding_flow
             integer resend_count
             integer resulting_user_id FK, UK
+            integer sms_setup_attempt_count
         }
         user_org_memberships:::identity {
             integer id PK

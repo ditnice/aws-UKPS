@@ -39,6 +39,8 @@ const user: UserInformationDto = {
   userRole: 'Standard',
   status: 'Active',
   hasMultipleOrganisations: false,
+  mfaMethod: 'Unknown',
+  mfaPhoneNumber: '',
 }
 
 function mockResponse() {

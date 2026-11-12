@@ -9,11 +9,19 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.WebApi.CustomResponses;
+using SetupSmsMfaResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.SmsMultiFactorAuthenticationSetupDto,
+    UKPS.Api.Application.Authentication.Errors.SetupSmsMfaError
+>;
 using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
     UKPS.Api.Application.Authentication.Errors.UserSetupError
 >;
 using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
+    UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
+>;
+using VerifySmsMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
 >;
@@ -270,6 +278,92 @@ public class AuthenticationController : ControllerBase
     }
 
     /// <summary>
+    /// Sets up SMS multi-factor authentication for a user.
+    /// </summary>
+    /// <param name="command"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>
+    ///
+    /// </returns>
+    [HttpPost("setup-sms-mfa")]
+    [ProducesResponseType(typeof(SmsMultiFactorAuthenticationSetupDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status410Gone)]
+    public async Task<ActionResult<SmsMultiFactorAuthenticationSetupDto>> SetupSmsMfa(
+        [FromBody] SetupSmsMfaCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        SetupSmsMfaResult result = await _authorisationAdministrationService.SetupSmsMfa(
+            command,
+            cancellationToken
+        );
+
+        return result.Match(
+            dto => Ok(dto),
+            err =>
+                err.Match<ActionResult>(
+                    invalidPhoneNumber: () => BadRequest("The supplied phone number is invalid."),
+                    doesNotExist: () => NotFound(),
+                    expired: () => StatusCode(StatusCodes.Status410Gone, _setupTokenExpiredDetails),
+                    unauthorised: () => Unauthorized(),
+                    alreadyCompleted: () => Conflict(),
+                    tooManyAttempts: () => StatusCode(StatusCodes.Status429TooManyRequests),
+                    tooSoon: () => StatusCode(StatusCodes.Status429TooManyRequests),
+                    concurrentRequest: () => Conflict()
+                )
+        );
+    }
+
+    /// <summary>
+    /// Verifies the user's SMS multi-factor authentication setup by validating the provided authentication code.
+    /// </summary>
+    /// <param name="command"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>
+    ///
+    /// </returns>
+    [HttpPost("verify-sms-mfa")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> VerifySmsMultiFactorAuthentication(
+        [FromBody] VerifySmsMultiFactorAuthenticationCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        VerifySmsMultiFactorAuthenticationResult result =
+            await _authorisationAdministrationService.VerifySmsMultiFactorAuthentication(
+                command,
+                cancellationToken
+            );
+
+        return result.Match(
+            HandleLoginSuccess,
+            err =>
+                err.Match<ActionResult>(
+                    invalidCode: _ =>
+                        BadRequest(
+                            new ProblemDetails
+                            {
+                                Title = "Invalid multi-factor authentication code.",
+                                Detail =
+                                    "The supplied authentication code is invalid or has expired.",
+                                Status = StatusCodes.Status400BadRequest,
+                            }
+                        ),
+                    doesNotExist: _ => NotFound(),
+                    alreadyCompleted: _ => Conflict(),
+                    expired: _ => StatusCode(StatusCodes.Status410Gone, _setupTokenExpiredDetails),
+                    sessionExpired: _ => Unauthorized(),
+                    rateLimited: _ => StatusCode(StatusCodes.Status429TooManyRequests)
+                )
+        );
+    }
+
+    /// <summary>
     /// Validates whether a user setup token is valid and can be used to complete the user setup process.
     /// </summary>
     /// <param name="setupToken">
@@ -488,7 +582,11 @@ public class AuthenticationController : ControllerBase
                                 Status = StatusCodes.Status400BadRequest,
                             }
                         ),
-                    doesNotExist: _ => NotFound()
+                    doesNotExist: _ => NotFound(),
+                    alreadyCompleted: _ => Conflict(),
+                    expired: _ => StatusCode(StatusCodes.Status410Gone, _setupTokenExpiredDetails),
+                    sessionExpired: _ => Unauthorized(),
+                    rateLimited: _ => StatusCode(StatusCodes.Status429TooManyRequests)
                 )
         );
     }

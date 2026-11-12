@@ -36,7 +36,9 @@ data "aws_iam_policy_document" "backend_cognito" {
       "cognito-idp:AdminDeleteUser",
       "cognito-idp:AdminInitiateAuth",
       "cognito-idp:AdminRespondToAuthChallenge",
+      "cognito-idp:AdminGetUser",
       "cognito-idp:AdminSetUserPassword",
+      "cognito-idp:AdminSetUserMFAPreference",
       "cognito-idp:AdminUpdateUserAttributes",
     ]
     resources = [module.cognito.user_pool_arn]
