@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
 using Amazon.CognitoIdentityProvider.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -34,11 +36,14 @@ using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
 >;
-using VerifySmsMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError>;
+using VerifySmsMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
+    UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
+>;
 
 namespace UKPS.Api.Application.Authentication;
 
-internal class IdentityAdministrationService : IIdentityAdministrationService
+internal partial class IdentityAdministrationService : IIdentityAdministrationService
 {
     private readonly AppDbContext _appDbContext;
     private readonly IIdentityService _identityService;
@@ -72,13 +77,10 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         CancellationToken cancellationToken
     )
     {
-        UserOnboardingRecord? userRecord = await _appDbContext
-            .UserOnboardingRecords.Include(x => x.ResultingUser)
-                .ThenInclude(x => x!.UserOrgMemberships)
-            .FirstOrDefaultAsync(
-                x => x.SetupToken == command.SetupToken,
-                cancellationToken: cancellationToken
-            );
+        UserOnboardingRecord? userRecord = await GetUserOnboardingRecordForVerificationAsync(
+            command.SetupToken,
+            cancellationToken
+        );
 
         if (userRecord is null)
         {
@@ -103,30 +105,10 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
             };
         }
 
-        userRecord.MarkAsConsumed(_dateTimeProvider.GetUtcNow());
+        DateTime now = _dateTimeProvider.GetUtcNow();
+        await PersistConsumedSetupAsync(userRecord, now, command.NewPassword, cancellationToken);
 
-        await _appDbContext.SaveChangesAsync(cancellationToken);
-
-        Result<UpdatePasswordError> updatePasswordResult = await _identityService.UpdatePassword(
-            userRecord.ResultingUser!.CognitoUsername,
-            command.NewPassword,
-            cancellationToken
-        );
-
-        if (updatePasswordResult.IsErr)
-        {
-            UserSetupError error = updatePasswordResult.Error.Match(
-                invalidPassword: _ => new UserSetupError.InvalidPassword()
-            );
-            return SetupUserResult.Err(error);
-        }
-
-        return await InitiateAuthenticationAndGetOtp(
-            userRecord.ResultingUser.CognitoUsername,
-            userRecord.ResultingUser.WorkEmail,
-            command.NewPassword,
-            cancellationToken
-        );
+        return await CompletePasswordSetupAsync(userRecord, command.NewPassword, cancellationToken);
     }
 
     public async Task<VerifyMultiFactorAuthenticationResult> VerifyMultiFactorAuthentication(
@@ -134,13 +116,10 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         CancellationToken cancellationToken
     )
     {
-        UserOnboardingRecord? userRecord = await _appDbContext
-            .UserOnboardingRecords.Include(x => x.ResultingUser)
-                .ThenInclude(x => x!.UserOrgMemberships)
-            .FirstOrDefaultAsync(
-                x => x.SetupToken == command.SetupToken,
-                cancellationToken: cancellationToken
-            );
+        UserOnboardingRecord? userRecord = await GetUserOnboardingRecordForVerificationAsync(
+            command.SetupToken,
+            cancellationToken
+        );
 
         if (userRecord is null)
         {
@@ -373,12 +352,10 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         CancellationToken cancellationToken
     )
     {
-        UserOnboardingRecord? userRecord = await _appDbContext
-            .UserOnboardingRecords.Include(x => x.ResultingUser)
-            .FirstOrDefaultAsync(
-                x => x.SetupToken == command.SetupToken,
-                cancellationToken: cancellationToken
-            );
+        UserOnboardingRecord? userRecord = await GetUserOnboardingRecordAsync(
+            command.SetupToken,
+            cancellationToken
+        );
 
         if (userRecord is null)
         {
@@ -386,25 +363,46 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         }
 
         DateTime now = _dateTimeProvider.GetUtcNow();
-        TimeSpan timeSpan = TimeSpan.FromSeconds(_options.Value.SetupTokenExpiryTimeSeconds);
-        if (userRecord.CreatedAt.Add(timeSpan) < now)
+
+        if (!IsWithinSetupWindow(userRecord, now))
         {
             return SetupSmsMfaResult.Err(new SetupSmsMfaError.Expired());
         }
 
         CognitoUsername cognitoUsername = userRecord.ResultingUser!.CognitoUsername;
 
+        string? storedPassword = DecryptPassword(
+            userRecord.EncryptedPassword,
+            userRecord.PasswordExpiresAt,
+            now,
+            _options.Value.PasswordStorageKey
+        );
+        if (storedPassword is null)
+        {
+            return SetupSmsMfaResult.Err(new SetupSmsMfaError.PasswordUnavailable());
+        }
+
         if (!PhoneNumberValidator.IsValidSmsNumber(command.PhoneNumber, out string? e164Number))
         {
             return SetupSmsMfaResult.Err(new SetupSmsMfaError.InvalidPhoneNumber());
         }
 
-        await _identityService.SetUserPhoneNumber(cognitoUsername, e164Number!, cancellationToken);
+        SetupSmsMfaResult? attemptError = await ValidateAndRecordSmsSetupAttemptAsync(
+            userRecord,
+            now,
+            cancellationToken
+        );
+        if (attemptError is not null)
+        {
+            return attemptError.Value;
+        }
 
-        // TODO: SMS MFA auth-restart is not implemented.
-        // SetupSmsMfa only stores the phone number and returns Unauthorised, so verification cannot proceed.
-        // Revisit an auth-restart mechanism for the SMS_MFA challenge.
-        return SetupSmsMfaResult.Err(new SetupSmsMfaError.Unauthorised());
+        return await EnableSmsMfaAndRestartAsync(
+            cognitoUsername,
+            e164Number!,
+            storedPassword,
+            cancellationToken
+        );
     }
 
     public async Task<VerifySmsMultiFactorAuthenticationResult> VerifySmsMultiFactorAuthentication(
@@ -412,48 +410,259 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         CancellationToken cancellationToken
     )
     {
-        UserOnboardingRecord? userRecord = await _appDbContext
-            .UserOnboardingRecords.Include(x => x.ResultingUser)
-            .FirstOrDefaultAsync(
-                x => x.SetupToken == command.SetupToken,
-                cancellationToken: cancellationToken
-            );
+        UserOnboardingRecord? userRecord = await GetUserOnboardingRecordForVerificationAsync(
+            command.SetupToken,
+            cancellationToken
+        );
 
-        if (userRecord is null)
+        if (userRecord is null || userRecord.ResultingUser is null)
         {
             return VerifySmsMultiFactorAuthenticationResult.Err(
                 new VerifyMultiFactorAuthenticationError.DoesNotExist()
             );
         }
 
-        CognitoUsername cognitoUsername = userRecord.ResultingUser!.CognitoUsername;
+        if (userRecord.ResultingUser.IsSetupComplete)
+        {
+            return VerifySmsMultiFactorAuthenticationResult.Err(
+                new VerifyMultiFactorAuthenticationError.AlreadyCompleted()
+            );
+        }
 
+        if (!IsWithinSetupWindow(userRecord, _dateTimeProvider.GetUtcNow()))
+        {
+            return VerifySmsMultiFactorAuthenticationResult.Err(
+                new VerifyMultiFactorAuthenticationError.Expired()
+            );
+        }
+
+        CognitoUsername cognitoUsername = userRecord.ResultingUser.CognitoUsername;
+
+        return await VerifySmsCodeAndFinaliseAsync(
+            userRecord,
+            cognitoUsername,
+            command,
+            cancellationToken
+        );
+    }
+
+#pragma warning disable CA1031
+    private async Task<SetupSmsMfaResult> EnableSmsMfaAndRestartAsync(
+        CognitoUsername cognitoUsername,
+        string e164Number,
+        string storedPassword,
+        CancellationToken cancellationToken
+    )
+    {
         try
         {
-            await _identityService.RespondToSmsMultiFactorAuthenticationChallenge(
+            await _identityService.SetUserPhoneNumber(
+                cognitoUsername,
+                e164Number,
+                cancellationToken
+            );
+            await _identityService.SetUserMfaPreference(
+                cognitoUsername,
+                smsEnabled: true,
+                smsPreferred: true,
+                cancellationToken,
+                softwareTokenEnabled: false
+            );
+
+            SetupSmsMfaResult restartResult = await RestartAuthenticationForSmsMfaAsync(
+                cognitoUsername,
+                storedPassword,
+                cancellationToken
+            );
+
+            if (restartResult.IsErr)
+            {
+                await RevertSmsMfaPreferenceAsync(cognitoUsername);
+            }
+
+            return restartResult;
+        }
+        catch
+        {
+            await RevertSmsMfaPreferenceAsync(cognitoUsername);
+            throw;
+        }
+    }
+
+    private async Task RevertSmsMfaPreferenceAsync(CognitoUsername cognitoUsername)
+    {
+        try
+        {
+            await _identityService.SetUserMfaPreference(
+                cognitoUsername,
+                smsEnabled: false,
+                smsPreferred: false,
+                CancellationToken.None,
+                softwareTokenEnabled: false
+            );
+        }
+        catch (Exception)
+        {
+            GC.KeepAlive(null);
+        }
+    }
+#pragma warning restore CA1031
+
+    private async Task<SetupSmsMfaResult> RestartAuthenticationForSmsMfaAsync(
+        CognitoUsername cognitoUsername,
+        string storedPassword,
+        CancellationToken cancellationToken
+    )
+    {
+        InitiateAuthenticationResult restartResult = await _identityService.InitiateAuthentication(
+            cognitoUsername,
+            storedPassword,
+            cancellationToken
+        );
+
+        return restartResult.Match(
+            _ => SetupSmsMfaResult.Err(new SetupSmsMfaError.Unauthorised()),
+            err =>
+                err.Match(
+                    unauthorised: () => SetupSmsMfaResult.Err(new SetupSmsMfaError.Unauthorised()),
+                    challenge: challenge =>
+                        challenge.ChallengeType
+                        == UkpsChallengeType.MultiFactorAuthenticationRequired
+                            ? SetupSmsMfaResult.Ok(
+                                new SmsMultiFactorAuthenticationSetupDto
+                                {
+                                    AuthenticationSession = challenge.AuthenticationSession,
+                                }
+                            )
+                            : SetupSmsMfaResult.Err(new SetupSmsMfaError.Unauthorised())
+                )
+        );
+    }
+
+    private bool IsWithinSetupWindow(UserOnboardingRecord record, DateTime now)
+    {
+        TimeSpan window = TimeSpan.FromSeconds(_options.Value.SetupTokenExpiryTimeSeconds);
+        return record.CreatedAt.Add(window) >= now;
+    }
+
+    private async Task<UserOnboardingRecord?> GetUserOnboardingRecordAsync(
+        Guid setupToken,
+        CancellationToken cancellationToken
+    )
+    {
+        return await _appDbContext
+            .UserOnboardingRecords.Include(x => x.ResultingUser)
+            .FirstOrDefaultAsync(
+                x => x.SetupToken == setupToken,
+                cancellationToken: cancellationToken
+            );
+    }
+
+    private async Task<UserOnboardingRecord?> GetUserOnboardingRecordForVerificationAsync(
+        Guid setupToken,
+        CancellationToken cancellationToken
+    )
+    {
+        return await _appDbContext
+            .UserOnboardingRecords.Include(x => x.ResultingUser)
+                .ThenInclude(x => x!.UserOrgMemberships)
+            .FirstOrDefaultAsync(
+                x => x.SetupToken == setupToken,
+                cancellationToken: cancellationToken
+            );
+    }
+
+    private async Task PersistConsumedSetupAsync(
+        UserOnboardingRecord userRecord,
+        DateTime now,
+        string newPassword,
+        CancellationToken cancellationToken
+    )
+    {
+        userRecord.MarkAsConsumed(now);
+        userRecord.StorePassword(
+            EncryptPassword(newPassword, _options.Value.PasswordStorageKey),
+            now.AddSeconds(_options.Value.StoredPasswordExpirySeconds)
+        );
+        await _appDbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task<SetupUserResult> CompletePasswordSetupAsync(
+        UserOnboardingRecord userRecord,
+        string newPassword,
+        CancellationToken cancellationToken
+    )
+    {
+        Result<UpdatePasswordError> updatePasswordResult = await _identityService.UpdatePassword(
+            userRecord.ResultingUser!.CognitoUsername,
+            newPassword,
+            cancellationToken
+        );
+
+        if (updatePasswordResult.IsErr)
+        {
+            UserSetupError error = updatePasswordResult.Error.Match(
+                invalidPassword: _ => new UserSetupError.InvalidPassword()
+            );
+            return SetupUserResult.Err(error);
+        }
+
+        return await InitiateAuthenticationAndGetOtp(
+            userRecord.ResultingUser.CognitoUsername,
+            userRecord.ResultingUser.WorkEmail,
+            newPassword,
+            cancellationToken
+        );
+    }
+
+    private async Task<SetupSmsMfaResult?> ValidateAndRecordSmsSetupAttemptAsync(
+        UserOnboardingRecord userRecord,
+        DateTime now,
+        CancellationToken cancellationToken
+    )
+    {
+        if (userRecord.SmsSetupAttemptCount >= _options.Value.MaxSmsSetupAttempts)
+        {
+            return SetupSmsMfaResult.Err(new SetupSmsMfaError.TooManyAttempts());
+        }
+
+        if (
+            userRecord.LastSmsSetupAttemptAt is { } lastAttempt
+            && lastAttempt.AddSeconds(_options.Value.SmsSetupCooldownSeconds) > now
+        )
+        {
+            return SetupSmsMfaResult.Err(new SetupSmsMfaError.TooSoon());
+        }
+
+        userRecord.RecordSmsSetupAttempt(now);
+        try
+        {
+            await _appDbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return SetupSmsMfaResult.Err(new SetupSmsMfaError.ConcurrentRequest());
+        }
+
+        return null;
+    }
+
+#pragma warning disable CA1031
+    private async Task<VerifySmsMultiFactorAuthenticationResult> VerifySmsCodeAndFinaliseAsync(
+        UserOnboardingRecord userRecord,
+        CognitoUsername cognitoUsername,
+        VerifySmsMultiFactorAuthenticationCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        AuthenticationCredentialsDto credentials;
+        try
+        {
+            credentials = await _identityService.RespondToSmsMultiFactorAuthenticationChallenge(
                 cognitoUsername,
                 command.AuthenticationSession,
                 command.Code,
                 cancellationToken
-            );
-
-            await _identityService.MarkEmailAsVerified(cognitoUsername, cancellationToken);
-            await _identityService.SetUserMfaPreference(
-                cognitoUsername,
-                smsEnabled: true,
-                smsPreferred: false,
-                cancellationToken
-            );
-
-            userRecord.ResultingUser.FinaliseSetup();
-            await _appDbContext.SaveChangesAsync(cancellationToken);
-
-            return VerifySmsMultiFactorAuthenticationResult.Ok();
-        }
-        catch (NotAuthorizedException)
-        {
-            return VerifySmsMultiFactorAuthenticationResult.Err(
-                new VerifyMultiFactorAuthenticationError.InvalidCode()
             );
         }
         catch (CodeMismatchException)
@@ -462,5 +671,97 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
                 new VerifyMultiFactorAuthenticationError.InvalidCode()
             );
         }
+        catch (Exception ex) when (ex is NotAuthorizedException or ExpiredCodeException)
+        {
+            await RevertSmsMfaPreferenceAsync(cognitoUsername);
+
+            return VerifySmsMultiFactorAuthenticationResult.Err(
+                new VerifyMultiFactorAuthenticationError.SessionExpired()
+            );
+        }
+        catch (Exception ex)
+            when (ex
+                    is TooManyRequestsException
+                        or LimitExceededException
+                        or TooManyFailedAttemptsException
+            )
+        {
+            return VerifySmsMultiFactorAuthenticationResult.Err(
+                new VerifyMultiFactorAuthenticationError.RateLimited()
+            );
+        }
+
+        await _identityService.MarkEmailAsVerified(cognitoUsername, cancellationToken);
+
+        userRecord.ClearStoredPassword();
+        userRecord.ResultingUser!.FinaliseSetup();
+        await _appDbContext.SaveChangesAsync(cancellationToken);
+
+        return VerifySmsMultiFactorAuthenticationResult.Ok(credentials);
     }
+
+    private static string EncryptPassword(string password, string key)
+    {
+        using var aes = Aes.Create();
+        aes.Key = SHA256.HashData(Encoding.UTF8.GetBytes(key));
+        aes.GenerateIV();
+
+        using var encryptor = aes.CreateEncryptor();
+        byte[] plainBytes = Encoding.UTF8.GetBytes(password);
+        byte[] cipherBytes = encryptor.TransformFinalBlock(plainBytes, 0, plainBytes.Length);
+
+        byte[] result = new byte[aes.IV.Length + cipherBytes.Length];
+        Buffer.BlockCopy(aes.IV, 0, result, 0, aes.IV.Length);
+        Buffer.BlockCopy(cipherBytes, 0, result, aes.IV.Length, cipherBytes.Length);
+        return Convert.ToBase64String(result);
+    }
+
+    private static string? DecryptPassword(
+        string? encryptedPassword,
+        DateTime? passwordExpiresAt,
+        DateTime now,
+        string key
+    )
+    {
+        if (
+            string.IsNullOrWhiteSpace(encryptedPassword)
+            || passwordExpiresAt is null
+            || passwordExpiresAt < now
+        )
+        {
+            return null;
+        }
+
+        try
+        {
+            byte[] data = Convert.FromBase64String(encryptedPassword);
+            if (data.Length < 16)
+            {
+                return null;
+            }
+
+            using var aes = Aes.Create();
+            aes.Key = SHA256.HashData(Encoding.UTF8.GetBytes(key));
+
+            byte[] iv = new byte[16];
+            Buffer.BlockCopy(data, 0, iv, 0, iv.Length);
+            aes.IV = iv;
+
+            byte[] cipherBytes = new byte[data.Length - iv.Length];
+            Buffer.BlockCopy(data, iv.Length, cipherBytes, 0, cipherBytes.Length);
+
+            using var decryptor = aes.CreateDecryptor();
+            byte[] plainBytes = decryptor.TransformFinalBlock(cipherBytes, 0, cipherBytes.Length);
+            return Encoding.UTF8.GetString(plainBytes);
+        }
+        catch (CryptographicException)
+        {
+            return null;
+        }
+        catch (FormatException)
+        {
+            return null;
+        }
+    }
+#pragma warning restore CA1031
 }

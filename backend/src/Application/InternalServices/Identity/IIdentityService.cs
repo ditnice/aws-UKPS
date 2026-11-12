@@ -97,6 +97,7 @@ internal interface IIdentityService
         CognitoUsername cognitoUsername,
         bool smsEnabled,
         bool smsPreferred,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        bool softwareTokenEnabled = true
     );
 }

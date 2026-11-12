@@ -14,4 +14,22 @@ internal sealed record UserOnboardingOptions
 
     [Required]
     public required Uri SetupLink { get; init; }
+
+    /// <summary>
+    /// The key used to encrypt short-lived onboarding passwords. Must be supplied via configuration.
+    /// </summary>
+    [Required]
+    [MinLength(16)]
+    public required string PasswordStorageKey { get; set; }
+
+    [Required]
+    public int StoredPasswordExpirySeconds { get; set; } = 300;
+
+    [Required]
+    [Range(1, int.MaxValue)]
+    public int MaxSmsSetupAttempts { get; set; } = 5;
+
+    [Required]
+    [Range(1, int.MaxValue)]
+    public int SmsSetupCooldownSeconds { get; set; } = 30;
 }

@@ -582,7 +582,8 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         CognitoUsername cognitoUsername,
         bool smsEnabled,
         bool smsPreferred,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        bool softwareTokenEnabled = true
     )
     {
         await _cognito.AdminSetUserMFAPreferenceAsync(
@@ -597,8 +598,8 @@ internal sealed partial class CognitoIdentityService : IIdentityService
                 },
                 SoftwareTokenMfaSettings = new SoftwareTokenMfaSettingsType
                 {
-                    Enabled = true,
-                    PreferredMfa = !smsPreferred,
+                    Enabled = softwareTokenEnabled,
+                    PreferredMfa = softwareTokenEnabled && !smsPreferred,
                 },
             },
             cancellationToken
@@ -607,6 +608,11 @@ internal sealed partial class CognitoIdentityService : IIdentityService
 
     private static string ObfuscatePhoneNumber(string phoneNumber)
     {
+        if (string.IsNullOrWhiteSpace(phoneNumber) || phoneNumber.Length < 4)
+        {
+            return string.Empty;
+        }
+
         return phoneNumber[..2] + "**" + " " + "***" + phoneNumber[^2..];
     }
 

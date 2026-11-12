@@ -1715,6 +1715,17 @@ export type SetupUserCommand = {
 };
 
 /**
+ * Represents the details required for a user to complete SMS multi-factor authentication setup.
+ */
+export type SmsMultiFactorAuthenticationSetupDto = {
+    /**
+     * Gets the authentication session identifier required to complete the
+     * multi-factor authentication setup flow.
+     */
+    authenticationSession: string;
+};
+
+/**
  * Specifies the direction in which query results are sorted.
  */
 export const SortDirection = { ASCENDING: 'Ascending', DESCENDING: 'Descending' } as const;
@@ -2196,8 +2207,10 @@ export type PostAuthSetupSmsMfaResponses = {
     /**
      * OK
      */
-    200: unknown;
+    200: SmsMultiFactorAuthenticationSetupDto;
 };
+
+export type PostAuthSetupSmsMfaResponse = PostAuthSetupSmsMfaResponses[keyof PostAuthSetupSmsMfaResponses];
 
 export type PostAuthVerifySmsMfaData = {
     body: VerifySmsMultiFactorAuthenticationCommand;

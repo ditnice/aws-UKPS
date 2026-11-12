@@ -21,7 +21,10 @@ using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
 >;
-using VerifySmsMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError>;
+using VerifySmsMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
+    UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
+>;
 
 namespace UKPS.Api.WebApi.Controllers;
 
@@ -283,12 +286,12 @@ public class AuthenticationController : ControllerBase
     ///
     /// </returns>
     [HttpPost("setup-sms-mfa")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SmsMultiFactorAuthenticationSetupDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status410Gone)]
-    public async Task<ActionResult> SetupSmsMfa(
+    public async Task<ActionResult<SmsMultiFactorAuthenticationSetupDto>> SetupSmsMfa(
         [FromBody] SetupSmsMfaCommand command,
         CancellationToken cancellationToken
     )
@@ -305,7 +308,12 @@ public class AuthenticationController : ControllerBase
                     invalidPhoneNumber: () => BadRequest("The supplied phone number is invalid."),
                     doesNotExist: () => NotFound(),
                     expired: () => StatusCode(StatusCodes.Status410Gone, _setupTokenExpiredDetails),
-                    unauthorised: () => Unauthorized()
+                    unauthorised: () => Unauthorized(),
+                    passwordUnavailable: () => Unauthorized(),
+                    alreadyCompleted: () => Conflict(),
+                    tooManyAttempts: () => StatusCode(StatusCodes.Status429TooManyRequests),
+                    tooSoon: () => StatusCode(StatusCodes.Status429TooManyRequests),
+                    concurrentRequest: () => Conflict()
                 )
         );
     }
@@ -334,7 +342,7 @@ public class AuthenticationController : ControllerBase
             );
 
         return result.Match(
-            () => Ok(),
+            HandleLoginSuccess,
             err =>
                 err.Match<ActionResult>(
                     invalidCode: _ =>
@@ -347,7 +355,11 @@ public class AuthenticationController : ControllerBase
                                 Status = StatusCodes.Status400BadRequest,
                             }
                         ),
-                    doesNotExist: _ => NotFound()
+                    doesNotExist: _ => NotFound(),
+                    alreadyCompleted: _ => Conflict(),
+                    expired: _ => StatusCode(StatusCodes.Status410Gone, _setupTokenExpiredDetails),
+                    sessionExpired: _ => Unauthorized(),
+                    rateLimited: _ => StatusCode(StatusCodes.Status429TooManyRequests)
                 )
         );
     }
@@ -571,7 +583,11 @@ public class AuthenticationController : ControllerBase
                                 Status = StatusCodes.Status400BadRequest,
                             }
                         ),
-                    doesNotExist: _ => NotFound()
+                    doesNotExist: _ => NotFound(),
+                    alreadyCompleted: _ => Conflict(),
+                    expired: _ => StatusCode(StatusCodes.Status410Gone, _setupTokenExpiredDetails),
+                    sessionExpired: _ => Unauthorized(),
+                    rateLimited: _ => StatusCode(StatusCodes.Status429TooManyRequests)
                 )
         );
     }

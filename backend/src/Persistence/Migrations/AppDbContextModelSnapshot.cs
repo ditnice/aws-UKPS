@@ -422,9 +422,17 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("created_by_user_id");
 
+                    b.Property<string>("EncryptedPassword")
+                        .HasColumnType("text")
+                        .HasColumnName("encrypted_password");
+
                     b.Property<int>("OnboardingFlow")
                         .HasColumnType("integer")
                         .HasColumnName("onboarding_flow");
+
+                    b.Property<DateTime?>("PasswordExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("password_expires_at");
 
                     b.Property<int>("ResendCount")
                         .HasColumnType("integer")

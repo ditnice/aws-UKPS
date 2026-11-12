@@ -269,7 +269,24 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsMultiFactorAuthenticationSetupDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsMultiFactorAuthenticationSetupDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsMultiFactorAuthenticationSetupDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Bad Request",
@@ -7739,6 +7756,19 @@
           }
         },
         "description": "Represents the command used to complete user setup by validating a setup token\nand assigning a new password to the user."
+      },
+      "SmsMultiFactorAuthenticationSetupDto": {
+        "required": [
+          "authenticationSession"
+        ],
+        "type": "object",
+        "properties": {
+          "authenticationSession": {
+            "type": "string",
+            "description": "Gets the authentication session identifier required to complete the\nmulti-factor authentication setup flow."
+          }
+        },
+        "description": "Represents the details required for a user to complete SMS multi-factor authentication setup."
       },
       "SortDirection": {
         "enum": [
