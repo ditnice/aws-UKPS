@@ -1,14 +1,17 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import { Alert } from '@/components/Alert/Alert'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
-export const CreateRecordPageHeader = () => {
-  const router = useRouter()
+type CreateRecordPageHeaderProps = {
+  // Where Back goes once the user has seen the exit warning
+  backHref: string
+}
+
+export const CreateRecordPageHeader = ({ backHref }: CreateRecordPageHeaderProps) => {
   const [showExitWarning, setShowExitWarning] = useState(false)
 
   return (
@@ -27,12 +30,11 @@ export const CreateRecordPageHeader = () => {
         preheading="Names and identifiers"
         backLink={
           <BackLink
-            href="#"
+            href={backHref}
             onClick={(event) => {
-              event.preventDefault()
-              if (showExitWarning) {
-                router.back()
-              } else {
+              // The first click warns; the next follows the link.
+              if (!showExitWarning) {
+                event.preventDefault()
                 setShowExitWarning(true)
               }
             }}

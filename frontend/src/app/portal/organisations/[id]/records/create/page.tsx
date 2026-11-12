@@ -13,7 +13,7 @@ const CreateMedicineRecordPage = async ({ params }: CreateMedicineRecordPageProp
     <OrganisationPageWrapper organisationId={organisationId}>
       {(organisation) => (
         <>
-          <CreateRecordPageHeader />
+          <CreateRecordPageHeader backHref={`/portal/organisations/${organisation.id}/records`} />
           <CreateMedicineRecordForm organisationId={organisation.id} />
         </>
       )}

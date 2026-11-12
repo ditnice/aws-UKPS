@@ -89,23 +89,23 @@ describe('AddAnother', () => {
   it('should render the hint above the first input and link it to that input only', () => {
     renderComponent()
 
-    expect(screen.getByText(defaultProps.hint)).toBeDefined()
-    expect(getInputByLabelText('label-prefix 1').getAttribute('aria-describedby')).toBe(
-      'test-field-hint',
-    )
-    expect(getInputByLabelText('label-prefix 2').getAttribute('aria-describedby')).toBeNull()
+    expect(screen.getByText(defaultProps.hint)).toBeInTheDocument()
+    expect(getInputByLabelText('label-prefix 1')).toHaveAccessibleDescription(defaultProps.hint)
+    expect(getInputByLabelText('label-prefix 2')).not.toHaveAccessibleDescription(defaultProps.hint)
   })
 
   it('should not number the label when there is only one item', () => {
     renderComponent({ field: singleItemField })
 
-    expect(getInputByLabelText('label-prefix')).toBeDefined()
+    expect(screen.getByLabelText('label-prefix')).toBeInTheDocument()
   })
 
   it('should not render a remove button when there is only one item', () => {
     renderComponent({ field: singleItemField })
 
-    expect(screen.queryByTestId('remove-button-0')).toBeNull()
+    expect(
+      screen.queryByRole('button', { name: new RegExp(defaultProps.removeItemLabel) }),
+    ).not.toBeInTheDocument()
   })
 
   it('should render a remove button for the first item', () => {
