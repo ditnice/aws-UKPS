@@ -1212,12 +1212,6 @@ export const fakePostAuthSetupUserResponse409 = (options?: Options): PostAuthSet
 
 export const fakePostAuthSetupUserResponse410 = (options?: Options): PostAuthSetupUserErrors[410] => fakeProblemDetails(options);
 
-export const fakeInitiateUpdateMultiFactorAuthenticationResponse200 = (options?: Options): InitiateUpdateMultiFactorAuthenticationResponses[200] => fakeMultiFactorAuthenticationSetupDto(options);
-
-export const fakeInitiateUpdateMultiFactorAuthenticationResponse401 = (options?: Options): InitiateUpdateMultiFactorAuthenticationErrors[401] => fakeAuthenticationProblemDetails(options);
-
-export const fakeInitiateUpdateMultiFactorAuthenticationResponse409 = (options?: Options): InitiateUpdateMultiFactorAuthenticationErrors[409] => fakeAuthenticationProblemDetails(options);
-
 export const fakePostAuthVerifyMfaRequest = (options?: Options): Omit<PostAuthVerifyMfaData, 'url'> => ({
     body: fakeVerifyMultiFactorAuthenticationCommand(options)
 });
@@ -1227,20 +1221,6 @@ export const fakePostAuthVerifyMfaResponse200 = (): PostAuthVerifyMfaResponses[2
 export const fakePostAuthVerifyMfaResponse400 = (options?: Options): PostAuthVerifyMfaErrors[400] => fakeProblemDetails(options);
 
 export const fakePostAuthVerifyMfaResponse404 = (options?: Options): PostAuthVerifyMfaErrors[404] => fakeProblemDetails(options);
-
-export const fakeVerifyMultiFactorAuthenticationUpdateRequest = (options?: Options): Omit<VerifyMultiFactorAuthenticationUpdateData, 'url'> => ({
-    body: fakeVerifyMultiFactorAuthenticationUpdateCommand(options)
-});
-
-export const fakeVerifyMultiFactorAuthenticationUpdateResponse200 = (): VerifyMultiFactorAuthenticationUpdateResponses[200] => undefined;
-
-export const fakeVerifyMultiFactorAuthenticationUpdateResponse400 = (options?: Options): VerifyMultiFactorAuthenticationUpdateErrors[400] => fakeProblemDetails(options);
-
-export const fakeVerifyMultiFactorAuthenticationUpdateResponse401 = (options?: Options): VerifyMultiFactorAuthenticationUpdateErrors[401] => fakeAuthenticationProblemDetails(options);
-
-export const fakeVerifyMultiFactorAuthenticationUpdateResponse404 = (options?: Options): VerifyMultiFactorAuthenticationUpdateErrors[404] => fakeProblemDetails(options);
-
-export const fakeVerifyMultiFactorAuthenticationUpdateResponse409 = (options?: Options): VerifyMultiFactorAuthenticationUpdateErrors[409] => fakeAuthenticationProblemDetails(options);
 
 export const fakeInitiateForgottenPasswordProcedureRequest = (options?: Options): Omit<InitiateForgottenPasswordProcedureData, 'url'> => ({
     body: fakeInitiateForgottenPasswordProcedureCommand(options)
@@ -1287,6 +1267,26 @@ export const fakeUpdateCurrentOrganisationResponse200 = (): UpdateCurrentOrganis
 export const fakeUpdateCurrentOrganisationResponse400 = (options?: Options): UpdateCurrentOrganisationErrors[400] => fakeProblemDetails(options);
 
 export const fakeUpdateCurrentOrganisationResponse401 = (options?: Options): UpdateCurrentOrganisationErrors[401] => fakeAuthenticationProblemDetails(options);
+
+export const fakeInitiateUpdateMultiFactorAuthenticationResponse200 = (options?: Options): InitiateUpdateMultiFactorAuthenticationResponses[200] => fakeMultiFactorAuthenticationSetupDto(options);
+
+export const fakeInitiateUpdateMultiFactorAuthenticationResponse401 = (options?: Options): InitiateUpdateMultiFactorAuthenticationErrors[401] => fakeAuthenticationProblemDetails(options);
+
+export const fakeInitiateUpdateMultiFactorAuthenticationResponse409 = (options?: Options): InitiateUpdateMultiFactorAuthenticationErrors[409] => fakeAuthenticationProblemDetails(options);
+
+export const fakeVerifyMultiFactorAuthenticationUpdateRequest = (options?: Options): Omit<VerifyMultiFactorAuthenticationUpdateData, 'url'> => ({
+    body: fakeVerifyMultiFactorAuthenticationUpdateCommand(options)
+});
+
+export const fakeVerifyMultiFactorAuthenticationUpdateResponse200 = (): VerifyMultiFactorAuthenticationUpdateResponses[200] => undefined;
+
+export const fakeVerifyMultiFactorAuthenticationUpdateResponse400 = (options?: Options): VerifyMultiFactorAuthenticationUpdateErrors[400] => fakeProblemDetails(options);
+
+export const fakeVerifyMultiFactorAuthenticationUpdateResponse401 = (options?: Options): VerifyMultiFactorAuthenticationUpdateErrors[401] => fakeAuthenticationProblemDetails(options);
+
+export const fakeVerifyMultiFactorAuthenticationUpdateResponse404 = (options?: Options): VerifyMultiFactorAuthenticationUpdateErrors[404] => fakeProblemDetails(options);
+
+export const fakeVerifyMultiFactorAuthenticationUpdateResponse409 = (options?: Options): VerifyMultiFactorAuthenticationUpdateErrors[409] => fakeAuthenticationProblemDetails(options);
 
 export const fakeGetOrganisationByIdRequest = (options?: Options): Omit<GetOrganisationByIdData, 'url'> => {
     const f = options?.faker ?? faker;

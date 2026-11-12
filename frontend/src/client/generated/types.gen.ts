@@ -2252,35 +2252,6 @@ export type PostAuthSetupUserResponses = {
 
 export type PostAuthSetupUserResponse = PostAuthSetupUserResponses[keyof PostAuthSetupUserResponses];
 
-export type InitiateUpdateMultiFactorAuthenticationData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/auth/update-mfa';
-};
-
-export type InitiateUpdateMultiFactorAuthenticationErrors = {
-    /**
-     * Unauthorized
-     */
-    401: AuthenticationProblemDetails;
-    /**
-     * Conflict
-     */
-    409: AuthenticationProblemDetails;
-};
-
-export type InitiateUpdateMultiFactorAuthenticationError = InitiateUpdateMultiFactorAuthenticationErrors[keyof InitiateUpdateMultiFactorAuthenticationErrors];
-
-export type InitiateUpdateMultiFactorAuthenticationResponses = {
-    /**
-     * OK
-     */
-    200: MultiFactorAuthenticationSetupDto;
-};
-
-export type InitiateUpdateMultiFactorAuthenticationResponse = InitiateUpdateMultiFactorAuthenticationResponses[keyof InitiateUpdateMultiFactorAuthenticationResponses];
-
 export type PostAuthVerifyMfaData = {
     /**
      * The token used to cancel the operation.
@@ -2308,44 +2279,6 @@ export type PostAuthVerifyMfaError = PostAuthVerifyMfaErrors[keyof PostAuthVerif
 export type PostAuthVerifyMfaResponses = {
     /**
      * The multi-factor authentication setup was successfully verified.
-     */
-    200: unknown;
-};
-
-export type VerifyMultiFactorAuthenticationUpdateData = {
-    /**
-     * A token to monitor for cancellation requests.
-     */
-    body: VerifyMultiFactorAuthenticationUpdateCommand;
-    path?: never;
-    query?: never;
-    url: '/auth/verify-mfa-update';
-};
-
-export type VerifyMultiFactorAuthenticationUpdateErrors = {
-    /**
-     * Bad Request
-     */
-    400: ProblemDetails;
-    /**
-     * Unauthorized
-     */
-    401: AuthenticationProblemDetails;
-    /**
-     * Not Found
-     */
-    404: ProblemDetails;
-    /**
-     * Conflict
-     */
-    409: AuthenticationProblemDetails;
-};
-
-export type VerifyMultiFactorAuthenticationUpdateError = VerifyMultiFactorAuthenticationUpdateErrors[keyof VerifyMultiFactorAuthenticationUpdateErrors];
-
-export type VerifyMultiFactorAuthenticationUpdateResponses = {
-    /**
-     * OK
      */
     200: unknown;
 };
@@ -2493,6 +2426,73 @@ export type UpdateCurrentOrganisationError = UpdateCurrentOrganisationErrors[key
 export type UpdateCurrentOrganisationResponses = {
     /**
      * The current organisation was successfully updated.
+     */
+    200: unknown;
+};
+
+export type InitiateUpdateMultiFactorAuthenticationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/mfa/update';
+};
+
+export type InitiateUpdateMultiFactorAuthenticationErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type InitiateUpdateMultiFactorAuthenticationError = InitiateUpdateMultiFactorAuthenticationErrors[keyof InitiateUpdateMultiFactorAuthenticationErrors];
+
+export type InitiateUpdateMultiFactorAuthenticationResponses = {
+    /**
+     * OK
+     */
+    200: MultiFactorAuthenticationSetupDto;
+};
+
+export type InitiateUpdateMultiFactorAuthenticationResponse = InitiateUpdateMultiFactorAuthenticationResponses[keyof InitiateUpdateMultiFactorAuthenticationResponses];
+
+export type VerifyMultiFactorAuthenticationUpdateData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: VerifyMultiFactorAuthenticationUpdateCommand;
+    path?: never;
+    query?: never;
+    url: '/mfa/verify';
+};
+
+export type VerifyMultiFactorAuthenticationUpdateErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type VerifyMultiFactorAuthenticationUpdateError = VerifyMultiFactorAuthenticationUpdateErrors[keyof VerifyMultiFactorAuthenticationUpdateErrors];
+
+export type VerifyMultiFactorAuthenticationUpdateResponses = {
+    /**
+     * OK
      */
     200: unknown;
 };

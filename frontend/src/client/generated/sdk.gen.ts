@@ -87,29 +87,11 @@ export const postAuthSetupUser = <ThrowOnError extends boolean = false>(options:
 });
 
 /**
- * Initiates the process of updating the authenticated user's multi-factor authentication settings.
- */
-export const initiateUpdateMultiFactorAuthentication = <ThrowOnError extends boolean = false>(options?: Options<InitiateUpdateMultiFactorAuthenticationData, ThrowOnError>): RequestResult<InitiateUpdateMultiFactorAuthenticationResponses, InitiateUpdateMultiFactorAuthenticationErrors, ThrowOnError> => (options?.client ?? client).post<InitiateUpdateMultiFactorAuthenticationResponses, InitiateUpdateMultiFactorAuthenticationErrors, ThrowOnError>({ url: '/auth/update-mfa', ...options });
-
-/**
  * Verifies the user's multi-factor authentication setup by validating the
  * provided authentication code.
  */
 export const postAuthVerifyMfa = <ThrowOnError extends boolean = false>(options: Options<PostAuthVerifyMfaData, ThrowOnError>): RequestResult<PostAuthVerifyMfaResponses, PostAuthVerifyMfaErrors, ThrowOnError> => (options.client ?? client).post<PostAuthVerifyMfaResponses, PostAuthVerifyMfaErrors, ThrowOnError>({
     url: '/auth/verify-mfa',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Verifies the multi-factor authentication code provided by the authenticated user
- * to complete the update of their multi-factor authentication settings.
- */
-export const verifyMultiFactorAuthenticationUpdate = <ThrowOnError extends boolean = false>(options: Options<VerifyMultiFactorAuthenticationUpdateData, ThrowOnError>): RequestResult<VerifyMultiFactorAuthenticationUpdateResponses, VerifyMultiFactorAuthenticationUpdateErrors, ThrowOnError> => (options.client ?? client).post<VerifyMultiFactorAuthenticationUpdateResponses, VerifyMultiFactorAuthenticationUpdateErrors, ThrowOnError>({
-    url: '/auth/verify-mfa-update',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -160,6 +142,24 @@ export const getCurrentUserOrganisations = <ThrowOnError extends boolean = false
  */
 export const updateCurrentOrganisation = <ThrowOnError extends boolean = false>(options: Options<UpdateCurrentOrganisationData, ThrowOnError>): RequestResult<UpdateCurrentOrganisationResponses, UpdateCurrentOrganisationErrors, ThrowOnError> => (options.client ?? client).patch<UpdateCurrentOrganisationResponses, UpdateCurrentOrganisationErrors, ThrowOnError>({
     url: '/users/me/current-organisation',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Initiates the process of updating the authenticated user's multi-factor authentication settings.
+ */
+export const initiateUpdateMultiFactorAuthentication = <ThrowOnError extends boolean = false>(options?: Options<InitiateUpdateMultiFactorAuthenticationData, ThrowOnError>): RequestResult<InitiateUpdateMultiFactorAuthenticationResponses, InitiateUpdateMultiFactorAuthenticationErrors, ThrowOnError> => (options?.client ?? client).post<InitiateUpdateMultiFactorAuthenticationResponses, InitiateUpdateMultiFactorAuthenticationErrors, ThrowOnError>({ url: '/mfa/update', ...options });
+
+/**
+ * Verifies the multi-factor authentication code provided by the authenticated user
+ * to complete the update of their multi-factor authentication settings.
+ */
+export const verifyMultiFactorAuthenticationUpdate = <ThrowOnError extends boolean = false>(options: Options<VerifyMultiFactorAuthenticationUpdateData, ThrowOnError>): RequestResult<VerifyMultiFactorAuthenticationUpdateResponses, VerifyMultiFactorAuthenticationUpdateErrors, ThrowOnError> => (options.client ?? client).post<VerifyMultiFactorAuthenticationUpdateResponses, VerifyMultiFactorAuthenticationUpdateErrors, ThrowOnError>({
+    url: '/mfa/verify',
     ...options,
     headers: {
         'Content-Type': 'application/json',

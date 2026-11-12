@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using UKPS.Api.Application.Authentication;
@@ -10,7 +9,6 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.WebApi.CustomResponses;
-using UKPS.Api.WebApi.InternalServices.Authentication;
 using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
     UKPS.Api.Application.Authentication.Errors.UserSetupError
@@ -45,7 +43,6 @@ public class AuthenticationController : ControllerBase
     private readonly ILoginService _loginService;
     private readonly IIdentityAdministrationService _authorisationAdministrationService;
     private readonly IDateTimeProvider _dateTimeProvider;
-    private readonly IAccessTokenProvider _accessTokenProvider;
     private readonly ProblemDetails _setupTokenExpiredDetails = new ProblemDetails
     {
         Title = "Setup token has expired.",
@@ -106,21 +103,15 @@ public class AuthenticationController : ControllerBase
     /// The provider used to obtain the current date and time, allowing time-dependent
     /// logic (such as token expiry) to be abstracted and tested.
     /// </param>
-    /// <param name="accessTokenProvider">
-    /// The provider responsible for generating and issuing access tokens
-    /// for authenticated users.
-    /// </param>
     public AuthenticationController(
         ILoginService loginService,
         IIdentityAdministrationService authorisationAdministrationService,
-        IDateTimeProvider dateTimeProvider,
-        IAccessTokenProvider accessTokenProvider
+        IDateTimeProvider dateTimeProvider
     )
     {
         _loginService = loginService;
         _authorisationAdministrationService = authorisationAdministrationService;
         _dateTimeProvider = dateTimeProvider;
-        _accessTokenProvider = accessTokenProvider;
     }
 
     /// <summary>
@@ -452,33 +443,6 @@ public class AuthenticationController : ControllerBase
     }
 
     /// <summary>
-    /// Initiates the process of updating the authenticated user's multi-factor authentication settings.
-    /// </summary>
-    /// <param name="cancellationToken">
-    /// A token to monitor for cancellation requests.
-    /// </param>
-    /// <returns>
-    /// An <see cref="ActionResult"/> containing a <see cref="MultiFactorAuthenticationSetupDto"/>
-    /// with the details required to configure multi-factor authentication.
-    /// </returns>
-    [Authorize]
-    [HttpPost("update-mfa", Name = nameof(InitiateUpdateMultiFactorAuthentication))]
-    [ProducesResponseType<MultiFactorAuthenticationSetupDto>(StatusCodes.Status200OK)]
-    public async Task<ActionResult> InitiateUpdateMultiFactorAuthentication(
-        CancellationToken cancellationToken
-    )
-    {
-        string accessToken = await _accessTokenProvider.GetAccessTokenAsync();
-        InitiateUpdateMultiFactorAuthenticationResult result =
-            await _authorisationAdministrationService.InitiateUpdateMultiFactorAuthentication(
-                accessToken,
-                cancellationToken
-            );
-
-        return Ok(result);
-    }
-
-    /// <summary>
     /// Verifies the user's multi-factor authentication setup by validating the
     /// provided authentication code.
     /// </summary>
@@ -524,46 +488,6 @@ public class AuthenticationController : ControllerBase
                     invalidCode: _ => BadRequest(_invalidMfaSetupCode),
                     doesNotExist: _ => NotFound()
                 )
-        );
-    }
-
-    /// <summary>
-    /// Verifies the multi-factor authentication code provided by the authenticated user
-    /// to complete the update of their multi-factor authentication settings.
-    /// </summary>
-    /// <param name="command">
-    /// The command containing the multi-factor authentication verification code.
-    /// </param>
-    /// <param name="cancellationToken">
-    /// A token to monitor for cancellation requests.
-    /// </param>
-    /// <returns>
-    /// An <see cref="ActionResult"/> indicating whether the multi-factor authentication
-    /// update was successful. Returns <see cref="StatusCodes.Status400BadRequest"/>
-    /// if the verification code is invalid, or <see cref="StatusCodes.Status404NotFound"/>
-    /// if the requested resource cannot be found.
-    /// </returns>
-    [Authorize]
-    [HttpPost("verify-mfa-update", Name = nameof(VerifyMultiFactorAuthenticationUpdate))]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> VerifyMultiFactorAuthenticationUpdate(
-        [FromBody] VerifyMultiFactorAuthenticationUpdateCommand command,
-        CancellationToken cancellationToken
-    )
-    {
-        string accessToken = await _accessTokenProvider.GetAccessTokenAsync();
-        VerifyMultiFactorAuthenticationUpdateResult result =
-            await _authorisationAdministrationService.VerifyMultiFactorAuthenticationUpdate(
-                accessToken,
-                command,
-                cancellationToken
-            );
-
-        return result.Match(
-            Ok,
-            err => err.Match<ActionResult>(invalidCode: _ => BadRequest(_invalidMfaSetupCode))
         );
     }
 
