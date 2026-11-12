@@ -29,7 +29,7 @@ const onboardUserSchema = z.object({
   contactNumber: z
     .string()
     .trim()
-    .min(1, errorMessages.userPhoneNumberRequired)
+    .min(1, errorMessages.userContactNumberRequired)
     .refine((value) => isValidPhoneNumber(value, 'GB'), errorMessages.phoneFormat),
 })
 

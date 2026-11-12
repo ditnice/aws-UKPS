@@ -28,7 +28,7 @@ const RegistrationRequest = z.object({
   phoneNumber: z
     .string()
     .trim()
-    .min(1, errorMessages.personalPhoneRequired)
+    .min(1, errorMessages.personalContactNumberRequired)
     .refine((value) => isValidPhoneNumber(value, 'GB'), errorMessages.phoneFormat),
 })
 

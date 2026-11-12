@@ -36,7 +36,7 @@ const fields: Field[] = [
     label: 'Head office phone number',
     value: '07123456789',
     unsavedValue: '07000000000',
-    emptyError: 'Enter a phone number',
+    emptyError: 'Enter the head office phone number',
   },
 ]
 
