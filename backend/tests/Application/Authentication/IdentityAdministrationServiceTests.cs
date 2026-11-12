@@ -25,12 +25,20 @@ using ResendSetupTokenResult = UKPS.Api.Application.Common.Result<
     System.Guid,
     UKPS.Api.Application.Authentication.Errors.ResendSetupTokenError
 >;
+using SetupSmsMfaResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.SmsMultiFactorAuthenticationSetupDto,
+    UKPS.Api.Application.Authentication.Errors.SetupSmsMfaError
+>;
 using SetupTokenValidationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.SetupTokenValidationError>;
 using UserSetupResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
     UKPS.Api.Application.Authentication.Errors.UserSetupError
 >;
 using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
+    UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
+>;
+using VerifySmsMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
 >;
@@ -684,6 +692,125 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         _harness.Cognito.GetUser(userIdentityId).ShouldNotBeNull().MfaSetup.ShouldBeFalse();
     }
 
+    [Fact]
+    public async Task SetupSmsMfa_WhenSetupTokenDoesNotExist_ReturnsDoesNotExistError()
+    {
+        SetupSmsMfaResult result = await _harness.Service.SetupSmsMfa(
+            new SetupSmsMfaCommand
+            {
+                SetupToken = Guid.CreateVersion7(),
+                PhoneNumber = "07400123456",
+            },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<SetupSmsMfaError.DoesNotExist>();
+    }
+
+    [Fact]
+    public async Task SetupSmsMfa_WhenStoredPasswordIsMissing_ReturnsPasswordUnavailableError()
+    {
+        UserOnboardingRecord entity = await OnboardUserViaInviteWithTimeOffset(minutesInPast: 15);
+
+        SetupSmsMfaResult result = await _harness.Service.SetupSmsMfa(
+            new SetupSmsMfaCommand { SetupToken = entity.SetupToken, PhoneNumber = "07400123456" },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<SetupSmsMfaError.PasswordUnavailable>();
+    }
+
+    [Fact]
+    public async Task SetupSmsMfa_WhenPhoneNumberIsInvalid_ReturnsInvalidPhoneNumberError()
+    {
+        var (setupToken, _, _) = await CreateAndDoInitialUserSetup();
+
+        SetupSmsMfaResult result = await _harness.Service.SetupSmsMfa(
+            new SetupSmsMfaCommand { SetupToken = setupToken, PhoneNumber = "not-a-phone-number" },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<SetupSmsMfaError.InvalidPhoneNumber>();
+    }
+
+    [Fact]
+    public async Task SetupSmsMfa_WhenSetupTokenHasExpired_ReturnsExpiredError()
+    {
+        UserOnboardingRecord entity = await OnboardUserViaInviteWithTimeOffset(minutesInPast: 30);
+
+        SetupSmsMfaResult result = await _harness.Service.SetupSmsMfa(
+            new SetupSmsMfaCommand { SetupToken = entity.SetupToken, PhoneNumber = "07400123456" },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<SetupSmsMfaError.Expired>();
+    }
+
+    [Fact]
+    public async Task SetupSmsMfa_WhenValid_ReturnsAuthenticationSession()
+    {
+        var (setupToken, _, _) = await CreateAndDoInitialUserSetup();
+
+        SetupSmsMfaResult result = await _harness.Service.SetupSmsMfa(
+            new SetupSmsMfaCommand { SetupToken = setupToken, PhoneNumber = "07400123456" },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess().AuthenticationSession.ShouldNotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task VerifySmsMultiFactorAuthentication_WhenValidCode_ReturnsSuccess()
+    {
+        var (setupToken, _, _) = await CreateAndDoInitialUserSetup();
+
+        SetupSmsMfaResult setupResult = await _harness.Service.SetupSmsMfa(
+            new SetupSmsMfaCommand { SetupToken = setupToken, PhoneNumber = "07400123456" },
+            TestContext.Current.CancellationToken
+        );
+
+        string session = setupResult.ShouldBeSuccess().AuthenticationSession;
+
+        VerifySmsMultiFactorAuthenticationResult result =
+            await _harness.Service.VerifySmsMultiFactorAuthentication(
+                new VerifySmsMultiFactorAuthenticationCommand
+                {
+                    SetupToken = setupToken,
+                    Code = _harness.Cognito.ValidMfaCode,
+                    AuthenticationSession = session,
+                },
+                TestContext.Current.CancellationToken
+            );
+
+        result.ShouldBeSuccess();
+    }
+
+    [Fact]
+    public async Task VerifySmsMultiFactorAuthentication_WhenInvalidCode_ReturnsInvalidCodeError()
+    {
+        var (setupToken, _, _) = await CreateAndDoInitialUserSetup();
+
+        SetupSmsMfaResult setupResult = await _harness.Service.SetupSmsMfa(
+            new SetupSmsMfaCommand { SetupToken = setupToken, PhoneNumber = "07400123456" },
+            TestContext.Current.CancellationToken
+        );
+
+        string session = setupResult.ShouldBeSuccess().AuthenticationSession;
+
+        VerifySmsMultiFactorAuthenticationResult result =
+            await _harness.Service.VerifySmsMultiFactorAuthentication(
+                new VerifySmsMultiFactorAuthenticationCommand
+                {
+                    SetupToken = setupToken,
+                    Code = "9999",
+                    AuthenticationSession = session,
+                },
+                TestContext.Current.CancellationToken
+            );
+
+        result.ShouldBeError().ShouldBeOfType<VerifyMultiFactorAuthenticationError.InvalidCode>();
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -939,8 +1066,14 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
                 services
                     .AddOptions<UserOnboardingOptions>()
                     .Configure(options =>
-                        options.SetupTokenExpiryTimeSeconds = (int)_testExpiryTokenTime.TotalSeconds
-                    );
+                    {
+                        options.SetupTokenExpiryTimeSeconds = (int)
+                            _testExpiryTokenTime.TotalSeconds;
+                        options.PasswordStorageKey = "test-password-storage-key";
+                        options.StoredPasswordExpirySeconds = 600;
+                        options.MaxSmsSetupAttempts = 3;
+                        options.SmsSetupCooldownSeconds = 30;
+                    });
                 services.AddSingleton(
                     Options.Create(
                         new CognitoOptions

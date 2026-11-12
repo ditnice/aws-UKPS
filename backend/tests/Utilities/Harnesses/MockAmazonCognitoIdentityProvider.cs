@@ -32,6 +32,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
     private List<ResetPasswordCommand> _resetPasswordCommands = new();
 
     private readonly HashSet<string> _mfaSessions = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> _phoneNumbers = new(StringComparer.Ordinal);
     private readonly HashSet<string> _revokedRefreshTokens = new(StringComparer.Ordinal);
 
     public MockAmazonCognitoIdentityProvider()
@@ -167,6 +168,20 @@ internal sealed class MockAmazonCognitoIdentityProvider
                     throw new UserNotFoundException($"User '{username}' not found.");
                 }
 
+                if (_phoneNumbers.ContainsKey(username))
+                {
+                    var session = Guid.NewGuid().ToString();
+                    _mfaSessions.Add(session);
+
+                    return Task.FromResult(
+                        new AdminInitiateAuthResponse
+                        {
+                            ChallengeName = ChallengeNameType.SMS_MFA,
+                            Session = session,
+                        }
+                    );
+                }
+
                 if (!user.MfaSetup)
                 {
                     var session = Guid.NewGuid().ToString();
@@ -261,6 +276,15 @@ internal sealed class MockAmazonCognitoIdentityProvider
                         string.Equals(x.Name, "email", StringComparison.Ordinal)
                     )
                     ?.Value;
+                var newPhoneNumberValue = request
+                    .UserAttributes.FirstOrDefault(x =>
+                        string.Equals(x.Name, "phone_number", StringComparison.Ordinal)
+                    )
+                    ?.Value;
+                if (!string.IsNullOrWhiteSpace(newPhoneNumberValue))
+                {
+                    _phoneNumbers[request.Username] = newPhoneNumberValue;
+                }
                 _users = _users
                     .Select(u =>
                         string.Equals(u.Username, request.Username, StringComparison.Ordinal)
@@ -297,7 +321,12 @@ internal sealed class MockAmazonCognitoIdentityProvider
                     throw new UserNotFoundException($"User '{username}' not found.");
                 }
 
-                var mfaCode = request.ChallengeResponses["SOFTWARE_TOKEN_MFA_CODE"];
+                string mfaCode = request.ChallengeResponses.TryGetValue(
+                    "SMS_MFA_CODE",
+                    out string? smsCode
+                )
+                    ? smsCode
+                    : request.ChallengeResponses["SOFTWARE_TOKEN_MFA_CODE"];
                 if (!IsValidMfaToken(mfaCode))
                 {
                     throw new CodeMismatchException("Invalid MFA code.");

@@ -426,6 +426,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("encrypted_password");
 
+                    b.Property<DateTime?>("LastSmsSetupAttemptAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_sms_setup_attempt_at");
+
                     b.Property<int>("OnboardingFlow")
                         .HasColumnType("integer")
                         .HasColumnName("onboarding_flow");
@@ -437,6 +441,10 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Property<int>("ResendCount")
                         .HasColumnType("integer")
                         .HasColumnName("resend_count");
+
+                    b.Property<int>("SmsSetupAttemptCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("sms_setup_attempt_count");
 
                     b.Property<int>("ResultingUserId")
                         .HasColumnType("integer")

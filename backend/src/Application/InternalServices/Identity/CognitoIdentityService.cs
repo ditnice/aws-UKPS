@@ -417,7 +417,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         }
         catch (CodeMismatchException)
         {
-            throw new NotAuthorizedException("Cognito SMS MFA code did not match.");
+            throw new CodeMismatchException("Cognito SMS MFA code did not match.");
         }
         catch (NotAuthorizedException)
         {

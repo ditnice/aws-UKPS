@@ -24,6 +24,21 @@ namespace UKPS.Api.Persistence.Migrations
                 table: "user_onboarding_records",
                 type: "timestamp with time zone",
                 nullable: true);
+
+            migrationBuilder.AddColumn<int>(
+                name: "sms_setup_attempt_count",
+                schema: "ukps",
+                table: "user_onboarding_records",
+                type: "integer",
+                nullable: false,
+                defaultValue: 0);
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "last_sms_setup_attempt_at",
+                schema: "ukps",
+                table: "user_onboarding_records",
+                type: "timestamp with time zone",
+                nullable: true);
         }
 
         /// <inheritdoc />
@@ -36,6 +51,16 @@ namespace UKPS.Api.Persistence.Migrations
 
             migrationBuilder.DropColumn(
                 name: "password_expires_at",
+                schema: "ukps",
+                table: "user_onboarding_records");
+
+            migrationBuilder.DropColumn(
+                name: "sms_setup_attempt_count",
+                schema: "ukps",
+                table: "user_onboarding_records");
+
+            migrationBuilder.DropColumn(
+                name: "last_sms_setup_attempt_at",
                 schema: "ukps",
                 table: "user_onboarding_records");
         }
