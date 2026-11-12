@@ -5,9 +5,9 @@ namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
 [FormSection(
     RecordType.Medicine,
-    "indication-and-development",
-    "Provide indication and development information",
-    Order = 10
+    MedicineFormSections.IndicationAndDevelopment,
+    MedicineFormSections.IndicationAndDevelopmentTitle,
+    Order = MedicineFormSections.IndicationAndDevelopmentOrder
 )]
 internal sealed class MedicinesIndicationDetail
 {

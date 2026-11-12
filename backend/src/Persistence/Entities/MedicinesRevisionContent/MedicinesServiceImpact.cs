@@ -5,9 +5,9 @@ namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
 [FormSection(
     RecordType.Medicine,
-    "service-readiness",
-    "Provide service readiness information (optional)",
-    Order = 60
+    MedicineFormSections.ServiceReadiness,
+    MedicineFormSections.ServiceReadinessTitle,
+    Order = MedicineFormSections.ServiceReadinessOrder
 )]
 internal sealed class MedicinesServiceImpact
 {

@@ -69,7 +69,8 @@ section and task.
 This is the whole of `MedicinesIndicationDetail` as it would be annotated for the first
 delivery. Every mapped scalar property has either `[FormField]` or `[FormIgnore]`; that is the
 [coverage rule](#step-1-account-for-every-property). The task's ID, title and order come from
-`MedicineFormTasks`, because every question in the task repeats them.
+`MedicineFormTasks`, because every question in the task repeats them. Likewise the section's
+come from `MedicineFormSections`, because every entity in the section repeats them.
 
 ```csharp
 using UKPS.Api.Persistence.Enums;
@@ -79,9 +80,9 @@ namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
 [FormSection(
     RecordType.Medicine,
-    "indication-and-development",
-    "Provide indication and development information",
-    Order = 10
+    MedicineFormSections.IndicationAndDevelopment,
+    MedicineFormSections.IndicationAndDevelopmentTitle,
+    Order = MedicineFormSections.IndicationAndDevelopmentOrder
 )]
 internal sealed class MedicinesIndicationDetail
 {
@@ -245,13 +246,14 @@ Put `[FormSection]` on the entity if it isn't already there:
 ```csharp
 [FormSection(
     RecordType.Medicine,
-    "indication-and-development",
-    "Provide indication and development information",
-    Order = 10
+    MedicineFormSections.IndicationAndDevelopment,
+    MedicineFormSections.IndicationAndDevelopmentTitle,
+    Order = MedicineFormSections.IndicationAndDevelopmentOrder
 )]
 ```
 
-- **Section ID**: a lowercase slug. Sections are ordered by `Order` within the form.
+- **Section ID**: a lowercase slug. Sections are ordered by `Order` within the form. Keep the
+  ID, title and order in `MedicineFormSections`, as several entities usually share a section.
 - **Section title**: the dataset's section name, such as "Provide indication and development
   information". It is the heading above the section's tasks in the task list. Each task's title
   is the dataset's sub-section name, and is also the caption above every page in the task.
@@ -633,8 +635,17 @@ Put `[FormPageShowWhen]` on the entity that declares the page. It covers the pag
 question on it:
 
 ```csharp
-[FormSection(RecordType.Medicine, "indication-and-development", "Provide indication and development information", Order = 10)]
-[FormPageShowWhen("originator-details", "medicines_development_background.is_originator_company", YesNoUnknown.No)]
+[FormSection(
+    RecordType.Medicine,
+    MedicineFormSections.IndicationAndDevelopment,
+    MedicineFormSections.IndicationAndDevelopmentTitle,
+    Order = MedicineFormSections.IndicationAndDevelopmentOrder
+)]
+[FormPageShowWhen(
+    "originator-details",
+    "medicines_development_background.is_originator_company",
+    YesNoUnknown.No
+)]
 internal sealed class MedicinesDevelopmentBackground { ... }
 ```
 

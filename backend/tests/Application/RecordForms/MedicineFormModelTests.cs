@@ -240,7 +240,7 @@ public class MedicineFormModelTests
     }
 
     [Fact]
-    public void Model_SectionsFollowTheDatasetOrder()
+    public void Model_SectionsGroupTasksPerDataset()
     {
         Model
             .Sections.Select(static s =>
