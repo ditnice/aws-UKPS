@@ -13,7 +13,7 @@ namespace UKPS.Api.Persistence.Data.Seeding.SyntheticData;
 internal sealed class SeedReferenceData
 {
     private static readonly HashSet<string> _medicinesOnlyProcedures = new(
-        ["Access Consortium", "Project Orbis"],
+        ["Access Consortium", "Orbis"],
         StringComparer.Ordinal
     );
 

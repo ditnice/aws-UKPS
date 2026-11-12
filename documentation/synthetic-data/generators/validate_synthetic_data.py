@@ -260,7 +260,7 @@ def main():
                 "irpReferenceRegulator", "irpRoute", "intlSubmissionDate", "intlLicenceDate",
                 "intlConditionalApprovalAnticipated")):
             error("no IRP fields outside the IRP", record)
-        if mhra["mhraProcedureType"] in ("Other", "Not yet confirmed") \
+        if mhra["mhraProcedureType"] in ("Other", "Unknown at this stage") \
                 and not mhra["procedureDetails"]:
             error("other or unconfirmed procedure needs details", record)
         if mhra["globalSubmissionActualDate"] and (

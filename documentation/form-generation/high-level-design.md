@@ -24,7 +24,12 @@ property is explicitly ignored, with a reason. The hierarchy is section → task
 all questions in a task repeat that task's ID, title and order.
 
 ```csharp
-[FormSection(RecordType.Medicine, "indication-details", "Indication details", Order = 20)]
+[FormSection(
+    RecordType.Medicine,
+    "indication-and-development",
+    "Provide indication and development information",
+    Order = 10
+)]
 internal sealed class MedicinesIndicationDetail
 {
     [FormIgnore("Database identity")]
@@ -207,7 +212,9 @@ invalid model stops the API starting. It holds structure only: bindings receive 
 
 - **Sections.** `[FormSection(recordType, id, title, Order = n)]` on an entity puts the entity's
   questions into that section of that record type's form. Several entities can declare the same
-  section ID, as long as they agree on its title and order. An entity can carry one
+  section ID, as long as they agree on its title and order. The section title is the dataset's
+  section name, a heading in the task list; each task under it has its own title, which is also
+  the page caption. An entity can carry one
   `[FormSection]` per record type. A shared entity such as `RecordProductDetail` can therefore
   take part in both the Medicine and Vaccine forms.
 - **Pages.** `[FormPage(id, title, Order = n)]` on a property places its question on that page.
@@ -633,8 +640,8 @@ Example `GET /records/5/task-list` response:
   "organisationId": 3,
   "sections": [
     {
-      "id": "indication-details",
-      "title": "Indication details",
+      "id": "indication-and-development",
+      "title": "Provide indication and development information",
       "tasks": [
         {
           "id": "indication-details",
@@ -670,7 +677,10 @@ examples below use record 5, revision 7.
 {
   "formVersion": "2026.10.1",
   "revisionVersion": 4711,
-  "section": { "id": "indication-details", "title": "Indication details" },
+  "section": {
+    "id": "indication-and-development",
+    "title": "Provide indication and development information"
+  },
   "task": { "id": "indication-details", "title": "Indication details" },
   "page": { "id": "therapeutic-area", "title": "Therapeutic area" },
   "previousPageId": "bnf-chapter",
