@@ -10,11 +10,16 @@ namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
     "Promising Innovative Medicine (PIM) and Early Access to Medicines Scheme (EAMS)",
     Order = 60
 )]
-// Temporary trigger: becomes eams_opinion_date = ActualDate once precision dates are on main.
 [FormPageShowWhen(
-    "eams-opinion-decision",
+    "eams-submission-date",
     "medicines_eams_pim.will_submit_to_eams",
     YesNoUnknown.Yes
+)]
+[FormPageShowWhen("eams-opinion-date", "medicines_eams_pim.will_submit_to_eams", YesNoUnknown.Yes)]
+[FormPageShowWhen(
+    "eams-opinion-decision",
+    "medicines_eams_pim.eams_opinion_date",
+    DatePrecision.ActualDate
 )]
 internal sealed class MedicinesEamsPim
 {
@@ -59,10 +64,48 @@ internal sealed class MedicinesEamsPim
     [FormRequired("Select yes if you intend to submit or have submitted to EAMS")]
     public YesNoUnknown? WillSubmitToEams { get; set; }
 
-    [FormIgnore("Precision dates not supported yet")]
+    [FormTask(
+        MedicineFormTasks.PimAndEams,
+        MedicineFormTasks.PimAndEamsTitle,
+        Order = MedicineFormTasks.PimAndEamsOrder
+    )]
+    [FormPage(
+        "eams-submission-date",
+        "EAMS submission date",
+        Order = 20,
+        CommercialInConfidence = true
+    )]
+    [FormField(
+        "medicines_eams_pim.eams_submission_date",
+        "What is the EAMS submission date?",
+        FormControl.PrecisionDate,
+        Order = 10,
+        Hint = "Choose the level of detail you are currently able to provide. Estimate the date you expect to submit for EAMS for this product, or enter the actual date of submission."
+    )]
+    [FormDateEvent(DateEventType.EamsSubmission)]
+    [FormRequired("Select an option")]
     public int? EamsSubmissionDateId { get; set; }
 
-    [FormIgnore("Precision dates not supported yet")]
+    [FormTask(
+        MedicineFormTasks.PimAndEams,
+        MedicineFormTasks.PimAndEamsTitle,
+        Order = MedicineFormTasks.PimAndEamsOrder
+    )]
+    [FormPage(
+        "eams-opinion-date",
+        "EAMS scientific opinion date",
+        Order = 30,
+        CommercialInConfidence = true
+    )]
+    [FormField(
+        "medicines_eams_pim.eams_opinion_date",
+        "Date of EAMS scientific opinion",
+        FormControl.PrecisionDate,
+        Order = 10,
+        Hint = "Choose the level of detail you are currently able to provide. Estimate the date you expect to receive the EAMS scientific opinion, or enter the actual date you received it."
+    )]
+    [FormDateEvent(DateEventType.EamsOpinion)]
+    [FormRequired("Select an option")]
     public int? EamsOpinionDateId { get; set; }
 
     [FormTask(

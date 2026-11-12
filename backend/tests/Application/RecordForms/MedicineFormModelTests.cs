@@ -14,9 +14,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.12";
+    private const string ExpectedVersion = "2026.11.13";
     private const string ExpectedFingerprint =
-        "6028beaf04956ac2932e5477687733b9452a177b3ad4cff3af42c9026c559356";
+        "316bc9bee3c98571c7d8578fb48c839d41fa1d5cf0c3b5b9f05f9aaa8c003258";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -89,7 +89,12 @@ public class MedicineFormModelTests
                 string.Equals(p.SectionId, "pim-and-eams", StringComparison.Ordinal)
             )
             .Select(static p => (p.Id, p.CommercialInConfidence))
-            .ShouldBe([("pim-designation", true), ("eams-opinion-decision", true)]);
+            .ShouldBe([
+                ("pim-designation", true),
+                ("eams-submission-date", true),
+                ("eams-opinion-date", true),
+                ("eams-opinion-decision", true),
+            ]);
     }
 
     [Fact]
@@ -179,6 +184,8 @@ public class MedicineFormModelTests
             .ShouldBe([
                 "nice-aligned-pathway",
                 "nice-ta-id",
+                "eams-submission-date",
+                "eams-opinion-date",
                 "eams-opinion-decision",
                 "biomarker-type",
                 "non-genomic-biomarker",
@@ -369,6 +376,12 @@ public class MedicineFormModelTests
             ("record_hta.uk_launch_date", FormControl.PrecisionDate, AnswerShape.Single),
             ("medicines_eams_pim.pim_designation_status", FormControl.Radio, AnswerShape.Single),
             ("medicines_eams_pim.will_submit_to_eams", FormControl.Radio, AnswerShape.Single),
+            (
+                "medicines_eams_pim.eams_submission_date",
+                FormControl.PrecisionDate,
+                AnswerShape.Single
+            ),
+            ("medicines_eams_pim.eams_opinion_date", FormControl.PrecisionDate, AnswerShape.Single),
             ("medicines_eams_pim.eams_opinion_decision", FormControl.Radio, AnswerShape.Single),
             (
                 "medicines_laboratory_testing.diagnostic_test_required",
