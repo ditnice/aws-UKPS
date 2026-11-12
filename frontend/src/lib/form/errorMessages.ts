@@ -20,7 +20,7 @@ export const errorMessages = {
   //// Onboarding
   userNameRequired: 'Enter their full name',
   userEmailRequired: 'Enter an email address',
-  userPhoneNumberRequired: 'Enter their phone number',
+  userPhoneNumberRequired: 'Enter their contact number',
 
   //// Records
   companyCodeRequired: 'Enter company code',

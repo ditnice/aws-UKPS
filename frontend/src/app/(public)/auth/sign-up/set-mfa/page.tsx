@@ -174,7 +174,7 @@ export default function SignUpSetMfa() {
         size={192}
         level="M"
       />
-      <p>If you cannot scan the QR code, enter this set up key in your app manually:</p>
+      <p>If you cannot scan the QR code, enter this setup key in your app manually:</p>
       <p>
         <strong>{manualSetupKey}</strong>
       </p>

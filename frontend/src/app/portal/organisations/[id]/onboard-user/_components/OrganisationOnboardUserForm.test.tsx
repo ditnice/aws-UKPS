@@ -110,7 +110,7 @@ describe('OrganisationOnboardUserForm', () => {
 
     expect(await screen.findByText('Enter their full name')).toBeInTheDocument()
     expect(await screen.findByText('Enter an email address')).toBeInTheDocument()
-    expect(await screen.findByText('Enter their phone number')).toBeInTheDocument()
+    expect(await screen.findByText('Enter their contact number')).toBeInTheDocument()
     expect(postUsersOnboard).not.toHaveBeenCalled()
   })
 
@@ -151,7 +151,7 @@ describe('OrganisationOnboardUserForm', () => {
 
     expect(await screen.findByText('Enter their full name')).toBeInTheDocument()
     expect(await screen.findByText('Enter an email address')).toBeInTheDocument()
-    expect(await screen.findByText('Enter their phone number')).toBeInTheDocument()
+    expect(await screen.findByText('Enter their contact number')).toBeInTheDocument()
 
     await fillInput(user, screen.getByLabelText('Full name'), 'Test User')
     await user.tab()
@@ -163,7 +163,7 @@ describe('OrganisationOnboardUserForm', () => {
     await waitFor(() => {
       expect(screen.queryByText('Enter their full name')).toBeNull()
       expect(screen.queryByText('Enter an email address')).toBeNull()
-      expect(screen.queryByText('Enter their phone number')).toBeNull()
+      expect(screen.queryByText('Enter their contact number')).toBeNull()
     })
   })
 

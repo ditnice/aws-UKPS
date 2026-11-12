@@ -155,7 +155,7 @@ export function SignInForm({ returnTo }: SignInFormProps) {
 
       <Details summary="Forgotten your password?">
         If you have forgotten your password, you can{' '}
-        <a href={createResetPasswordHref()}>reset your password</a>
+        <a href={createResetPasswordHref()}>reset your password</a>.
       </Details>
 
       {/* TODO - Update this to point to the correct page once built */}

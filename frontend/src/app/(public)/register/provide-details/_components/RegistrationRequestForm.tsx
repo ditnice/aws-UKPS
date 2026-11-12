@@ -169,7 +169,7 @@ export function RegistrationRequestForm() {
             return (
               <Input
                 autoComplete="tel"
-                label="Phone number"
+                label="Contact number"
                 name={field.name}
                 onBlur={field.handleBlur}
                 type="tel"
