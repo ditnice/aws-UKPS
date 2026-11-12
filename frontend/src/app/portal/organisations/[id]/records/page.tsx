@@ -1,6 +1,8 @@
 import Link from 'next/link'
 
 import { TableAndFiltersGrid } from '@/app/portal/components/_components/TableAndFiltersGrid'
+import { getCurrentOrganisationChampions, getUsersMe } from '@/client/generated'
+import { createServerApiClient } from '@/client/server-api'
 import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
 import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
@@ -25,12 +27,21 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
   const query = parseQueryFromSearchParams(resolvedSearchParams)
   const recordAction = parseRecordAction(resolvedSearchParams)
 
+  const apiClient = await createServerApiClient()
+  const { data: currentUser } = await getUsersMe({ client: apiClient })
+  const { data: championEmails } = await getCurrentOrganisationChampions({
+    client: apiClient,
+  })
+
   return (
     <OrganisationPageWrapper organisationId={organisationId}>
       {(organisation) => (
         <>
           {recordAction && <RecordActionAlert action={recordAction} />}
           <PageHeader heading={`${organisation.organisationName}`} />
+          {currentUser?.userRole === 'Standard' && (championEmails?.length ?? 0) > 0 && (
+            <p> Your champion user is : {championEmails?.join(' and ')} </p>
+          )}
           <CreateMedicineRecordActionBanner organisationId={organisationId} />
           <TableAndFiltersGrid
             title="Search and filter records"
