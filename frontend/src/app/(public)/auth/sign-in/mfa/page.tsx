@@ -16,7 +16,7 @@ export default async function SignInMfa({
 
   return (
     <>
-      <PageHeader heading="Enter the code from your authentication device" />
+      <PageHeader heading="Enter the code from your chosen authenticator" />
       <SignInMfaForm username={username} session={session} returnTo={getSafeReturnTo(returnTo)} />
     </>
   )

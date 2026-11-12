@@ -50,7 +50,7 @@ describe('SignInMfaForm', () => {
     expect(screen.getByText(`Enter the 6-digit authentication code.`)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: 'I do not have access to my authenticator device' }),
+      screen.getByRole('link', { name: 'I do not have access to my authenticator' }),
     ).toBeInTheDocument()
   })
   it('redirects on successful authentication', async () => {

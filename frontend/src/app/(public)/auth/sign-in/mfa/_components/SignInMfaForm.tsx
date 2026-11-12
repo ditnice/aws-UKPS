@@ -116,7 +116,7 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
 
       {/* TODO 620 - link this up when the page is created */}
       <p className={styles.helpLink}>
-        <Link href="/">I do not have access to my authenticator device</Link>
+        <Link href="/">I do not have access to my authenticator</Link>
       </p>
     </form>
   )

@@ -166,7 +166,7 @@ export default function SignUpSetMfa() {
       <PageHeader heading="Set up two-factor authentication"></PageHeader>
       <p>
         We use two-factor authentication to help protect your account. Scan the QR code using your
-        authenticator device.
+        chosen authenticator.
       </p>
       <QRCodeSVG
         aria-label="QR code for authenticator app setup"
@@ -174,7 +174,7 @@ export default function SignUpSetMfa() {
         size={192}
         level="M"
       />
-      <p>If you cannot scan the QR code, enter this setup key in your app manually:</p>
+      <p>If you cannot scan the QR code, enter this setup key in your chosen authenticator:</p>
       <p>
         <strong>{manualSetupKey}</strong>
       </p>
