@@ -1,0 +1,67 @@
+@use '@/styles/colours';
+@use '@/styles/media-queries';
+@use '@/styles/spacing';
+@use '@/styles/utils';
+@use '@/styles/focus';
+@use '@/styles/typography';
+
+// Mirrors GOV.UK's "text input with a prefix" (govuk-input__wrapper / govuk-input__prefix):
+// https://design-system.service.gov.uk/components/text-input/#prefixes-and-suffixes
+// On small screens the prefix stacks above the input; from `sm` up it sits inline,
+// sharing a border with the input.
+.wrapper {
+  display: block;
+
+  // Keep the focus ring above the adjoining prefix border.
+  :global(.input__input):focus {
+    position: relative;
+    z-index: 1;
+  }
+
+  // Error state: outline the prefix and input as one field, not just the input.
+  :global(.input--error) & {
+    @include typography.default-error-style;
+    width: fit-content;
+
+    :global(.input__input) {
+      outline: 0;
+
+      &:focus {
+        @include focus.default-focus-style;
+      }
+    }
+  }
+
+  @include media-queries.mq($from: sm) {
+    display: flex;
+
+    // Let the input shrink to share the row with the prefix, rather than NDS's
+    // `width: 100%` pushing it past the container.
+    :global(.input__input) {
+      flex: 0 1 auto;
+      min-width: 0;
+    }
+  }
+}
+
+.prefix {
+  align-items: center;
+  background-color: colours.$code-background;
+  border: utils.rem(spacing.$xx-small) solid colours.$border-dark;
+  border-bottom: 0;
+  box-sizing: border-box;
+  cursor: default;
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: center;
+  min-width: utils.rem(40);
+  padding: utils.rem(spacing.$x-small) utils.rem(spacing.$small);
+  // When stacked, hug the content rather than spanning the full row.
+  width: fit-content;
+
+  @include media-queries.mq($from: sm) {
+    border-bottom: utils.rem(spacing.$xx-small) solid colours.$border-dark;
+    border-right: 0;
+    white-space: nowrap;
+  }
+}

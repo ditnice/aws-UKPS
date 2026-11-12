@@ -6,13 +6,13 @@ export const errorMessages = {
   organisationNameRequired: 'Enter the organisation name',
   addressRequired: 'Enter organisation address',
   organisationEmailRequired: 'Enter an email address',
+  organisationPhoneRequired: 'Enter the head office phone number',
 
   //// Setup
   personalFullNameRequired: 'Enter your full name',
   personalEmailRequired: 'Enter your email address',
   workEmailRequired: 'Enter your work email address',
-  personalPhoneRequired: 'Enter your phone number',
-  phoneRequired: 'Enter a phone number',
+  personalContactNumberRequired: 'Enter your contact number',
   passwordRequired: 'Enter your password',
   securityCodeRequired: 'Enter your security code',
   organisationRequired: 'Select an organisation',
@@ -20,7 +20,7 @@ export const errorMessages = {
   //// Onboarding
   userNameRequired: 'Enter their full name',
   userEmailRequired: 'Enter an email address',
-  userPhoneNumberRequired: 'Enter their phone number',
+  userContactNumberRequired: 'Enter their contact number',
 
   //// Records
   companyCodeRequired: 'Enter company code',

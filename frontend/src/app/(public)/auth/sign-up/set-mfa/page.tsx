@@ -165,18 +165,16 @@ export default function SignUpSetMfa() {
     <>
       <PageHeader heading="Set up two-factor authentication"></PageHeader>
       <p>
-        To help protect your account, we use two-factor authentication. To enable two-factor
-        authentication scan the QR code below using your chosen authenticator app.
+        We use two-factor authentication to help protect your account. Scan the QR code using your
+        chosen authenticator.
       </p>
       <QRCodeSVG
-        aria-label="QR code for authenticator app setup"
+        aria-label="QR code for authenticator setup"
         value={setup.otpAuthUri}
         size={192}
         level="M"
       />
-      <p>
-        If you cannot scan the QR code, enter this set up key in your authenticator app manually:
-      </p>
+      <p>If you cannot scan the QR code, enter this setup key in your chosen authenticator:</p>
       <p>
         <strong>{manualSetupKey}</strong>
       </p>
@@ -198,7 +196,7 @@ export default function SignUpSetMfa() {
                 autoComplete="one-time-code"
                 error={Boolean(errorMessage)}
                 errorMessage={errorMessage}
-                hint="Enter the 6-digit authentication code shown in your authenticator app."
+                hint="Enter the 6-digit authentication code shown in your authenticator."
                 inputMode="numeric"
                 label="Enter your authentication code"
                 name={field.name}
@@ -214,7 +212,7 @@ export default function SignUpSetMfa() {
           }}
         </form.Field>
 
-        <Link href="/">I want to use a different method</Link>
+        <Link href="/">I want to use a different way to sign in</Link>
 
         {submitError ? <p>{submitError}</p> : null}
 

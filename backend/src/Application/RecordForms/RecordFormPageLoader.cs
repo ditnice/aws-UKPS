@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.RecordForms.Conditions;
@@ -19,6 +20,11 @@ internal sealed class RecordFormPageLoader(
     OptionProviderRegistry optionProviders
 )
 {
+    private static readonly MethodInfo _loadCodesMethod = typeof(RecordFormPageLoader).GetMethod(
+        nameof(LoadCodesAsync),
+        BindingFlags.NonPublic | BindingFlags.Static
+    )!;
+
     /// <summary>
     /// Finds the record's latest revision and the page, and checks the caller can read them. The
     /// revision is tracked when <paramref name="track"/> is set, for a save.
@@ -117,8 +123,11 @@ internal sealed class RecordFormPageLoader(
             track: forSave,
             cancellationToken
         );
-        Applicability applicability = FormApplicability.Evaluate(model, answers);
-        return applicability.Applies(page) ? new LoadedAnswers(rows, answers, applicability) : null;
+        ReferenceCodes codes = await LoadReferenceCodesAsync(model, cancellationToken);
+        Applicability applicability = FormApplicability.Evaluate(model, answers, codes);
+        return applicability.Applies(page)
+            ? new LoadedAnswers(rows, answers, applicability, codes)
+            : null;
     }
 
     /// <summary>
@@ -138,7 +147,49 @@ internal sealed class RecordFormPageLoader(
             track: false,
             cancellationToken
         );
-        return FormApplicability.Evaluate(model, answers);
+        ReferenceCodes codes = await LoadReferenceCodesAsync(model, cancellationToken);
+        return FormApplicability.Evaluate(model, answers, codes);
+    }
+
+    /// <summary>Loads the codes of the reference data that the form's conditions name.</summary>
+    private async Task<ReferenceCodes> LoadReferenceCodesAsync(
+        FormModel model,
+        CancellationToken cancellationToken
+    )
+    {
+        if (model.ReferenceTriggerTypes.Count == 0)
+        {
+            return ReferenceCodes.None;
+        }
+
+        Dictionary<Type, IReadOnlyList<(int Id, string Code)>> rows = [];
+        foreach (Type type in model.ReferenceTriggerTypes)
+        {
+            rows[type] = await (Task<IReadOnlyList<(int Id, string Code)>>)
+                _loadCodesMethod
+                    .MakeGenericMethod(type)
+                    .Invoke(null, [dbContext, cancellationToken])!;
+        }
+
+        return new ReferenceCodes(rows);
+    }
+
+    private static async Task<IReadOnlyList<(int Id, string Code)>> LoadCodesAsync<TEntity>(
+        AppDbContext dbContext,
+        CancellationToken cancellationToken
+    )
+        where TEntity : class
+    {
+        var rows = await dbContext
+            .Set<TEntity>()
+            .AsNoTracking()
+            .Select(static x => new
+            {
+                Id = EF.Property<int>(x, "Id"),
+                Code = EF.Property<string>(x, "Code"),
+            })
+            .ToListAsync(cancellationToken);
+        return [.. rows.Select(static x => (x.Id, x.Code))];
     }
 
     /// <summary>
