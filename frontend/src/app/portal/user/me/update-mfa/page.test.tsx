@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import Page from './page'
 
+vi.mock('server-only', () => ({}))
+
 // ---- Mocks -----------------------------------------------------------------
 
 const { redirectMock, getOtpCookieDataMock, generateOtpMock, buildMyDetailsHrefMock } = vi.hoisted(
