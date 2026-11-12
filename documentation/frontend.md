@@ -74,7 +74,13 @@ certificates, AWS access or secrets are needed.
 just e2e                          # build, run the whole Playwright suite, tear down
 just e2e --project=chromium       # extra arguments are passed to `playwright test`
 CI=true just e2e                  # CI behaviour: 1 worker, 2 retries, JUnit output
+just e2e-update-snapshots         # regenerate the @visual screenshot baselines
 ```
+
+`just e2e-update-snapshots` runs only the `@visual` tests with `--update-snapshots` and writes changed
+baselines straight into `frontend/tests/e2e/**/*-snapshots/` (the tests folder is mounted into the
+runner for this). Extra arguments are passed to `playwright test` as with `just e2e`; review the
+updated PNGs before committing.
 
 Results are written to `e2e-results/` (git-ignored):
 
