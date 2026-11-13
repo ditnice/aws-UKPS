@@ -3,6 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { errorMessages } from '@/lib/form/errorMessages'
+
 import EditUserEmailForm from './EditUserEmailForm'
 import { updateUserEmailAction } from './serverActions'
 
@@ -125,7 +127,7 @@ describe('EditUserDetailForm', () => {
     await user.type(input, 'not-an-email')
     await user.click(screen.getByRole('button', { name: /submit/i }))
 
-    await screen.findByText('Enter a valid email address')
+    await screen.findByText(errorMessages.emailFormat)
     expect(input).toHaveValue('not-an-email')
   })
 })

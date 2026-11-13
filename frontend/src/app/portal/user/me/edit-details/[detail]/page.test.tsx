@@ -159,7 +159,7 @@ describe('Edit user detail page', () => {
 
       await renderPage()
 
-      expect(screen.getByRole('heading', { name: 'Edit Email address' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Edit Work email address' })).toBeInTheDocument()
       expect(screen.getByTestId('back-link')).toHaveAttribute('href', '/portal/user/me')
     })
   })
@@ -168,7 +168,7 @@ describe('Edit user detail page', () => {
     it.each([
       ['fullName', 'Edit Full name'],
       ['contactNumber', 'Edit Contact number'],
-      ['email', 'Edit Email address'],
+      ['email', 'Edit Work email address'],
     ])('renders the heading for %s', async (detail, heading) => {
       setDetail(detail)
 
