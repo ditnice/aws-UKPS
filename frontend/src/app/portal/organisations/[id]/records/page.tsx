@@ -39,8 +39,27 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
         <>
           {recordAction && <RecordActionAlert action={recordAction} />}
           <PageHeader heading={`${organisation.organisationName}`} />
-          {currentUser?.userRole === 'Standard' && (championEmails?.length ?? 0) > 0 && (
-            <p> Your champion user is : {championEmails?.join(' and ')} </p>
+
+          {currentUser?.userRole === 'Standard' && championEmails && championEmails.length > 0 && (
+            <div className="champion-user">
+              {championEmails.length === 1 ? (
+                <p>
+                  Your champion user is:{' '}
+                  <a href={`mailto:${championEmails[0]}`}>{championEmails[0]}</a>
+                </p>
+              ) : (
+                <>
+                  <p>Your champion users are:</p>
+                  <ul className="multiple-champion-users">
+                    {championEmails.map((email) => (
+                      <li key={email}>
+                        <a href={`mailto:${email}`}>{email}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
           )}
           <CreateMedicineRecordActionBanner organisationId={organisationId} />
           <TableAndFiltersGrid
