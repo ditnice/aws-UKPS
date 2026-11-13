@@ -561,7 +561,7 @@ public class RecordFormServiceTests : DatabaseTestBase
             { null, RecordFormMessages.Missing },
             { "12", RecordFormMessages.WrongShape },
             { "[\"a\"]", RecordFormMessages.WrongShape },
-            { "\"   \"", "Enter the indication this product is seeking a licence for" },
+            { "\"   \"", "Enter the indication" },
             { $"\"{new string('a', 2001)}\"", "Indication must be 2000 characters or fewer" },
         };
 
