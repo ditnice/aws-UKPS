@@ -212,13 +212,30 @@ describe('Radios', () => {
     expect(handleBlur).toHaveBeenCalled()
   })
 
-  it('renders the error message and styles every option as invalid', () => {
+  it('styles the first Radio as invalid when options are wrapped in Fragments or follow other content', () => {
+    const { container } = render(
+      <Radios error="Choose one" legend="Answer" name="answer">
+        <p>Choose the closest match.</p>
+        <>
+          <Radio label="Yes" value="yes" />
+          <Radio label="No" value="no" />
+        </>
+      </Radios>,
+    )
+    const invalid = container.querySelectorAll('.radio--error')
+    expect(invalid).toHaveLength(1)
+    expect(invalid[0]).toContainElement(screen.getByLabelText('Yes'))
+  })
+
+  it('renders the error message and styles only the first option as invalid', () => {
     const { asFragment, container } = render(
       <ContactRadios error="Select how you would like to be contacted" />,
     )
 
     expect(screen.getByText('Select how you would like to be contacted')).toBeInTheDocument()
-    expect(container.querySelectorAll('.radio--error')).toHaveLength(3)
+    const invalid = container.querySelectorAll('.radio--error')
+    expect(invalid).toHaveLength(1)
+    expect(invalid[0]).toContainElement(screen.getByLabelText('Email'))
     expect(asFragment()).toMatchSnapshot()
   })
 

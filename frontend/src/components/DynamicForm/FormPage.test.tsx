@@ -545,7 +545,7 @@ describe('FormPage', () => {
   })
 
   describe('controls', () => {
-    it('associates radio hints and errors and revalidates after selection and blur', async () => {
+    it('associates radio hints and errors and revalidates on selection', async () => {
       const user = userEvent.setup()
       render(
         <FormPage
@@ -581,8 +581,8 @@ describe('FormPage', () => {
       }
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
       await user.click(yes)
-      await user.tab()
       await waitFor(() => expect(screen.queryByText('Choose yes or no')).not.toBeInTheDocument())
+      expect(yes).toHaveFocus()
       expect(yes).toBeChecked()
       expect(yes).not.toHaveAttribute('aria-invalid')
       expect(screen.getByRole('group', { name: 'Choose an answer' })).not.toHaveAttribute(
@@ -657,7 +657,7 @@ describe('FormPage', () => {
       ).not.toHaveAccessibleDescription()
     })
 
-    it('associates checkbox hints and errors and revalidates on selection and blur', async () => {
+    it('associates checkbox hints and errors and revalidates on selection', async () => {
       const user = userEvent.setup()
       render(
         <FormPage
@@ -691,11 +691,12 @@ describe('FormPage', () => {
         )
       }
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+      expect(document.querySelectorAll('.checkbox--error')).toHaveLength(1)
       await user.click(first)
-      await user.tab()
       await waitFor(() =>
         expect(screen.queryByText('Choose at least one method')).not.toBeInTheDocument(),
       )
+      expect(first).toHaveFocus()
       expect(first).not.toHaveAttribute('aria-invalid')
       expect(screen.getByRole('group', { name: 'Choose contact methods' })).not.toHaveAttribute(
         'aria-invalid',
@@ -1187,7 +1188,9 @@ describe('FormPage', () => {
 
       const message = await screen.findByText('Enter the UK regulatory submission date')
       expect(message.closest('[data-component="radios-conditional"]')).toBeNull()
-      expect(container.querySelectorAll('.radio--error')).toHaveLength(3)
+      const invalid = container.querySelectorAll('.radio--error')
+      expect(invalid).toHaveLength(1)
+      expect(invalid[0]).toContainElement(screen.getByRole('radio', { name: 'Estimated quarter' }))
     })
 
     describe('actual month', () => {
