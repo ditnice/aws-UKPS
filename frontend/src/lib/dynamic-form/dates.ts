@@ -10,7 +10,10 @@ export const actualMonthInFutureMessage = 'The date must be this month or in the
 
 export type DatePrecision = 'EstimatedQuarter' | 'EstimatedMonth' | 'ActualDate' | 'ActualMonth'
 
-/** The controls whose answer is a date: a date at a chosen precision, an actual month or an actual date. */
+/**
+ * The controls whose answer is a date: a date at a chosen precision, an actual month or an actual
+ * date.
+ */
 export type DateControl = Extract<FormControl, 'PrecisionDate' | 'ActualMonth' | 'ActualDate'>
 
 export const isDateControl = (control: FormControl): control is DateControl =>
@@ -29,8 +32,9 @@ export type DateValue = {
 }
 
 // Mirrors DateAnswer: a PrecisionDate is yyyy-Qn, yyyy-MM or yyyy-MM-dd, an ActualMonth is
-// yyyy-MM and an ActualDate is yyyy-MM-dd, with a four-digit year from 1000. An actual date is today or earlier, an actual month
-// this month or earlier, and an estimate is for a quarter or month that has not ended.
+// yyyy-MM and an ActualDate is yyyy-MM-dd, with a four-digit year from 1000. An actual date is
+// today or earlier, an actual month this month or earlier, and an estimate is for a quarter or
+// month that has not ended.
 const pattern =
   /^(?<year>[1-9][0-9]{3})-(?:Q(?<quarter>[1-4])|(?<month>0[1-9]|1[0-2])(?:-(?<day>0[1-9]|[12][0-9]|3[01]))?)$/
 
