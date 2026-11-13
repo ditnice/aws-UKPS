@@ -3524,6 +3524,173 @@
         }
       }
     },
+    "/records/{recordId}/submit": {
+      "post": {
+        "tags": [
+          "RecordSubmission"
+        ],
+        "summary": "Submits the record's draft revision, as it was when check your answers loaded. A medicine\ngoes to QA review.",
+        "operationId": "SubmitRecord",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The record to submit.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitRecordCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitRecordCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitRecordCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The record was submitted."
+          },
+          "400": {
+            "description": "The request body is missing or malformed.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller can read the record but not submit it.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record was not found or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The record can't be submitted in its current state, or the form or revision changed since\ncheck your answers loaded. The `code` member says which.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The revision has problems to fix first. `errors` is keyed by question ID, and\n`fields` lists each problem with its page and task, in form order.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRecordProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRecordProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRecordProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/records/{recordId}/task-list": {
       "get": {
         "tags": [
@@ -5191,6 +5358,71 @@
           }
         },
         "description": "Represents a request to start the forgotten password flow for a user."
+      },
+      "InvalidRecordProblemDetails": {
+        "required": [
+          "fields",
+          "code",
+          "errors"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "code": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Identifies the problem; always `record_invalid`."
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmissionErrorDto"
+            },
+            "description": "Each problem with its page and task, in form order."
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "description": "The problems that stop a record being submitted. `errors` is keyed by question ID;\n`fields` adds each problem's page and task."
       },
       "LoginRequest": {
         "required": [
@@ -7727,6 +7959,52 @@
         "type": "string",
         "description": "Specifies the direction in which query results are sorted."
       },
+      "SubmissionErrorDto": {
+        "required": [
+          "questionId",
+          "pageId",
+          "taskId",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "string",
+            "description": "The question to highlight, which is also its key in `errors`."
+          },
+          "pageId": {
+            "type": "string",
+            "description": "The page the question is on, to link to."
+          },
+          "taskId": {
+            "type": "string",
+            "description": "The task the page belongs to."
+          },
+          "message": {
+            "type": "string",
+            "description": "What is wrong and how to fix it."
+          }
+        },
+        "description": "A problem that stops a record being submitted, and the question it is on."
+      },
+      "SubmitRecordCommand": {
+        "required": [
+          "formVersion",
+          "revisionHash"
+        ],
+        "type": "object",
+        "properties": {
+          "formVersion": {
+            "type": "string",
+            "description": "The form version check your answers was loaded with."
+          },
+          "revisionHash": {
+            "type": "string",
+            "description": "The hash of the whole revision check your answers was loaded with. If anything in the\nrevision has changed since, the submission is rejected."
+          }
+        },
+        "description": "Submits a record's draft revision, as it was when check your answers loaded."
+      },
       "TrialPhase": {
         "enum": [
           "Preclinical",
@@ -8166,6 +8444,9 @@
     },
     {
       "name": "RecordForm"
+    },
+    {
+      "name": "RecordSubmission"
     },
     {
       "name": "RecordTaskList"

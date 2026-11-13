@@ -109,10 +109,44 @@ internal static partial class DateAnswer
             return value > today ? RecordFormMessages.ActualMonthInFuture : null;
         }
 
-        // The last day is found within the period, as the day after it may be past DateOnly.MaxValue.
-        int lastMonth = value.Month + (precision == DatePrecision.EstimatedQuarter ? 2 : 0);
-        DateOnly lastDay = new(value.Year, lastMonth, DateTime.DaysInMonth(value.Year, lastMonth));
-        return lastDay < today ? RecordFormMessages.EstimatedDateInPast : null;
+        return LastDay(precision, value) < today ? RecordFormMessages.EstimatedDateInPast : null;
+    }
+
+    /// <summary>
+    /// The first and last day the answer covers: one day for an actual date, otherwise the whole
+    /// month or quarter. Returns false when it is not a real date in one of the control's formats.
+    /// </summary>
+    public static bool TryGetRange(
+        FormControl control,
+        string answer,
+        out DateOnly firstDay,
+        out DateOnly lastDay
+    )
+    {
+        if (!TryParse(control, answer, out DatePrecision precision, out firstDay))
+        {
+            lastDay = default;
+            return false;
+        }
+
+        lastDay = LastDay(precision, firstDay);
+        return true;
+    }
+
+    // The last day is found within the period, as the day after it may be past DateOnly.MaxValue.
+    private static DateOnly LastDay(DatePrecision precision, DateOnly firstDay)
+    {
+        if (precision == DatePrecision.ActualDate)
+        {
+            return firstDay;
+        }
+
+        int lastMonth = firstDay.Month + (precision == DatePrecision.EstimatedQuarter ? 2 : 0);
+        return new DateOnly(
+            firstDay.Year,
+            lastMonth,
+            DateTime.DaysInMonth(firstDay.Year, lastMonth)
+        );
     }
 
     /// <summary>
