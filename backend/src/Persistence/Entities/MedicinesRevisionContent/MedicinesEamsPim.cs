@@ -3,7 +3,10 @@ using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
-/// <summary>Owns EamsSubmission and EamsOpinion regulatory date rows.</summary>
+/// <summary>
+/// Holds the PIM designation and EAMS answers, and owns the EamsSubmission and EamsOpinion
+/// regulatory date rows.
+/// </summary>
 [FormSection(
     RecordType.Medicine,
     "pim-and-eams",
