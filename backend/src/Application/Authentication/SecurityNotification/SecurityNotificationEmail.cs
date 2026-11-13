@@ -8,8 +8,10 @@ internal sealed record SecurityNotificationEmail : IEmail
     public string Subject => $"Your {FormattedChangedValue} was changed";
     public required ChangedUserData ChangedValue { get; init; }
 
-    private string FormattedChangedValue =>
-        ChangedValue.ToString().ToLower(CultureInfo.CurrentCulture);
+    private string FormattedChangedValue
+    {
+        get => ChangedValue.ToString().ToLower(CultureInfo.CurrentCulture);
+    }
 
     public string GetHtmlContent(EmailContextData contextData)
     {
