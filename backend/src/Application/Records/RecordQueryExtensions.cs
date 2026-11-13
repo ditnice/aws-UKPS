@@ -43,5 +43,12 @@ internal static class RecordQueryExtensions
                     : RecordDisplayStatus.Draft,
                 LatestRevisionStatus = x.Latest == null ? null : x.Latest.WorkflowStatus,
                 HasSingleRevision = x.Record.Revisions.Count == 1,
+                NextUpdateDue =
+                    x.Record.ReviewedAt == null ? null
+                    : x.Record.RecordStatus == RecordStatus.Published
+                        ? x.Record.ReviewedAt.Value.AddMonths(3)
+                    : x.Record.RecordStatus == RecordStatus.OnHold
+                        ? x.Record.ReviewedAt.Value.AddMonths(6)
+                    : null,
             });
 }

@@ -6675,6 +6675,14 @@
               "$ref": "#/components/schemas/RecordAction"
             },
             "description": "Gets the actions the user can take on the record, given its status and the workflow status\nof its latest revision."
+          },
+          "nextUpdateDue": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the date of when the next update is due.",
+            "format": "date-time"
           }
         },
         "description": "Represents the data held on the latest revision of a medicine record."
@@ -6731,6 +6739,14 @@
               "$ref": "#/components/schemas/RecordAction"
             },
             "description": "Gets the actions the user can take on the record, given its status and the workflow status\nof its latest revision."
+          },
+          "nextUpdateDue": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the date of when the next update is due.",
+            "format": "date-time"
           }
         },
         "description": "Represents the data held on the latest revision of a vaccine record."

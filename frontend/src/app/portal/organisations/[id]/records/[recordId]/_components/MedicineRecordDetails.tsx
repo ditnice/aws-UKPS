@@ -38,8 +38,8 @@ type SectionProps = MedicineRecordDetailsProps
 export const MedicineRecordDetails = ({ record }: MedicineRecordDetailsProps) => {
   return (
     <AccordionGroup>
-      <Accordion title="Product record details" displayTitleAsHeading headingLevel={3}>
-        <ProductRecordDetailsSection record={record} />
+      <Accordion title="Names and identifiers" displayTitleAsHeading headingLevel={3}>
+        <NamesAndIdentifiersSection record={record} />
       </Accordion>
       <Accordion
         title="Indication and development information"
@@ -48,11 +48,11 @@ export const MedicineRecordDetails = ({ record }: MedicineRecordDetailsProps) =>
       >
         <IndicationAndDevelopmentSection record={record} />
       </Accordion>
-      <Accordion title="Clinical trial information" displayTitleAsHeading headingLevel={3}>
+      <Accordion title="Clinical trials" displayTitleAsHeading headingLevel={3}>
         <ClinicalTrialsSection record={record} />
       </Accordion>
       <Accordion
-        title="Regulatory, access and launch information"
+        title="Regulatory, access, and launch information"
         displayTitleAsHeading
         headingLevel={3}
       >
@@ -69,7 +69,7 @@ export const MedicineRecordDetails = ({ record }: MedicineRecordDetailsProps) =>
   )
 }
 
-const ProductRecordDetailsSection = ({ record }: SectionProps) => {
+const NamesAndIdentifiersSection = ({ record }: SectionProps) => {
   const productDetail = record.recordProductDetail
   const namesOfType = (nameType: 'GenericName' | 'OtherIdentifier') =>
     formatList(

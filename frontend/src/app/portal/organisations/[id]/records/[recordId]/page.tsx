@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation'
 
-import { getRecord, RecordType } from '@/client/generated'
+import { getOrganisationRecords, getRecord, RecordType } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
+import { Alert } from '@/components/Alert/Alert'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
@@ -24,6 +25,26 @@ type RecordPageProps = {
   params: Promise<{ id: string; recordId: string }>
   searchParams: Promise<{ recordType?: string | string[]; action?: string | string[] }>
 }
+
+const isRecordOverdue = (nextUpdateDue?: string | null) => {
+  if (!nextUpdateDue) return false
+
+  const dueDate = new Date(nextUpdateDue)
+
+  if (Number.isNaN(dueDate.getTime())) return false
+
+  return dueDate.getTime() < Date.now()
+}
+
+const OverdueRecordAlert = () => (
+  <Alert type="info">
+    <h3>Record update overdue</h3>
+    <p>
+      This record needs to be reviewed for any updates. You can edit the record to update published
+      record information or confirm the information is up-to-date.
+    </p>
+  </Alert>
+)
 
 const RecordPage = async ({ params, searchParams }: RecordPageProps) => {
   const { id, recordId: recordIdParam } = await params
@@ -85,15 +106,26 @@ const RecordView = async ({ organisationId, recordId, recordType, alert }: Recor
     )
   }
 
+  const isOverdue = isRecordOverdue(record.nextUpdateDue)
+
   //TODO: needs updating when we add vaccine DTOs
   const productDetail = record.recordType === 'Medicine' ? record.recordProductDetail : undefined
+
+  const statusHeadings = {
+    Archived: 'Archived record details',
+    OnHold: 'Published record details',
+    QAReview: 'Published record details',
+    Published: 'View record details',
+    Draft: 'View record details',
+  }
 
   return (
     <>
       {alert && <RecordViewAlert action={alert} />}
+      {backLink}
+      {isOverdue && record.recordStatus !== 'Archived' && <OverdueRecordAlert />}
 
       <PageHeader
-        backLink={backLink}
         heading={`Record ${record.recordId}${productDetail ? `: ${productDetail.companyCode}` : ''}`}
         lead={
           <>
@@ -114,7 +146,7 @@ const RecordView = async ({ organisationId, recordId, recordType, alert }: Recor
         }
       />
 
-      <h2>View record details</h2>
+      <h2>{statusHeadings[record.displayStatus]}</h2>
       <Button variant="secondary">Export record to PDF</Button>
       {record.recordType === 'Medicine' ? (
         <MedicineRecordDetails record={record} />
