@@ -47,6 +47,12 @@ internal sealed class Applicability(
     }
 
     /// <summary>
+    /// Whether a condition holds for these answers, reading its triggers as page and question
+    /// conditions do.
+    /// </summary>
+    public bool IsMet(FormCondition condition) => condition.IsMet(AnswerOf);
+
+    /// <summary>
     /// What a condition compares: the trigger's answer (a date's precision, or a reference data
     /// item's code), or unanswered when the trigger does not apply.
     /// </summary>

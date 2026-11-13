@@ -1,6 +1,7 @@
 using System.Data;
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Respawn;
 using Respawn.Graph;
 using Testcontainers.PostgreSql;
@@ -59,7 +60,7 @@ public sealed class PostgresFixture : IAsyncLifetime
         await _respawner.ResetAsync(connection);
     }
 
-    internal AppDbContext CreateContext()
+    internal AppDbContext CreateContext(params IInterceptor[] interceptors)
     {
         DbContextOptions<AppDbContext> options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(
@@ -67,6 +68,7 @@ public sealed class PostgresFixture : IAsyncLifetime
                 npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "ukps")
             )
             .UseSnakeCaseNamingConvention()
+            .AddInterceptors(interceptors)
             .Options;
 
         return new AppDbContext(options);
