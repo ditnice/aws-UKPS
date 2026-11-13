@@ -28,7 +28,7 @@ const PageWrapper = (props: React.PropsWithChildren & { label: string }) => {
 const userDetailLabels: Record<UserDetail, string> = {
   fullName: 'Full name',
   contactNumber: 'Contact number',
-  email: 'Email address',
+  email: 'Work email address',
 }
 
 const Page = async (props: PageProps) => {

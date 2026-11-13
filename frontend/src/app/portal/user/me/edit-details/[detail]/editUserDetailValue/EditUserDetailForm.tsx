@@ -1,7 +1,7 @@
 'use client'
 
 import { initialFormState, mergeForm, useForm, useTransform } from '@tanstack/react-form-nextjs'
-import { ChangeEvent, useActionState } from 'react'
+import { ChangeEvent, startTransition, useActionState } from 'react'
 
 import { EditableUserDetail } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
@@ -20,7 +20,7 @@ type EditUserDetailFormProps = {
 }
 const EditUserDetailForm = ({ initialValue, userId, property, label }: EditUserDetailFormProps) => {
   const boundAction = updateUserDetailsAction.bind(null, userId)
-  const [state, action] = useActionState(boundAction, initialFormState)
+  const [state, action, isPending] = useActionState(boundAction, initialFormState)
   const defaultValues = {
     ...updateUserDetailOptions.defaultValues,
     value: initialValue,
@@ -31,8 +31,6 @@ const EditUserDetailForm = ({ initialValue, userId, property, label }: EditUserD
     defaultValues,
     transform: useTransform(
       (baseForm) => {
-        console.log({ defaultValues })
-        console.log({ state })
         return mergeForm(baseForm, {
           ...state!,
           values: {
@@ -44,9 +42,21 @@ const EditUserDetailForm = ({ initialValue, userId, property, label }: EditUserD
       },
       [state, initialValue, property],
     ),
+    onSubmitMeta: {} as { formData: FormData },
+    onSubmit: ({ meta }) => {
+      startTransition(() => {
+        action(meta.formData)
+      })
+    },
   })
   return (
-    <form action={action as never} onSubmit={() => form.handleSubmit()}>
+    <form
+      action={action as never}
+      onSubmit={(e) => {
+        e.preventDefault()
+        void form.handleSubmit({ formData: new FormData(e.currentTarget) })
+      }}
+    >
       <FormLevelErrors errors={state?.errors ?? []} />
       <form.Field name="property">
         {(field) => <input type="hidden" name={field.name} value={field.state.value} />}
@@ -71,7 +81,7 @@ const EditUserDetailForm = ({ initialValue, userId, property, label }: EditUserD
           )
         }}
       </form.Field>
-      <Button type="submit" variant="cta" disabled={form.state.isSubmitting}>
+      <Button type="submit" variant="cta" disabled={isPending}>
         Save
       </Button>
     </form>

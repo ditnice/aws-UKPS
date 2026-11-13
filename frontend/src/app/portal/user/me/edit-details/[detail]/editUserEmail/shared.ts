@@ -1,4 +1,4 @@
-import { formOptions } from '@tanstack/react-form'
+import { formOptions, revalidateLogic } from '@tanstack/react-form'
 import { createServerValidate } from '@tanstack/react-form-nextjs'
 import z from 'zod'
 
@@ -19,6 +19,10 @@ const defaultValues: UpdateUserEmailCommand = {
 
 export const updateUserEmailOptions = formOptions({
   defaultValues: defaultValues,
+  validationLogic: revalidateLogic({
+    mode: 'submit',
+    modeAfterSubmission: 'blur',
+  }),
   validators: {
     onDynamic: formSchema,
   },

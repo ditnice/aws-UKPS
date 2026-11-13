@@ -1,4 +1,4 @@
-import { formOptions } from '@tanstack/react-form'
+import { formOptions, revalidateLogic } from '@tanstack/react-form'
 import { createServerValidate } from '@tanstack/react-form-nextjs'
 import { isValidPhoneNumber } from 'libphonenumber-js/max'
 import z from 'zod'
@@ -32,6 +32,10 @@ const defaultValues: UpdateUserDetailsCommand = {
 
 export const updateUserDetailOptions = formOptions({
   defaultValues: defaultValues,
+  validationLogic: revalidateLogic({
+    mode: 'submit',
+    modeAfterSubmission: 'blur',
+  }),
   validators: {
     onDynamic: formSchema,
   },

@@ -1,7 +1,7 @@
 'use client'
 
 import { initialFormState, mergeForm, useForm, useTransform } from '@tanstack/react-form-nextjs'
-import { ChangeEvent, useActionState } from 'react'
+import { ChangeEvent, startTransition, useActionState } from 'react'
 
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
@@ -36,9 +36,21 @@ const EditUserEmailForm = ({ initialValue, userId }: EditUserDetailFormProps) =>
         }),
       [state, initialValue],
     ),
+    onSubmitMeta: {} as { formData: FormData },
+    onSubmit: ({ meta }) => {
+      startTransition(() => {
+        action(meta.formData)
+      })
+    },
   })
   return (
-    <form action={action as never} onSubmit={() => form.handleSubmit()}>
+    <form
+      action={action as never}
+      onSubmit={(e) => {
+        e.preventDefault()
+        void form.handleSubmit({ formData: new FormData(e.currentTarget) })
+      }}
+    >
       <FormLevelErrors errors={state?.errors ?? []} />
       <form.Field name="value">
         {(field) => {
@@ -48,7 +60,7 @@ const EditUserEmailForm = ({ initialValue, userId }: EditUserDetailFormProps) =>
               autoComplete="email"
               error={Boolean(errorMessage)}
               errorMessage={errorMessage}
-              label={'Email address'}
+              label={'Work email address'}
               name={field.name}
               onBlur={field.handleBlur}
               onChange={(event: ChangeEvent<HTMLInputElement>) =>
