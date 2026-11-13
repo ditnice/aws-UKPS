@@ -136,7 +136,7 @@ describe('EditUserDetailForm', () => {
     it('renders an enabled CTA submit button', () => {
       renderForm()
 
-      const button = screen.getByRole('button', { name: /submit/i })
+      const button = screen.getByRole('button', { name: /save/i })
       expect(button).toHaveAttribute('type', 'submit')
       expect(button).toHaveAttribute('data-variant', 'cta')
       expect(button).toBeEnabled()
@@ -187,7 +187,7 @@ describe('EditUserDetailForm', () => {
       const input = screen.getByLabelText(LABEL)
       await user.clear(input)
       await user.type(input, 'Bob')
-      await user.click(screen.getByRole('button', { name: /submit/i }))
+      await user.click(screen.getByRole('button', { name: /save/i }))
 
       await waitFor(() => expect(formAction).toHaveBeenCalledTimes(1))
 
@@ -200,7 +200,7 @@ describe('EditUserDetailForm', () => {
       const user = userEvent.setup()
       renderForm()
 
-      await user.click(screen.getByRole('button', { name: /submit/i }))
+      await user.click(screen.getByRole('button', { name: /save/i }))
 
       await waitFor(() => expect(formAction).toHaveBeenCalledTimes(1))
       const formData = formAction.mock.calls[0][0] as FormData

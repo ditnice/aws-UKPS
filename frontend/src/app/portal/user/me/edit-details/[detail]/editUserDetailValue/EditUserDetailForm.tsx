@@ -72,7 +72,7 @@ const EditUserDetailForm = ({ initialValue, userId, property, label }: EditUserD
         }}
       </form.Field>
       <Button type="submit" variant="cta" disabled={form.state.isSubmitting}>
-        Submit
+        Save
       </Button>
     </form>
   )

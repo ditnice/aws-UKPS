@@ -16,7 +16,7 @@ const PageWrapper = (props: React.PropsWithChildren & { label: string }) => {
     <>
       <PageHeader
         backLink={<BackLink href={'/portal/user/me'} />}
-        heading={`Update ${props.label}`}
+        heading={`Edit ${props.label}`}
       />
       {props.children}
     </>
