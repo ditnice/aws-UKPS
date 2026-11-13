@@ -51,6 +51,12 @@ public class RecordFormServiceTests : DatabaseTestBase
     private const string EamsPrefix = "medicines_eams_pim.";
     private const string EamsSubmissionDate = "medicines_eams_pim.eams_submission_date";
     private const string EamsOpinionDate = "medicines_eams_pim.eams_opinion_date";
+    private const string OrphanStatus = "medicines_eu_status.eu_orphan_status";
+    private const string OrphanGrantedDate = "medicines_eu_status.eu_orphan_granted_date";
+    private const string OrphanStatusNumber = "medicines_eu_status.eu_orphan_status_number";
+    private const string AtmpStatus = "medicines_eu_status.eu_atmp_classification_status";
+    private const string AtmpRecommendationDate = "medicines_eu_status.atmp_recommendation_date";
+    private const string AtmpClassificationQuestion = "medicines_eu_status.atmp_classification_id";
 
     private static readonly DateTime _now = new(2026, 10, 15, 9, 30, 0, DateTimeKind.Utc);
 
@@ -69,6 +75,7 @@ public class RecordFormServiceTests : DatabaseTestBase
     private TherapeuticArea _otherCondition = null!;
     private FormulationType _formulation = null!;
     private PatientPathwayPoint _pathwayPoint = null!;
+    private AtmpClassification _atmpClassification = null!;
     private ServiceTestHarness<IRecordFormQueryService> _queryHarness = null!;
     private ServiceTestHarness<IRecordFormSaveService> _saveHarness = null!;
 
@@ -146,6 +153,10 @@ public class RecordFormServiceTests : DatabaseTestBase
         _formulation = await AddEntity(new FormulationType { Label = "Tablet" }, Ct);
         _pathwayPoint = await AddEntity(
             new PatientPathwayPoint { Label = "Initial presentation" },
+            Ct
+        );
+        _atmpClassification = await AddEntity(
+            new AtmpClassification { Label = "Somatic-cell therapy medicine" },
             Ct
         );
 
@@ -980,6 +991,91 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task SavePage_OrphanStatusGrantedWithDateAndNumber_GoesToTheAtmpPage()
+    {
+        SaveRecordPageDto saved = await SaveOk("orphan-status", OrphanGrantedAnswers());
+
+        saved.NextPageId.ShouldBe("atmp-classification");
+    }
+
+    [Fact]
+    public async Task SavePage_OrphanStatusGranted_StoresAnActualDateForTheEuOrphanEvent()
+    {
+        await SaveOk("orphan-status", OrphanGrantedAnswers());
+
+        MedicinesEuStatus row = await EuStatusRow();
+        row.EuOrphanStatus.ShouldBe(DesignationStatus.Granted);
+        row.EuOrphanStatusNumber.ShouldBe("EU/3/20/2345");
+        RegulatoryDate date = await Context
+            .RegulatoryDates.AsNoTracking()
+            .SingleAsync(d => d.Id == row.EuOrphanGrantedDateId!.Value, Ct);
+        date.DateEvent.ShouldBe(DateEventType.EuOrphanGranted);
+        date.DatePrecision.ShouldBe(DatePrecision.ActualDate);
+        date.DateValue.ShouldBe(new DateOnly(2025, 3, 14));
+    }
+
+    [Fact]
+    public async Task SavePage_OrphanStatusGrantedWithNoDateOrNumber_ReportsBothRequiredMessages()
+    {
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "orphan-status",
+            OrphanAnswersWithoutDetails("Granted")
+        );
+
+        errors.Keys.ShouldBe([OrphanGrantedDate, OrphanStatusNumber], ignoreOrder: true);
+        errors[OrphanGrantedDate]
+            .ShouldBe("Enter the date that EU orphan medicine status was granted");
+        errors[OrphanStatusNumber].ShouldBe("Enter the EU orphan status number");
+    }
+
+    [Fact]
+    public async Task SavePage_OrphanStatusNotGranted_DoesNotRequireTheGrantedDetails()
+    {
+        SaveRecordPageDto saved = await SaveOk(
+            "orphan-status",
+            OrphanAnswersWithoutDetails("NotGranted")
+        );
+
+        saved.NextPageId.ShouldBe("atmp-classification");
+    }
+
+    [Fact]
+    public async Task SavePage_AtmpGrantedWithNoDateOrClassification_ReportsBothRequiredMessages()
+    {
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "atmp-classification",
+            AtmpAnswersWithoutDetails("Granted")
+        );
+
+        errors.Keys.ShouldBe(
+            [AtmpRecommendationDate, AtmpClassificationQuestion],
+            ignoreOrder: true
+        );
+        errors[AtmpRecommendationDate]
+            .ShouldBe("Enter the date the ATMP classification recommendation was provided");
+        errors[AtmpClassificationQuestion]
+            .ShouldBe("Select the ATMP classification of your product");
+    }
+
+    [Fact]
+    public async Task SavePage_AtmpGrantedWithDateAndClassification_GoesToTheTaskList()
+    {
+        SaveRecordPageDto saved = await SaveOk("atmp-classification", AtmpGrantedAnswers());
+
+        saved.NextPageId.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SavePage_AtmpGrantedWithDateAndClassification_StoresTheClassification()
+    {
+        await SaveOk("atmp-classification", AtmpGrantedAnswers());
+
+        MedicinesEuStatus row = await EuStatusRow();
+        row.EuAtmpClassificationStatus.ShouldBe(DesignationStatus.Granted);
+        row.AtmpClassificationId.ShouldBe(_atmpClassification.Id);
+    }
+
+    [Fact]
     public async Task SavePage_FirstLaboratoryTestingSave_CreatesTheRow()
     {
         (
@@ -1433,6 +1529,44 @@ public class RecordFormServiceTests : DatabaseTestBase
             [$"{HtaPrefix}medicine_hta_bodies"] = Json(bodies),
             [$"{HtaPrefix}hta_additional_details"] = Json("Planned submissions differ by body"),
         };
+
+    private static Dictionary<string, JsonElement> OrphanGrantedAnswers() =>
+        new(StringComparer.Ordinal)
+        {
+            [OrphanStatus] = Json("Granted"),
+            [OrphanGrantedDate] = Json("2025-03-14"),
+            [OrphanStatusNumber] = Json("EU/3/20/2345"),
+        };
+
+    // A page needs every one of its questions in the payload, with null for an empty one.
+    private static Dictionary<string, JsonElement> OrphanAnswersWithoutDetails(string status) =>
+        new(StringComparer.Ordinal)
+        {
+            [OrphanStatus] = Json(status),
+            [OrphanGrantedDate] = Json<string?>(null),
+            [OrphanStatusNumber] = Json<string?>(null),
+        };
+
+    private static Dictionary<string, JsonElement> AtmpAnswersWithoutDetails(string status) =>
+        new(StringComparer.Ordinal)
+        {
+            [AtmpStatus] = Json(status),
+            [AtmpRecommendationDate] = Json<string?>(null),
+            [AtmpClassificationQuestion] = Json<string?>(null),
+        };
+
+    private Dictionary<string, JsonElement> AtmpGrantedAnswers() =>
+        new(StringComparer.Ordinal)
+        {
+            [AtmpStatus] = Json("Granted"),
+            [AtmpRecommendationDate] = Json("2025-06-02"),
+            [AtmpClassificationQuestion] = Json($"{_atmpClassification.Id}"),
+        };
+
+    private async Task<MedicinesEuStatus> EuStatusRow() =>
+        await Context
+            .MedicinesEuStatuses.AsNoTracking()
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
 
     private async Task<RecordHta> HtaRow() =>
         await Context.RecordHtas.AsNoTracking().SingleAsync(x => x.RevisionId == _revision.Id, Ct);

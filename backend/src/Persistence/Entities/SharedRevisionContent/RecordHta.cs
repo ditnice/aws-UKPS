@@ -9,7 +9,7 @@ namespace UKPS.Api.Persistence.Entities.SharedRevisionContent;
     RecordType.Medicine,
     "hta-and-launch",
     "Health technology assessment and launch",
-    Order = 50
+    Order = 40
 )]
 [FormPageShowWhen(
     "nice-aligned-pathway",

@@ -10,15 +10,18 @@ export const actualMonthInFutureMessage = 'The date must be this month or in the
 
 export type DatePrecision = 'EstimatedQuarter' | 'EstimatedMonth' | 'ActualDate' | 'ActualMonth'
 
-/** The controls whose answer is a date: a date at a chosen precision, or an actual month. */
-export type DateControl = Extract<FormControl, 'PrecisionDate' | 'ActualMonth'>
+/**
+ * The controls whose answer is a date: a date at a chosen precision, an actual month or an actual
+ * date.
+ */
+export type DateControl = Extract<FormControl, 'PrecisionDate' | 'ActualMonth' | 'ActualDate'>
 
 export const isDateControl = (control: FormControl): control is DateControl =>
-  control === 'PrecisionDate' || control === 'ActualMonth'
+  control === 'PrecisionDate' || control === 'ActualMonth' || control === 'ActualDate'
 
 /**
  * A date question's value while the form is being edited: the chosen precision ('' until one is
- * chosen; always ActualMonth for that control) and the text typed into each part.
+ * chosen; always ActualMonth or ActualDate for those controls) and the text typed into each part.
  */
 export type DateValue = {
   precision: DatePrecision | ''
@@ -28,9 +31,10 @@ export type DateValue = {
   year: string
 }
 
-// Mirrors DateAnswer: a PrecisionDate is yyyy-Qn, yyyy-MM or yyyy-MM-dd, and an ActualMonth is
-// yyyy-MM, with a four-digit year from 1000. An actual date is today or earlier, an actual month
-// this month or earlier, and an estimate is for a quarter or month that has not ended.
+// Mirrors DateAnswer: a PrecisionDate is yyyy-Qn, yyyy-MM or yyyy-MM-dd, an ActualMonth is
+// yyyy-MM and an ActualDate is yyyy-MM-dd, with a four-digit year from 1000. An actual date is
+// today or earlier, an actual month this month or earlier, and an estimate is for a quarter or
+// month that has not ended.
 const pattern =
   /^(?<year>[1-9][0-9]{3})-(?:Q(?<quarter>[1-4])|(?<month>0[1-9]|1[0-2])(?:-(?<day>0[1-9]|[12][0-9]|3[01]))?)$/
 
@@ -61,7 +65,11 @@ export const utcToday = () => {
 const parseDateAnswer = (answer: string, control: DateControl): ParsedDate | null => {
   const groups = pattern.exec(answer)?.groups
   const isMonth = Boolean(groups?.month) && !groups?.day
-  if (!groups || (control === 'ActualMonth' && !isMonth)) {
+  if (
+    !groups ||
+    (control === 'ActualMonth' && !isMonth) ||
+    (control === 'ActualDate' && !groups.day)
+  ) {
     return null
   }
   const year = Number(groups.year)
@@ -108,11 +116,16 @@ export const precisionOf = (answer: Answer): DatePrecision | null =>
 
 const emptyParts = { day: '', month: '', quarter: '', year: '' }
 
+const fixedPrecision: Partial<Record<DateControl, DatePrecision>> = {
+  ActualMonth: 'ActualMonth',
+  ActualDate: 'ActualDate',
+}
+
 /** Converts a saved date answer into the value the form edits. */
 export const toDateValue = (answer: unknown, control: DateControl = 'PrecisionDate'): DateValue => {
   const parsed = typeof answer === 'string' ? parseDateAnswer(answer, control) : null
   if (!parsed) {
-    return { precision: control === 'ActualMonth' ? 'ActualMonth' : '', ...emptyParts }
+    return { precision: fixedPrecision[control] ?? '', ...emptyParts }
   }
   return {
     precision: parsed.precision,

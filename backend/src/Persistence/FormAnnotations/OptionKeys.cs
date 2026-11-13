@@ -125,4 +125,27 @@ internal static class OptionKeys
     /// <c>UkPatientPopulationRangeId</c> property. Archived options are hidden unless already saved.
     /// </summary>
     public const string UkPatientPopulationRanges = "uk-patient-population-ranges";
+
+    /// <summary>
+    /// The <c>DesignationStatus</c> enum worded for EU orphan medicine status: granted, not
+    /// granted, decision to submit ongoing, application submitted and decision pending, and no
+    /// submission intended. For a <see cref="FormControl.Radio"/> on a <c>DesignationStatus?</c>
+    /// property.
+    /// </summary>
+    public const string EuOrphanStatus = "eu-orphan-status";
+
+    /// <summary>
+    /// The <c>DesignationStatus</c> enum worded for EU ATMP classification: yes, no, decision to
+    /// submit ongoing, and application submitted and decision pending. It has no option for
+    /// <c>NoSubmissionIntended</c>. For a <see cref="FormControl.Radio"/> on a
+    /// <c>DesignationStatus?</c> property.
+    /// </summary>
+    public const string EuAtmpClassificationStatus = "eu-atmp-classification-status";
+
+    /// <summary>
+    /// The <c>AtmpClassification</c> reference data as a flat list, ordered by ID. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on an
+    /// <c>AtmpClassificationId</c> property. Archived options are hidden unless already saved.
+    /// </summary>
+    public const string AtmpClassifications = "atmp-classifications";
 }

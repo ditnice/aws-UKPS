@@ -82,4 +82,11 @@ public enum FormControl
     /// <see cref="FormOptionsAttribute"/>.
     /// </summary>
     PrefixedNumber = 8,
+
+    /// <summary>
+    /// The actual day, month and year of an event that has happened, for a foreign key to a regulatory
+    /// date. The answer is <c>yyyy-MM-dd</c>, this day or earlier. Needs
+    /// <see cref="FormDateEventAttribute"/>.
+    /// </summary>
+    ActualDate = 9,
 }
