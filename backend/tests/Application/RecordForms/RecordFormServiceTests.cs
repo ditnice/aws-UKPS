@@ -159,7 +159,7 @@ public class RecordFormServiceTests : DatabaseTestBase
         RecordPageDto page = await GetPage("indication");
 
         page.FormVersion.ShouldBe(FormVersions.Medicine);
-        page.Section.Title.ShouldBe("Indication details");
+        page.Section.Title.ShouldBe("Provide indication and development information");
         (page.Task.Id, page.Task.Title).ShouldBe(("indication-details", "Indication details"));
         page.PreviousPageId.ShouldBeNull();
         page.NextPageId.ShouldBe("bnf-chapter");

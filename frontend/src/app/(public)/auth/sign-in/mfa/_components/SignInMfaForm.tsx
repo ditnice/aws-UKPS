@@ -94,7 +94,7 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
               autoComplete="one-time-code"
               error={Boolean(errorMessage)}
               errorMessage={errorMessage}
-              hint={`Enter the 6-digit authentication code shown in the app.`}
+              hint={`Enter the 6-digit authentication code.`}
               inputMode="numeric"
               label="Security code"
               name={field.name}
@@ -116,7 +116,7 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
 
       {/* TODO 620 - link this up when the page is created */}
       <p className={styles.helpLink}>
-        <Link href="/">I do not have access to my authenticator device</Link>
+        <Link href="/">I do not have access to my authenticator</Link>
       </p>
     </form>
   )

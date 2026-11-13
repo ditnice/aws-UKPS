@@ -1067,6 +1067,192 @@
         }
       }
     },
+    "/mfa/update": {
+      "post": {
+        "tags": [
+          "MultiFactorAuthentication"
+        ],
+        "summary": "Initiates the process of updating the authenticated user's multi-factor authentication settings.",
+        "operationId": "InitiateUpdateMultiFactorAuthentication",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultiFactorAuthenticationSetupDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultiFactorAuthenticationSetupDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultiFactorAuthenticationSetupDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mfa/verify": {
+      "post": {
+        "tags": [
+          "MultiFactorAuthentication"
+        ],
+        "summary": "Verifies the multi-factor authentication code provided by the authenticated user\nto complete the update of their multi-factor authentication settings.",
+        "operationId": "VerifyMultiFactorAuthenticationUpdate",
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationUpdateCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationUpdateCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationUpdateCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/organisations/{id}": {
       "get": {
         "tags": [
@@ -7911,8 +8097,8 @@
       "VerifyMultiFactorAuthenticationCommand": {
         "required": [
           "setupToken",
-          "code",
-          "authenticationSession"
+          "authenticationSession",
+          "code"
         ],
         "type": "object",
         "properties": {
@@ -7921,16 +8107,29 @@
             "description": "Gets the unique token associated with the user onboarding record.",
             "format": "uuid"
           },
-          "code": {
-            "type": "string",
-            "description": "Gets the verification code generated by the user's authenticator application."
-          },
           "authenticationSession": {
             "type": "string",
             "description": "Gets the authentication session identifier required to complete the\nmulti-factor authentication verification flow."
+          },
+          "code": {
+            "type": "string",
+            "description": "Gets the verification code generated by the user's authenticator application."
           }
         },
         "description": "Represents the details required to verify a user's multi-factor authentication setup."
+      },
+      "VerifyMultiFactorAuthenticationUpdateCommand": {
+        "required": [
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Gets the verification code generated by the user's authenticator application."
+          }
+        },
+        "description": "Represents a command to verify a multi-factor authentication update by supplying\na verification code from the user's authenticator application."
       },
       "YesNoUnknown": {
         "enum": [
@@ -7952,6 +8151,9 @@
     },
     {
       "name": "CurrentUserOrganisation"
+    },
+    {
+      "name": "MultiFactorAuthentication"
     },
     {
       "name": "Organisation"

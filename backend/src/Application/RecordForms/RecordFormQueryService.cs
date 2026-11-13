@@ -41,18 +41,19 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
 
         PageAnswers answers = PageAnswers.For(loaded.Page, saved.Answers);
         var options = await loader.LoadOptionsAsync(loaded.Page, answers, cancellationToken);
-        return GetRecordPageResult.Ok(ToDto(loaded, saved.Applicability, answers, options));
+        return GetRecordPageResult.Ok(ToDto(loaded, saved, answers, options));
     }
 
     private static RecordPageDto ToDto(
         LoadedPage loaded,
-        Applicability applicability,
+        LoadedAnswers saved,
         PageAnswers answers,
         Dictionary<string, IReadOnlyList<FormOption>> options
     )
     {
         FormModel model = loaded.Model;
         FormPage page = loaded.Page;
+        Applicability applicability = saved.Applicability;
         return new RecordPageDto
         {
             FormVersion = model.Version,
@@ -68,7 +69,9 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             PreviousPageId = model.PreviousPage(page, applicability)?.Id,
             NextPageId = model.PossibleNextPage(page, applicability)?.Id,
             Questions = page
-                .Questions.Select(q => ToDto(q, options.GetValueOrDefault(q.Id)))
+                .Questions.Select(q =>
+                    ToDto(q, options.GetValueOrDefault(q.Id), model, saved.Codes)
+                )
                 .ToArray(),
             Answers = page.Questions.ToDictionary(
                 static q => q.Id,
@@ -81,7 +84,9 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
 
     private static RecordPageQuestionDto ToDto(
         FormQuestion question,
-        IReadOnlyList<FormOption>? options
+        IReadOnlyList<FormOption>? options,
+        FormModel model,
+        ReferenceCodes codes
     ) =>
         new()
         {
@@ -96,7 +101,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             ChildPlaceholder = question.ChildPlaceholder,
             AddAnotherLabel = question.AddAnotherLabel,
             Prefixes = question.Prefixes,
-            ShowWhen = question.ShowWhen is null ? null : ToDto(question.ShowWhen),
+            ShowWhen = question.ShowWhen is null ? null : ToDto(question.ShowWhen, model, codes),
             Rules = question
                 .Rules.Select(static r => new RecordPageRuleDto
                 {
@@ -108,14 +113,24 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             Options = options?.Select(ToDto).ToArray(),
         };
 
-    private static RecordPageConditionDto ToDto(FormCondition condition) =>
+    /// <summary>
+    /// The condition as the browser evaluates it. A reference trigger's codes are sent as the IDs
+    /// its options use.
+    /// </summary>
+    private static RecordPageConditionDto ToDto(
+        FormCondition condition,
+        FormModel model,
+        ReferenceCodes codes
+    ) =>
         condition switch
         {
             AnswerInCondition answerIn => new RecordPageConditionDto
             {
                 Kind = answerIn.Kind,
                 QuestionId = answerIn.QuestionId,
-                Values = answerIn.Values,
+                Values = model.FindQuestion(answerIn.QuestionId)?.ReferenceType is { } type
+                    ? [.. codes.IdsOf(type, answerIn.Values)]
+                    : answerIn.Values,
             },
             _ => throw new InvalidOperationException(
                 $"Unsupported condition kind {condition.Kind}."

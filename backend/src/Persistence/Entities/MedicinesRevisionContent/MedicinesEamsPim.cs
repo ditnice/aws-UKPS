@@ -11,7 +11,7 @@ namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
     RecordType.Medicine,
     "pim-and-eams",
     "Promising Innovative Medicine (PIM) and Early Access to Medicines Scheme (EAMS)",
-    Order = 60
+    Order = 55
 )]
 [FormPageShowWhen(
     "eams-submission-date",

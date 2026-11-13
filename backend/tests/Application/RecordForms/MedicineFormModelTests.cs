@@ -16,7 +16,7 @@ public class MedicineFormModelTests
     // Bump FormVersions.Medicine whenever this changes, then update both values.
     private const string ExpectedVersion = "2026.11.13";
     private const string ExpectedFingerprint =
-        "316bc9bee3c98571c7d8578fb48c839d41fa1d5cf0c3b5b9f05f9aaa8c003258";
+        "5331df756cdf173c0630dfa8eeb7668262fc8c5cd188d79d42f5868bd522b925";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -35,7 +35,7 @@ public class MedicineFormModelTests
     {
         Model
             .Pages.Where(static p =>
-                string.Equals(p.SectionId, "indication-details", StringComparison.Ordinal)
+                string.Equals(p.TaskId, "indication-details", StringComparison.Ordinal)
             )
             .Select(static p => p.Id)
             .ShouldBe([
@@ -59,7 +59,7 @@ public class MedicineFormModelTests
     {
         Model
             .Pages.Where(static p =>
-                string.Equals(p.SectionId, "laboratory-testing", StringComparison.Ordinal)
+                string.Equals(p.TaskId, "laboratory-testing", StringComparison.Ordinal)
             )
             .Select(static p => p.Id)
             .ShouldBe([
@@ -102,7 +102,7 @@ public class MedicineFormModelTests
     {
         Model
             .Pages.Where(static p =>
-                string.Equals(p.SectionId, "development-background", StringComparison.Ordinal)
+                string.Equals(p.TaskId, "development-background", StringComparison.Ordinal)
             )
             .Select(static p => p.Id)
             .ShouldBe(["repurposed-medicine", "originator", "co-marketing"]);
@@ -244,7 +244,7 @@ public class MedicineFormModelTests
         Model
             .Pages.Where(static p =>
                 string.Equals(
-                    p.SectionId,
+                    p.TaskId,
                     "patient-and-clinical-requirements",
                     StringComparison.Ordinal
                 )
@@ -259,6 +259,21 @@ public class MedicineFormModelTests
                 "handling-storage",
                 "population-range",
                 "eligible-population",
+            ]);
+    }
+
+    [Fact]
+    public void Model_SectionsGroupTasksPerDataset()
+    {
+        Model
+            .Sections.Select(static s =>
+                $"{s.Id}: {string.Join(", ", s.Tasks.Select(static t => t.Id))}"
+            )
+            .ShouldBe([
+                "indication-and-development: indication-details, development-background",
+                "hta-and-launch: hta-and-launch",
+                "pim-and-eams: pim-and-eams",
+                "service-readiness: laboratory-testing, patient-and-clinical-requirements",
             ]);
     }
 

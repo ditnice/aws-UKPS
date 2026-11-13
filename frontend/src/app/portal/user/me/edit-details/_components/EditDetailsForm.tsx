@@ -26,7 +26,7 @@ const EditDetails = z.object({
   workTelephone: z
     .string()
     .trim()
-    .min(1, errorMessages.personalPhoneRequired)
+    .min(1, errorMessages.personalContactNumberRequired)
     .refine((value) => isValidPhoneNumber(value, 'GB'), errorMessages.phoneFormat),
 })
 

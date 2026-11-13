@@ -72,9 +72,16 @@ export const AddAnother = <T extends string>({
 }: AddAnotherProps<T>) => {
   const errorMessage = getFieldErrorMessage(field.state.meta.errors)
   const canRemoveItem = field.state.value.length > 1
+  const hintId = `${field.name}-hint`
+  // Singular item keeps plain label; several are numbered from 1.
+  const getItemLabel = (index: number) =>
+    canRemoveItem ? `${labelPrefix} ${index + 1}` : labelPrefix
   return (
     <div className={styles.root}>
       {title && <h2>{title}</h2>}
+      <p className="input__hint" id={hintId}>
+        {hint}
+      </p>
       {errorMessage && <ErrorState>{errorMessage}</ErrorState>}
       {field.state.value.map((_, i) => (
         <div
@@ -90,11 +97,11 @@ export const AddAnother = <T extends string>({
                 <Input
                   error={Boolean(errorMessage)}
                   errorMessage={errorMessage}
-                  label={i > 0 ? `${labelPrefix} ${i + 1}` : labelPrefix}
+                  label={getItemLabel(i)}
                   name={subfield.name}
                   onBlur={subfield.handleBlur}
                   value={subfield.state.value}
-                  hint={i === 0 ? hint : undefined}
+                  aria-describedby={i === 0 ? hintId : undefined}
                   onChange={(event: ChangeEvent<HTMLInputElement>) => {
                     subfield.handleChange(event.target.value)
                     field.setMeta(clearFormApiErrors())
@@ -112,7 +119,7 @@ export const AddAnother = <T extends string>({
               variant="secondary"
               onClick={() => field.removeValue(i)}
             >
-              {removeItemLabel} <span className="visually-hidden">{i + 1}</span>
+              {removeItemLabel} <span className="visually-hidden">{getItemLabel(i)}</span>
             </Button>
           )}
         </div>
