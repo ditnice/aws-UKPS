@@ -44,10 +44,12 @@ internal sealed class Record
     /// </summary>
     /// <param name="state">The record's status and its latest revision's workflow status.</param>
     /// <param name="hasSingleRevision">Whether the record has only one revision.</param>
+    /// <param name="canChangeStatus">Whether the user may put the record on hold, resume it or archive it.</param>
     /// <returns>The permitted actions.</returns>
     internal static IReadOnlyCollection<RecordAction> GetPermittedActions(
         RecordLifecycleState state,
-        bool hasSingleRevision
+        bool hasSingleRevision,
+        bool canChangeStatus
     )
     {
         return new RecordLifecycleStateMachine(state)
@@ -55,6 +57,7 @@ internal sealed class Record
             .Where(x => x != RecordLifecycleStateMachine.Command.Discard || hasSingleRevision)
             .Select(x => ConvertCommandToAction(x, state.RecordStatus))
             .OfType<RecordAction>()
+            .Where(x => canChangeStatus || x != RecordAction.ChangeStatus)
             .Append(RecordAction.ViewTimeline)
             .Distinct()
             .Order()
@@ -119,6 +122,51 @@ internal sealed class Record
             }
         );
         RecordStatus = toStatus;
+    }
+
+    /// <summary>
+    /// Puts the record on hold, resumes it or archives it for a user, if its state permits. Adds
+    /// the status history row and timeline event, and sets <see cref="ReviewedAt"/>. The latest
+    /// revision keeps its workflow status.
+    /// </summary>
+    /// <param name="command">PutOnHold, Resume or Archive.</param>
+    /// <param name="latestRevision">The record's latest revision.</param>
+    /// <param name="time">When the status changed.</param>
+    /// <param name="changedBy">The user who changed it.</param>
+    /// <param name="reason">Why the status changed.</param>
+    /// <param name="note">Further details about the change.</param>
+    /// <returns>Whether the status changed. Nothing is changed when the state doesn't permit it.</returns>
+    internal bool TryChangeStatusByUser(
+        RecordLifecycleStateMachine.Command command,
+        RecordRevision latestRevision,
+        DateTime time,
+        User changedBy,
+        RecordStatusChangeReason reason,
+        string? note
+    )
+    {
+        var result = new RecordLifecycleStateMachine(
+            new(RecordStatus, latestRevision.WorkflowStatus)
+        ).TrySendCommand(command);
+        if (!result.Success)
+        {
+            return false;
+        }
+
+        ChangeStatus(result.CurrentState.RecordStatus, time, changedBy, reason, note);
+        ReviewedAt = time;
+
+        // Record-level: the revision's status doesn't change, so the event has no revision.
+        Events.Add(
+            new RecordEvent
+            {
+                Record = this,
+                EventType = RecordEventType.RecordStatusChanged,
+                PerformedAt = time,
+                PerformedByUser = changedBy,
+            }
+        );
+        return true;
     }
 
     internal static (Record record, RecordRevision recordRevision) CreateInitial(

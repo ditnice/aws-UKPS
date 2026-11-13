@@ -178,9 +178,29 @@ internal static partial class FormModelValidator
             problems.Add($"{where} is bound to a non-nullable column, so it needs [FormRequired].");
         }
 
+        ValidateDateEvent(question, control, problems);
         ValidateOptions(question, control, options, problems);
         ValidateRules(question, control, problems);
         ValidatePresentation(question, control, problems);
+    }
+
+    private static void ValidateDateEvent(
+        QuestionDeclaration question,
+        FormControl control,
+        List<string> problems
+    )
+    {
+        bool isDate = question.Binding.Kind == BindingKind.RegulatoryDate;
+        if (isDate && question.DateEvent is null)
+        {
+            problems.Add($"{question.Where} uses control {control}, which needs [FormDateEvent].");
+        }
+        else if (!isDate && question.DateEvent is not null)
+        {
+            problems.Add(
+                $"{question.Where} has [FormDateEvent], which only a PrecisionDate or ActualMonth uses."
+            );
+        }
     }
 
     private static void ValidateOptions(
@@ -318,23 +338,83 @@ internal static partial class FormModelValidator
         }
     }
 
-    private static void ValidatePresentation(
+    private static void ValidatePrefixes(
         QuestionDeclaration question,
         FormControl control,
         List<string> problems
     )
     {
         string where = question.Where;
+        IReadOnlyList<string>? prefixes = question.Prefixes?.Prefixes;
+
+        if (control != FormControl.PrefixedNumber)
+        {
+            if (prefixes is not null)
+            {
+                problems.Add($"{where} has [FormValuePrefixes], which only a PrefixedNumber uses.");
+            }
+
+            return;
+        }
+
+        if (prefixes is null or { Count: 0 })
+        {
+            problems.Add(
+                $"{where} uses PrefixedNumber, which needs [FormValuePrefixes] with at least one prefix."
+            );
+            return;
+        }
+
+        if (prefixes.Any(static p => string.IsNullOrWhiteSpace(p) || char.IsAsciiDigit(p[^1])))
+        {
+            problems.Add(
+                $"{where} has a blank prefix, or one ending in a digit, which would make the number ambiguous."
+            );
+        }
+
+        if (prefixes.Distinct(StringComparer.Ordinal).Count() != prefixes.Count)
+        {
+            problems.Add($"{where} repeats a prefix in [FormValuePrefixes].");
+        }
+
+        if (
+            prefixes.Any(a =>
+                prefixes.Any(b =>
+                    !string.Equals(a, b, StringComparison.Ordinal)
+                    && b.StartsWith(a, StringComparison.Ordinal)
+                )
+            )
+        )
+        {
+            problems.Add(
+                $"{where} has a prefix that starts another, which makes the split ambiguous."
+            );
+        }
+    }
+
+    private static void ValidatePresentation(
+        QuestionDeclaration question,
+        FormControl control,
+        List<string> problems
+    )
+    {
+        ValidatePrefixes(question, control, problems);
+        string where = question.Where;
         FormFieldAttribute field = question.Field;
         bool isHierarchical = control == FormControl.HierarchicalSelect;
 
         if (
             field.Placeholder is not null
-            && control is not (FormControl.Select or FormControl.HierarchicalSelect)
+            && control
+                is not (
+                    FormControl.Select
+                    or FormControl.HierarchicalSelect
+                    or FormControl.PrefixedNumber
+                )
         )
         {
             problems.Add(
-                $"{where} sets Placeholder, which only a Select or HierarchicalSelect uses."
+                $"{where} sets Placeholder, which only a Select or HierarchicalSelect or PrefixedNumber uses."
             );
         }
 
@@ -413,6 +493,36 @@ internal static partial class FormModelValidator
         )
         {
             problems.Add($"{form} uses question ID '{duplicate.Key}' more than once.");
+        }
+
+        ValidateDateEvents(form, questions, problems);
+    }
+
+    /// <summary>
+    /// A revision holds one regulatory date per event and precision, so two date questions in a
+    /// form with the same event would overwrite each other's row or break its unique index.
+    /// </summary>
+    private static void ValidateDateEvents(
+        string form,
+        (QuestionDeclaration Question, string SectionId)[] questions,
+        List<string> problems
+    )
+    {
+        foreach (
+            var duplicate in questions
+                .Where(static x => x.Question.Binding.Kind == BindingKind.RegulatoryDate)
+                .Where(static x => x.Question.DateEvent is not null)
+                .GroupBy(static x => x.Question.DateEvent!.DateEvent)
+                .Where(static g => g.Count() > 1)
+        )
+        {
+            string ids = string.Join(
+                ", ",
+                duplicate.Select(static x => $"'{x.Question.Field.Id}'")
+            );
+            problems.Add(
+                $"{form} uses date event {duplicate.Key} on more than one question: {ids}."
+            );
         }
     }
 
@@ -520,8 +630,8 @@ internal static partial class FormModelValidator
     }
 
     /// <summary>
-    /// Checks every question and page condition: the trigger exists, comes earlier, and is an
-    /// enum choice that the values belong to.
+    /// Checks every question and page condition: the trigger exists, comes earlier, and is a
+    /// trigger the values suit (see <see cref="ValidateTrigger"/>).
     /// </summary>
     private static void ValidateConditions(
         string form,
@@ -664,6 +774,11 @@ internal static partial class FormModelValidator
         }
     }
 
+    /// <summary>
+    /// A trigger is a choice on an enum (values are its members), a choice on reference data with
+    /// a <c>string Code</c> (values are codes), or a date (values are <see cref="DatePrecision"/>
+    /// members).
+    /// </summary>
     private static void ValidateTrigger(
         string where,
         QuestionDeclaration trigger,
@@ -671,13 +786,11 @@ internal static partial class FormModelValidator
         List<string> problems
     )
     {
-        if (
-            trigger.Control is not (FormControl.Radio or FormControl.Select or FormControl.Checkbox)
-            || trigger.Binding.EnumType is not { } enumType
-        )
+        Type? valueType = TriggerValueType(trigger);
+        if (valueType is null)
         {
             problems.Add(
-                $"{where} names '{trigger.Field.Id}', which must be a Radio, Select or Checkbox on an enum."
+                $"{where} names '{trigger.Field.Id}', which must be a Radio, Select or Checkbox on an enum or on reference data with a string Code, or a PrecisionDate."
             );
             return;
         }
@@ -689,10 +802,19 @@ internal static partial class FormModelValidator
 
         foreach (object value in values)
         {
-            if (value.GetType() != enumType || !Enum.IsDefined(enumType, value))
+            if (valueType == typeof(string))
+            {
+                if (value is not string code || string.IsNullOrWhiteSpace(code))
+                {
+                    problems.Add(
+                        $"{where} has value '{value}', which is not a {trigger.Binding.ReferenceType!.Name} code."
+                    );
+                }
+            }
+            else if (value.GetType() != valueType || !Enum.IsDefined(valueType, value))
             {
                 problems.Add(
-                    $"{where} has value '{value}', which is not a {enumType.Name} member."
+                    $"{where} has value '{value}', which is not a {valueType.Name} member."
                 );
             }
         }
@@ -701,6 +823,31 @@ internal static partial class FormModelValidator
         {
             problems.Add($"{where} repeats a value.");
         }
+    }
+
+    /// <summary>The type of the values a condition on the trigger names, or null if it cannot be a trigger.</summary>
+    private static Type? TriggerValueType(QuestionDeclaration trigger)
+    {
+        if (trigger.Control == FormControl.PrecisionDate)
+        {
+            return typeof(DatePrecision);
+        }
+
+        if (
+            trigger.Control is not (FormControl.Radio or FormControl.Select or FormControl.Checkbox)
+        )
+        {
+            return null;
+        }
+
+        if (trigger.Binding.EnumType is { } enumType)
+        {
+            return enumType;
+        }
+
+        return trigger.Binding.ReferenceType?.GetProperty("Code")?.PropertyType == typeof(string)
+            ? typeof(string)
+            : null;
     }
 
     private static void ValidatePageMetadata(

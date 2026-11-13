@@ -57,6 +57,13 @@ vi.mock('./_components/ManageRecordActionBanner', () => ({
   ManageRecordActionBanner: () => <div data-testid="manage-record-banner" />,
 }))
 
+vi.mock('./_components/RecordViewAlert', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./_components/RecordViewAlert')>()),
+  RecordViewAlert: ({ action }: { action: string }) => (
+    <div data-testid="record-alert" data-action={action} />
+  ),
+}))
+
 vi.mock('./_components/MedicineRecordDetails', () => ({
   MedicineRecordDetails: () => <div data-testid="medicine-record-details" />,
 }))
@@ -82,10 +89,14 @@ const medicineRecord: RecordDto = {
 const mockRecord = (result: Partial<GetRecordResult>) =>
   vi.mocked(getRecord).mockResolvedValue(result as GetRecordResult)
 
-const renderPage = async (recordId = '42', recordType: string | undefined = 'Medicine') => {
+const renderPage = async (
+  recordId = '42',
+  recordType: string | undefined = 'Medicine',
+  action?: string,
+) => {
   const page = await RecordPage({
     params: Promise.resolve({ id: '7', recordId }),
-    searchParams: Promise.resolve({ recordType }),
+    searchParams: Promise.resolve({ recordType, action }),
   })
   // The organisation wrapper mock renders the async record view directly, so resolve it here.
   const view = page.props.children({ id: 7 }) as ReactElement<unknown>
@@ -137,6 +148,22 @@ describe('RecordPage', () => {
       }),
     ).rejects.toThrow('NEXT_NOT_FOUND')
     expect(getRecord).not.toHaveBeenCalled()
+  })
+
+  it('shows the alert for an action just taken', async () => {
+    mockRecord({ data: medicineRecord, error: undefined, response: new Response() })
+
+    await renderPage('42', 'Medicine', 'archived')
+
+    expect(screen.getByTestId('record-alert').getAttribute('data-action')).toBe('archived')
+  })
+
+  it.each([undefined, 'discarded'])('shows no alert for %s', async (action) => {
+    mockRecord({ data: medicineRecord, error: undefined, response: new Response() })
+
+    await renderPage('42', 'Medicine', action)
+
+    expect(screen.queryByTestId('record-alert')).toBeNull()
   })
 
   it('returns not found when the API cannot find the record', async () => {

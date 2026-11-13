@@ -8,6 +8,8 @@ import '@nice-digital/nds-checkbox/scss/checkbox.scss'
 import { composeDescriptions, FormGroup, useFormGroup } from '@/components/FormGroup/FormGroup'
 import type { FormGroupProps } from '@/components/FormGroup/FormGroup'
 
+import styles from './Checkboxes.module.scss'
+
 import type { ComponentPropsWithRef, FocusEventHandler, ReactNode } from 'react'
 
 type Selection = {
@@ -125,7 +127,7 @@ export function Checkbox({
           type="checkbox"
           value={value}
         />
-        <label className="checkbox__label" htmlFor={inputId}>
+        <label className={clsx('checkbox__label', !hint && styles.labelPlain)} htmlFor={inputId}>
           {label}
         </label>
         {hintId && (

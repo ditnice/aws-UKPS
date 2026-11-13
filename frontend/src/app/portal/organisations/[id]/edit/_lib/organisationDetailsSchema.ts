@@ -14,7 +14,7 @@ export const editOrganisationDetailsSchema = z.object({
   headOfficeTelephone: z
     .string()
     .trim()
-    .min(1, errorMessages.phoneRequired)
+    .min(1, errorMessages.organisationPhoneRequired)
     .refine((value) => isValidPhoneNumber(value, 'GB'), errorMessages.phoneFormat),
 })
 

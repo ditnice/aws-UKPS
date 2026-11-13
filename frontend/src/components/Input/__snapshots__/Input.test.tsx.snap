@@ -151,6 +151,39 @@ exports[`Input > merges consumer descriptions with hint and error ids 1`] = `
 </DocumentFragment>
 `;
 
+exports[`Input > renders a prefix before the input, hidden from assistive technology 1`] = `
+<DocumentFragment>
+  <div
+    class="input"
+    data-component="input"
+  >
+    <label
+      class="input__label"
+      for="cost"
+    >
+      Cost, in pounds
+    </label>
+    <div
+      class="_wrapper_9af53b"
+    >
+      <div
+        aria-hidden="true"
+        class="_prefix_9af53b"
+      >
+        £
+      </div>
+      <input
+        class="input__input"
+        id="cost"
+        name="cost"
+        style="max-width: 5.5em;"
+        type="text"
+      />
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
 exports[`Input > renders an unmodified design system input by default 1`] = `
 <DocumentFragment>
   <div

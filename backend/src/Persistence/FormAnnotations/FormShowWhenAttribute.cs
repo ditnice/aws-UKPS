@@ -8,12 +8,13 @@ namespace UKPS.Api.Persistence.FormAnnotations;
 /// <param name="questionId">
 /// The ID of the trigger question. It must be on the same page with a lower
 /// <see cref="FormFieldAttribute.Order"/>, and be a <see cref="FormControl.Radio"/>,
-/// <see cref="FormControl.Select"/> or <see cref="FormControl.Checkbox"/> on an enum or flags
-/// enum property.
+/// <see cref="FormControl.Select"/> or <see cref="FormControl.Checkbox"/> on an enum, flags enum
+/// or reference data with a string <c>Code</c>, or a <see cref="FormControl.PrecisionDate"/>.
 /// </param>
 /// <param name="values">
-/// Members of the trigger's enum, for example <c>YesNoUnknown.Yes</c>. The condition is met when
-/// the trigger's answer includes any of them. At least one, with no duplicates.
+/// Members of the trigger's enum, for example <c>YesNoUnknown.Yes</c>; reference data codes; or
+/// <see cref="Enums.DatePrecision"/> members for a date. The condition is met when the trigger's
+/// answer includes any of them. At least one, with no duplicates.
 /// </param>
 /// <remarks>
 /// The question must not be bound to a non-nullable column, because its answer is cleared when it

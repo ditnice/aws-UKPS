@@ -10,7 +10,7 @@ import { parsePositiveInteger } from '@/lib/valueParsing'
 import OrganisationPageWrapper from '../../../_components/OrganisationPageWrapper'
 import { buildRecordHref } from '../_lib/recordLinks'
 
-import { ChangeRecordStatusActions } from './_components/ChangeRecordStatusActions'
+import { StatusChangeActionForm } from './_components/StatusChangeActionForm'
 
 type ChangeRecordStatusPageProps = {
   params: Promise<{ id: string; recordId: string }>
@@ -40,7 +40,7 @@ const ChangeRecordStatusPage = async ({ params, searchParams }: ChangeRecordStat
   )
 }
 
-type ChangeRecordStatusProps = {
+type StatusChangeActionFormProps = {
   organisationId: number
   recordId: number
   recordType: RecordType
@@ -50,7 +50,7 @@ const ChangeRecordStatus = async ({
   organisationId,
   recordId,
   recordType,
-}: ChangeRecordStatusProps) => {
+}: StatusChangeActionFormProps) => {
   const {
     data: record,
     error,
@@ -100,13 +100,12 @@ const ChangeRecordStatus = async ({
       </p>
 
       <p>
-        {/* TODO: On hold wording is awaiting copy from the design team. */}
         {record.recordStatus === 'OnHold'
-          ? 'If development has restarted, you should remove the record hold.'
+          ? 'Removing a record from hold means development has restarted and the information in this record may now need updating.'
           : 'If development has paused and may restart in the future, you should place the record on hold. Update requests for records on hold will be reduced to every 6 months.'}
       </p>
 
-      <ChangeRecordStatusActions
+      <StatusChangeActionForm
         organisationId={organisationId}
         recordId={recordId}
         recordType={recordType}

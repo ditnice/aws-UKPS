@@ -2,7 +2,7 @@
 
 > **Status: first delivery implemented** (Medicine form, Indication details section), with
 > conditional questions and pages (Development background, Laboratory testing and Patient and
-> clinical requirements sections). The
+> clinical requirements sections), and date questions. The
 > decision is recorded in
 > [ADR-006](../ADR/ADR-006-attribute-annotated-record-content-forms.md).
 
@@ -24,7 +24,12 @@ property is explicitly ignored, with a reason. The hierarchy is section → task
 all questions in a task repeat that task's ID, title and order.
 
 ```csharp
-[FormSection(RecordType.Medicine, "indication-details", "Indication details", Order = 20)]
+[FormSection(
+    RecordType.Medicine,
+    "indication-and-development",
+    "Provide indication and development information",
+    Order = 10
+)]
 internal sealed class MedicinesIndicationDetail
 {
     [FormIgnore("Database identity")]
@@ -80,7 +85,7 @@ model, telling it which column or junction table holds the answer.
 | Entry points | The record task list is the root of the journey. Record creation redirects to it, and **Update record** on the record details page opens it. Both show only when `canEditContent`, returned by `POST /records` and `GET /records/{id}`, is true: the record type has a form and the user can edit it |
 | Audit | One event per save, one row per changed answer |
 | Conditions | Questions revealed by an answer on the same page, and pages shown by an answer on an earlier page (see [Conditional questions and pages](#conditional-questions-and-pages)) |
-| Later | Add-another groups, precision dates, vaccine forms, searchable combobox, hiding answers that do not apply on View record |
+| Later | Add-another groups, vaccine forms, searchable combobox, hiding answers that do not apply on View record |
 
 ## Architecture
 
@@ -207,7 +212,9 @@ invalid model stops the API starting. It holds structure only: bindings receive 
 
 - **Sections.** `[FormSection(recordType, id, title, Order = n)]` on an entity puts the entity's
   questions into that section of that record type's form. Several entities can declare the same
-  section ID, as long as they agree on its title and order. An entity can carry one
+  section ID, as long as they agree on its title and order. The section title is the dataset's
+  section name, a heading in the task list; each task under it has its own title, which is also
+  the page caption. An entity can carry one
   `[FormSection]` per record type. A shared entity such as `RecordProductDetail` can therefore
   take part in both the Medicine and Vaccine forms.
 - **Pages.** `[FormPage(id, title, Order = n)]` on a property places its question on that page.
@@ -258,6 +265,7 @@ in the entity and a missing one is a compile error. The scanner checks it suits 
 | `int` / `int?` foreign key to reference data | `Radio`, `Select`, `HierarchicalSelect` |
 | `[Flags]` enum | `Checkbox` |
 | navigation collection to a junction entity | `Checkbox`, `HierarchicalSelect` |
+| `int?` foreign key to `RegulatoryDate` | `PrecisionDate`, `ActualMonth` (with `[FormDateEvent]`) |
 
 Choice controls (`Radio`, `Select`, `Checkbox`, `HierarchicalSelect`) need an option provider,
 found by the property's type or named with `[FormOptions]`; `Text` and `Textarea` must not have
@@ -632,8 +640,8 @@ Example `GET /records/5/task-list` response:
   "organisationId": 3,
   "sections": [
     {
-      "id": "indication-details",
-      "title": "Indication details",
+      "id": "indication-and-development",
+      "title": "Provide indication and development information",
       "tasks": [
         {
           "id": "indication-details",
@@ -669,7 +677,10 @@ examples below use record 5, revision 7.
 {
   "formVersion": "2026.10.1",
   "revisionVersion": 4711,
-  "section": { "id": "indication-details", "title": "Indication details" },
+  "section": {
+    "id": "indication-and-development",
+    "title": "Provide indication and development information"
+  },
   "task": { "id": "indication-details", "title": "Indication details" },
   "page": { "id": "therapeutic-area", "title": "Therapeutic area" },
   "previousPageId": "bnf-chapter",
@@ -868,14 +879,17 @@ loaded by the synthetic data seeder; see [Reference data](reference-data.md).
   of questions that do not apply, and hide those rows.
 - **Conditional requiredness**, such as Service readiness becoming mandatory 12 months before the
   marketing authorisation date. A `FormRequiredWhen` can reuse `FormCondition`. A date condition
-  kind would give the evaluator today's date, and it needs precision dates first. It probably
-  belongs to section completeness (tasklist, submission) rather than to page saves.
-- **Other condition kinds**: compound `All`/`Any`, and triggers on reference data (such as a
-  storage requirement of "Other"), which need stable option codes. Each kind is a new
-  `FormCondition` subclass with fixture cases.
+  kind would give the evaluator today's date. It probably belongs to section completeness
+  (tasklist, submission) rather than to page saves.
+- **Date rules across questions**, such as a licence date after the submission date. The
+  dataset asks for these; they need a rule that reads other answers. (Actual dates in the past
+  and estimates in the future are already checked against today.)
+- **Other condition kinds**: compound `All`/`Any`. Each kind is a new `FormCondition` subclass
+  with fixture cases. Reference data triggers need a `Code` on the entity; only
+  `MhraProcedureType` has one so far.
 - **A question revealed by an earlier page's answer.** This would add a `context` member to the
   page response, holding the earlier answers the page's conditions read.
-- Add-another groups, precision dates and their bindings.
+- Add-another groups.
 - The searchable combobox: the hierarchical selects use plain dropdowns behind
   `display: "combobox"` until it exists.
 - Vaccine forms, and vaccine record creation.

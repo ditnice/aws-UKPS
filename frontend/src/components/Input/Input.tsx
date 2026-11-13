@@ -2,6 +2,8 @@ import clsx from 'clsx'
 
 import '@nice-digital/nds-input/scss/input.scss'
 
+import styles from './Input.module.scss'
+
 import type { ComponentPropsWithoutRef, CSSProperties, Ref } from 'react'
 
 export type InputFixedWidth = 2 | 3 | 4 | 5 | 10 | 20 | 30
@@ -11,7 +13,10 @@ export type InputFluidWidth =
 
 export type InputWidth = InputFixedWidth | InputFluidWidth
 
-export type InputProps = Omit<ComponentPropsWithoutRef<'input'>, 'className' | 'title'> & {
+export type InputProps = Omit<
+  ComponentPropsWithoutRef<'input'>,
+  'className' | 'prefix' | 'title'
+> & {
   className?: string
   error?: boolean
   errorMessage?: string
@@ -19,6 +24,12 @@ export type InputProps = Omit<ComponentPropsWithoutRef<'input'>, 'className' | '
   inputRef?: Ref<HTMLInputElement>
   label: string | null
   name: string
+  /**
+   * Text shown in a box before the input, such as a currency symbol (e.g. '£').
+   * Hidden from assistive technology, as in GOV.UK's text input with a prefix, so the
+   * label or hint must convey the same information.
+   */
+  prefix?: string
   title?: string
   /**
    * Fixed widths (2, 3, 4, 5, 10, 20, 30) constrain the input to a character-based
@@ -55,6 +66,7 @@ export function Input({
   inputRef,
   label,
   name,
+  prefix,
   style,
   title,
   type = 'text',
@@ -63,9 +75,25 @@ export function Input({
 }: InputProps) {
   const inputId = id ?? name
   const hintId = hint ? `${inputId}-hint` : undefined
-  const errorId = error ? `${inputId}-error` : undefined
+  // `error` alone styles the field; the message is shown only when one is given, so grouped
+  // inputs can share a single message.
+  const errorId = error && errorMessage ? `${inputId}-error` : undefined
   const ariaDescribedBy = [describedBy, hintId, errorId].filter(Boolean).join(' ') || undefined
   const inputStyle = width ? { ...style, ...inputWidthStyles[width] } : style
+
+  const input = (
+    <input
+      {...rest}
+      aria-describedby={ariaDescribedBy}
+      aria-invalid={error ? true : ariaInvalid}
+      className="input__input"
+      id={inputId}
+      name={name}
+      ref={inputRef}
+      style={inputStyle}
+      type={type}
+    />
+  )
 
   return (
     <div className={clsx('input', error && 'input--error', className)} data-component="input">
@@ -80,22 +108,21 @@ export function Input({
           {hint}
         </p>
       )}
-      {error && (
+      {errorId && (
         <p className="input__error" id={errorId}>
           <span className="visually-hidden">Error:</span> {errorMessage}
         </p>
       )}
-      <input
-        {...rest}
-        aria-describedby={ariaDescribedBy}
-        aria-invalid={error ? true : ariaInvalid}
-        className="input__input"
-        id={inputId}
-        name={name}
-        ref={inputRef}
-        style={inputStyle}
-        type={type}
-      />
+      {prefix ? (
+        <div className={styles.wrapper}>
+          <div aria-hidden="true" className={styles.prefix}>
+            {prefix}
+          </div>
+          {input}
+        </div>
+      ) : (
+        input
+      )}
     </div>
   )
 }

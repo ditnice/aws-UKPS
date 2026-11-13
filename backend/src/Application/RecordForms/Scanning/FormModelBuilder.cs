@@ -40,9 +40,17 @@ internal static class FormModelBuilder
             ? FormRowSource.RecordCreation
             : FormRowSource.FirstSave;
 
+        // Junction and regulatory date questions read their answers through a navigation.
         string[] includes = entity
-            .Questions.Where(static q => q.Binding.Kind == BindingKind.Junction)
-            .Select(static q => q.Property.Name)
+            .Questions.Select(static q =>
+                q.Binding.Kind switch
+                {
+                    BindingKind.Junction => q.Property.Name,
+                    BindingKind.RegulatoryDate => q.Binding.DateNavigation!.Name,
+                    _ => null,
+                }
+            )
+            .OfType<string>()
             .ToArray();
 
         FormEntity formEntity = new(
@@ -90,19 +98,30 @@ internal static class FormModelBuilder
             ChildLabel = field.ChildLabel,
             ChildPlaceholder = field.ChildPlaceholder,
             AddAnotherLabel = field.AddAnotherLabel,
+            Prefixes = question.Prefixes?.Prefixes,
             Rules = [.. rules.OrderBy(static r => r.Kind)],
             ShowWhen = question.ShowWhen is { } showWhen
                 ? Condition(showWhen.QuestionId, showWhen.Values)
                 : null,
             OptionKey = OptionKey(question, options),
+            ReferenceType = question.Binding.ReferenceType,
             Entity = entity,
-            Binding = BuildBinding(question),
+            Binding = BuildBinding(question, entity),
         };
     }
 
-    /// <summary>A condition on enum values, which are stored as their member names.</summary>
+    /// <summary>
+    /// A condition on enum values, stored as their member names, or on reference data codes.
+    /// </summary>
     private static AnswerInCondition Condition(string questionId, IReadOnlyList<object> values) =>
-        new(questionId, values.Select(static v => Enum.GetName(v.GetType(), v)!).ToArray());
+        new(
+            questionId,
+            values
+                .Select(static v =>
+                    v is Enum member ? Enum.GetName(v.GetType(), member)! : (string)v
+                )
+                .ToArray()
+        );
 
     /// <summary>
     /// The key named by <c>[FormOptions]</c>, or else the only provider of the expected kind and
@@ -128,7 +147,7 @@ internal static class FormModelBuilder
         return options.FindBySource(kind, source!).Single().Key;
     }
 
-    private static IFormBinding BuildBinding(QuestionDeclaration question) =>
+    private static IFormBinding BuildBinding(QuestionDeclaration question, FormEntity entity) =>
         question.Binding.Kind switch
         {
             BindingKind.Text => new ColumnBinding(question.Property, ColumnValueKind.Text),
@@ -142,6 +161,13 @@ internal static class FormModelBuilder
                 question.Property,
                 question.Binding.JunctionType!,
                 question.Binding.JunctionReferenceIdProperty!
+            ),
+            BindingKind.RegulatoryDate => new RegulatoryDateBinding(
+                question.Property,
+                question.Binding.DateNavigation!,
+                entity.RevisionIdProperty,
+                question.DateEvent!.DateEvent,
+                question.Control
             ),
             _ => throw new InvalidOperationException(
                 $"Unsupported binding kind {question.Binding.Kind}."
