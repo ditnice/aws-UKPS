@@ -16,7 +16,7 @@ public class MedicineFormModelTests
     // Bump FormVersions.Medicine whenever this changes, then update both values.
     private const string ExpectedVersion = "2026.11.13";
     private const string ExpectedFingerprint =
-        "de8cb96b7f5ed7e3656dd2ca0f97cfa545b9642d32c91be377bb8eb6086c3b8e";
+        "c35ee0181fc62924d4e8f956414f93384b6e4e9e93821c8fa7d08fe49c7a1f11";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -108,7 +108,7 @@ public class MedicineFormModelTests
     {
         Model
             .Pages.Where(static p =>
-                string.Equals(p.SectionId, "orphan-and-atmp", StringComparison.Ordinal)
+                string.Equals(p.SectionId, "special-designation", StringComparison.Ordinal)
             )
             .Select(static p => p.Id)
             .ShouldBe(["orphan-status", "atmp-classification"]);
@@ -297,7 +297,7 @@ public class MedicineFormModelTests
             .ShouldBe([
                 "indication-and-development: indication-details, development-background",
                 "hta-and-launch: hta-and-launch",
-                "orphan-and-atmp: orphan-and-atmp",
+                "special-designation: orphan-and-atmp",
                 "service-readiness: laboratory-testing, patient-and-clinical-requirements",
             ]);
     }

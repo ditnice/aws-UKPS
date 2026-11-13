@@ -21,6 +21,15 @@ internal static class MedicineFormSections
     /// <summary>The "Provide indication and development information" section's position.</summary>
     public const int IndicationAndDevelopmentOrder = 10;
 
+    /// <summary>The "Provide special designation information" section's ID.</summary>
+    public const string SpecialDesignation = "special-designation";
+
+    /// <summary>The "Provide special designation information" section's title.</summary>
+    public const string SpecialDesignationTitle = "Provide special designation information";
+
+    /// <summary>The "Provide special designation information" section's position.</summary>
+    public const int SpecialDesignationOrder = 50;
+
     /// <summary>The "Provide service readiness information" section's ID.</summary>
     public const string ServiceReadiness = "service-readiness";
 

@@ -94,7 +94,7 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             .ShouldBe([
                 ("indication-and-development", "Provide indication and development information"),
                 ("hta-and-launch", "Health technology assessment and launch"),
-                ("orphan-and-atmp", "Orphan medicine status and ATMP classification"),
+                ("special-designation", "Provide special designation information"),
                 ("service-readiness", "Provide service readiness information (optional)"),
             ]);
         taskList

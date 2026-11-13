@@ -6,9 +6,9 @@ namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 /// <summary>Owns the EuOrphanGranted and AtmpClassificationRecommendation regulatory date rows.</summary>
 [FormSection(
     RecordType.Medicine,
-    "orphan-and-atmp",
-    "Orphan medicine status and ATMP classification",
-    Order = 55
+    MedicineFormSections.SpecialDesignation,
+    MedicineFormSections.SpecialDesignationTitle,
+    Order = MedicineFormSections.SpecialDesignationOrder
 )]
 internal sealed class MedicinesEuStatus
 {
