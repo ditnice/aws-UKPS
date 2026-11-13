@@ -20,7 +20,7 @@ export const formSchema = z.discriminatedUnion('property', [
     value: z
       .string()
       .trim()
-      .min(1, errorMessages.personalPhoneRequired)
+      .min(1, errorMessages.personalContactNumberRequired)
       .refine((value) => isValidPhoneNumber(value, 'GB'), errorMessages.phoneFormat),
   }),
 ])
