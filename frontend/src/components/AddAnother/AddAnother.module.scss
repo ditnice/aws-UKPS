@@ -12,6 +12,10 @@
   margin-bottom: utils.rem(spacing.$small);
 }
 
+.row + .row {
+  margin-top: utils.rem(spacing.$large);
+}
+
 .input {
   flex: 0 1 66.6667%;
   min-width: 0;
