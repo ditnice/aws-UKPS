@@ -1,0 +1,33 @@
+@use '@/styles/colours';
+@use '@/styles/spacing';
+@use '@/styles/typography';
+@use '@/styles/utils';
+
+.summaryCard {
+  border: 1px solid colours.$border;
+  margin-bottom: utils.rem(spacing.$large);
+  padding: utils.rem(spacing.$medium);
+
+  > dl {
+    margin-bottom: 0;
+  }
+}
+
+.header {
+  align-items: baseline;
+  display: flex;
+  gap: utils.rem(spacing.$medium);
+  justify-content: space-between;
+}
+
+.title {
+  @include typography.font-size(2);
+  font-family: typography.get-font-family(sans);
+  font-weight: bold;
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: utils.rem(spacing.$small);
+}
