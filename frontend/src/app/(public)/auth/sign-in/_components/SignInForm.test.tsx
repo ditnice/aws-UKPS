@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it } from 'vitest'
-import { vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { postAuthLogin } from '@/client/generated'
 import { router } from '@/test-utils/nextNavigation'
@@ -16,10 +15,17 @@ vi.mock('@/client/generated', () => ({
 }))
 
 let user: ReturnType<typeof userEvent.setup>
+const assign = vi.fn()
 
 beforeEach(() => {
   vi.mocked(postAuthLogin).mockResolvedValue({ error: undefined, data: undefined })
+  vi.stubGlobal('location', { ...globalThis.location, assign })
+  assign.mockReset()
   user = userEvent.setup()
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
 })
 
 describe('SignInForm', () => {
@@ -92,7 +98,7 @@ describe('SignInForm', () => {
     })
   })
 
-  it('submits valid credentials and redirects to the portal', async () => {
+  it('submits valid credentials and reloads the organisation selection page', async () => {
     render(<SignInForm />)
 
     await fillInput(user, screen.getByLabelText('Email address'), 'name@example.com')
@@ -109,7 +115,7 @@ describe('SignInForm', () => {
         credentials: 'include',
       })
 
-      expect(router.push).toHaveBeenCalledWith('/portal/organisations/select')
+      expect(assign).toHaveBeenCalledWith('/portal/organisations/select')
     })
   })
 
@@ -122,7 +128,7 @@ describe('SignInForm', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => {
-      expect(router.push).toHaveBeenCalledWith(
+      expect(assign).toHaveBeenCalledWith(
         '/portal/organisations/select?returnTo=%2Fportal%2Forganisations%2F1%3Ftab%3Dusers',
       )
     })
