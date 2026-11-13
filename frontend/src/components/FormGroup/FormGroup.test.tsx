@@ -4,7 +4,13 @@ import { hydrateRoot } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 
-import { FormGroup } from './FormGroup'
+import { firstOptionValue, FormGroup } from './FormGroup'
+
+import type { ReactNode } from 'react'
+
+function Option(_: { value: string }) {
+  return null
+}
 
 describe('FormGroup', () => {
   it('preserves generated description IDs across server rendering and hydration', async () => {
@@ -105,5 +111,43 @@ describe('FormGroup', () => {
       </FormGroup>,
     )
     expect(screen.getByRole('group').querySelector('legend')).toBeNull()
+  })
+
+  it('renders the hint before the error message, following the NDS and GOV.UK patterns', () => {
+    const { container } = render(
+      <FormGroup error="Choose something" hint="Choose all that apply" legend="Contact" />,
+    )
+    const hint = container.querySelector('.form-group__hint')
+    const error = container.querySelector('.form-group__error-message')
+    expect(hint).not.toBeNull()
+    expect(error).not.toBeNull()
+    expect(hint!.compareDocumentPosition(error!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  describe('firstOptionValue', () => {
+    const cases: [string, ReactNode, string | undefined][] = [
+      ['direct children', [<Option key="a" value="a" />, <Option key="b" value="b" />], 'a'],
+      [
+        'skipping other elements and text',
+        ['Or', <p key="p">Divider</p>, <Option key="b" value="b" />],
+        'b',
+      ],
+      [
+        'inside Fragments',
+        <>
+          <></>
+          <>
+            <Option value="nested" />
+          </>
+          <Option value="after" />
+        </>,
+        'nested',
+      ],
+      ['no options', <p key="p">Nothing</p>, undefined],
+      ['no children', null, undefined],
+    ]
+    it.each(cases)('finds the first option among %s', (_, children, expected) => {
+      expect(firstOptionValue(children, Option)).toBe(expected)
+    })
   })
 })

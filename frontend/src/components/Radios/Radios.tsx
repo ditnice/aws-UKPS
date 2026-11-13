@@ -1,11 +1,16 @@
 'use client'
 
 import clsx from 'clsx'
-import { Children, createContext, isValidElement, useContext, useId, useState } from 'react'
+import { createContext, useContext, useId, useState } from 'react'
 
 import '@nice-digital/nds-radio/scss/radio.scss'
 
-import { composeDescriptions, FormGroup, useFormGroup } from '@/components/FormGroup/FormGroup'
+import {
+  composeDescriptions,
+  firstOptionValue,
+  FormGroup,
+  useFormGroup,
+} from '@/components/FormGroup/FormGroup'
 import type { FormGroupProps } from '@/components/FormGroup/FormGroup'
 
 import styles from './Radios.module.scss'
@@ -33,6 +38,7 @@ function useRadiosContext(): RadiosContextValue {
 
 export type RadiosProps = {
   'aria-describedby'?: string
+  /** `Radio` options, rendered directly or in Fragments so the first can show a group error. */
   children: ReactNode
   className?: string
   /** Initial selection when uncontrolled. */
@@ -81,8 +87,7 @@ export function Radios({
   const [uncontrolledValue, setUncontrolledValue] = useState<string | null>(defaultValue ?? null)
   const isControlled = value !== undefined
   const selectedValue = isControlled ? value : uncontrolledValue
-  const firstOption = Children.toArray(children).find(isValidElement<RadioProps>)
-  const firstValue = firstOption?.props.value
+  const firstValue = firstOptionValue(children, Radio)
 
   function select(next: string) {
     if (!isControlled) {

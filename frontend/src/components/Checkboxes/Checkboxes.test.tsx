@@ -38,6 +38,21 @@ describe('Checkboxes', () => {
     expect(second).toHaveAccessibleDescription('Second hint Error: Second error Second option hint')
   })
 
+  it('styles the first Checkbox as invalid when options are wrapped in Fragments or follow other content', () => {
+    render(
+      <Checkboxes error="Choose one" legend="Answer" name="answer">
+        <p>Select all that apply.</p>
+        <>
+          <Checkbox label="Email" value="email" />
+          <Checkbox label="Phone" value="phone" />
+        </>
+      </Checkboxes>,
+    )
+    const invalid = document.querySelectorAll('.checkbox--error')
+    expect(invalid).toHaveLength(1)
+    expect(invalid[0]).toContainElement(screen.getByLabelText('Email'))
+  })
+
   it('owns option names and checked state rather than leaking standalone defaults', () => {
     render(
       <Checkboxes legend="Contact" name="contact" value={['email']}>
