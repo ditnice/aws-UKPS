@@ -7,6 +7,8 @@ import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { errorMessages } from '@/lib/form/errorMessages'
 
+import { buildMyDetailsHref } from '../../navigation'
+
 import EditUserDetailForm from './editUserDetailValue/EditUserDetailForm'
 import EditUserEmailForm from './editUserEmail/EditUserEmailForm'
 import { findTypedPageProps, PageProps, UserDetail } from './navigation'
@@ -15,7 +17,7 @@ const PageWrapper = (props: React.PropsWithChildren & { label: string }) => {
   return (
     <>
       <PageHeader
-        backLink={<BackLink href={'/portal/user/me'} />}
+        backLink={<BackLink href={buildMyDetailsHref()} />}
         heading={`Edit ${props.label}`}
       />
       {props.children}
