@@ -14,9 +14,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.12";
+    private const string ExpectedVersion = "2026.11.14";
     private const string ExpectedFingerprint =
-        "5e14a908de0275e1b467ab6967f55ebc43f817228cfb69b1ac9dc6ae1b39e59d";
+        "2a6bd250872e77855173e2ff68368fd760a520e86d2bdad724806ec8b58c95ca";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -157,6 +157,18 @@ public class MedicineFormModelTests
                     "medicines_service_impact.handling_storage_details",
                     "AnswerIn medicines_service_impact.handling_storage_requirements [Yes]"
                 ),
+                (
+                    "medicines_budget_impact.compassionate_access_details",
+                    "AnswerIn medicines_budget_impact.compassionate_access_available [Yes]"
+                ),
+                (
+                    "medicines_budget_impact.patient_access_scheme_regions",
+                    "AnswerIn medicines_budget_impact.patient_access_scheme_planned [Yes]"
+                ),
+                (
+                    "medicines_budget_impact.indication_specific_pricing_details",
+                    "AnswerIn medicines_budget_impact.indication_specific_pricing_planned [Yes]"
+                ),
             ]);
         Model
             .Pages.Where(static p => p.ShowWhen is not null)
@@ -240,6 +252,23 @@ public class MedicineFormModelTests
     }
 
     [Fact]
+    public void Model_HasThePricingAndBudgetImpactPagesInOrder()
+    {
+        Model
+            .Pages.Where(static p =>
+                string.Equals(p.TaskId, "pricing-and-budget-impact", StringComparison.Ordinal)
+            )
+            .Select(static p => p.Id)
+            .ShouldBe([
+                "estimated-uptake",
+                "compassionate-access",
+                "patient-access-scheme",
+                "indication-specific-pricing",
+                "net-budget-impact",
+            ]);
+    }
+
+    [Fact]
     public void Model_SectionsGroupTasksPerDataset()
     {
         Model
@@ -249,7 +278,7 @@ public class MedicineFormModelTests
             .ShouldBe([
                 "indication-and-development: indication-details, development-background",
                 "hta-and-launch: hta-and-launch",
-                "service-readiness: laboratory-testing, patient-and-clinical-requirements",
+                "service-readiness: laboratory-testing, patient-and-clinical-requirements, pricing-and-budget-impact",
             ]);
     }
 
@@ -264,6 +293,7 @@ public class MedicineFormModelTests
                 typeof(MedicinesLaboratoryTesting),
                 typeof(MedicinesPatientIdentification),
                 typeof(MedicinesServiceImpact),
+                typeof(MedicinesBudgetImpact),
             ]);
     }
 
@@ -501,6 +531,42 @@ public class MedicineFormModelTests
                 FormControl.Textarea,
                 AnswerShape.Single
             ),
+            ("medicines_budget_impact.estimated_uptake", FormControl.Textarea, AnswerShape.Single),
+            (
+                "medicines_budget_impact.compassionate_access_available",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_budget_impact.compassionate_access_details",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_budget_impact.patient_access_scheme_planned",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_budget_impact.patient_access_scheme_regions",
+                FormControl.Checkbox,
+                AnswerShape.Multi
+            ),
+            (
+                "medicines_budget_impact.indication_specific_pricing_planned",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_budget_impact.indication_specific_pricing_details",
+                FormControl.Textarea,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_budget_impact.net_uk_budget_impact_band",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
         ]);
     }
 
@@ -540,6 +606,9 @@ public class MedicineFormModelTests
         Previous("screening-programme").ShouldBeNull();
         Next("screening-programme").ShouldBe("urgent-identification");
         Next("eligible-population").ShouldBeNull();
+        Previous("estimated-uptake").ShouldBeNull();
+        Next("estimated-uptake").ShouldBe("compassionate-access");
+        Next("net-budget-impact").ShouldBeNull();
         model.FindPage("unknown").ShouldBeNull();
     }
 

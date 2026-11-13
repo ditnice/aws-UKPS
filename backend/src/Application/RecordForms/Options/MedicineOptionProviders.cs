@@ -14,6 +14,7 @@ internal static class MedicineOptionProviders
         RegisterHtaAndLaunchProviders(registry);
         RegisterLaboratoryTestingProviders(registry);
         RegisterPatientAndClinicalRequirementsProviders(registry);
+        RegisterPricingAndBudgetImpactProviders(registry);
         RegisterProductProviders(registry);
     }
 
@@ -55,6 +56,25 @@ internal static class MedicineOptionProviders
             OptionKeys.UkPatientPopulationRanges,
             q => q.OrderBy(x => x.SortOrder).ThenBy(x => x.Id),
             x => new ReferenceOptionRow(x.Id, x.Label, x.IsArchived, null)
+        );
+    }
+
+    private static void RegisterPricingAndBudgetImpactProviders(OptionProviderRegistry registry)
+    {
+        registry.AddEnum(
+            OptionKeys.PatientAccessSchemeRegion,
+            (PatientAccessSchemeRegion.England, "England"),
+            (PatientAccessSchemeRegion.Wales, "Wales"),
+            (PatientAccessSchemeRegion.Scotland, "Scotland"),
+            (PatientAccessSchemeRegion.NorthernIreland, "Northern Ireland")
+        );
+
+        registry.AddEnum(
+            OptionKeys.NetUkBudgetImpactBand,
+            (NetUkBudgetImpactBand.LessThan5M, "Less than £5 million per year"),
+            (NetUkBudgetImpactBand.Between5MAnd40M, "£5 million to less than £40 million per year"),
+            (NetUkBudgetImpactBand.FortyMOrMore, "£40 million or more per year"),
+            (NetUkBudgetImpactBand.Unknown, "Unknown at this stage")
         );
     }
 

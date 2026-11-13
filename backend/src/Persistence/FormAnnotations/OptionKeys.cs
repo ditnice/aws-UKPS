@@ -110,4 +110,19 @@ internal static class OptionKeys
     /// <c>UkPatientPopulationRangeId</c> property. Archived options are hidden unless already saved.
     /// </summary>
     public const string UkPatientPopulationRanges = "uk-patient-population-ranges";
+
+    /// <summary>
+    /// The <c>PatientAccessSchemeRegion</c> flags enum: England, Wales, Scotland and Northern
+    /// Ireland. For a <see cref="FormControl.Checkbox"/> on a <c>PatientAccessSchemeRegion?</c>
+    /// property.
+    /// </summary>
+    public const string PatientAccessSchemeRegion = "patient-access-scheme-region";
+
+    /// <summary>
+    /// The <c>NetUkBudgetImpactBand</c> enum: less than £5 million, £5 million to less than £40
+    /// million, and £40 million or more per year, and unknown at this stage. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
+    /// <c>NetUkBudgetImpactBand?</c> property.
+    /// </summary>
+    public const string NetUkBudgetImpactBand = "net-uk-budget-impact-band";
 }
