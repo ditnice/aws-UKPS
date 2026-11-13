@@ -1,6 +1,8 @@
 import Link from 'next/link'
 
 import { TableAndFiltersGrid } from '@/app/portal/components/_components/TableAndFiltersGrid'
+import { getCurrentOrganisationChampions, getUsersMe } from '@/client/generated'
+import { createServerApiClient } from '@/client/server-api'
 import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
 import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
@@ -24,6 +26,11 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
   const resolvedSearchParams = await searchParams
   const query = parseQueryFromSearchParams(resolvedSearchParams)
   const recordAction = parseRecordAction(resolvedSearchParams)
+  const apiClient = await createServerApiClient()
+  const { data: currentUser } = await getUsersMe({ client: apiClient })
+  const { data: championEmails } = await getCurrentOrganisationChampions({
+    client: apiClient,
+  })
 
   return (
     <OrganisationPageWrapper organisationId={organisationId}>
@@ -31,21 +38,44 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
         <>
           {recordAction && <RecordActionAlert action={recordAction} />}
           <PageHeader heading={`${organisation.organisationName}`} />
-          <CreateMedicineRecordActionBanner organisationId={organisationId} />
-          <TableAndFiltersGrid
-            title="Search and filter records"
-            filters={<RecordsTablesFilters query={query} />}
-            table={
-              <RecordsFetch organisationId={organisation.id} query={query}>
-                {(data) => (
+          {currentUser?.userRole === 'Standard' && championEmails && championEmails.length > 0 && (
+            <>
+              <div className="champion-user">
+                {championEmails.length === 1 ? (
+                  <p>
+                    Your champion user is:{' '}
+                    <a href={`mailto:${championEmails[0]}`}>{championEmails[0]}</a>
+                  </p>
+                ) : (
                   <>
-                    <RecordsQueryResultsSummary query={query} data={data} />
-                    <RecordsTable organisationId={organisation.id} data={data} query={query} />
+                    <p>Your champion users are:</p>
+                    <ul className="multiple-champion-users">
+                      {championEmails.map((email) => (
+                        <li key={email}>
+                          <a href={`mailto:${email}`}>{email}</a>
+                        </li>
+                      ))}
+                    </ul>
                   </>
                 )}
-              </RecordsFetch>
-            }
-          />
+              </div>
+              <CreateMedicineRecordActionBanner organisationId={organisationId} />
+              <TableAndFiltersGrid
+                title="Search and filter records"
+                filters={<RecordsTablesFilters query={query} />}
+                table={
+                  <RecordsFetch organisationId={organisation.id} query={query}>
+                    {(data) => (
+                      <>
+                        <RecordsQueryResultsSummary query={query} data={data} />
+                        <RecordsTable organisationId={organisation.id} data={data} query={query} />
+                      </>
+                    )}
+                  </RecordsFetch>
+                }
+              />
+            </>
+          )}
         </>
       )}
     </OrganisationPageWrapper>
@@ -74,5 +104,6 @@ const CreateMedicineRecordActionBanner = ({ organisationId }: { organisationId: 
     </ActionBanner>
   )
 }
+// TODO: Add the record template to the link
 
 export default OrganisationRecordsPage
