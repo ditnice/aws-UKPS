@@ -3,6 +3,8 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
+using UKPS.Api.Application.Authentication.SecurityNotification;
+using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
@@ -17,11 +19,17 @@ internal class LoginService : ILoginService
 {
     private readonly IIdentityService _identityService;
     private readonly AppDbContext _appDbContext;
+    private readonly IEmailService _emailService;
 
-    public LoginService(IIdentityService identityService, AppDbContext appDbContext)
+    public LoginService(
+        IIdentityService identityService,
+        AppDbContext appDbContext,
+        IEmailService emailService
+    )
     {
         _identityService = identityService;
         _appDbContext = appDbContext;
+        _emailService = emailService;
     }
 
     public async Task<InitiateAuthenticationResult> Login(
@@ -107,12 +115,27 @@ internal class LoginService : ILoginService
     {
         var user = await _appDbContext.Users.GetByEmailOrDefault(command.Email, cancellationToken);
         var username = user is not null ? user.CognitoUsername : CreateDummyUsername(command.Email);
-        return await _identityService.ConfirmNewPassword(
+        var result = await _identityService.ConfirmNewPassword(
             username,
             command.ConfirmationCode,
             command.NewPassword,
             cancellationToken
         );
+
+        if (user is null)
+            return result;
+
+        await _emailService.SendEmail(
+            new SendEmailCommand()
+            {
+                RecipientAddress = user.WorkEmail,
+                PersonIdentifier = user.CognitoUsername,
+                Email = new SecurityNotificationEmail() { ChangedValue = ChangedUserData.Password },
+            },
+            cancellationToken
+        );
+
+        return result;
     }
 
     public Task SignOut(string refreshToken, CancellationToken cancellationToken)
