@@ -149,6 +149,22 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
         problem["code"]!.GetValue<string>().ShouldBe("record_changed");
     }
 
+    [Fact]
+    public async Task Submit_AlreadySubmitted_ReturnsNotSubmittableConflict()
+    {
+        string hash = await CurrentHash();
+        using HttpResponseMessage submitted = await PostSubmit(hash);
+        submitted.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using HttpResponseMessage response = await PostSubmit(hash);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        JsonObject problem = (
+            await response.Content.ReadFromJsonAsync<JsonObject>(Ct)
+        ).ShouldNotBeNull();
+        problem["code"]!.GetValue<string>().ShouldBe("record_not_submittable");
+    }
+
     private Task<HttpResponseMessage> PostSubmit(string revisionHash) =>
         _httpClient.PostAsJsonAsync(
             new Uri($"/records/{_record.Id}/submit", UriKind.Relative),

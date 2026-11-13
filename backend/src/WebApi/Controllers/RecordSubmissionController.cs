@@ -76,7 +76,7 @@ public class RecordSubmissionController(IRecordSubmissionService submissionServi
                 ),
             notSubmittable: _ =>
                 Conflict(
-                    "record_not_editable",
+                    "record_not_submittable",
                     "This record can't be submitted because it has already been submitted, or is on hold or archived."
                 ),
             formVersionChanged: _ =>
