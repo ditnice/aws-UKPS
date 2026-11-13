@@ -362,13 +362,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task UpdateUserDetails_WhenValidRequest_ShouldReturnOk()
     {
-        UpdateUserDetailsCommandFaker faker = new();
-        var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
-        var response = await _client.PatchAsJsonAsync(
-            url,
-            faker.Generate(),
-            TestContext.Current.CancellationToken
-        );
+        var response = await SendUpdateUserDetailsRequest();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
@@ -378,8 +372,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var userId = 1;
         var command = _updateUserDetailsCommandFaker.Generate();
-        var url = new Uri($"{UsersUrl}/{userId}", UriKind.Relative);
-        _ = await _client.PatchAsJsonAsync(url, command, TestContext.Current.CancellationToken);
+        await SendUpdateUserDetailsRequest(userId, _ => command);
 
         await _mockUserService
             .Received()
@@ -401,12 +394,7 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                 )
             );
 
-        var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
-        var response = await _client.PatchAsJsonAsync(
-            url,
-            _updateUserDetailsCommandFaker.Generate(),
-            TestContext.Current.CancellationToken
-        );
+        var response = await SendUpdateUserDetailsRequest();
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
@@ -428,18 +416,8 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                     new UpdateUserDetailsError.UserDoesNotExist()
                 )
             );
-        UpdateUserDetailsCommand command = _updateUserDetailsCommandFaker.Generate();
-
-        var forbiddenResponse = await _client.PatchAsJsonAsync(
-            new Uri($"{UsersUrl}/{1}", UriKind.Relative),
-            command,
-            TestContext.Current.CancellationToken
-        );
-        var missingResponse = await _client.PatchAsJsonAsync(
-            new Uri($"{UsersUrl}/{2}", UriKind.Relative),
-            command,
-            TestContext.Current.CancellationToken
-        );
+        var forbiddenResponse = await SendUpdateUserDetailsRequest(userId: 1);
+        var missingResponse = await SendUpdateUserDetailsRequest(userId: 2);
 
         var forbiddenProblem = await forbiddenResponse.Content.ReadFromJsonAsync<ProblemDetails>(
             TestContext.Current.CancellationToken
@@ -469,18 +447,13 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                 )
             );
 
-        var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
-        var response = await _client.PatchAsJsonAsync(
-            url,
-            _updateUserDetailsCommandFaker.Generate(),
-            TestContext.Current.CancellationToken
-        );
+        var response = await SendUpdateUserDetailsRequest();
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
-    public async Task UpdateUserDetails_WhenNewEmailConflicts_ShouldReturnConflictResponse()
+    public async Task UpdateUserDetails_WhenValidationError_ShouldReturnValidationError()
     {
         _mockUserService
             .UpdateUserDetails(
@@ -490,18 +463,25 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             )
             .Returns(
                 Result<UserDetailsDto, UpdateUserDetailsError>.Err(
-                    new UpdateUserDetailsError.ConflictingEmail()
+                    new UpdateUserDetailsError.ValidationError("message")
                 )
             );
 
-        var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
-        var response = await _client.PatchAsJsonAsync(
-            url,
-            _updateUserDetailsCommandFaker.Generate(),
+        var response = await SendUpdateUserDetailsRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var validationDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(
             TestContext.Current.CancellationToken
         );
+        validationDetails.ShouldNotBeNull();
+        var errors = validationDetails.Errors.TryGetValue(
+            nameof(UpdateUserDetailsCommand.Value),
+            out string[]? e
+        )
+            ? e
+            : null;
 
-        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        errors.ShouldNotBeNull().ShouldHaveSingleItem().ShouldBe("message");
     }
 
     [Fact]
@@ -512,38 +492,86 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             Func<UpdateUserDetailsCommand, UpdateUserDetailsCommand> Value
         )[] modifiers =
         [
-            (nameof(UpdateUserDetailsCommand.FullName), x => x with { FullName = string.Empty }),
-            (nameof(UpdateUserDetailsCommand.FullName), x => x with { FullName = null! }),
-            (nameof(UpdateUserDetailsCommand.WorkEmail), x => x with { WorkEmail = string.Empty }),
-            (nameof(UpdateUserDetailsCommand.WorkEmail), x => x with { WorkEmail = null! }),
             (
-                nameof(UpdateUserDetailsCommand.WorkEmail),
-                x => x with { WorkEmail = "not a valid email" }
+                nameof(UpdateUserDetailsCommand.Value),
+                x => x with { Property = EditableUserDetail.FullName, Value = string.Empty }
             ),
             (
-                nameof(UpdateUserDetailsCommand.WorkTelephone),
-                x => x with { WorkTelephone = string.Empty }
+                nameof(UpdateUserDetailsCommand.Value),
+                x => x with { Property = EditableUserDetail.FullName, Value = null! }
             ),
-            (nameof(UpdateUserDetailsCommand.WorkTelephone), x => x with { WorkTelephone = null! }),
             (
-                nameof(UpdateUserDetailsCommand.WorkTelephone),
-                x => x with { WorkTelephone = "invalid-telephone-number" }
+                nameof(UpdateUserDetailsCommand.Value),
+                x => x with { Property = EditableUserDetail.WorkPhone, Value = string.Empty }
+            ),
+            (
+                nameof(UpdateUserDetailsCommand.Value),
+                x => x with { Property = EditableUserDetail.WorkPhone, Value = null! }
             ),
         ];
 
         foreach (var mod in modifiers)
         {
-            var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
-            var response = await _client.PatchAsJsonAsync(
-                url,
-                mod.Value(_updateUserDetailsCommandFaker.Generate()),
-                TestContext.Current.CancellationToken
-            );
+            var response = await SendUpdateUserDetailsRequest(overrides: mod.Value);
 
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
             var errors = await response.Content.ShouldContainValidationErrors();
             errors.ShouldContainKey(mod.Label);
         }
+    }
+
+    [Fact]
+    public async Task UpdateUserEmail_OnSuccess_ShouldReturn200()
+    {
+        MockUpdateUserEmailMethod(Result<UpdateUserEmailError>.Ok());
+        var response = await SendUpdateUserEmailRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task UpdateUserEmail_ShouldPassArgumentsToTheServiceMethod()
+    {
+        int testUserId = 5;
+        string testEmail = "testuser@email.com";
+        MockUpdateUserEmailMethod(Result<UpdateUserEmailError>.Ok());
+        _ = await SendUpdateUserEmailRequest(testUserId, x => x with { Value = testEmail });
+        await _mockUserService
+            .Received(1)
+            .UpdateUserEmail(
+                testUserId,
+                Arg.Is<UpdateUserEmailCommand>(x => x.Value == testEmail),
+                Arg.Any<CancellationToken>()
+            );
+    }
+
+    [Fact]
+    public async Task UpdateUserEmail_WhenNewEmailConflicts_ShouldReturnConflictResponse()
+    {
+        MockUpdateUserEmailMethod(
+            Result<UpdateUserEmailError>.Err(new UpdateUserEmailError.ConflictingEmail())
+        );
+        var response = await SendUpdateUserEmailRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task UpdateUserEmail_OnNotAuthorisedError_ShouldReturnNotFound()
+    {
+        MockUpdateUserEmailMethod(
+            Result<UpdateUserEmailError>.Err(new UpdateUserEmailError.Unauthorised())
+        );
+        var response = await SendUpdateUserEmailRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task UpdateUserEmail_OnNotNotFound_ShouldReturnNotFound()
+    {
+        MockUpdateUserEmailMethod(
+            Result<UpdateUserEmailError>.Err(new UpdateUserEmailError.UserDoesNotExist())
+        );
+        var response = await SendUpdateUserEmailRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -709,6 +737,23 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         problem.Detail.ShouldBe("This action would leave an organisation without a champion user.");
     }
 
+    private async Task<HttpResponseMessage> SendUpdateUserDetailsRequest(
+        int? userId = 1,
+        Func<UpdateUserDetailsCommand, UpdateUserDetailsCommand>? overrides = null
+    )
+    {
+        UpdateUserDetailsCommandFaker faker = new();
+        var defaultCommand = faker.Generate();
+        var command = overrides is not null ? overrides(defaultCommand) : defaultCommand;
+        var url = new Uri($"{UsersUrl}/{userId}", UriKind.Relative);
+        return await _client.PatchAsJsonAsync(
+            url,
+            command,
+            options: TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+    }
+
     private static Uri UserWithinOrganisationUrl(int userId, int organisationId) =>
         new($"{UsersUrl}/{userId}/organisations/{organisationId}", UriKind.Relative);
 
@@ -751,6 +796,28 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         var output = $"{url}{separator}{string.Join("&", queryParams)}";
 
         return new Uri(output, UriKind.RelativeOrAbsolute);
+    }
+
+    private async Task<HttpResponseMessage> SendUpdateUserEmailRequest(
+        int userId = 1,
+        Func<UpdateUserEmailCommand, UpdateUserEmailCommand>? overrides = null
+    )
+    {
+        var defaultCommand = new UpdateUserEmailCommand() { Value = "example.user@email.com" };
+        var command = overrides is not null ? overrides(defaultCommand) : defaultCommand;
+        var url = new Uri($"{UsersUrl}/{userId}/email", UriKind.Relative);
+        return await _client.PatchAsJsonAsync(url, command, TestContext.Current.CancellationToken);
+    }
+
+    private void MockUpdateUserEmailMethod(Result<UpdateUserEmailError> result)
+    {
+        _mockUserService
+            .UpdateUserEmail(
+                Arg.Any<int>(),
+                Arg.Any<UpdateUserEmailCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(result);
     }
 
     private static GetUsersQueryDto CreateQuery() =>
