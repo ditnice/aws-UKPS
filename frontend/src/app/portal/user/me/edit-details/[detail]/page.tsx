@@ -23,7 +23,7 @@ const PageWrapper = (props: React.PropsWithChildren & { label: string }) => {
   )
 }
 
-export const userDetailLabels: Record<UserDetail, string> = {
+const userDetailLabels: Record<UserDetail, string> = {
   fullName: 'Full name',
   contactNumber: 'Contact number',
   email: 'Email address',

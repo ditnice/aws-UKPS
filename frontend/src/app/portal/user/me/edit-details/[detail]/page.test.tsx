@@ -6,7 +6,7 @@ import { createServerApiClient } from '@/client/server-api'
 import { errorMessages } from '@/lib/form/errorMessages'
 
 import { findTypedPageProps } from './navigation'
-import Page, { userDetailLabels } from './page'
+import Page from './page'
 
 // ---- Mocks -----------------------------------------------------------------
 
@@ -106,16 +106,6 @@ describe('Edit user detail page', () => {
     )
     setDetail('fullName')
     mockGetUsersMe({ data: mockUser })
-  })
-
-  describe('userDetailLabels', () => {
-    it('maps each detail to its human readable label', () => {
-      expect(userDetailLabels).toEqual({
-        fullName: 'Full name',
-        contactNumber: 'Contact number',
-        email: 'Email address',
-      })
-    })
   })
 
   describe('when no detail param is provided', () => {
