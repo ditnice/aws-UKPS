@@ -5,9 +5,9 @@ namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
 [FormSection(
     RecordType.Medicine,
-    "patient-and-clinical-requirements",
-    "Patient and clinical requirements",
-    Order = 80
+    MedicineFormSections.ServiceReadiness,
+    MedicineFormSections.ServiceReadinessTitle,
+    Order = MedicineFormSections.ServiceReadinessOrder
 )]
 internal sealed class MedicinesPatientIdentification
 {

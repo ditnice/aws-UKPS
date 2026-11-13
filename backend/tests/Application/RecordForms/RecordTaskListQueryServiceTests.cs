@@ -92,11 +92,9 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
         taskList
             .Sections.Select(static s => (s.Id, s.Title))
             .ShouldBe([
-                ("indication-details", "Indication details"),
-                ("development-background", "Development background"),
+                ("indication-and-development", "Provide indication and development information"),
                 ("hta-and-launch", "Health technology assessment and launch"),
-                ("laboratory-testing", "Laboratory testing"),
-                ("patient-and-clinical-requirements", "Patient and clinical requirements"),
+                ("service-readiness", "Provide service readiness information (optional)"),
             ]);
         taskList
             .Sections.SelectMany(static s => s.Tasks)
@@ -250,10 +248,10 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
     public async Task GetTaskList_NoLaboratoryTestingAnswers_IsNotStarted()
     {
         RecordTaskListTaskDto task = (await GetTaskList())
-            .Sections.Single(static s =>
-                string.Equals(s.Id, "laboratory-testing", StringComparison.Ordinal)
-            )
-            .Tasks.ShouldHaveSingleItem();
+            .Sections.SelectMany(static s => s.Tasks)
+            .Single(static t =>
+                string.Equals(t.Id, "laboratory-testing", StringComparison.Ordinal)
+            );
 
         (task.Id, task.Title, task.FirstPageId).ShouldBe(
             ("laboratory-testing", "Laboratory testing", "diagnostic-test-required")

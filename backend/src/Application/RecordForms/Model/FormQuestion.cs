@@ -28,6 +28,10 @@ internal sealed record FormQuestion
     public FormCondition? ShowWhen { get; init; }
 
     public string? OptionKey { get; init; }
+
+    /// <summary>The reference data entity of a reference ID or junction question.</summary>
+    public Type? ReferenceType { get; init; }
+
     public required FormEntity Entity { get; init; }
     public required IFormBinding Binding { get; init; }
 

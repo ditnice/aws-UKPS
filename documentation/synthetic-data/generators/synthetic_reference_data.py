@@ -378,12 +378,12 @@ FORMULATION_TYPES = [
 ]
 
 MHRA_PROCEDURE_TYPES = [
-    "MHRA National Procedure",
+    "MHRA national procedure",
     "International Recognition Procedure",
     "Access Consortium",
-    "Project Orbis",
+    "Orbis",
     "Other",
-    "Not yet confirmed",
+    "Unknown at this stage",
 ]
 
 IRP_REFERENCE_REGULATORS = [

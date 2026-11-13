@@ -47,7 +47,7 @@ test.describe('User details screen', { tag: forRoles(allRoles) }, () => {
 
       await expect(page.getByText('Enter your full name')).toBeVisible()
       await expect(page.getByText('Enter your work email address')).toBeVisible()
-      await expect(page.getByText('Enter your phone number')).toBeVisible()
+      await expect(page.getByText('Enter your contact number')).toBeVisible()
     })
   })
 })
