@@ -50,12 +50,12 @@ describes. You only touch the frontend to add a new control.
 | `[FormOptions(key)]`                                | property |                                                                                                | Chooses a provider other than the default for the property's type. Only needed when several providers offer the same type                                                                                                                           |
 | `[FormIgnore(reason)]`                              | property |                                                                                                | Not a question. The reason is required                                                                                                                                                                                                              |
 | `[FormValuePrefixes(prefixes...)]`                  | property |                                                                                                | Required on `PrefixedNumber`, not allowed on any other control. The fixed prefixes offered before the digits, in order. See [Prefixed numbers](#prefixed-numbers)                                                                                   |
-| `[FormDateEvent(dateEvent)]`                        | property |                                                                                                | Required on `PrecisionDate` and `ActualMonth`: the `DateEventType` the regulatory date row is stored with. See [Dates](#dates)                                                                                                                      |
+| `[FormDateEvent(dateEvent)]`                        | property |                                                                                                | Required on `PrecisionDate`, `ActualMonth` and `ActualDate`: the `DateEventType` the regulatory date row is stored with. See [Dates](#dates)                                                                                                                      |
 | `[FormShowWhen(questionId, values...)]`             | property |                                                                                                | The question applies only when an earlier question on the same page has one of the values. See [Conditional questions and pages](#conditional-questions-and-pages)                                                                                  |
 | `[FormPageShowWhen(pageId, questionId, values...)]` | class    |                                                                                                | The page applies only when a question on an earlier page has one of the values. One per page                                                                                                                                                        |
 
 `FormControl`: `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect`,
-`PrecisionDate`, `ActualMonth`, `PrefixedNumber`.
+`PrecisionDate`, `ActualMonth`, `ActualDate`, `PrefixedNumber`.
 `FormRowSource`: `FirstSave` (default), `RecordCreation`.
 
 The form hierarchy is **section → task → page → question**. Put `[FormTask]` and `[FormPage]`
@@ -321,7 +321,7 @@ controls for the property type:
 | `int?` reference FK           | `Radio`, `Select`, `HierarchicalSelect` | `string \| null` (ID)                  | NDS radios / `Select` / parent and child `Select`s    |
 | `[Flags]` enum                | `Checkbox`                              | `string[]` (member names)              | NDS checkboxes                                        |
 | junction navigation           | `Checkbox`, `HierarchicalSelect`        | `string[]` (IDs)                       | NDS checkboxes / repeated parent and child `Select`s  |
-| `int?` FK to `RegulatoryDate` | `PrecisionDate`, `ActualMonth`          | `string \| null` (see [Dates](#dates)) | Precision radios revealing the parts / month and year |
+| `int?` FK to `RegulatoryDate` | `PrecisionDate`, `ActualMonth`, `ActualDate` | `string \| null` (see [Dates](#dates)) | Precision radios revealing the parts / month and year / day, month and year |
 
 `HierarchicalSelect` is for reference data with a `ParentId`: the user picks a parent, then
 optionally a child, and the answer is the most specific choice. It needs a tree provider (see
@@ -385,6 +385,9 @@ public int? UkLicenceDateId { get; set; }
 - **`ActualMonth`** asks for the month and year of an event that has happened, such as the
   global first submission. It is stored with `date_precision` `ActualMonth`, and cannot
   trigger a condition.
+- **`ActualDate`** asks for the day, month and year of an event that has happened, such as the
+  date an EU orphan status was granted, with no choice of precision. It is stored with
+  `date_precision` `ActualDate`, must be today or earlier, and cannot trigger a condition.
 - **Stored** as a real date with its precision: Q2 2027 is `date_value` `2027-04-01` with
   `date_precision` `EstimatedQuarter`, so dates can be compared and reported on whatever their
   precision. `is_confidential` is set for estimated dates and cleared for actual dates and
@@ -392,7 +395,7 @@ public int? UkLicenceDateId { get; set; }
 - **Audited** as the row's contents in JSON, for example
   `{"date_precision":"EstimatedQuarter","date_value":"2027-04-01","is_confidential":true}`.
 - **On the wire** between the page and the API, the answer is one string: `yyyy-Qn`, `yyyy-MM`
-  or `yyyy-MM-dd` for a `PrecisionDate`, and `yyyy-MM` for an `ActualMonth`. `DateAnswer` and
+  or `yyyy-MM-dd` for a `PrecisionDate`, `yyyy-MM` for an `ActualMonth` and `yyyy-MM-dd` for an `ActualDate`. `DateAnswer` and
   the frontend's `lib/dynamic-form/dates.ts` both parse it; `date-cases.json` keeps them in
   step. A date that is not real (31 April, month 13, quarter 5) is rejected with "Enter a real
   date."
@@ -409,7 +412,8 @@ public int? UkLicenceDateId { get; set; }
 - The entity needs a navigation to `RegulatoryDate` for the foreign key; the form loads the date
   through it. The row is created by the first answer, updated in place, and deleted when the
   answer is cleared. A stored date is read at a precision the control offers: an `ActualMonth` reads any date
-  as its month, and a `PrecisionDate` reads an actual month as an actual date on its first day.
+  as its month, an `ActualDate` reads any date as an actual date on its first day, and a
+  `PrecisionDate` reads an actual month as an actual date on its first day.
   The row keeps its precision until the answer is changed.
 
 ## Step 5: Add options
@@ -679,7 +683,7 @@ reports every problem in one exception.
 | Agreement    | Declarations of one section ID disagree on title or order; declarations of one task ID disagree on title, order or section; declarations of one page ID disagree on title, order or `CommercialInConfidence`. A page spans tasks                                                                                                                                                                                                                                                                                                                               |
 | Order        | Two sections, two tasks in a section, two pages in a task, or two questions on a page have the same `Order`                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | Structure    | A section has no pages, or a page has no questions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| Controls     | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]`. A `PrecisionDate` or `ActualMonth` has no `[FormDateEvent]`, or another control has one. Two date questions in one form use the same `[FormDateEvent]`                                                                                                                                                                                                                                                                                   |
+| Controls     | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]`. A `PrecisionDate`, `ActualMonth` or `ActualDate` has no `[FormDateEvent]`, or another control has one. Two date questions in one form use the same `[FormDateEvent]`                                                                                                                                                                                                                                                                                   |
 | Presentation | `PrefixedNumber` without `[FormValuePrefixes]`, or the attribute on another control, with a blank prefix, a prefix ending in a digit, a repeated prefix or a prefix that starts another; `Placeholder` on a control other than `Select`, `HierarchicalSelect` or `PrefixedNumber`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`; a `HierarchicalSelect` without `ChildLabel`                                                                          |
 | Options      | A choice control has no provider registered for its type, or several and no `[FormOptions]`. A text control has `[FormOptions]`. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId`                                                                                                                                                                                                  |
 | Rules        | A rule is on a control it does not apply to, or a rule kind appears twice                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
@@ -725,7 +729,7 @@ through to your page.
 
 ## Adding a new control
 
-Needed when a page uses an input that no existing control covers. `ActualMonth` is the
+Needed when a page uses an input that no existing control covers. `ActualDate` is the
 latest example. This touches both backend and frontend.
 
 **Backend**

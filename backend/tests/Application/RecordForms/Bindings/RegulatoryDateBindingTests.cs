@@ -146,10 +146,23 @@ public class RegulatoryDateBindingTests : DatabaseTestBase
             );
     }
 
+    [Fact]
+    public void AuditText_ActualDateControl_ReadsADateAsActual()
+    {
+        Binding(FormControl.ActualDate)
+            .AuditText(FormAnswer.Single("2025-04-01"))
+            .ShouldBe(
+                """{"date_precision":"ActualDate","date_value":"2025-04-01","is_confidential":false}"""
+            );
+    }
+
     [Theory]
     [InlineData(FormControl.ActualMonth, DatePrecision.ActualDate, "2025-04-15", "2025-04")]
     [InlineData(FormControl.ActualMonth, DatePrecision.EstimatedQuarter, "2027-04-01", "2027-04")]
     [InlineData(FormControl.ActualMonth, DatePrecision.EstimatedMonth, "2027-05-01", "2027-05")]
+    [InlineData(FormControl.ActualDate, DatePrecision.ActualMonth, "2025-04-01", "2025-04-01")]
+    [InlineData(FormControl.ActualDate, DatePrecision.EstimatedQuarter, "2027-04-01", "2027-04-01")]
+    [InlineData(FormControl.ActualDate, DatePrecision.EstimatedMonth, "2027-05-01", "2027-05-01")]
     [InlineData(FormControl.PrecisionDate, DatePrecision.ActualMonth, "2025-04-01", "2025-04-01")]
     public async Task Read_PrecisionTheControlDoesNotOffer_ReadsAnAnswerTheControlAccepts(
         FormControl control,
