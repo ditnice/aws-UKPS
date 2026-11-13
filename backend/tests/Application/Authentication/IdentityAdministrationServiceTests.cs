@@ -1,3 +1,4 @@
+using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,6 +41,7 @@ namespace UKPS.Api.Tests.Application.Authentication;
 [Collection(DatabaseCollection.Name)]
 public class IdentityAdministrationServiceTests : DatabaseTestBase
 {
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
     private readonly IServiceTestHarness<IIdentityAdministrationService> _harness;
     private readonly DateTime _testTime = new DateTime(2022, 10, 11, 12, 14, 48, DateTimeKind.Utc);
     private readonly string _currentUser = "test.user@email.com";
@@ -772,6 +774,96 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             .ShouldBeOfType<VerifyMultiFactorAuthenticationError.DoesNotExist>();
         _harness.Cognito.Mock.ReceivedCalls().ShouldBeEmpty();
         _harness.Emails.Mock.ReceivedCalls().ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task InitiateUpdateMultiFactorAuthentication_ShouldCallAssociateSoftwareTokenAsync()
+    {
+        var exampleAccessToken = "access_token";
+        _ = await _harness.Service.InitiateUpdateMultiFactorAuthentication(exampleAccessToken, Ct);
+
+        await _harness
+            .Cognito.Mock.Received(1)
+            .AssociateSoftwareTokenAsync(
+                Arg.Is<AssociateSoftwareTokenRequest>(r => r.AccessToken == exampleAccessToken),
+                Ct
+            );
+    }
+
+    [Fact]
+    public async Task InitiateUpdateMultiFactorAuthentication_ShouldReturnSecretInTheOtp()
+    {
+        var secret = "verysecretsecretcode";
+        _harness
+            .Cognito.Mock.AssociateSoftwareTokenAsync(Arg.Any<AssociateSoftwareTokenRequest>(), Ct)
+            .Returns(new AssociateSoftwareTokenResponse() { SecretCode = secret });
+
+        var exampleAccessToken = "access_token";
+        var result = await _harness.Service.InitiateUpdateMultiFactorAuthentication(
+            exampleAccessToken,
+            Ct
+        );
+
+        result.OtpAuthUri.AbsoluteUri.ShouldContain($"secret={secret}");
+    }
+
+    [Fact]
+    public async Task VerifyMultiFactorAuthenticationUpdate_WithValidCode_ReturnsSuccess()
+    {
+        var accessToken = "access_token";
+        var code = "123456";
+
+        _harness
+            .Cognito.Mock.VerifySoftwareTokenAsync(
+                Arg.Any<VerifySoftwareTokenRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                new VerifySoftwareTokenResponse { Status = VerifySoftwareTokenResponseType.SUCCESS }
+            );
+
+        var result = await _harness.Service.VerifyMultiFactorAuthenticationUpdate(
+            accessToken,
+            new VerifyMultiFactorAuthenticationUpdateCommand() { Code = code },
+            Ct
+        );
+
+        result.ShouldBeSuccess();
+
+        await _harness
+            .Cognito.Mock.Received(1)
+            .VerifySoftwareTokenAsync(
+                Arg.Is<VerifySoftwareTokenRequest>(r =>
+                    r.AccessToken == accessToken && r.UserCode == code
+                ),
+                Ct
+            );
+    }
+
+    [Fact]
+    public async Task VerifyMultiFactorAuthenticationUpdate_WithInvalidCode_ReturnsInvalidCodeError()
+    {
+        var accessToken = "access_token";
+        var code = "123456";
+
+        _harness
+            .Cognito.Mock.VerifySoftwareTokenAsync(
+                Arg.Any<VerifySoftwareTokenRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                new VerifySoftwareTokenResponse { Status = VerifySoftwareTokenResponseType.ERROR }
+            );
+
+        var result = await _harness.Service.VerifyMultiFactorAuthenticationUpdate(
+            accessToken,
+            new VerifyMultiFactorAuthenticationUpdateCommand() { Code = code },
+            Ct
+        );
+
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<VerifyMultiFactorAuthenticationUpdateError.InvalidCode>();
     }
 
     private async Task<(
