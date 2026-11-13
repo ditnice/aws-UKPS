@@ -1,53 +1,82 @@
 import { expect, test } from '../../fixtures/test'
 import { allRoles, forRoles } from '../../helpers/roles'
-import { mutatesDataTag, visualTag } from '../../helpers/test-environment'
 
-// The baseline is only kept for the Super user.
-test('shows the user details page', { tag: forRoles(['Super'], visualTag) }, async ({ page }) => {
-  await page.goto('/portal/user/me/edit-details')
-  await expect(page.getByRole('heading', { name: 'Edit personal details' })).toBeVisible()
-  // The field values come from whichever user is signed in, so they're masked.
-  await expect(page).toHaveScreenshot('user-details.png', {
-    fullPage: true,
-    mask: [page.getByRole('textbox')],
-  })
-})
+test.describe('Edit user details pages', { tag: forRoles(allRoles) }, () => {
+  test.describe('Edit user full name screen', () => {
+    test.describe('without saving', () => {
+      test.use({ readOnly: true })
+      const path = `/portal/user/me/edit-details/fullName`
+      test('loads the form', async ({ page }) => {
+        await page.goto(path)
 
-test.describe('User details screen', { tag: forRoles(allRoles) }, () => {
-  test('saves current-user details', { tag: mutatesDataTag }, async () => {
-    test.fixme(true, 'The form does not call the user API or show a success state.')
-  })
+        await expect(page).toHaveURL(path)
+        await expect(page.getByRole('heading', { name: 'Edit full name' })).toBeVisible()
+        await expect(page.getByLabel('Full name')).toBeVisible()
+        await expect(page.getByRole('button', { name: 'Save' })).toBeVisible()
+      })
+      test('shows errors for empty fields', async ({ page }) => {
+        await page.goto(path)
+        await expect(page.getByRole('heading', { name: 'Edit full name' })).toBeVisible()
 
-  test.describe('without saving', () => {
-    test.use({ readOnly: true })
+        await page.getByLabel('Full name').fill('')
+        await page.getByRole('button', { name: 'Save' }).click()
 
-    test('loads the current-user details form', async ({ page }) => {
-      await page.goto('/portal/user/me/edit-details')
+        await expect(page.getByLabel('Full name')).toHaveAttribute('aria-invalid', 'true')
 
-      await expect(page).toHaveURL('/portal/user/me/edit-details')
-      await expect(page.getByRole('heading', { name: 'Edit personal details' })).toBeVisible()
-      await expect(page.getByLabel('Full name')).toBeVisible()
-      await expect(page.getByLabel('Work email address')).toBeVisible()
-      await expect(page.getByLabel('Contact number')).toBeVisible()
-      await expect(page.getByRole('button', { name: 'Save' })).toBeVisible()
+        await expect(page.getByText('Enter your full name')).toBeVisible()
+      })
     })
+  })
 
-    test('shows errors for empty fields', async ({ page }) => {
-      await page.goto('/portal/user/me/edit-details')
-      await expect(page.getByRole('heading', { name: 'Edit personal details' })).toBeVisible()
+  test.describe('Edit user contact number screen', () => {
+    test.describe('without saving', () => {
+      test.use({ readOnly: true })
+      const path = `/portal/user/me/edit-details/contactNumber`
+      test('loads the form', async ({ page }) => {
+        await page.goto(path)
 
-      await page.getByLabel('Full name').fill('')
-      await page.getByLabel('Work email address').fill('')
-      await page.getByLabel('Contact number').fill('')
-      await page.getByRole('button', { name: 'Save' }).click()
+        await expect(page).toHaveURL(path)
+        await expect(page.getByRole('heading', { name: 'Edit contact number' })).toBeVisible()
+        await expect(page.getByLabel('Contact number')).toBeVisible()
+        await expect(page.getByRole('button', { name: 'Save' })).toBeVisible()
+      })
+      test('shows errors for empty fields', async ({ page }) => {
+        await page.goto(path)
+        await expect(page.getByRole('heading', { name: 'Edit contact number' })).toBeVisible()
 
-      await expect(page.getByLabel('Full name')).toHaveAttribute('aria-invalid', 'true')
-      await expect(page.getByLabel('Work email address')).toHaveAttribute('aria-invalid', 'true')
-      await expect(page.getByLabel('Contact number')).toHaveAttribute('aria-invalid', 'true')
+        await page.getByLabel('Contact number').fill('')
+        await page.getByRole('button', { name: 'Save' }).click()
 
-      await expect(page.getByText('Enter your full name')).toBeVisible()
-      await expect(page.getByText('Enter your work email address')).toBeVisible()
-      await expect(page.getByText('Enter your contact number')).toBeVisible()
+        await expect(page.getByLabel('Contact number')).toHaveAttribute('aria-invalid', 'true')
+
+        await expect(page.getByText('Enter your contact number')).toBeVisible()
+      })
+    })
+  })
+
+  test.describe('Edit user email screen', () => {
+    test.describe('without saving', () => {
+      test.use({ readOnly: true })
+      const path = `/portal/user/me/edit-details/email`
+      test('loads the form', async ({ page }) => {
+        await page.goto(path)
+
+        await expect(page).toHaveURL(path)
+        await expect(page.getByRole('heading', { name: 'Edit email address' })).toBeVisible()
+        await expect(page.getByLabel('Work email address')).toBeVisible()
+        await expect(page.getByRole('button', { name: 'Submit' })).toBeVisible()
+      })
+      test('shows errors for empty fields', async ({ page }) => {
+        await page.goto(path)
+        await expect(page.getByRole('heading', { name: 'Edit personal details' })).toBeVisible()
+
+        await page.getByLabel('Work email address').fill('')
+        await page.getByRole('button', { name: 'Save' }).click()
+
+        await expect(page.getByLabel('Work email address')).toHaveAttribute('aria-invalid', 'true')
+
+        await expect(page.getByText('Enter your work email address')).toBeVisible()
+      })
     })
   })
 })
