@@ -133,6 +133,7 @@ module "ecs_frontend" {
     DATABASE_PORT                = tostring(module.aurora_frontend.port)
     FRONTEND_PUBLIC_ORIGIN       = "https://${module.alb.frontend_host_name}"
     NEXT_PUBLIC_QA_SUPPORT_EMAIL = var.qa_support_email
+    ROBOTS_NOINDEX               = "true"
   }
   container_secrets = {
     DATABASE_PASSWORD = "${module.aurora_frontend.master_user_secret_arn}:password::"
