@@ -98,19 +98,30 @@ internal static class FormModelBuilder
             ChildLabel = field.ChildLabel,
             ChildPlaceholder = field.ChildPlaceholder,
             AddAnotherLabel = field.AddAnotherLabel,
+            Prefixes = question.Prefixes?.Prefixes,
             Rules = [.. rules.OrderBy(static r => r.Kind)],
             ShowWhen = question.ShowWhen is { } showWhen
                 ? Condition(showWhen.QuestionId, showWhen.Values)
                 : null,
             OptionKey = OptionKey(question, options),
+            ReferenceType = question.Binding.ReferenceType,
             Entity = entity,
             Binding = BuildBinding(question, entity),
         };
     }
 
-    /// <summary>A condition on enum values, which are stored as their member names.</summary>
+    /// <summary>
+    /// A condition on enum values, stored as their member names, or on reference data codes.
+    /// </summary>
     private static AnswerInCondition Condition(string questionId, IReadOnlyList<object> values) =>
-        new(questionId, values.Select(static v => Enum.GetName(v.GetType(), v)!).ToArray());
+        new(
+            questionId,
+            values
+                .Select(static v =>
+                    v is Enum member ? Enum.GetName(v.GetType(), member)! : (string)v
+                )
+                .ToArray()
+        );
 
     /// <summary>
     /// The key named by <c>[FormOptions]</c>, or else the only provider of the expected kind and

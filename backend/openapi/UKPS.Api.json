@@ -5122,7 +5122,8 @@
           "Checkbox",
           "HierarchicalSelect",
           "PrecisionDate",
-          "ActualMonth"
+          "ActualMonth",
+          "PrefixedNumber"
         ],
         "type": "string",
         "description": "The input a record content question is rendered with. Part of the HTTP API contract: the\nmember names are sent to the frontend, so never rename or remove one."
@@ -7173,6 +7174,16 @@
               "string"
             ],
             "description": "The button text that adds another entry to a multi-value hierarchical select."
+          },
+          "prefixes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "The prefixes a `PrefixedNumber` question offers before its digits, in order, or\nnull for any other control. Not `required`, so existing clients and fixtures are\nunaffected."
           },
           "showWhen": {
             "oneOf": [

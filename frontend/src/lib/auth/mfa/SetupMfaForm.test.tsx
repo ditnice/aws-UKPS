@@ -62,13 +62,13 @@ describe('SetupMfaForm', () => {
 
       const qr = screen.getByTestId('qr-code')
       expect(qr).toHaveAttribute('data-value', otpAuthUri)
-      expect(qr).toHaveAttribute('aria-label', 'QR code for authenticator app setup')
+      expect(qr).toHaveAttribute('aria-label', 'QR code for authenticator setup')
     })
 
     it('shows the manual setup key extracted from the otpAuthUri', () => {
       render(<SetupMfaForm setup={initialiseSetup} />)
 
-      expect(screen.getByText(/enter this set up key/i)).toBeInTheDocument()
+      expect(screen.getByText(/enter this setup key/i)).toBeInTheDocument()
       expect(screen.getByText(SECRET)).toBeInTheDocument()
     })
 
@@ -87,7 +87,7 @@ describe('SetupMfaForm', () => {
 
       expect(screen.getByLabelText(/enter your authentication code/i)).toBeInTheDocument()
       expect(
-        screen.getByText(/enter the 6-digit authentication code shown in your authenticator app/i),
+        screen.getByText(/enter the 6-digit authentication code shown in your authenticator/i),
       ).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /continue/i })).toBeInTheDocument()
     })
@@ -96,7 +96,7 @@ describe('SetupMfaForm', () => {
       render(<SetupMfaForm setup={initialiseSetup} />)
 
       expect(
-        screen.getByRole('link', { name: /i want to use a different method/i }),
+        screen.getByRole('link', { name: /i want to use a different way to sign in/i }),
       ).toHaveAttribute('href', '/')
     })
 
@@ -104,7 +104,7 @@ describe('SetupMfaForm', () => {
       render(<SetupMfaForm setup={initialiseSetup} hideAlternativeOptions />)
 
       expect(
-        screen.queryByRole('link', { name: /i want to use a different method/i }),
+        screen.queryByRole('link', { name: /i want to use a different way to sign in/i }),
       ).not.toBeInTheDocument()
     })
   })

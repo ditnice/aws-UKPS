@@ -44,6 +44,19 @@ export function Examples() {
           errorMessage="Please enter your surname"
         />
       </Example>
+      <Example title="Example: input with a prefix">
+        <Input label="Cost, in pounds" name="cost" prefix="£" width={5} />
+      </Example>
+      <Example title="Example: input with a prefix and error">
+        <Input
+          error
+          errorMessage="Enter a cost"
+          label="Cost, in pounds"
+          name="cost-error"
+          prefix="£"
+          width={5}
+        />
+      </Example>
       <Example title="Example: fixed width">
         <Input label="20 characters" name="width-20" width={20} />
         <Input label="10 characters" name="width-10" width={10} />

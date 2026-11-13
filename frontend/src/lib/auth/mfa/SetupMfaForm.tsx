@@ -115,14 +115,12 @@ const SetupMfaForm = ({ setup, hideAlternativeOptions, onSuccess }: Setup2FAForm
   return (
     <>
       <QRCodeSVG
-        aria-label="QR code for authenticator app setup"
+        aria-label="QR code for authenticator setup"
         value={setup.otpAuthUri}
         size={192}
         level="M"
       />
-      <p>
-        If you cannot scan the QR code, enter this set up key in your authenticator app manually:
-      </p>
+      <p>If you cannot scan the QR code, enter this setup key in your chosen authenticator:</p>
       <p>
         <strong>{manualSetupKey}</strong>
       </p>
@@ -144,7 +142,7 @@ const SetupMfaForm = ({ setup, hideAlternativeOptions, onSuccess }: Setup2FAForm
                 autoComplete="one-time-code"
                 error={Boolean(errorMessage)}
                 errorMessage={errorMessage}
-                hint="Enter the 6-digit authentication code shown in your authenticator app."
+                hint="Enter the 6-digit authentication code shown in your authenticator."
                 inputMode="numeric"
                 label="Enter your authentication code"
                 name={field.name}
@@ -160,7 +158,11 @@ const SetupMfaForm = ({ setup, hideAlternativeOptions, onSuccess }: Setup2FAForm
           }}
         </form.Field>
 
-        {hideAlternativeOptions ? <></> : <Link href="/">I want to use a different method</Link>}
+        {hideAlternativeOptions ? (
+          <></>
+        ) : (
+          <Link href="/">I want to use a different way to sign in</Link>
+        )}
 
         {submitError ? <p>{submitError}</p> : null}
 

@@ -65,6 +65,16 @@ describe('Input', () => {
     expect(asFragment()).toMatchSnapshot()
   })
 
+  it('styles an input as invalid without a message when error has none', () => {
+    render(<Input error label="Age" name="age" />)
+
+    const input = screen.getByLabelText('Age')
+    expect(input.getAttribute('aria-invalid')).toBe('true')
+    expect(input.closest('[data-component="input"]')).toHaveClass('input--error')
+    expect(input.getAttribute('aria-describedby')).toBeNull()
+    expect(document.getElementById('age-error')).toBeNull()
+  })
+
   it('merges consumer descriptions with hint and error ids', () => {
     const { asFragment } = render(
       <Input
@@ -82,6 +92,27 @@ describe('Input', () => {
       'existing-description age-input-hint age-input-error',
     )
     expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('renders a prefix before the input, hidden from assistive technology', () => {
+    const { asFragment } = render(
+      <Input label="Cost, in pounds" name="cost" prefix="£" width={5} />,
+    )
+
+    const input = screen.getByLabelText('Cost, in pounds')
+    const prefix = screen.getByText('£')
+    expect(prefix.getAttribute('aria-hidden')).toBe('true')
+    expect(prefix.nextElementSibling).toBe(input)
+    expect(input.getAttribute('aria-describedby')).toBeNull()
+    expect(input.style.maxWidth).toBe('5.5em')
+    expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('does not render a prefix wrapper without a prefix', () => {
+    render(<Input label="Age" name="age" />)
+
+    const input = screen.getByLabelText('Age')
+    expect(input.parentElement?.getAttribute('data-component')).toBe('input')
   })
 
   it.each(inputWidthCases)(

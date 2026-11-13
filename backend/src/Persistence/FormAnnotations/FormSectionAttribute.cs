@@ -15,7 +15,8 @@ namespace UKPS.Api.Persistence.FormAnnotations;
 /// (<c>^[a-z0-9]+(-[a-z0-9]+)*$</c>).
 /// </param>
 /// <param name="title">
-/// The section name, shown as the caption above each page heading. Must not be blank.
+/// The section name, shown as a heading in the record task list above the section's tasks. Must
+/// not be blank.
 /// </param>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
 internal sealed class FormSectionAttribute(RecordType recordType, string id, string title)
@@ -27,7 +28,7 @@ internal sealed class FormSectionAttribute(RecordType recordType, string id, str
     /// <summary>The section's lowercase slug ID.</summary>
     public string Id { get; } = id;
 
-    /// <summary>The section name, shown as the caption above each page heading.</summary>
+    /// <summary>The section name, shown as a heading in the record task list.</summary>
     public string Title { get; } = title;
 
     /// <summary>Position of the section within the form.</summary>

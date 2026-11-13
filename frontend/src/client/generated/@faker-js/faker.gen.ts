@@ -126,7 +126,8 @@ export const fakeFormControl = (options?: Options): FormControl => {
         'Checkbox',
         'HierarchicalSelect',
         'PrecisionDate',
-        'ActualMonth'
+        'ActualMonth',
+        'PrefixedNumber'
     ]);
 };
 
@@ -662,6 +663,7 @@ export const fakeRecordPageQuestionDto = (options?: Options): RecordPageQuestion
         childLabel: f.datatype.boolean() ? f.string.sample() : null,
         childPlaceholder: f.datatype.boolean() ? f.string.sample() : null,
         addAnotherLabel: f.datatype.boolean() ? f.string.sample() : null,
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { prefixes: f.datatype.boolean() ? f.helpers.multiple(() => f.string.sample()) : null },
         showWhen: f.datatype.boolean() ? fakeRecordPageConditionDto(options) : null,
         rules: f.helpers.multiple(() => fakeRecordPageRuleDto(options)),
         options: f.datatype.boolean() ? f.helpers.multiple(() => fakeRecordPageOptionDto(options)) : null

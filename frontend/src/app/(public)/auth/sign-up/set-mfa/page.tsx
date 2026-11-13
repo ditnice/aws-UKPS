@@ -73,8 +73,8 @@ export default function SignUpSetMfa() {
     <>
       <PageHeader heading="Set up two-factor authentication"></PageHeader>
       <p>
-        To help protect your account, we use two-factor authentication. To enable two-factor
-        authentication scan the QR code below using your chosen authenticator app.
+        We use two-factor authentication to help protect your account. Scan the QR code using your
+        chosen authenticator.
       </p>
       <SetupMfaForm
         setup={{ type: 'initialise', ...setup }}
