@@ -106,16 +106,7 @@ const RecordView = async ({ organisationId, recordId, recordType, alert }: Recor
     )
   }
 
-  const { data: recordList } = await getOrganisationRecords({
-    client: await createServerApiClient(),
-    path: { organisationId },
-  })
-
-  const recordListItem = recordList?.items?.find((item) => item.id === recordId)
-
-  const nextUpdateDue = recordListItem?.nextUpdateDue
-
-  const isOverdue = isRecordOverdue(nextUpdateDue)
+  const isOverdue = isRecordOverdue(record.nextUpdateDue)
 
   //TODO: needs updating when we add vaccine DTOs
   const productDetail = record.recordType === 'Medicine' ? record.recordProductDetail : undefined
@@ -132,7 +123,7 @@ const RecordView = async ({ organisationId, recordId, recordType, alert }: Recor
     <>
       {alert && <RecordViewAlert action={alert} />}
       {backLink}
-      {isOverdue && <OverdueRecordAlert />}
+      {isOverdue && record.recordStatus !== 'Archived' && <OverdueRecordAlert />}
 
       <PageHeader
         heading={`Record ${record.recordId}${productDetail ? `: ${productDetail.companyCode}` : ''}`}

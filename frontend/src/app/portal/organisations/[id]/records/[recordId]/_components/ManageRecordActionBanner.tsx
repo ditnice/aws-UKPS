@@ -123,7 +123,6 @@ export const ManageRecordActionBanner = ({
                 Discard record
               </Button>
             )}
-            {actions.includes('ConfirmOnHold') && <Button>Confirm status as current</Button>}
             {actions.includes('ViewTimeline') && (
               <Button variant="secondary">View record timeline</Button>
             )}

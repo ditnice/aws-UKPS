@@ -427,7 +427,8 @@ export const fakeRecordDtoVaccineRecordDto = (options?: Options): RecordDtoVacci
         displayStatus: fakeRecordDisplayStatus(options),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null },
         canEditContent: f.datatype.boolean(),
-        actions: f.helpers.multiple(() => fakeRecordAction(options))
+        actions: f.helpers.multiple(() => fakeRecordAction(options)),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { nextUpdateDue: f.datatype.boolean() ? f.date.recent().toISOString() : null }
     };
 };
 
@@ -1114,7 +1115,8 @@ export const fakeRecordDtoMedicineRecordDto = (options?: Options): RecordDtoMedi
         displayStatus: fakeRecordDisplayStatus(options),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null },
         canEditContent: f.datatype.boolean(),
-        actions: f.helpers.multiple(() => fakeRecordAction(options))
+        actions: f.helpers.multiple(() => fakeRecordAction(options)),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { nextUpdateDue: f.datatype.boolean() ? f.date.recent().toISOString() : null }
     };
 };
 

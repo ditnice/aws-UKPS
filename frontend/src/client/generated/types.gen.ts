@@ -977,6 +977,10 @@ export type RecordDtoMedicineRecordDto = {
      * of its latest revision.
      */
     actions: Array<RecordAction>;
+    /**
+     * Gets the date of when the next update is due.
+     */
+    nextUpdateDue?: null | string;
 };
 
 /**
@@ -1014,6 +1018,10 @@ export type RecordDtoVaccineRecordDto = {
      * of its latest revision.
      */
     actions: Array<RecordAction>;
+    /**
+     * Gets the date of when the next update is due.
+     */
+    nextUpdateDue?: null | string;
 };
 
 /**
