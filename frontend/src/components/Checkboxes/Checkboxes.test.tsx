@@ -96,8 +96,11 @@ describe('Checkboxes', () => {
       expect(checkbox).toHaveAccessibleDescription('Select all Error: Select an option')
       expect(checkbox).not.toHaveAttribute('aria-invalid')
       expect(checkbox).not.toBeRequired()
-      expect(checkbox.parentElement).toHaveClass('checkbox--inline', 'checkbox--error')
+      expect(checkbox.parentElement).toHaveClass('checkbox--inline')
     }
+    const invalid = document.querySelectorAll('.checkbox--error')
+    expect(invalid).toHaveLength(1)
+    expect(invalid[0]).toContainElement(screen.getByRole('checkbox', { name: 'Email' }))
     expect(new FormData(screen.getByRole('form') as HTMLFormElement).getAll('contact')).toEqual([
       'email',
       'phone',

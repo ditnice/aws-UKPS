@@ -72,14 +72,14 @@ export function FormGroup({
             )}
           </legend>
         )}
-        {errorId && (
-          <p className="form-group__error-message" id={errorId}>
-            <span className="visually-hidden">Error:</span> {error}
-          </p>
-        )}
         {hintId && (
           <p className="form-group__hint" id={hintId}>
             {hint}
+          </p>
+        )}
+        {errorId && (
+          <p className="form-group__error-message" id={errorId}>
+            <span className="visually-hidden">Error:</span> {error}
           </p>
         )}
         {children}

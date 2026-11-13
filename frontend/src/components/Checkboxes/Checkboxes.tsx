@@ -1,7 +1,7 @@
 'use client'
 
 import clsx from 'clsx'
-import { createContext, useContext, useId, useState } from 'react'
+import { Children, createContext, isValidElement, useContext, useId, useState } from 'react'
 
 import '@nice-digital/nds-checkbox/scss/checkbox.scss'
 
@@ -13,6 +13,8 @@ import styles from './Checkboxes.module.scss'
 import type { ComponentPropsWithRef, FocusEventHandler, ReactNode } from 'react'
 
 type Selection = {
+  /** Value of the first option, the only one styled as invalid for a group error. */
+  firstValue?: string
   name: string
   values: string[]
   toggle: (value: string, checked: boolean) => void
@@ -53,8 +55,9 @@ export function Checkboxes({
     if (!controlled) setUncontrolledValue(next)
     onChange?.(next)
   }
+  const firstValue = Children.toArray(children).find(isValidElement<CheckboxProps>)?.props.value
   return (
-    <CheckboxSelection.Provider value={{ name, values, toggle, onBlur }}>
+    <CheckboxSelection.Provider value={{ firstValue, name, values, toggle, onBlur }}>
       <FormGroup {...groupProps}>{children}</FormGroup>
     </CheckboxSelection.Provider>
   )
@@ -92,7 +95,8 @@ export function Checkbox({
   const inputId = id ?? generatedId
   const hintId = hint ? `${inputId}-hint` : undefined
   const errorId = error && errorMessage ? `${inputId}-error` : undefined
-  const isInvalid = error || group.error
+  // A group error marks only the first option of a Checkboxes group.
+  const isInvalid = error || (group.error && (!selection || selection.firstValue === value))
   return (
     <>
       {errorId && (
