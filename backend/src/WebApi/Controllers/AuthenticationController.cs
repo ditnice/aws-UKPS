@@ -31,10 +31,8 @@ namespace UKPS.Api.WebApi.Controllers;
 [Route("auth")]
 public class AuthenticationController : ControllerBase
 {
-    private const string CsrfCookieName = "csrf_token";
     private const string CsrfHeaderName = "X-CSRF-Token";
-    private const string RefreshCookieName = "refresh_token";
-    private const string AccessCookieName = "access_token";
+
     private const string RootCookiePath = "/";
     private const string AuthCookiePath = "/auth";
 
@@ -84,6 +82,12 @@ public class AuthenticationController : ControllerBase
             "The request could not be authenticated because the CSRF token was missing or invalid.",
         Status = StatusCodes.Status401Unauthorized,
     };
+    private readonly ProblemDetails _invalidMfaSetupCode = new ProblemDetails
+    {
+        Title = "Invalid multi-factor authentication code.",
+        Detail = "The supplied authentication code is invalid or has expired.",
+        Status = StatusCodes.Status400BadRequest,
+    };
 
     /// <summary>
     /// Initialises a new instance of the <see cref="AuthenticationController"/> class.
@@ -95,7 +99,10 @@ public class AuthenticationController : ControllerBase
     /// The service responsible for managing authorisation administration operations,
     /// such as user onboarding, setup token validation, and password management.
     /// </param>
-    /// <param name="dateTimeProvider"></param>
+    /// <param name="dateTimeProvider">
+    /// The provider used to obtain the current date and time, allowing time-dependent
+    /// logic (such as token expiry) to be abstracted and tested.
+    /// </param>
     public AuthenticationController(
         ILoginService loginService,
         IIdentityAdministrationService authorisationAdministrationService,
@@ -191,7 +198,7 @@ public class AuthenticationController : ControllerBase
         }
         var command = new RefreshAuthenticationTokenCommand
         {
-            RefreshToken = Request.Cookies[RefreshCookieName] ?? string.Empty,
+            RefreshToken = Request.Cookies[CookieNames.RefreshCookieName] ?? string.Empty,
         };
         return (await _loginService.RefreshAuthenticationToken(command, cancellationToken)).Match(
             HandleLoginSuccess,
@@ -220,7 +227,7 @@ public class AuthenticationController : ControllerBase
 
         ClearAuthenticationCookies();
         await _loginService.SignOut(
-            Request.Cookies[RefreshCookieName] ?? string.Empty,
+            Request.Cookies[CookieNames.RefreshCookieName] ?? string.Empty,
             cancellationToken
         );
 
@@ -478,16 +485,7 @@ public class AuthenticationController : ControllerBase
             HandleLoginSuccess,
             err =>
                 err.Match<ActionResult>(
-                    invalidCode: _ =>
-                        BadRequest(
-                            new ProblemDetails
-                            {
-                                Title = "Invalid multi-factor authentication code.",
-                                Detail =
-                                    "The supplied authentication code is invalid or has expired.",
-                                Status = StatusCodes.Status400BadRequest,
-                            }
-                        ),
+                    invalidCode: _ => BadRequest(_invalidMfaSetupCode),
                     doesNotExist: _ => NotFound()
                 )
         );
@@ -627,7 +625,7 @@ public class AuthenticationController : ControllerBase
 
     private bool PassesCsrfValidation()
     {
-        string? csrfCookie = Request.Cookies[CsrfCookieName];
+        string? csrfCookie = Request.Cookies[CookieNames.CsrfCookieName];
         StringValues csrfHeader = Request.Headers[CsrfHeaderName];
 
         return !string.IsNullOrWhiteSpace(csrfCookie)
@@ -638,7 +636,7 @@ public class AuthenticationController : ControllerBase
     {
         TimeSpan accessTokenLifetime = _accessTokenValidity + _accessTokenRefreshThreshold;
         Response.Cookies.Append(
-            AccessCookieName,
+            CookieNames.AccessCookieName,
             dto.AccessToken,
             new CookieOptions
             {
@@ -651,7 +649,7 @@ public class AuthenticationController : ControllerBase
         );
 
         Response.Cookies.Append(
-            RefreshCookieName,
+            CookieNames.RefreshCookieName,
             dto.RefreshToken,
             new CookieOptions
             {
@@ -665,7 +663,7 @@ public class AuthenticationController : ControllerBase
 
         var csrfToken = Guid.NewGuid().ToString("N");
         Response.Cookies.Append(
-            CsrfCookieName,
+            CookieNames.CsrfCookieName,
             csrfToken,
             new CookieOptions
             {
@@ -684,9 +682,9 @@ public class AuthenticationController : ControllerBase
     {
         DateTimeOffset expires = _dateTimeProvider.GetOffsetUtcNow().AddDays(-1);
 
-        ExpireCookie(AccessCookieName, RootCookiePath, httpOnly: true, expires);
-        ExpireCookie(RefreshCookieName, AuthCookiePath, httpOnly: true, expires);
-        ExpireCookie(CsrfCookieName, RootCookiePath, httpOnly: false, expires);
+        ExpireCookie(CookieNames.AccessCookieName, RootCookiePath, httpOnly: true, expires);
+        ExpireCookie(CookieNames.RefreshCookieName, AuthCookiePath, httpOnly: true, expires);
+        ExpireCookie(CookieNames.CsrfCookieName, RootCookiePath, httpOnly: false, expires);
     }
 
     private void ExpireCookie(string name, string path, bool httpOnly, DateTimeOffset expires)
