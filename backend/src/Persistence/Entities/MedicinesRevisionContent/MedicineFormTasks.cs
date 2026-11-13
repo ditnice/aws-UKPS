@@ -55,4 +55,13 @@ internal static class MedicineFormTasks
 
     /// <summary>The "Patient and clinical requirements" task's position within its section.</summary>
     public const int PatientAndClinicalRequirementsOrder = 20;
+
+    /// <summary>The "Pricing and budget impact" task's ID.</summary>
+    public const string PricingAndBudgetImpact = "pricing-and-budget-impact";
+
+    /// <summary>The "Pricing and budget impact" task's title.</summary>
+    public const string PricingAndBudgetImpactTitle = "Pricing and budget impact";
+
+    /// <summary>The "Pricing and budget impact" task's position within its section.</summary>
+    public const int PricingAndBudgetImpactOrder = 30;
 }

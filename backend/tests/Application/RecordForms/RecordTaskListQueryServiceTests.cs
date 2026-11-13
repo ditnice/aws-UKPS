@@ -130,6 +130,12 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
                     "screening-programme",
                     RecordTaskStatus.NotStarted
                 ),
+                (
+                    "pricing-and-budget-impact",
+                    "Pricing and budget impact",
+                    "estimated-uptake",
+                    RecordTaskStatus.NotStarted
+                ),
             ]);
     }
 
