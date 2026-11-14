@@ -126,6 +126,12 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
                     RecordTaskStatus.NotStarted
                 ),
                 (
+                    "pim-and-eams",
+                    "Promising Innovative Medicine (PIM) and Early Access to Medicines Scheme (EAMS)",
+                    "pim-designation",
+                    RecordTaskStatus.NotStarted
+                ),
+                (
                     "laboratory-testing",
                     "Laboratory testing",
                     "diagnostic-test-required",

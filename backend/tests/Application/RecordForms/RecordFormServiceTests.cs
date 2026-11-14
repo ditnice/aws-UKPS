@@ -48,6 +48,9 @@ public class RecordFormServiceTests : DatabaseTestBase
     private const string HtaPrefix = "record_hta.";
     private const string NiceTaId = "record_hta.nice_ta_development_id";
     private const string UkLaunchDate = "record_hta.uk_launch_date";
+    private const string EamsPrefix = "medicines_eams_pim.";
+    private const string EamsSubmissionDate = "medicines_eams_pim.eams_submission_date";
+    private const string EamsOpinionDate = "medicines_eams_pim.eams_opinion_date";
     private const string OrphanStatus = "medicines_eu_status.eu_orphan_status";
     private const string OrphanGrantedDate = "medicines_eu_status.eu_orphan_granted_date";
     private const string OrphanStatusNumber = "medicines_eu_status.eu_orphan_status_number";
@@ -1190,6 +1193,152 @@ public class RecordFormServiceTests : DatabaseTestBase
         (await LaboratoryTestingRow()).PatientPathwayPointId.ShouldBeNull();
     }
 
+    [Fact]
+    public async Task GetPage_PimPageWithNothingSaved_OffersTheSubmissionDatePageAsNext()
+    {
+        RecordPageDto page = await GetPage("pim-designation");
+
+        page.NextPageId.ShouldBe("eams-submission-date");
+    }
+
+    [Fact]
+    public async Task GetPage_PimPageSavedAsNotGranted_StillOffersTheSubmissionDatePageAsNext()
+    {
+        await SaveOk("pim-designation", PimAnswers("NotGranted", null));
+
+        RecordPageDto page = await GetPage("pim-designation");
+
+        page.NextPageId.ShouldBe("eams-submission-date");
+    }
+
+    [Fact]
+    public async Task GetPage_OpinionDatePageWithNothingSaved_OffersTheDecisionPageAsNext()
+    {
+        await SaveOk("pim-designation", PimAnswers("Granted", "Yes"));
+
+        RecordPageDto page = await GetPage("eams-opinion-date");
+
+        page.NextPageId.ShouldBe("eams-opinion-decision");
+    }
+
+    [Fact]
+    public async Task SavePage_PimGrantedAndWillSubmitToEams_StepsThroughEveryEamsPage()
+    {
+        SaveRecordPageDto pim = await SaveOk("pim-designation", PimAnswers("Granted", "Yes"));
+        SaveRecordPageDto submission = await SaveOk(
+            "eams-submission-date",
+            Answer(EamsSubmissionDate, "2026-03-01")
+        );
+        SaveRecordPageDto opinion = await SaveOk(
+            "eams-opinion-date",
+            Answer(EamsOpinionDate, "2026-09-30")
+        );
+        SaveRecordPageDto decision = await SaveOk(
+            "eams-opinion-decision",
+            Answer($"{EamsPrefix}eams_opinion_decision", "Positive")
+        );
+
+        pim.NextPageId.ShouldBe("eams-submission-date");
+        submission.NextPageId.ShouldBe("eams-opinion-date");
+        opinion.NextPageId.ShouldBe("eams-opinion-decision");
+        decision.NextPageId.ShouldBeNull();
+        MedicinesEamsPim row = await EamsPimRow();
+        row.PimDesignationStatus.ShouldBe(DesignationStatus.Granted);
+        row.WillSubmitToEams.ShouldBe(YesNoUnknown.Yes);
+        row.EamsOpinionDecision.ShouldBe(EamsOpinionDecision.Positive);
+        RegulatoryDate submissionDate = await Context
+            .RegulatoryDates.AsNoTracking()
+            .SingleAsync(d => d.Id == row.EamsSubmissionDateId!.Value, Ct);
+        submissionDate.DateEvent.ShouldBe(DateEventType.EamsSubmission);
+        submissionDate.DatePrecision.ShouldBe(DatePrecision.ActualDate);
+        submissionDate.DateValue.ShouldBe(new DateOnly(2026, 3, 1));
+        RegulatoryDate opinionDate = await Context
+            .RegulatoryDates.AsNoTracking()
+            .SingleAsync(d => d.Id == row.EamsOpinionDateId!.Value, Ct);
+        opinionDate.DateEvent.ShouldBe(DateEventType.EamsOpinion);
+        opinionDate.DatePrecision.ShouldBe(DatePrecision.ActualDate);
+        opinionDate.DateValue.ShouldBe(new DateOnly(2026, 9, 30));
+    }
+
+    [Fact]
+    public async Task SavePage_EstimatedOpinionDate_EndsTheTaskWithoutTheDecisionPage()
+    {
+        await SaveOk("pim-designation", PimAnswers("Granted", "Yes"));
+
+        SaveRecordPageDto opinion = await SaveOk(
+            "eams-opinion-date",
+            Answer(EamsOpinionDate, "2099-Q1")
+        );
+
+        opinion.NextPageId.ShouldBeNull();
+        MedicinesEamsPim row = await EamsPimRow();
+        RegulatoryDate opinionDate = await Context
+            .RegulatoryDates.AsNoTracking()
+            .SingleAsync(d => d.Id == row.EamsOpinionDateId!.Value, Ct);
+        opinionDate.DatePrecision.ShouldBe(DatePrecision.EstimatedQuarter);
+    }
+
+    [Fact]
+    public async Task SavePage_SubmissionDateBlank_ReportsTheRequiredMessage()
+    {
+        await SaveOk("pim-designation", PimAnswers("Granted", "Yes"));
+
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "eams-submission-date",
+            Answer<string?>(EamsSubmissionDate, null)
+        );
+
+        errors[EamsSubmissionDate].ShouldBe("Select an option");
+    }
+
+    [Fact]
+    public async Task SavePage_PimNotGranted_ClearsTheEamsAnswerAndSkipsTheDecisionPage()
+    {
+        await AddEntity(
+            new MedicinesEamsPim
+            {
+                RevisionId = _revision.Id,
+                PimDesignationStatus = DesignationStatus.Granted,
+                WillSubmitToEams = YesNoUnknown.Yes,
+            },
+            Ct
+        );
+
+        SaveRecordPageDto pim = await SaveOk("pim-designation", PimAnswers("NotGranted", null));
+
+        pim.NextPageId.ShouldBeNull();
+        MedicinesEamsPim row = await EamsPimRow();
+        row.PimDesignationStatus.ShouldBe(DesignationStatus.NotGranted);
+        row.WillSubmitToEams.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SavePage_PimGrantedWithoutAnEamsAnswer_IsRejected()
+    {
+        string question = $"{EamsPrefix}will_submit_to_eams";
+
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "pim-designation",
+            PimAnswers("Granted", null)
+        );
+
+        errors[question].ShouldBe("Select yes if you intend to submit or have submitted to EAMS");
+    }
+
+    [Fact]
+    public async Task SavePage_PimWithNoAnswer_IsRejected()
+    {
+        string question = $"{EamsPrefix}pim_designation_status";
+
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "pim-designation",
+            PimAnswers(null, null)
+        );
+
+        errors[question]
+            .ShouldBe("Select granted if your product has been awarded MHRA PIM designation");
+    }
+
     // The route to the genomic pages: they apply only once these two answers are saved.
     private async Task AddGenomicRoute() =>
         await AddEntity(
@@ -1425,6 +1574,19 @@ public class RecordFormServiceTests : DatabaseTestBase
     private async Task<MedicinesLaboratoryTesting> LaboratoryTestingRow() =>
         await Context
             .MedicinesLaboratoryTestings.AsNoTracking()
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+
+    // A page save must carry every question on the page; null means unanswered.
+    private static Dictionary<string, JsonElement> PimAnswers(string? status, string? willSubmit) =>
+        new(StringComparer.Ordinal)
+        {
+            [$"{EamsPrefix}pim_designation_status"] = Json(status),
+            [$"{EamsPrefix}will_submit_to_eams"] = Json(willSubmit),
+        };
+
+    private async Task<MedicinesEamsPim> EamsPimRow() =>
+        await Context
+            .MedicinesEamsPims.AsNoTracking()
             .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
 
     private IQueryable<RecordFieldAudit> FieldAudits() =>
