@@ -202,7 +202,8 @@ export const FormControl = {
     HIERARCHICAL_SELECT: 'HierarchicalSelect',
     PRECISION_DATE: 'PrecisionDate',
     ACTUAL_MONTH: 'ActualMonth',
-    PREFIXED_NUMBER: 'PrefixedNumber'
+    PREFIXED_NUMBER: 'PrefixedNumber',
+    ACTUAL_DATE: 'ActualDate'
 } as const;
 
 /**

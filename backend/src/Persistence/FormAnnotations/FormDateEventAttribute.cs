@@ -3,7 +3,8 @@ using UKPS.Api.Persistence.Enums;
 namespace UKPS.Api.Persistence.FormAnnotations;
 
 /// <summary>
-/// How a <see cref="FormControl.PrecisionDate"/> or <see cref="FormControl.ActualMonth"/> question
+/// How a <see cref="FormControl.PrecisionDate"/>, <see cref="FormControl.ActualMonth"/> or
+/// <see cref="FormControl.ActualDate"/> question
 /// stores its answer: a regulatory date row with this event, which the question's foreign key
 /// points to. Required on those controls and not allowed on any other.
 /// </summary>

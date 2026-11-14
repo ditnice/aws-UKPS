@@ -94,6 +94,7 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             .ShouldBe([
                 ("indication-and-development", "Provide indication and development information"),
                 ("hta-and-launch", "Health technology assessment and launch"),
+                ("special-designation", "Provide special designation information"),
                 ("service-readiness", "Provide service readiness information (optional)"),
             ]);
         taskList
@@ -116,6 +117,12 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
                     "hta-and-launch",
                     "Health Technology Assessment (HTA) and launch",
                     "hta-submission",
+                    RecordTaskStatus.NotStarted
+                ),
+                (
+                    "orphan-and-atmp",
+                    "Orphan medicine status and Advanced Therapy Medicinal Product (ATMP) classification",
+                    "orphan-status",
                     RecordTaskStatus.NotStarted
                 ),
                 (

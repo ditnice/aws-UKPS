@@ -198,7 +198,7 @@ internal static partial class FormModelValidator
         else if (!isDate && question.DateEvent is not null)
         {
             problems.Add(
-                $"{question.Where} has [FormDateEvent], which only a PrecisionDate or ActualMonth uses."
+                $"{question.Where} has [FormDateEvent], which only a PrecisionDate, ActualMonth or ActualDate uses."
             );
         }
     }
