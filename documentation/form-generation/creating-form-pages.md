@@ -50,7 +50,7 @@ describes. You only touch the frontend to add a new control.
 | `[FormOptions(key)]`                                | property |                                                                                                | Chooses a provider other than the default for the property's type. Only needed when several providers offer the same type                                                                                                                           |
 | `[FormIgnore(reason)]`                              | property |                                                                                                | Not a question. The reason is required                                                                                                                                                                                                              |
 | `[FormValuePrefixes(prefixes...)]`                  | property |                                                                                                | Required on `PrefixedNumber`, not allowed on any other control. The fixed prefixes offered before the digits, in order. See [Prefixed numbers](#prefixed-numbers)                                                                                   |
-| `[FormDateEvent(dateEvent)]`                        | property |                                                                                                | Required on `PrecisionDate` and `ActualMonth`: the `DateEventType` the regulatory date row is stored with. See [Dates](#dates)                                                                                                                      |
+| `[FormDateEvent(dateEvent)]`                        | property |                                                                                                | Required on `PrecisionDate` and `ActualMonth`: the `DateEventType` the regulatory date row is stored with. A `PrecisionDate` also needs `Name`, the date in its error messages. See [Dates](#dates)                                                 |
 | `[FormShowWhen(questionId, values...)]`             | property |                                                                                                | The question applies only when an earlier question on the same page has one of the values. See [Conditional questions and pages](#conditional-questions-and-pages)                                                                                  |
 | `[FormPageShowWhen(pageId, questionId, values...)]` | class    |                                                                                                | The page applies only when a question on an earlier page has one of the values. One per page                                                                                                                                                        |
 
@@ -383,20 +383,28 @@ public string? NiceTaDevelopmentId { get; set; }
 
 A date is stored as a `RegulatoryDate` row that the entity's `int?` foreign key points to. Put
 the question on the foreign key column (not the navigation), and name the event with
-`[FormDateEvent]`. For example (illustrative; the MHRA pages are not annotated yet):
+`[FormDateEvent]`. A `PrecisionDate` also gives the date a `Name` for its error messages. For
+example:
 
 ```csharp
 [FormField(
     "record_mhra_date.uk_licence_date",
     "What is the UK regulatory licence date?",
     FormControl.PrecisionDate)]
-[FormDateEvent(DateEventType.UkLicence)]
-[FormRequired("Enter the UK regulatory licence date")]
+[FormDateEvent(DateEventType.UkLicence, Name = "licence")]
+[FormRequired("Select an option")]
 public int? UkLicenceDateId { get; set; }
 ```
 
 - **`PrecisionDate`** asks for the type of date first (estimated quarter, estimated month or
-  actual date) and reveals the parts it needs.
+  actual date) and reveals the parts it needs. With none chosen, the `[FormRequired]` message is
+  shown on the radios. Once one is chosen, the error is shown above its parts and names the date,
+  checked in this order:
+  - a part is blank: "Enter the actual licence date", marking the blank parts;
+  - a part is not real (month 16, year 20AB, 31 April): "Actual date of licence must be a real
+    date", marking those parts;
+  - the date is on the wrong side of today: "Actual date of licence must be in the past" or
+    "Estimated date of licence must be in the future", marking every part.
 - **`ActualMonth`** asks for the month and year of an event that has happened, such as the
   global first submission. It is stored with `date_precision` `ActualMonth`, and cannot
   trigger a condition.
@@ -409,8 +417,10 @@ public int? UkLicenceDateId { get; set; }
 - **On the wire** between the page and the API, the answer is one string: `yyyy-Qn`, `yyyy-MM`
   or `yyyy-MM-dd` for a `PrecisionDate`, and `yyyy-MM` for an `ActualMonth`. `DateAnswer` and
   the frontend's `lib/dynamic-form/dates.ts` both parse it; `date-cases.json` keeps them in
-  step. A date that is not real (31 April, month 13, quarter 5) is rejected with "Enter a real
-  date."
+  step. A date that is not real (31 April, month 13, quarter 5) is rejected with "Actual date of
+  licence must be a real date" (taken as actual when it has a day, otherwise estimated), or
+  "Enter a real date" for an `ActualMonth`. The page checks each part first, as above; the
+  server checks the whole answer, and its errors mark every part.
 - **Checked against today in UTC**, on both the server (`DateAnswer.Today`) and the page
   (`utcToday`), so the two always agree: an actual date must be today or earlier, an actual
   month this month or earlier, and an estimate must be for a quarter or month that has not
@@ -707,7 +717,7 @@ reports every problem in one exception.
 | Agreement    | Declarations of one section ID disagree on title or order; declarations of one task ID disagree on title, order or section; declarations of one page ID disagree on title, order or `CommercialInConfidence`. A page spans tasks                                                                                                                                                                                                                                                                                                                                                                                                  |
 | Order        | Two sections, two tasks in a section, two pages in a task, or two questions on a page have the same `Order`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | Structure    | A section has no pages, or a page has no questions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Controls     | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]`. A `PrecisionDate` or `ActualMonth` has no `[FormDateEvent]`, or another control has one. Two date questions in one form use the same `[FormDateEvent]`                                                                                                                                                                                                                                                                                                                                                      |
+| Controls     | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]`. A `PrecisionDate` or `ActualMonth` has no `[FormDateEvent]`, or another control has one. Two date questions in one form use the same `[FormDateEvent]`. A `PrecisionDate`'s `[FormDateEvent]` has no `Name`                                                                                                                                                                                                                                                                                                 |
 | Presentation | `PrefixedNumber` without `[FormValuePrefixes]`, or the attribute on another control, with a blank prefix, a prefix ending in a digit, a repeated prefix or a prefix that starts another; `Placeholder` on a control other than `Select`, `HierarchicalSelect` or `PrefixedNumber`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`; a `HierarchicalSelect` without `ChildLabel`                                                                                                                                             |
 | Options      | A choice control has no provider registered for its type, or several and no `[FormOptions]`. A text control has `[FormOptions]`. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId`                                                                                                                                                                                                                                                                     |
 | Rules        | A rule is on a control it does not apply to, or a rule kind appears twice                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
@@ -730,6 +740,8 @@ reports every problem in one exception.
   `date-cases.json` too).
 - **`RegulatoryDateBindingTests`**: database tests of how a date answer is stored, updated,
   cleared and audited.
+- **`RecordFormMhraServiceTests`**: database tests of the MHRA procedure and dates pages,
+  including conditions on a reference code and on a date's precision.
 - **`RecordFormServiceTests`**: database tests of the page query and save services, following
   the [walkthrough](record-creation-walkthrough.md).
 - **`MedicineOptionProviderTests`**: if you added a provider.

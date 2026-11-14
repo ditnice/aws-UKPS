@@ -201,6 +201,15 @@ internal static partial class FormModelValidator
                 $"{question.Where} has [FormDateEvent], which only a PrecisionDate or ActualMonth uses."
             );
         }
+        else if (
+            control == FormControl.PrecisionDate
+            && string.IsNullOrWhiteSpace(question.DateEvent?.Name)
+        )
+        {
+            problems.Add(
+                $"{question.Where} uses control PrecisionDate, whose [FormDateEvent] needs a Name for its error messages."
+            );
+        }
     }
 
     private static void ValidateOptions(

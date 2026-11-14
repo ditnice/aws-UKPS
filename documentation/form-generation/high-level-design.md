@@ -2,7 +2,8 @@
 
 > **Status: first delivery implemented** (Medicine form, Indication details section), with
 > conditional questions and pages (Development background, Laboratory testing and Patient and
-> clinical requirements sections), and date questions. The
+> clinical requirements sections), date questions and reference data triggers (MHRA procedure
+> and dates section). The
 > decision is recorded in
 > [ADR-006](../ADR/ADR-006-attribute-annotated-record-content-forms.md).
 
@@ -795,7 +796,7 @@ reported under its own key:
   "status": 400,
   "errors": {
     "medicines_indication_detail_therapeutic_area": ["Select up to 3 therapeutic areas"],
-    "medicines_indication_detail.indication": ["This is not a question on this page."]
+    "medicines_indication_detail.indication": ["This is not a question on this page"]
   },
   "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
 }
@@ -805,11 +806,11 @@ The server has its own messages for problems that the attributes do not describe
 
 | Problem | Message |
 |---|---|
-| A page question is missing from `answers` | `Provide an answer for this question, or null if it is unanswered.` |
-| A key is not a question on this page | `This is not a question on this page.` |
-| Wrong JSON shape (for example a number, or a string for a checkbox) | `The answer is not in the expected format.` |
-| A value that is not an offered option | `Select a valid option.` |
-| A multi-value answer repeats a value | `You have selected the same option more than once.` |
+| A page question is missing from `answers` | `Provide an answer for this question, or null if it is unanswered` |
+| A key is not a question on this page | `This is not a question on this page` |
+| Wrong JSON shape (for example a number, or a string for a checkbox) | `The answer is not in the expected format` |
+| A value that is not an offered option | `Select a valid option` |
+| A multi-value answer repeats a value | `You have selected the same option more than once` |
 
 #### 403, 404 and 409
 

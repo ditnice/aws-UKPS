@@ -7,9 +7,9 @@ namespace UKPS.Api.Persistence.Entities.SharedRevisionContent;
 /// <summary>Health technology assessment and UK launch.</summary>
 [FormSection(
     RecordType.Medicine,
-    "hta-and-launch",
-    "Health technology assessment and launch",
-    Order = 50
+    MedicineFormSections.RegulatoryAccessAndLaunch,
+    MedicineFormSections.RegulatoryAccessAndLaunchTitle,
+    Order = MedicineFormSections.RegulatoryAccessAndLaunchOrder
 )]
 [FormPageShowWhen(
     "nice-aligned-pathway",
@@ -142,7 +142,7 @@ internal sealed class RecordHta
         Order = 10,
         Hint = "Choose the level of detail you are currently able to provide. Only enter an actual date if the medicine has already launched, meaning stock is already available to be administered or dispensed.\n\nThe commercial launch date is when this medicine will first be available in the UK supply chain for this indication. This is distinct from the licence date and from the date of any HTA recommendation or reimbursement decision. For new indications of a medicine already in the supply chain, this date will typically align with the licence date for that indication.\n\nFor medicines being made available through the Early Access to Medicines Scheme (EAMS), enter the date from which the medicine will be available under EAMS. This may be before the UK licence date."
     )]
-    [FormDateEvent(DateEventType.UkLaunch)]
+    [FormDateEvent(DateEventType.UkLaunch, Name = "launch")]
     [FormRequired("Select an option")]
     public int? UkLaunchDateId { get; set; }
 

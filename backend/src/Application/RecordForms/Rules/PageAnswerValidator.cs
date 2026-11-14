@@ -96,7 +96,7 @@ internal static class PageAnswerValidator
     /// </summary>
     private static string? CheckDate(FormQuestion question, FormAnswer answer, DateOnly today) =>
         ControlRules.IsDate(question.Control) && answer.Value is not null
-            ? DateAnswer.Check(question.Control, answer.Value, today)
+            ? DateAnswer.Check(question.Control, answer.Value, today, question.DateName)
             : null;
 
     private static string? CheckOptions(FormAnswer answer, IReadOnlyList<FormOption>? options)

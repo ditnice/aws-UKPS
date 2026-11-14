@@ -1,8 +1,16 @@
 import { RuleKind } from '@/client/generated'
 
-import { dateAnswerError, isDateControl, toDateAnswer, toDateValue } from './dates'
+import {
+  dateAnswerError,
+  isDateControl,
+  precisionDateProblem,
+  toDateAnswer,
+  toDateValue,
+  utcToday,
+} from './dates'
 import { evaluatePrefixedNumber } from './prefixedNumber'
 
+import type { DatePart } from './dates'
 import type {
   Answer,
   FormValue,
@@ -14,7 +22,7 @@ import type {
 } from './types'
 
 /** Server message for a multi-value answer that repeats a value; mirrors RecordFormMessages.Duplicate. */
-export const duplicateMessage = 'You have selected the same option more than once.'
+export const duplicateMessage = 'You have selected the same option more than once'
 
 const emptyEntry: HierarchicalEntry = { parent: '', child: '' }
 
@@ -119,23 +127,45 @@ export const firstFailure = (rules: Rule[], answer: Answer): string | undefined 
     .sort((a, b) => ruleOrder.indexOf(a.kind) - ruleOrder.indexOf(b.kind))
     .find((rule) => !isSatisfied(rule, answer))?.message
 
-/** Validates one question's form value; returns the message to show, or undefined. */
-export const validateQuestion = (question: Question, value: FormValue | undefined) => {
+/** An error on a question, and the parts of a date it is about when only some are at fault. */
+export type QuestionError = { message: string; parts?: DatePart[] }
+
+/** Validates one question's form value; returns the error to show, or undefined. */
+export const questionError = (
+  question: Question,
+  value: FormValue | undefined,
+): QuestionError | undefined => {
+  if (
+    question.type === 'PrecisionDate' &&
+    value &&
+    typeof value === 'object' &&
+    'precision' in value
+  ) {
+    const problem = precisionDateProblem(value, question.dateName)
+    if (problem) {
+      return problem
+    }
+  }
   const answer = normaliseAnswer(toAnswer(question, value))
   if (Array.isArray(answer) && new Set(answer).size !== answer.length) {
-    return duplicateMessage
+    return { message: duplicateMessage }
   }
   if (question.prefixes && !Array.isArray(answer)) {
     // The server saves a prefix with no digits as blank before running the rules.
     const { value: saved, error } = evaluatePrefixedNumber(question.prefixes, answer)
-    return firstFailure(question.rules, saved) ?? error ?? undefined
+    const prefixMessage = firstFailure(question.rules, saved) ?? error
+    return prefixMessage ? { message: prefixMessage } : undefined
   }
-  const dateError =
-    isDateControl(question.type) && typeof answer === 'string'
-      ? dateAnswerError(answer, question.type)
-      : null
-  return dateError ?? firstFailure(question.rules, answer)
+  const message =
+    (isDateControl(question.type) && typeof answer === 'string'
+      ? dateAnswerError(answer, question.type, utcToday(), question.dateName)
+      : null) ?? firstFailure(question.rules, answer)
+  return message ? { message } : undefined
 }
+
+/** Validates one question's form value; returns the message to show, or undefined. */
+export const validateQuestion = (question: Question, value: FormValue | undefined) =>
+  questionError(question, value)?.message
 
 /** The answer of an unanswered question: null, or an empty array when multi-value. */
 const emptyAnswer = (question: Question): Answer => (question.multiple ? [] : null)

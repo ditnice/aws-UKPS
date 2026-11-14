@@ -31,6 +31,7 @@ const question = (overrides: Partial<RecordPageQuestionDto>): RecordPageQuestion
   childLabel: null,
   childPlaceholder: null,
   addAnotherLabel: null,
+  dateName: null,
   showWhen: null,
   rules: [{ kind: 'Required', value: null, message: 'Enter the indication' }],
   options: null,
@@ -398,7 +399,7 @@ describe('FormPage', () => {
         error: {
           errors: {
             'medicines_indication_detail.indication': ['Server says no'],
-            stray: ['This is not a question on this page.'],
+            stray: ['This is not a question on this page'],
           },
         },
         response: { ok: false, status: 400 },
@@ -410,7 +411,7 @@ describe('FormPage', () => {
       save()
 
       expect(await screen.findByText('Server says no')).toBeInTheDocument()
-      expect(screen.getByRole('alert')).toHaveTextContent('This is not a question on this page.')
+      expect(screen.getByRole('alert')).toHaveTextContent('This is not a question on this page')
       expect(mocks.push).not.toHaveBeenCalled()
     })
 
@@ -886,7 +887,7 @@ describe('FormPage', () => {
       save()
 
       expect(
-        await screen.findAllByText('You have selected the same option more than once.'),
+        await screen.findAllByText('You have selected the same option more than once'),
       ).not.toHaveLength(0)
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
     })
@@ -1015,12 +1016,37 @@ describe('FormPage', () => {
       type: 'PrecisionDate',
       label: 'What is the UK regulatory submission date?',
       hint: 'Choose the level of detail you are currently able to provide.',
-      rules: [
-        { kind: 'Required', value: null, message: 'Enter the UK regulatory submission date' },
-      ],
+      dateName: 'submission',
+      rules: [{ kind: 'Required', value: null, message: 'Select an option' }],
     })
     const datePage = (answer: string | null = null) =>
       page({ questions: [precisionDate], answers: { uk_submission_date: answer } })
+
+    /** The shown date parts, by label, that are marked as invalid. */
+    const invalidParts = () =>
+      ['Quarter', 'Day', 'Month', 'Year'].filter((label) =>
+        screen
+          .queryAllByRole(label === 'Quarter' ? 'combobox' : 'textbox', { name: label })
+          .some((control) => control.getAttribute('aria-invalid') === 'true'),
+      )
+
+    const enterActualDate = async (
+      user: ReturnType<typeof userEvent.setup>,
+      day: string,
+      month: string,
+      year: string,
+    ) => {
+      await user.click(screen.getByRole('radio', { name: 'Actual date' }))
+      for (const [label, text] of [
+        ['Day', day],
+        ['Month', month],
+        ['Year', year],
+      ]) {
+        if (text) {
+          await user.type(screen.getByRole('textbox', { name: label }), text)
+        }
+      }
+    }
 
     it('sends an estimated quarter as the year and quarter', async () => {
       const user = userEvent.setup()
@@ -1049,59 +1075,92 @@ describe('FormPage', () => {
       expect(screen.getByRole('textbox', { name: 'Year' })).toHaveValue('2027')
     })
 
-    it('rejects a date that is not real without saving', async () => {
-      const user = userEvent.setup()
-      render(<FormPage page={datePage()} />)
+    it('asks to select an option on the radios when no precision is chosen', async () => {
+      const { container } = render(<FormPage page={datePage()} />)
 
-      await user.click(screen.getByRole('radio', { name: 'Actual date' }))
-      await user.type(screen.getByRole('textbox', { name: 'Day' }), '31')
-      await user.type(screen.getByRole('textbox', { name: 'Month' }), '4')
-      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2026')
       save()
 
-      expect(await screen.findByText('Enter a real date.')).toBeInTheDocument()
+      const message = await screen.findByText('Select an option')
+      expect(message.closest('[data-component="radios-conditional"]')).toBeNull()
+      expect(container.querySelectorAll('.radio--error')).toHaveLength(3)
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
     })
 
-    it('rejects an actual date in the future without saving', async () => {
-      const user = userEvent.setup()
-      render(<FormPage page={datePage()} />)
-
-      await user.click(screen.getByRole('radio', { name: 'Actual date' }))
-      await user.type(screen.getByRole('textbox', { name: 'Day' }), '16')
-      await user.type(screen.getByRole('textbox', { name: 'Month' }), '6')
-      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2026')
-      save()
-
-      expect(
-        await screen.findByText('An actual date must be today or in the past.'),
-      ).toBeInTheDocument()
-      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
-    })
-
-    it('rejects an estimate for a month that has ended without saving', async () => {
-      const user = userEvent.setup()
-      render(<FormPage page={datePage()} />)
-
-      await user.click(screen.getByRole('radio', { name: 'Estimated month' }))
-      await user.type(screen.getByRole('textbox', { name: 'Month' }), '5')
-      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2026')
-      save()
-
-      expect(
-        await screen.findByText('An estimated date must be in the future.'),
-      ).toBeInTheDocument()
-      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
-    })
-
-    it('asks for a date when only the precision is chosen', async () => {
+    it('asks for the date when only the precision is chosen, marking every part', async () => {
       const user = userEvent.setup()
       render(<FormPage page={datePage()} />)
 
       await user.click(screen.getByRole('radio', { name: 'Estimated month' }))
       save()
 
-      expect(await screen.findByText('Enter the UK regulatory submission date')).toBeInTheDocument()
+      expect(await screen.findByText('Enter the estimated submission date')).toBeInTheDocument()
+      expect(invalidParts()).toEqual(['Month', 'Year'])
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('asks for the date when any part is blank, marking only the blank parts', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await enterActualDate(user, '', 'AB', '2025')
+      save()
+
+      expect(await screen.findByText('Enter the actual submission date')).toBeInTheDocument()
+      expect(invalidParts()).toEqual(['Day'])
+    })
+
+    it('asks for a quarter when only the year is entered', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Estimated quarter' }))
+      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2027')
+      save()
+
+      expect(await screen.findByText('Enter the estimated submission date')).toBeInTheDocument()
+      expect(invalidParts()).toEqual(['Quarter'])
+    })
+
+    it('rejects parts that are not real, marking only those parts', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Estimated month' }))
+      await user.type(screen.getByRole('textbox', { name: 'Month' }), '16')
+      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2027')
+      save()
+
+      expect(
+        await screen.findByText('Estimated date of submission must be a real date'),
+      ).toBeInTheDocument()
+      expect(invalidParts()).toEqual(['Month'])
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('rejects a day that is not in its month, marking only the day', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await enterActualDate(user, '31', '4', '2026')
+      save()
+
+      expect(
+        await screen.findByText('Actual date of submission must be a real date'),
+      ).toBeInTheDocument()
+      expect(invalidParts()).toEqual(['Day'])
+    })
+
+    it('rejects an actual date in the future, marking every part', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await enterActualDate(user, '16', '6', '2026')
+      save()
+
+      expect(
+        await screen.findByText('Actual date of submission must be in the past'),
+      ).toBeInTheDocument()
+      expect(invalidParts()).toEqual(['Day', 'Month', 'Year'])
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
     })
 
@@ -1114,21 +1173,34 @@ describe('FormPage', () => {
       await user.type(screen.getByRole('textbox', { name: 'Year' }), '2025')
       save()
 
-      const message = await screen.findByText('An estimated date must be in the future.')
+      const message = await screen.findByText('Estimated date of submission must be in the future')
       expect(message.closest('[data-component="radios-conditional"]')).not.toBeNull()
       expect(container.querySelector('.radio--error')).toBeNull()
+      expect(invalidParts()).toEqual(['Quarter', 'Year'])
       for (const control of [
         screen.getByRole('combobox', { name: 'Quarter' }),
         screen.getByRole('textbox', { name: 'Year' }),
       ]) {
-        expect(control).toBeInvalid()
         expect(control).toHaveAccessibleDescription(expect.stringContaining(message.textContent!))
       }
-      for (const part of ['Day', 'Month']) {
-        for (const input of screen.getAllByLabelText(part)) {
-          expect(input).not.toBeInvalid()
-        }
-      }
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('marks every part for an error from the server', async () => {
+      mocks.saveRecordFormPage.mockResolvedValue({
+        error: {
+          errors: { uk_submission_date: ['Actual date of submission must be in the past'] },
+        },
+        response: { ok: false, status: 400 },
+      })
+      render(<FormPage page={datePage('2026-06-15')} />)
+
+      save()
+
+      expect(
+        await screen.findByText('Actual date of submission must be in the past'),
+      ).toBeInTheDocument()
+      expect(invalidParts()).toEqual(['Day', 'Month', 'Year'])
     })
 
     it('starts a newly chosen precision empty', async () => {
@@ -1137,10 +1209,7 @@ describe('FormPage', () => {
 
       await user.click(screen.getByRole('radio', { name: 'Estimated quarter' }))
       await user.selectOptions(screen.getByRole('combobox', { name: 'Quarter' }), '2')
-      await user.click(screen.getByRole('radio', { name: 'Actual date' }))
-      await user.type(screen.getByRole('textbox', { name: 'Day' }), '14')
-      await user.type(screen.getByRole('textbox', { name: 'Month' }), '5')
-      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2027')
+      await enterActualDate(user, '14', '5', '2027')
       await user.click(screen.getByRole('radio', { name: 'Estimated quarter' }))
 
       expect(screen.getByRole('combobox', { name: 'Quarter' })).toHaveValue('')
@@ -1157,37 +1226,28 @@ describe('FormPage', () => {
       const user = userEvent.setup()
       render(<FormPage page={datePage()} />)
 
-      await user.click(screen.getByRole('radio', { name: 'Actual date' }))
-      await user.type(screen.getByRole('textbox', { name: 'Day' }), '31')
-      await user.type(screen.getByRole('textbox', { name: 'Month' }), '4')
-      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2026')
+      await enterActualDate(user, '31', '4', '2026')
       save()
-      expect(await screen.findByText('Enter a real date.')).toBeInTheDocument()
+      expect(
+        await screen.findByText('Actual date of submission must be a real date'),
+      ).toBeInTheDocument()
 
       await user.click(screen.getByRole('radio', { name: 'Estimated month' }))
-      expect(screen.queryByText('Enter a real date.')).not.toBeInTheDocument()
+      expect(
+        screen.queryByText('Actual date of submission must be a real date'),
+      ).not.toBeInTheDocument()
 
       // Moving into and between the parts does not revalidate.
       await user.click(screen.getByRole('textbox', { name: 'Month' }))
       await user.keyboard('7')
       await user.tab()
-      expect(screen.queryByText('Enter a real date.')).not.toBeInTheDocument()
-      expect(screen.getByRole('textbox', { name: 'Month' })).not.toBeInvalid()
+      expect(screen.queryByText('Enter the estimated submission date')).not.toBeInTheDocument()
+      expect(invalidParts()).toEqual([])
 
-      // Leaving the question does.
+      // Leaving the question does, marking only the blank year.
       await user.tab()
-      expect(await screen.findByText('Enter a real date.')).toBeInTheDocument()
-      expect(screen.getByRole('textbox', { name: 'Month' })).toBeInvalid()
-    })
-
-    it('shows the error on the radios when no precision is chosen', async () => {
-      const { container } = render(<FormPage page={datePage()} />)
-
-      save()
-
-      const message = await screen.findByText('Enter the UK regulatory submission date')
-      expect(message.closest('[data-component="radios-conditional"]')).toBeNull()
-      expect(container.querySelectorAll('.radio--error')).toHaveLength(3)
+      expect(await screen.findByText('Enter the estimated submission date')).toBeInTheDocument()
+      expect(invalidParts()).toEqual(['Year'])
     })
 
     describe('actual month', () => {
@@ -1246,7 +1306,7 @@ describe('FormPage', () => {
         save()
 
         expect(
-          await screen.findByText('The date must be this month or in the past.'),
+          await screen.findByText('The date must be this month or in the past'),
         ).toBeInTheDocument()
         expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
       })

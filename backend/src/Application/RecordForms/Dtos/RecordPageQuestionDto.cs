@@ -43,6 +43,12 @@ public sealed record RecordPageQuestionDto
     public IReadOnlyList<string>? Prefixes { get; init; }
 
     /// <summary>
+    /// What a <see cref="FormControl.PrecisionDate"/> question's date is of, for its error
+    /// messages, for example <c>submission</c>; null for other questions.
+    /// </summary>
+    public required string? DateName { get; init; }
+
+    /// <summary>
     /// When set, the question applies only while the condition is met; otherwise it is hidden,
     /// not validated, and should be sent as null (or an empty array).
     /// </summary>
