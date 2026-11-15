@@ -13,8 +13,8 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261110153626_AddedAComputedNormalisedColumnForWorkEmailToUsersTable")]
-    partial class AddedAComputedNormalisedColumnForWorkEmailToUsersTable
+    [Migration("20261115165132_NormalisedEmailFunctionAndColumn")]
+    partial class NormalisedEmailFunctionAndColumn
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -22,7 +22,7 @@ namespace UKPS.Api.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("ukps")
-                .HasAnnotation("ProductVersion", "10.0.14")
+                .HasAnnotation("ProductVersion", "10.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -319,7 +319,7 @@ namespace UKPS.Api.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("text")
                         .HasColumnName("normalised_work_email")
-                        .HasComputedColumnSql("UPPER(TRIM(work_email))", true);
+                        .HasComputedColumnSql("public.normalise_email(work_email)", true);
 
                     b.Property<string>("Title")
                         .HasColumnType("text")
@@ -348,10 +348,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.HasIndex("NormalisedWorkEmail")
                         .IsUnique()
                         .HasDatabaseName("ix_app_user_normalised_work_email");
-
-                    b.HasIndex("WorkEmail")
-                        .IsUnique()
-                        .HasDatabaseName("ix_app_user_work_email");
 
                     b.ToTable("app_user", "ukps");
                 });
@@ -1654,6 +1650,11 @@ namespace UKPS.Api.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("code");
+
                     b.Property<bool>("IsArchived")
                         .HasColumnType("boolean")
                         .HasColumnName("is_archived");
@@ -1669,6 +1670,10 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_mhra_procedure_type");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_mhra_procedure_type_code");
 
                     b.ToTable("mhra_procedure_type", "ukps");
                 });

@@ -10,9 +10,8 @@ internal static class UserDbSetExtensions
         CancellationToken cancellationToken
     )
     {
-        var normalised = email.Trim().ToUpperInvariant();
         return usersSet.FirstOrDefaultAsync(
-            x => x.NormalisedWorkEmail == normalised,
+            x => x.NormalisedWorkEmail == EmailDbFunctions.Normalise(email),
             cancellationToken
         );
     }

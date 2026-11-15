@@ -17,11 +17,9 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .Property(x => x.CognitoUsername)
             .HasConversion((x) => x.Value, (x) => CognitoUsername.Parse(x));
         builder.Property(x => x.WorkEmail).IsRequired();
-        builder.HasIndex(x => x.WorkEmail).IsUnique().HasDatabaseName("ix_app_user_work_email");
         builder
             .Property(u => u.NormalisedWorkEmail)
-            .HasColumnName("normalised_work_email")
-            .HasComputedColumnSql("UPPER(TRIM(work_email))", stored: true);
+            .HasComputedColumnSql("public.normalise_email(work_email)", stored: true);
 
         builder
             .HasIndex(u => u.NormalisedWorkEmail)

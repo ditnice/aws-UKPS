@@ -19,7 +19,7 @@ namespace UKPS.Api.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("ukps")
-                .HasAnnotation("ProductVersion", "10.0.14")
+                .HasAnnotation("ProductVersion", "10.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -316,7 +316,7 @@ namespace UKPS.Api.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("text")
                         .HasColumnName("normalised_work_email")
-                        .HasComputedColumnSql("UPPER(TRIM(work_email))", true);
+                        .HasComputedColumnSql("public.normalise_email(work_email)", true);
 
                     b.Property<string>("Title")
                         .HasColumnType("text")
@@ -345,10 +345,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.HasIndex("NormalisedWorkEmail")
                         .IsUnique()
                         .HasDatabaseName("ix_app_user_normalised_work_email");
-
-                    b.HasIndex("WorkEmail")
-                        .IsUnique()
-                        .HasDatabaseName("ix_app_user_work_email");
 
                     b.ToTable("app_user", "ukps");
                 });
