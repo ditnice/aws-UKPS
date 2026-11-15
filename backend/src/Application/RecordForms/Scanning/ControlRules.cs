@@ -9,7 +9,12 @@ internal static class ControlRules
     public static IReadOnlyList<FormControl> Allowed(BindingKind kind) =>
         kind switch
         {
-            BindingKind.Text => [FormControl.Text, FormControl.Textarea],
+            BindingKind.Text =>
+            [
+                FormControl.Text,
+                FormControl.Textarea,
+                FormControl.PrefixedNumber,
+            ],
             BindingKind.Enum => [FormControl.Radio, FormControl.Select],
             BindingKind.ReferenceId =>
             [
@@ -19,8 +24,16 @@ internal static class ControlRules
             ],
             BindingKind.Flags => [FormControl.Checkbox],
             BindingKind.Junction => [FormControl.Checkbox, FormControl.HierarchicalSelect],
+            BindingKind.RegulatoryDate => [FormControl.PrecisionDate, FormControl.ActualMonth],
             _ => [],
         };
+
+    /// <summary>
+    /// Whether the control's answer is a date, as for a regulatory date binding; mirrored by
+    /// <c>isDateControl</c> in <c>frontend/src/lib/dynamic-form/dates.ts</c>.
+    /// </summary>
+    public static bool IsDate(FormControl control) =>
+        Allowed(BindingKind.RegulatoryDate).Contains(control);
 
     public static bool IsChoice(FormControl control) =>
         control

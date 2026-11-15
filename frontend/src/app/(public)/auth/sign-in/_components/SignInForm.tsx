@@ -1,6 +1,7 @@
 'use client'
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { type ChangeEvent } from 'react'
 import { z } from 'zod'
@@ -155,7 +156,15 @@ export function SignInForm({ returnTo }: SignInFormProps) {
 
       <Details summary="Forgotten your password?">
         If you have forgotten your password, you can{' '}
-        <a href={createResetPasswordHref()}>reset your password</a> page.
+        <a href={createResetPasswordHref()}>reset your password</a>.
+      </Details>
+
+      <Details summary="I cannot access my account">
+        If you cannot access your account, visit the{' '}
+        <Link href="/auth/account-recovery" target="_blank" rel="noopener noreferrer">
+          account recovery (opens in a new tab)
+        </Link>{' '}
+        page.
       </Details>
 
       <Button type="submit" variant="cta">

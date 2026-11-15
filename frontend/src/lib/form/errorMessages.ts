@@ -6,13 +6,13 @@ export const errorMessages = {
   organisationNameRequired: 'Enter the organisation name',
   addressRequired: 'Enter organisation address',
   organisationEmailRequired: 'Enter an email address',
+  organisationPhoneRequired: 'Enter the head office phone number',
 
   //// Setup
   personalFullNameRequired: 'Enter your full name',
   personalEmailRequired: 'Enter your email address',
   workEmailRequired: 'Enter your work email address',
-  personalPhoneRequired: 'Enter your phone number',
-  phoneRequired: 'Enter a phone number',
+  personalContactNumberRequired: 'Enter your contact number',
   passwordRequired: 'Enter your password',
   securityCodeRequired: 'Enter your security code',
   organisationRequired: 'Select an organisation',
@@ -20,12 +20,12 @@ export const errorMessages = {
   //// Onboarding
   userNameRequired: 'Enter their full name',
   userEmailRequired: 'Enter an email address',
-  userPhoneNumberRequired: 'Enter their phone number',
+  userContactNumberRequired: 'Enter their contact number',
 
   //// Records
   companyCodeRequired: 'Enter company code',
   genericNameRequired: 'Enter generic name',
-  recordTitleRequired: 'Enter record title',
+  recordTitleRequired: 'Enter a record title',
 
   // Formatting
   emailFormat: 'Enter an email address in the correct format, like name@example.com',
@@ -37,7 +37,7 @@ export const errorMessages = {
   passwordWhitespace: 'Your password cannot contain spaces',
 
   genericNamesDistinct: 'Generic names must be distinct',
-  recordTitleTooLong: 'Record title cannot be greater than 100 characters',
+  recordTitleTooLong: 'Record title must be between 1 and 100 characters',
 
   // Data retrieval
   failedToRetrieveCurrentUser: 'Failed to retrieve the current user.',

@@ -11,9 +11,20 @@ internal static class MedicineOptionProviders
     public static void Register(OptionProviderRegistry registry)
     {
         RegisterIndicationDetailsProviders(registry);
+        RegisterHtaAndLaunchProviders(registry);
         RegisterLaboratoryTestingProviders(registry);
         RegisterPatientAndClinicalRequirementsProviders(registry);
         RegisterProductProviders(registry);
+    }
+
+    private static void RegisterHtaAndLaunchProviders(OptionProviderRegistry registry)
+    {
+        registry.AddEnum(
+            OptionKeys.MedicineHtaAssessor,
+            (MedicineHtaAssessor.Nice, "NICE"),
+            (MedicineHtaAssessor.Smc, "SMC"),
+            (MedicineHtaAssessor.Awmsg, "AWMSG")
+        );
     }
 
     private static void RegisterPatientAndClinicalRequirementsProviders(

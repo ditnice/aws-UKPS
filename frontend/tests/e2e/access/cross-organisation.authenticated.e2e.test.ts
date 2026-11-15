@@ -22,9 +22,7 @@ test.describe('Using another organisation as a champion', { tag: forRoles(['Cham
     await page.goto(otherPath('edit'))
 
     await expect(page.getByRole('heading', { name: 'Unable to load organisation' })).toBeVisible()
-    await expect(
-      page.getByRole('heading', { name: "Edit your organisation's details" }),
-    ).toBeHidden()
+    await expect(page.getByRole('heading', { name: 'Edit organisation details' })).toBeHidden()
     await expect(page.getByRole('button', { name: 'Submit' })).toHaveCount(0)
   })
 

@@ -28,6 +28,12 @@ internal sealed class FormModel
     /// </summary>
     public IReadOnlyList<FormEntity> TriggerEntities { get; }
 
+    /// <summary>
+    /// The reference data entities of trigger questions. Conditions on them name codes, so their
+    /// codes are loaded with the answers.
+    /// </summary>
+    public IReadOnlyList<Type> ReferenceTriggerTypes { get; }
+
     public FormModel(RecordType recordType, string version, IReadOnlyList<FormSection> sections)
     {
         RecordType = recordType;
@@ -43,9 +49,11 @@ internal sealed class FormModel
             .SelectMany(static p => p.Questions.Select(q => (q.Id, Page: p)))
             .ToDictionary(static x => x.Id, static x => x.Page, StringComparer.Ordinal);
         _scopes = BuildScopes();
-        TriggerEntities = Questions
-            .SelectMany(TriggersOf)
-            .Select(static q => q.Entity)
+        FormQuestion[] triggers = Questions.SelectMany(TriggersOf).Distinct().ToArray();
+        TriggerEntities = triggers.Select(static q => q.Entity).Distinct().ToArray();
+        ReferenceTriggerTypes = triggers
+            .Select(static q => q.ReferenceType)
+            .OfType<Type>()
             .Distinct()
             .ToArray();
     }

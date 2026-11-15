@@ -13,7 +13,7 @@ ADD --checksum=sha256:17c557502061c4879b844fff983288a2fb07d520f4cf2a5de60f5cda80
 
 # .NET 10 SDK on Ubuntu 24.04 "noble", the same SDK image as backend/Dockerfile. The
 # self-contained publish below bundles the .NET runtime from this SDK.
-FROM --platform=${LAMBDA_PLATFORM} mcr.microsoft.com/dotnet/sdk:10.0.403-noble@sha256:212fe4cb74627d5adf9817a4088906ae3edff1bd853bb27565d4b46731efe61e AS restore
+FROM --platform=${LAMBDA_PLATFORM} mcr.microsoft.com/dotnet/sdk:10.0.404-noble@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb AS restore
 
 WORKDIR /src
 

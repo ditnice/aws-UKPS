@@ -109,7 +109,9 @@ describe('EditOrganisationDetailsForm', () => {
     await submit()
 
     expect(
-      await screen.findByText(errorMessages.phoneRequired, { selector: '.input__error' }),
+      await screen.findByText(errorMessages.organisationPhoneRequired, {
+        selector: '.input__error',
+      }),
     ).toBeInTheDocument()
     expect(updateOrganisationDetailsActionMock).not.toHaveBeenCalled()
   })

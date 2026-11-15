@@ -64,7 +64,7 @@ describe('EditOrganisationPage (direct invocation)', () => {
 
     render(await EditOrganisationPage({ params }))
 
-    expect(screen.getByRole('heading', { name: "Edit your organisation's details" })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Edit organisation details' })).toBeVisible()
     expect(screen.getByRole('form', { name: 'Edit organisation details' })).toBeInTheDocument()
   })
 

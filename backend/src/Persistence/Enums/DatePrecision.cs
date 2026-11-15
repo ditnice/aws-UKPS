@@ -19,4 +19,9 @@ public enum DatePrecision
     /// The date is an exact, specific day.
     /// </summary>
     ActualDate = 2,
+
+    /// <summary>
+    /// The date is the actual month, stored as its first day.
+    /// </summary>
+    ActualMonth = 3,
 }

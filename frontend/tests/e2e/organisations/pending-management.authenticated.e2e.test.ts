@@ -16,7 +16,7 @@ async function requestAccess(page: Page, organisationId: string): Promise<string
   await organisation.selectOption(organisationId)
   await page.getByLabel('Full name').fill('Playwright Requester')
   await page.getByLabel('Work email address').fill(workEmail)
-  await page.getByLabel('Phone number').fill('07123456789')
+  await page.getByLabel('Contact number').fill('07123456789')
   await page.getByRole('button', { name: 'Submit request' }).click()
   await expect(page).toHaveURL('/register/request-submitted')
   return workEmail

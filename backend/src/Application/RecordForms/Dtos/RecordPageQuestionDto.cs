@@ -36,6 +36,13 @@ public sealed record RecordPageQuestionDto
     public required string? AddAnotherLabel { get; init; }
 
     /// <summary>
+    /// The prefixes a <c>PrefixedNumber</c> question offers before its digits, in order, or
+    /// null for any other control. Not <c>required</c>, so existing clients and fixtures are
+    /// unaffected.
+    /// </summary>
+    public IReadOnlyList<string>? Prefixes { get; init; }
+
+    /// <summary>
     /// When set, the question applies only while the condition is met; otherwise it is hidden,
     /// not validated, and should be sent as null (or an empty array).
     /// </summary>

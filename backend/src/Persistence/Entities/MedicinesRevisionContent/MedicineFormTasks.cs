@@ -27,7 +27,7 @@ internal static class MedicineFormTasks
     public const string DevelopmentBackgroundTitle = "Development background";
 
     /// <summary>The "Development background" task's position within its section.</summary>
-    public const int DevelopmentBackgroundOrder = 10;
+    public const int DevelopmentBackgroundOrder = 20;
 
     /// <summary>The "Laboratory testing" task's ID.</summary>
     public const string LaboratoryTesting = "laboratory-testing";
@@ -38,6 +38,15 @@ internal static class MedicineFormTasks
     /// <summary>The "Laboratory testing" task's position within its section.</summary>
     public const int LaboratoryTestingOrder = 10;
 
+    /// <summary>The "Health Technology Assessment (HTA) and launch" task's ID.</summary>
+    public const string HtaAndLaunch = "hta-and-launch";
+
+    /// <summary>The "Health Technology Assessment (HTA) and launch" task's title.</summary>
+    public const string HtaAndLaunchTitle = "Health Technology Assessment (HTA) and launch";
+
+    /// <summary>The "Health Technology Assessment (HTA) and launch" task's position within its section.</summary>
+    public const int HtaAndLaunchOrder = 10;
+
     /// <summary>The "Patient and clinical requirements" task's ID.</summary>
     public const string PatientAndClinicalRequirements = "patient-and-clinical-requirements";
 
@@ -45,5 +54,5 @@ internal static class MedicineFormTasks
     public const string PatientAndClinicalRequirementsTitle = "Patient and clinical requirements";
 
     /// <summary>The "Patient and clinical requirements" task's position within its section.</summary>
-    public const int PatientAndClinicalRequirementsOrder = 10;
+    public const int PatientAndClinicalRequirementsOrder = 20;
 }

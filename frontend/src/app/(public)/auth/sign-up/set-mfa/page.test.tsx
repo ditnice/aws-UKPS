@@ -111,11 +111,11 @@ describe('SignUpSetMfa', () => {
     expect(
       await screen.findByRole('heading', { name: 'Set up two-factor authentication' }),
     ).toBeInTheDocument()
-    expect(screen.getByLabelText('QR code for authenticator app setup')).toBeInTheDocument()
+    expect(screen.getByLabelText('QR code for authenticator setup')).toBeInTheDocument()
     expect(screen.getByText('JBSWY3DPEHPK3PXP')).toBeInTheDocument()
     expect(screen.getByLabelText('Enter your authentication code')).toBeInTheDocument()
     expect(
-      screen.getByText('Enter the 6-digit authentication code shown in your authenticator app.'),
+      screen.getByText('Enter the 6-digit authentication code shown in your authenticator.'),
     ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
   })

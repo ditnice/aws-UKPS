@@ -16,7 +16,7 @@ test(
 
     await page.getByLabel('Full name').fill('Playwright User')
     await page.getByLabel('Work email address').fill(email)
-    await page.getByLabel('Phone number').fill('020 7946 0000')
+    await page.getByLabel('Contact number').fill('020 7946 0000')
     await page.getByRole('button', { name: 'Send invite' }).click()
 
     await expect(page).toHaveURL(

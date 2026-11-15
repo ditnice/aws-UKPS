@@ -77,6 +77,16 @@ const areasQuestion = question({
   options: tree,
 })
 
+const niceTaIdQuestion = question({
+  id: 'record_hta.nice_ta_development_id',
+  type: 'PrefixedNumber',
+  label: 'Enter the NICE technology appraisal development ID for this product (optional)',
+  hint: 'Select the ID format and enter the NICE technology appraisal ID.',
+  placeholder: 'Choose ID type',
+  prefixes: ['GID-TA', 'GID-HST'],
+  rules: [],
+})
+
 const save = () => fireEvent.click(screen.getByRole('button', { name: 'Save and continue' }))
 
 beforeEach(() => {
@@ -879,6 +889,367 @@ describe('FormPage', () => {
         await screen.findAllByText('You have selected the same option more than once.'),
       ).not.toHaveLength(0)
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('prefixed number', () => {
+    const idPage = (answer: string | null = null) =>
+      page({
+        questions: [niceTaIdQuestion],
+        answers: { 'record_hta.nice_ta_development_id': answer },
+      })
+
+    it('shows a saved value split across the type and the number', () => {
+      render(<FormPage page={idPage('GID-HST123')} />)
+
+      expect(screen.getByRole('combobox', { name: 'Choose ID type' })).toHaveValue('GID-HST')
+      expect(screen.getByRole('textbox', { name: 'Number' })).toHaveValue('123')
+    })
+
+    it('saves the chosen type and number as one answer', async () => {
+      render(<FormPage page={idPage()} />)
+
+      fireEvent.change(screen.getByRole('combobox', { name: 'Choose ID type' }), {
+        target: { value: 'GID-HST' },
+      })
+      fireEvent.change(screen.getByRole('textbox', { name: 'Number' }), {
+        target: { value: '123' },
+      })
+      save()
+
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({
+        'record_hta.nice_ta_development_id': 'GID-HST123',
+      })
+    })
+
+    it('replaces both parts when a whole ID is pasted into the number', async () => {
+      render(<FormPage page={idPage('GID-TA1')} />)
+
+      fireEvent.change(screen.getByRole('textbox', { name: 'Number' }), {
+        target: { value: 'GID-HST123' },
+      })
+
+      expect(screen.getByRole('combobox', { name: 'Choose ID type' })).toHaveValue('GID-HST')
+      expect(screen.getByRole('textbox', { name: 'Number' })).toHaveValue('123')
+      save()
+
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({
+        'record_hta.nice_ta_development_id': 'GID-HST123',
+      })
+    })
+
+    it('saves nothing chosen as a blank answer', async () => {
+      render(<FormPage page={idPage()} />)
+
+      save()
+
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({
+        'record_hta.nice_ta_development_id': null,
+      })
+    })
+
+    it('asks for a type when only a number is entered', async () => {
+      render(<FormPage page={idPage()} />)
+
+      fireEvent.change(screen.getByRole('textbox', { name: 'Number' }), {
+        target: { value: '10234' },
+      })
+      save()
+
+      expect(await screen.findByText('Select ID type')).toBeInTheDocument()
+      expect(screen.getByRole('combobox', { name: 'Choose ID type' })).toBeInvalid()
+      expect(screen.getByRole('textbox', { name: 'Number' })).toBeValid()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('asks for positive whole numbers only when the number has other characters', async () => {
+      render(<FormPage page={idPage()} />)
+
+      fireEvent.change(screen.getByRole('combobox', { name: 'Choose ID type' }), {
+        target: { value: 'GID-TA' },
+      })
+      fireEvent.change(screen.getByRole('textbox', { name: 'Number' }), {
+        target: { value: '12a' },
+      })
+      save()
+
+      expect(await screen.findByText('ID must be a whole positive number')).toBeInTheDocument()
+      expect(screen.getByRole('combobox', { name: 'Choose ID type' })).toBeValid()
+      expect(screen.getByRole('textbox', { name: 'Number' })).toBeInvalid()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('asks for no more than 5 digits when the number is too long', async () => {
+      render(<FormPage page={idPage()} />)
+
+      fireEvent.change(screen.getByRole('combobox', { name: 'Choose ID type' }), {
+        target: { value: 'GID-TA' },
+      })
+      fireEvent.change(screen.getByRole('textbox', { name: 'Number' }), {
+        target: { value: '123456' },
+      })
+      save()
+
+      expect(await screen.findByText('ID must not be longer than 5 digits')).toBeInTheDocument()
+      expect(screen.getByRole('combobox', { name: 'Choose ID type' })).toBeValid()
+      expect(screen.getByRole('textbox', { name: 'Number' })).toBeInvalid()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('date questions', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(new Date(2026, 5, 15, 12))
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    const precisionDate = question({
+      id: 'uk_submission_date',
+      type: 'PrecisionDate',
+      label: 'What is the UK regulatory submission date?',
+      hint: 'Choose the level of detail you are currently able to provide.',
+      rules: [
+        { kind: 'Required', value: null, message: 'Enter the UK regulatory submission date' },
+      ],
+    })
+    const datePage = (answer: string | null = null) =>
+      page({ questions: [precisionDate], answers: { uk_submission_date: answer } })
+
+    it('sends an estimated quarter as the year and quarter', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Estimated quarter' }))
+      await user.selectOptions(screen.getByRole('combobox', { name: 'Quarter' }), '2')
+      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2027')
+      save()
+
+      await waitFor(() => {
+        expect(mocks.saveRecordFormPage).toHaveBeenCalledWith(
+          expect.objectContaining({
+            body: expect.objectContaining({ answers: { uk_submission_date: '2027-Q2' } }),
+          }),
+        )
+      })
+    })
+
+    it('loads a saved actual date into its parts', () => {
+      render(<FormPage page={datePage('2027-05-14')} />)
+
+      expect(screen.getByRole('radio', { name: 'Actual date' })).toBeChecked()
+      expect(screen.getByRole('textbox', { name: 'Day' })).toHaveValue('14')
+      expect(screen.getByRole('textbox', { name: 'Month' })).toHaveValue('5')
+      expect(screen.getByRole('textbox', { name: 'Year' })).toHaveValue('2027')
+    })
+
+    it('rejects a date that is not real without saving', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Actual date' }))
+      await user.type(screen.getByRole('textbox', { name: 'Day' }), '31')
+      await user.type(screen.getByRole('textbox', { name: 'Month' }), '4')
+      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2026')
+      save()
+
+      expect(await screen.findByText('Enter a real date.')).toBeInTheDocument()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('rejects an actual date in the future without saving', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Actual date' }))
+      await user.type(screen.getByRole('textbox', { name: 'Day' }), '16')
+      await user.type(screen.getByRole('textbox', { name: 'Month' }), '6')
+      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2026')
+      save()
+
+      expect(
+        await screen.findByText('An actual date must be today or in the past.'),
+      ).toBeInTheDocument()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('rejects an estimate for a month that has ended without saving', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Estimated month' }))
+      await user.type(screen.getByRole('textbox', { name: 'Month' }), '5')
+      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2026')
+      save()
+
+      expect(
+        await screen.findByText('An estimated date must be in the future.'),
+      ).toBeInTheDocument()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('asks for a date when only the precision is chosen', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Estimated month' }))
+      save()
+
+      expect(await screen.findByText('Enter the UK regulatory submission date')).toBeInTheDocument()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('shows the error above the chosen precision, not on the radios', async () => {
+      const user = userEvent.setup()
+      const { container } = render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Estimated quarter' }))
+      await user.selectOptions(screen.getByRole('combobox', { name: 'Quarter' }), '1')
+      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2025')
+      save()
+
+      const message = await screen.findByText('An estimated date must be in the future.')
+      expect(message.closest('[data-component="radios-conditional"]')).not.toBeNull()
+      expect(container.querySelector('.radio--error')).toBeNull()
+      for (const control of [
+        screen.getByRole('combobox', { name: 'Quarter' }),
+        screen.getByRole('textbox', { name: 'Year' }),
+      ]) {
+        expect(control).toBeInvalid()
+        expect(control).toHaveAccessibleDescription(expect.stringContaining(message.textContent!))
+      }
+      for (const part of ['Day', 'Month']) {
+        for (const input of screen.getAllByLabelText(part)) {
+          expect(input).not.toBeInvalid()
+        }
+      }
+    })
+
+    it('starts a newly chosen precision empty', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Estimated quarter' }))
+      await user.selectOptions(screen.getByRole('combobox', { name: 'Quarter' }), '2')
+      await user.click(screen.getByRole('radio', { name: 'Actual date' }))
+      await user.type(screen.getByRole('textbox', { name: 'Day' }), '14')
+      await user.type(screen.getByRole('textbox', { name: 'Month' }), '5')
+      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2027')
+      await user.click(screen.getByRole('radio', { name: 'Estimated quarter' }))
+
+      expect(screen.getByRole('combobox', { name: 'Quarter' })).toHaveValue('')
+      expect(screen.getByRole('textbox', { name: 'Year' })).toHaveValue('')
+
+      await user.click(screen.getByRole('radio', { name: 'Actual date' }))
+
+      for (const part of ['Day', 'Month', 'Year']) {
+        expect(screen.getByRole('textbox', { name: part })).toHaveValue('')
+      }
+    })
+
+    it('clears the error when another precision is chosen until focus leaves the question', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={datePage()} />)
+
+      await user.click(screen.getByRole('radio', { name: 'Actual date' }))
+      await user.type(screen.getByRole('textbox', { name: 'Day' }), '31')
+      await user.type(screen.getByRole('textbox', { name: 'Month' }), '4')
+      await user.type(screen.getByRole('textbox', { name: 'Year' }), '2026')
+      save()
+      expect(await screen.findByText('Enter a real date.')).toBeInTheDocument()
+
+      await user.click(screen.getByRole('radio', { name: 'Estimated month' }))
+      expect(screen.queryByText('Enter a real date.')).not.toBeInTheDocument()
+
+      // Moving into and between the parts does not revalidate.
+      await user.click(screen.getByRole('textbox', { name: 'Month' }))
+      await user.keyboard('7')
+      await user.tab()
+      expect(screen.queryByText('Enter a real date.')).not.toBeInTheDocument()
+      expect(screen.getByRole('textbox', { name: 'Month' })).not.toBeInvalid()
+
+      // Leaving the question does.
+      await user.tab()
+      expect(await screen.findByText('Enter a real date.')).toBeInTheDocument()
+      expect(screen.getByRole('textbox', { name: 'Month' })).toBeInvalid()
+    })
+
+    it('shows the error on the radios when no precision is chosen', async () => {
+      const { container } = render(<FormPage page={datePage()} />)
+
+      save()
+
+      const message = await screen.findByText('Enter the UK regulatory submission date')
+      expect(message.closest('[data-component="radios-conditional"]')).toBeNull()
+      expect(container.querySelectorAll('.radio--error')).toHaveLength(3)
+    })
+
+    describe('actual month', () => {
+      const monthPage = (answer: string | null = null) =>
+        page({
+          page: { id: 'global', title: 'Global first submission', commercialInConfidence: true },
+          questions: [
+            question({ id: 'region', type: 'Text', label: 'Where?', hint: null, rules: [] }),
+            question({
+              id: 'global_date',
+              type: 'ActualMonth',
+              label: 'Actual global first submission date',
+              hint: null,
+              rules: [],
+            }),
+          ],
+          answers: { region: null, global_date: answer },
+        })
+
+      it('sends the month and year beside another question', async () => {
+        const user = userEvent.setup()
+        render(<FormPage page={monthPage()} />)
+
+        expect(
+          screen.getByRole('group', { name: 'Actual global first submission date' }),
+        ).toBeInTheDocument()
+        expect(screen.queryByRole('textbox', { name: 'Day' })).not.toBeInTheDocument()
+        await user.type(screen.getByRole('textbox', { name: 'Month' }), '7')
+        await user.type(screen.getByRole('textbox', { name: 'Year' }), '2025')
+        save()
+
+        await waitFor(() => {
+          expect(mocks.saveRecordFormPage).toHaveBeenCalledWith(
+            expect.objectContaining({
+              body: expect.objectContaining({
+                answers: { region: null, global_date: '2025-07' },
+              }),
+            }),
+          )
+        })
+      })
+
+      it('loads a saved month into its parts', () => {
+        render(<FormPage page={monthPage('2025-07')} />)
+
+        expect(screen.getByRole('textbox', { name: 'Month' })).toHaveValue('7')
+        expect(screen.getByRole('textbox', { name: 'Year' })).toHaveValue('2025')
+      })
+
+      it('rejects a month after this one without saving', async () => {
+        const user = userEvent.setup()
+        render(<FormPage page={monthPage()} />)
+
+        await user.type(screen.getByRole('textbox', { name: 'Month' }), '7')
+        await user.type(screen.getByRole('textbox', { name: 'Year' }), '2026')
+        save()
+
+        expect(
+          await screen.findByText('The date must be this month or in the past.'),
+        ).toBeInTheDocument()
+        expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+      })
     })
   })
 })

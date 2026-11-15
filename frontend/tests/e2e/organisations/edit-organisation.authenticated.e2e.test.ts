@@ -36,15 +36,13 @@ const fields: Field[] = [
     label: 'Head office phone number',
     value: '07123456789',
     unsavedValue: '07000000000',
-    emptyError: 'Enter a phone number',
+    emptyError: 'Enter the head office phone number',
   },
 ]
 
 async function gotoEditPage(page: Page, organisationId: string) {
   await page.goto(`/portal/organisations/${organisationId}/edit`)
-  await expect(
-    page.getByRole('heading', { name: "Edit your organisation's details" }),
-  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Edit organisation details' })).toBeVisible()
 }
 
 // In file order on one worker, so no test reads the organisation while another changes it, and
@@ -94,7 +92,7 @@ test.describe(
     test.use({ readOnly: true })
 
     test('edits the details and cancels', async ({ page, organisationId }) => {
-      const editHeading = page.getByRole('heading', { name: "Edit your organisation's details" })
+      const editHeading = page.getByRole('heading', { name: 'Edit organisation details' })
       await page.goto(`/portal/organisations/${organisationId}`)
       await page.getByRole('link', { name: 'Edit details' }).click()
       await expect(editHeading).toBeVisible()
@@ -145,9 +143,7 @@ test.describe(
       await expect(
         page.getByRole('heading', { name: 'User is not permitted to view this page' }),
       ).toBeVisible()
-      await expect(
-        page.getByRole('heading', { name: "Edit your organisation's details" }),
-      ).toBeHidden()
+      await expect(page.getByRole('heading', { name: 'Edit organisation details' })).toBeHidden()
       await expect(page.getByRole('button', { name: 'Submit' })).toBeHidden()
     })
   },

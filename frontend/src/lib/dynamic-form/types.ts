@@ -5,6 +5,8 @@ import type {
   RecordPageRuleDto,
 } from '@/client/generated'
 
+import type { DateValue } from './dates'
+
 export type Question = RecordPageQuestionDto
 export type Rule = RecordPageRuleDto
 export type Option = RecordPageOptionDto
@@ -20,8 +22,9 @@ export type HierarchicalEntry = { parent: string; child: string }
  * A question's value while the form is being edited:
  * - text, select and radio questions hold a string ('' when unanswered);
  * - checkbox questions hold the ticked values;
- * - hierarchical selects hold a parent and child pair, or a list of pairs when multi-value.
+ * - hierarchical selects hold a parent and child pair, or a list of pairs when multi-value;
+ * - date questions hold the chosen precision and the text of each part.
  */
-export type FormValue = string | string[] | HierarchicalEntry | HierarchicalEntry[]
+export type FormValue = string | string[] | HierarchicalEntry | HierarchicalEntry[] | DateValue
 
 export type FormValues = Record<string, FormValue>

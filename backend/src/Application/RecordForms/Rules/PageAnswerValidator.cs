@@ -2,14 +2,16 @@ using System.Text.Json;
 using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
+using UKPS.Api.Application.RecordForms.Scanning;
 
 namespace UKPS.Api.Application.RecordForms.Rules;
 
 /// <summary>
 /// Server-side validation of a submitted page in two steps: <see cref="Parse"/> checks every
-/// question is present with the right shape and there are no other keys; <see cref="Check"/>
-/// then checks, for each question that applies, every value is an offered option and the
-/// question's rules pass. One message per key.
+/// question is present with the right shape and there are no other keys, and normalises
+/// <c>PrefixedNumber</c> answers; <see cref="Check"/> then checks, for each question that applies,
+/// a date is a real date on the right side of today, every value is an offered option, the
+/// question's rules pass and a <c>PrefixedNumber</c> is well formed. One message per key.
 /// </summary>
 internal static class PageAnswerValidator
 {
@@ -48,7 +50,7 @@ internal static class PageAnswerValidator
             }
             else
             {
-                answers[question.Id] = answer!;
+                answers[question.Id] = Normalise(question, answer!);
             }
         }
 
@@ -65,6 +67,7 @@ internal static class PageAnswerValidator
         IReadOnlyDictionary<string, FormAnswer> answers,
         IReadOnlyDictionary<string, IReadOnlyList<FormOption>> options,
         Applicability applicability,
+        DateOnly today,
         Dictionary<string, string> errors
     )
     {
@@ -76,14 +79,25 @@ internal static class PageAnswerValidator
             }
 
             string? error =
-                CheckOptions(answer, options.GetValueOrDefault(question.Id))
-                ?? RuleEvaluator.FirstFailure(question.Rules, answer);
+                CheckDate(question, answer, today)
+                ?? CheckOptions(answer, options.GetValueOrDefault(question.Id))
+                ?? RuleEvaluator.FirstFailure(question.Rules, answer)
+                ?? CheckPrefixedNumber(question, answer);
             if (error is not null)
             {
                 errors[question.Id] = error;
             }
         }
     }
+
+    /// <summary>
+    /// A date answer must be a real date: an actual date or month not after today, an estimate not
+    /// yet past.
+    /// </summary>
+    private static string? CheckDate(FormQuestion question, FormAnswer answer, DateOnly today) =>
+        ControlRules.IsDate(question.Control) && answer.Value is not null
+            ? DateAnswer.Check(question.Control, answer.Value, today)
+            : null;
 
     private static string? CheckOptions(FormAnswer answer, IReadOnlyList<FormOption>? options)
     {
@@ -98,4 +112,19 @@ internal static class PageAnswerValidator
             .ToHashSet(StringComparer.Ordinal);
         return answer.AllValues().All(offered.Contains) ? null : RecordFormMessages.InvalidOption;
     }
+
+    /// <summary>
+    /// Saves a <c>PrefixedNumber</c> prefix with no digits as blank, so the rules see what will be
+    /// stored. Its format error is left to <see cref="Check"/>, which reports it only when the
+    /// question applies.
+    /// </summary>
+    private static FormAnswer Normalise(FormQuestion question, FormAnswer answer) =>
+        question.Prefixes is { } prefixes
+            ? FormAnswer.Single(PrefixedNumberAnswer.Evaluate(prefixes, answer.Value).Value)
+            : answer;
+
+    private static string? CheckPrefixedNumber(FormQuestion question, FormAnswer answer) =>
+        question.Prefixes is { } prefixes
+            ? PrefixedNumberAnswer.Evaluate(prefixes, answer.Value).Error
+            : null;
 }

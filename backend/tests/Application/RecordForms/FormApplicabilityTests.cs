@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Shouldly;
 using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Model;
-using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Application.RecordForms.Scanning;
+using UKPS.Api.Persistence.Entities.ReferenceData;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Application.RecordForms.Scanning;
 
@@ -164,6 +164,39 @@ public class FormApplicabilityTests
         _form.PreviousPage(gate, shown).ShouldBeNull();
     }
 
+    [Theory]
+    [InlineData("7", true)]
+    [InlineData("8", false)]
+    [InlineData("9", false)]
+    public void Evaluate_ReferenceTrigger_ComparesTheCodeOfTheAnswer(
+        string procedureId,
+        bool applies
+    )
+    {
+        // The condition names a code; the answer is an ID, and 9 has no loaded code.
+        FormModel form = BuildForm(typeof(CodedEntity));
+        ReferenceCodes codes = new(
+            new Dictionary<Type, IReadOnlyList<(int Id, string Code)>>
+            {
+                [typeof(MhraProcedureType)] =
+                [
+                    (7, MhraProcedureTypeCodes.InternationalRecognition),
+                    (8, MhraProcedureTypeCodes.National),
+                ],
+            }
+        );
+        Dictionary<string, FormAnswer> answers = new(StringComparer.Ordinal)
+        {
+            ["coded_entity.procedure_id"] = FormAnswer.Single(procedureId),
+            ["coded_entity.irp_details"] = FormAnswer.Single(null),
+        };
+
+        FormApplicability
+            .Evaluate(form, answers, codes)
+            .Applies(form.FindQuestion("coded_entity.irp_details")!)
+            .ShouldBe(applies);
+    }
+
     [Fact]
     public void AffectedBy_HoldsThePagesQuestionsAndEverythingThatDependsOnThem()
     {
@@ -196,16 +229,14 @@ public class FormApplicabilityTests
         _form.TriggerEntities.Select(static e => e.ClrType).ShouldBe([typeof(ConditionalEntity)]);
     }
 
-    private static FormModel BuildForm()
+    private static FormModel BuildForm(params Type[] types)
     {
         IModel model = ScanningTestDbContext.CreateModel();
         var (entities, _) = FormModelScanner.Scan(
             model,
-            [typeof(ConditionalEntity), typeof(ConditionalExtraEntity)]
+            types.Length > 0 ? types : [typeof(ConditionalEntity), typeof(ConditionalExtraEntity)]
         );
-        return FormModelBuilder.Build(entities, OptionProviderRegistry.CreateDefault())[
-            RecordType.Vaccine
-        ];
+        return FormModelBuilder.Build(entities, ScanningTestOptions.Create())[RecordType.Vaccine];
     }
 
     /// <summary>Every question unanswered, apart from those given.</summary>

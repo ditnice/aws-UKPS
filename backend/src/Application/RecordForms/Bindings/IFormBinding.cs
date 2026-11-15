@@ -23,4 +23,7 @@ internal interface IFormBinding
 
     /// <summary>Builds a database-translatable expression that checks whether the row has an answer.</summary>
     Expression HasAnswerExpression(ParameterExpression row);
+
+    /// <summary>The field audit value of an answer, or null when unanswered.</summary>
+    string? AuditText(FormAnswer answer) => answer.ToAuditText();
 }

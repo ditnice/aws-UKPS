@@ -15,10 +15,15 @@ internal static class FormApplicability
     /// about, which the rows of <see cref="FormModel.EntitiesToRead"/> or
     /// <see cref="FormModel.EntitiesToSave"/> provide.
     /// </param>
+    /// <param name="codes">
+    /// The codes of <see cref="FormModel.ReferenceTriggerTypes"/>; only needed by a form with
+    /// reference data triggers.
+    /// </param>
     public static Applicability Evaluate(
         FormModel model,
-        IReadOnlyDictionary<string, FormAnswer> answers
-    ) => new(model, answers);
+        IReadOnlyDictionary<string, FormAnswer> answers,
+        ReferenceCodes? codes = null
+    ) => new(model, answers, codes ?? ReferenceCodes.None);
 
     /// <summary>
     /// The answers, with each of <paramref name="questions"/> that does not apply left

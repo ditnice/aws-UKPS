@@ -93,6 +93,7 @@ describe('formatRegulatoryDate', () => {
     ['EstimatedQuarter', '2027-12-01', 'Q4 2027 (estimated)'],
     ['EstimatedMonth', '2027-03-01', 'March 2027 (estimated)'],
     ['ActualDate', '2027-03-12', '12 March 2027'],
+    ['ActualMonth', '2025-07-01', 'July 2025'],
   ] as const)('formats %s %s as %s', (datePrecision, dateValue, expected) => {
     expect(formatRegulatoryDate({ dateValue, datePrecision, isConfidential: false })).toBe(expected)
   })

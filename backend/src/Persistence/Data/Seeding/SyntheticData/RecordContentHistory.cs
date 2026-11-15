@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text.Json;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Enums;
@@ -12,11 +11,6 @@ namespace UKPS.Api.Persistence.Data.Seeding.SyntheticData;
 /// </summary>
 internal static class RecordContentHistory
 {
-    private static readonly JsonSerializerOptions _dateAuditJsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-    };
-
     /// <summary>Phrases that introduce the population an indication applies to.</summary>
     private static readonly string[] _populationPhrases =
     [
@@ -290,6 +284,16 @@ internal static class RecordContentHistory
                 "record_hta.medicine_hta_submission_intended",
                 hta.MedicineHtaSubmissionIntended?.ToString()
             ),
+            (
+                "record_hta.medicine_hta_bodies",
+                hta.MedicineHtaBodies is null || hta.MedicineHtaBodies.Count == 0
+                    ? null
+                    : FieldAuditJson.Serialize(
+                        hta.MedicineHtaBodies.Select(body => body.ToString())
+                            .Order(StringComparer.Ordinal)
+                    )
+            ),
+            ("record_hta.hta_additional_details", hta.HtaAdditionalDetails),
             ("record_hta.hta_nice_aligned_pathway", hta.HtaNiceAlignedPathway?.ToString()),
             ("record_hta.nice_ta_development_id", hta.NiceTaDevelopmentId),
             ("record_hta.uk_launch_date", Format(hta.UkLaunchDate)),
@@ -654,20 +658,11 @@ internal static class RecordContentHistory
     private static string? Format(SyntheticRegulatoryDate? date) =>
         date is null
             ? null
-            : JsonSerializer.Serialize(
-                new DateAuditValue(
-                    date.DatePrecision.ToString(),
-                    date.DateValue.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                    date.IsConfidential
-                ),
-                _dateAuditJsonOptions
+            : FieldAuditJson.RegulatoryDate(
+                date.DatePrecision,
+                date.DateValue,
+                date.IsConfidential
             );
-
-    private sealed record DateAuditValue(
-        string DatePrecision,
-        string DateValue,
-        bool IsConfidential
-    );
 
     private sealed class Disclosure(IReadOnlySet<string> unknownFields)
     {

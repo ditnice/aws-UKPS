@@ -41,6 +41,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly ISetupLinkCreator _setupLinkCreator;
     private readonly IEmailService _emailService;
+    private readonly ICurrentUserInfoService _currentUserInfoService;
     private readonly EmailOptions _configuration;
 
     public IdentityAdministrationService(
@@ -50,6 +51,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         IDateTimeProvider dateTimeProvider,
         ISetupLinkCreator setupLinkCreator,
         IEmailService emailService,
+        ICurrentUserInfoService currentUserInfoService,
         IOptions<EmailOptions> configuration
     )
     {
@@ -59,6 +61,7 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         _dateTimeProvider = dateTimeProvider;
         _setupLinkCreator = setupLinkCreator;
         _emailService = emailService;
+        _currentUserInfoService = currentUserInfoService;
         _configuration = configuration.Value;
     }
 
@@ -124,6 +127,35 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         );
     }
 
+    public async Task<VerifyMultiFactorAuthenticationUpdateResult> VerifyMultiFactorAuthenticationUpdate(
+        string accessToken,
+        VerifyMultiFactorAuthenticationUpdateCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await _identityService.VerifySoftwareTokenWithAccessToken(
+                accessToken,
+                command.Code,
+                cancellationToken
+            );
+            return VerifyMultiFactorAuthenticationUpdateResult.Ok();
+        }
+        catch (EnableSoftwareTokenMFAException)
+        {
+            return VerifyMultiFactorAuthenticationUpdateResult.Err(
+                new VerifyMultiFactorAuthenticationUpdateError.InvalidCode()
+            );
+        }
+        catch (CodeMismatchException)
+        {
+            return VerifyMultiFactorAuthenticationUpdateResult.Err(
+                new VerifyMultiFactorAuthenticationUpdateError.InvalidCode()
+            );
+        }
+    }
+
     public async Task<VerifyMultiFactorAuthenticationResult> VerifyMultiFactorAuthentication(
         VerifyMultiFactorAuthenticationCommand command,
         CancellationToken cancellationToken
@@ -146,12 +178,13 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
 
         try
         {
-            AuthenticationCredentialsDto credentials = await _identityService.VerifySoftwareToken(
-                userRecord.ResultingUser!.CognitoUsername,
-                command.AuthenticationSession,
-                command.Code,
-                cancellationToken
-            );
+            AuthenticationCredentialsDto credentials =
+                await _identityService.VerifySoftwareTokenWithSession(
+                    userRecord.ResultingUser!.CognitoUsername,
+                    command.AuthenticationSession,
+                    command.Code,
+                    cancellationToken
+                );
             await _identityService.MarkEmailAsVerified(
                 userRecord.ResultingUser.CognitoUsername,
                 cancellationToken
@@ -213,12 +246,12 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
         }
 
         var result = await _identityService.AssociateSoftwareToken(
-            challenge.AuthenticationSession,
+            new SessionIdentifier.AuthenticationSession(challenge.AuthenticationSession),
             cancellationToken
         );
 
         return SetupUserResult.Ok(
-            new()
+            new MultiFactorAuthenticationSetupDto()
             {
                 OtpAuthUri = new OptAuthUri(userEmail, result.Secret).ToUri(),
                 AuthenticationSession = result.AuthenticationSession,
@@ -304,6 +337,22 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
                     "ReplaceOnboardingRecord always assigns a CorrelationId to the new record."
                 )
         );
+    }
+
+    public async Task<InitiateUpdateMultiFactorAuthenticationResult> InitiateUpdateMultiFactorAuthentication(
+        string accessToken,
+        CancellationToken cancellationToken
+    )
+    {
+        CurrentUser currentUserInfo = _currentUserInfoService.GetCurrentUserInfo();
+        AssociateSoftwareTokenResult result = await _identityService.AssociateSoftwareToken(
+            new SessionIdentifier.AccessToken(accessToken),
+            cancellationToken
+        );
+        return new MultiFactorAuthenticationUpdateDto()
+        {
+            OtpAuthUri = new OptAuthUri(currentUserInfo.Email, result.Secret).ToUri(),
+        };
     }
 
     private async Task<UserOnboardingRecord> ReplaceOnboardingRecord(

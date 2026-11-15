@@ -13,9 +13,19 @@ namespace UKPS.Api.Persistence.Data.Seeding.SyntheticData;
 internal sealed class SeedReferenceData
 {
     private static readonly HashSet<string> _medicinesOnlyProcedures = new(
-        ["Access Consortium", "Project Orbis"],
+        ["Access Consortium", "Orbis"],
         StringComparer.Ordinal
     );
+
+    private static readonly Dictionary<string, string> _procedureCodes = new(StringComparer.Ordinal)
+    {
+        ["MHRA national procedure"] = MhraProcedureTypeCodes.National,
+        ["International Recognition Procedure"] = MhraProcedureTypeCodes.InternationalRecognition,
+        ["Access Consortium"] = MhraProcedureTypeCodes.AccessConsortium,
+        ["Orbis"] = MhraProcedureTypeCodes.Orbis,
+        ["Other"] = MhraProcedureTypeCodes.Other,
+        ["Unknown at this stage"] = MhraProcedureTypeCodes.Unknown,
+    };
 
     private SeedReferenceData(SyntheticReferenceData data)
     {
@@ -49,6 +59,7 @@ internal sealed class SeedReferenceData
             data.MhraProcedureTypes,
             e => new MhraProcedureType
             {
+                Code = _procedureCodes[e.Label],
                 Label = e.Label,
                 RelevantTo = _medicinesOnlyProcedures.Contains(e.Label)
                     ? ReferenceDataType.MedicinesOnly

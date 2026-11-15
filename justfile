@@ -20,14 +20,24 @@ e2e *args:
     rm -rf e2e-results
     mkdir -p e2e-results
     export E2E_UID="$(id -u)" E2E_GID="$(id -g)"
+    run_opts=()
+    # Set by e2e-update-snapshots: snapshots are baked into the image, so mount the host's tests
+    # folder for the updated baselines to land in the working tree.
+    if [[ -n "${E2E_MOUNT_TESTS:-}" ]]; then
+        run_opts+=(--volume "$PWD/frontend/tests/e2e:/app/tests/e2e")
+    fi
     docker compose up --build --detach postgres backend frontend
     status=0
-    docker compose --profile e2e run --rm --build playwright "$@" || status=$?
+    docker compose --profile e2e run --rm --build "${run_opts[@]}" playwright "$@" || status=$?
     if [[ $status -ne 0 ]]; then
         docker compose logs --no-color postgres backend frontend > e2e-results/stack.log 2>&1 || true
         echo "Stack logs written to e2e-results/stack.log" >&2
     fi
     exit $status
+
+# Regenerate the @visual screenshot baselines in frontend/tests/e2e. Extra args go to `playwright test`.
+e2e-update-snapshots *args:
+    E2E_MOUNT_TESTS=1 {{just_executable()}} e2e --grep @visual --update-snapshots "$@"
 
 # Run Postgres, backend and frontend in the background on http://localhost:3000.
 stack-up:

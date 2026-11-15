@@ -8,7 +8,10 @@ namespace UKPS.Api.Persistence.FormAnnotations;
 /// The task's ID: a lowercase slug such as <c>indication-details</c>
 /// (<c>^[a-z0-9]+(-[a-z0-9]+)*$</c>).
 /// </param>
-/// <param name="title">The task title shown in the record task list. Must not be blank.</param>
+/// <param name="title">
+/// The task title, shown in the record task list and as the caption above each page heading. Must
+/// not be blank.
+/// </param>
 [AttributeUsage(AttributeTargets.Property, Inherited = false)]
 internal sealed class FormTaskAttribute(string id, string title) : Attribute
 {

@@ -3,7 +3,12 @@ using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
-[FormSection(RecordType.Medicine, "laboratory-testing", "Laboratory testing", Order = 70)]
+[FormSection(
+    RecordType.Medicine,
+    MedicineFormSections.ServiceReadiness,
+    MedicineFormSections.ServiceReadinessTitle,
+    Order = MedicineFormSections.ServiceReadinessOrder
+)]
 [FormPageShowWhen(
     "biomarker-type",
     "medicines_laboratory_testing.diagnostic_test_required",

@@ -1,5 +1,8 @@
 import { RuleKind } from '@/client/generated'
 
+import { dateAnswerError, isDateControl, toDateAnswer, toDateValue } from './dates'
+import { evaluatePrefixedNumber } from './prefixedNumber'
+
 import type {
   Answer,
   FormValue,
@@ -38,6 +41,9 @@ export const findEntry = (options: Option[] | null, value: string): Hierarchical
 
 /** Converts a saved answer into the value the form edits. */
 export const toFormValue = (question: Question, answer: unknown): FormValue => {
+  if (isDateControl(question.type)) {
+    return toDateValue(answer, question.type)
+  }
   if (question.multiple) {
     const values = Array.isArray(answer)
       ? answer.filter((v): v is string => typeof v === 'string')
@@ -60,6 +66,9 @@ const entryValue = (entry: HierarchicalEntry) => entry.child || entry.parent
 
 /** Converts a form value into its answer on the wire. */
 export const toAnswer = (question: Question, value: FormValue | undefined): Answer => {
+  if (isDateControl(question.type)) {
+    return value && typeof value === 'object' && 'precision' in value ? toDateAnswer(value) : null
+  }
   if (question.multiple) {
     if (!Array.isArray(value)) {
       return []
@@ -69,7 +78,7 @@ export const toAnswer = (question: Question, value: FormValue | undefined): Answ
       .filter((item) => item !== '')
   }
 
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
+  if (value && typeof value === 'object' && 'parent' in value) {
     return entryValue(value) || null
   }
   return typeof value === 'string' && value !== '' ? value : null
@@ -116,7 +125,16 @@ export const validateQuestion = (question: Question, value: FormValue | undefine
   if (Array.isArray(answer) && new Set(answer).size !== answer.length) {
     return duplicateMessage
   }
-  return firstFailure(question.rules, answer)
+  if (question.prefixes && !Array.isArray(answer)) {
+    // The server saves a prefix with no digits as blank before running the rules.
+    const { value: saved, error } = evaluatePrefixedNumber(question.prefixes, answer)
+    return firstFailure(question.rules, saved) ?? error ?? undefined
+  }
+  const dateError =
+    isDateControl(question.type) && typeof answer === 'string'
+      ? dateAnswerError(answer, question.type)
+      : null
+  return dateError ?? firstFailure(question.rules, answer)
 }
 
 /** The answer of an unanswered question: null, or an empty array when multi-value. */

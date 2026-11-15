@@ -53,7 +53,7 @@ test.describe('sign-up', () => {
     await expect(
       page.getByRole('heading', { name: 'Set up two-factor authentication' }),
     ).toBeVisible()
-    await expect(page.getByLabel('QR code for authenticator app setup')).toBeVisible()
+    await expect(page.getByLabel('QR code for authenticator setup')).toBeVisible()
     await expect(page.getByLabel('Enter your authentication code')).toBeVisible()
   })
 

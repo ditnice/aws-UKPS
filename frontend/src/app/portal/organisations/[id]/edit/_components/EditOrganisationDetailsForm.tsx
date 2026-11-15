@@ -155,7 +155,7 @@ export function EditOrganisationDetailsForm({
               <Input
                 label="Head office phone number"
                 name={field.name}
-                hint="For international numbers include the country code. For example +1 555-123-4567."
+                hint="For international numbers include the country code."
                 type="tel"
                 value={field.state.value}
                 onBlur={field.handleBlur}

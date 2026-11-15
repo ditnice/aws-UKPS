@@ -897,7 +897,14 @@ public class RecordViewServiceTests : DatabaseTestBase
         var ct = TestContext.Current.CancellationToken;
         Record record = await AddRecord(RecordStatus.Published);
         RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
-        var procedureType = await AddEntity(new MhraProcedureType { Label = "IRP" }, ct);
+        var procedureType = await AddEntity(
+            new MhraProcedureType
+            {
+                Code = MhraProcedureTypeCodes.InternationalRecognition,
+                Label = "IRP",
+            },
+            ct
+        );
         var regulator = await AddEntity(new IrpReferenceRegulator { Label = "FDA" }, ct);
         var ukSubmission = await AddDate(revision, DateEventType.UkSubmission, 1);
         var ukLicence = await AddDate(revision, DateEventType.UkLicence, 2);

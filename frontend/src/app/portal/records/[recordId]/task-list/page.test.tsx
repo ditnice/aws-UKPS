@@ -26,8 +26,8 @@ vi.mock('next/navigation', () => ({
 
 type GetRecordTaskListResult = Awaited<ReturnType<typeof getRecordTaskList>>
 
-// The Medicine form has one task today. The second section is illustrative, to show that every
-// section and task is rendered.
+// A trimmed version of the Medicine form: one task from each of its two sections, to show that
+// every section and task is rendered.
 const taskList = {
   data: {
     recordId: 42,
@@ -37,8 +37,8 @@ const taskList = {
     recordTitle: 'COVID-19, 18+ who do not require supplemental oxygen',
     sections: [
       {
-        id: 'indication-details',
-        title: 'Indication details',
+        id: 'indication-and-development',
+        title: 'Provide indication and development information',
         tasks: [
           {
             id: 'indication-details',
@@ -49,14 +49,14 @@ const taskList = {
         ],
       },
       {
-        id: 'treatment-details',
-        title: 'Treatment details',
+        id: 'service-readiness',
+        title: 'Provide service readiness information (optional)',
         tasks: [
           {
-            id: 'formulation',
-            title: 'Formulation',
+            id: 'laboratory-testing',
+            title: 'Laboratory testing',
             status: 'NotStarted',
-            firstPageId: 'formulation-type',
+            firstPageId: 'diagnostic-test-required',
           },
         ],
       },
@@ -99,9 +99,17 @@ describe('RecordTaskListPage', () => {
       '/portal/records/42/indication',
     )
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Indication details' }),
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Provide indication and development information',
+      }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: 'Treatment details' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Provide service readiness information (optional)',
+      }),
+    ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
       'href',
       '/portal/organisations/7/records/42',
@@ -110,9 +118,9 @@ describe('RecordTaskListPage', () => {
       'href',
       '/portal/records/42/indication',
     )
-    expect(screen.getByRole('link', { name: 'Formulation' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Laboratory testing' })).toHaveAttribute(
       'href',
-      '/portal/records/42/formulation-type',
+      '/portal/records/42/diagnostic-test-required',
     )
     expect(screen.getByText('In progress')).toBeInTheDocument()
     expect(screen.getByText('Not yet started')).toBeInTheDocument()

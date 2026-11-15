@@ -172,6 +172,9 @@ export const formatRegulatoryDate = (value: RegulatoryDateDto | null | undefined
     case 'ActualDate':
       formatted = fullDateFormat.format(date)
       break
+    case 'ActualMonth':
+      formatted = monthYearFormat.format(date)
+      break
   }
 
   return value.isConfidential ? `${formatted} (confidential)` : formatted
