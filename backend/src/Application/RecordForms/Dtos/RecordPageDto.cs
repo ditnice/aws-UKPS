@@ -25,7 +25,8 @@ public sealed record RecordPageDto
 
     /// <summary>
     /// The page after this one in its task, or null on the task's last page, where saving returns
-    /// to the task list.
+    /// to the task list. When a later page depends on this page's own answers it is offered even
+    /// if those answers do not yet lead to it, and saving then decides where to go.
     /// </summary>
     public required string? NextPageId { get; init; }
 

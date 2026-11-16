@@ -97,6 +97,21 @@ internal static class OptionKeys
     public const string MedicineHtaAssessor = "medicine-hta-assessor";
 
     /// <summary>
+    /// The <c>DesignationStatus</c> enum worded for MHRA PIM designation: granted, not granted,
+    /// decision to submit is ongoing, application submitted and decision pending, and no
+    /// submission intended. For a <see cref="FormControl.Radio"/> on a
+    /// <c>DesignationStatus?</c> property. Other designations that share the enum need their own
+    /// key, so name this one with <c>[FormOptions]</c>.
+    /// </summary>
+    public const string PimDesignationStatus = "pim-designation-status";
+
+    /// <summary>
+    /// The <c>EamsOpinionDecision</c> enum: positive and negative. For a
+    /// <see cref="FormControl.Radio"/> on an <c>EamsOpinionDecision?</c> property.
+    /// </summary>
+    public const string EamsOpinionDecision = "eams-opinion-decision";
+
+    /// <summary>
     /// The <c>NhsServiceChangesRequired</c> enum: complete transformation, some change, no
     /// changes and unknown at this stage, with a hint on all but the last. For a
     /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
@@ -110,6 +125,29 @@ internal static class OptionKeys
     /// <c>UkPatientPopulationRangeId</c> property. Archived options are hidden unless already saved.
     /// </summary>
     public const string UkPatientPopulationRanges = "uk-patient-population-ranges";
+
+    /// <summary>
+    /// The <c>DesignationStatus</c> enum worded for EU orphan medicine status: granted, not
+    /// granted, decision to submit ongoing, application submitted and decision pending, and no
+    /// submission intended. For a <see cref="FormControl.Radio"/> on a <c>DesignationStatus?</c>
+    /// property.
+    /// </summary>
+    public const string EuOrphanStatus = "eu-orphan-status";
+
+    /// <summary>
+    /// The <c>DesignationStatus</c> enum worded for EU ATMP classification: yes, no, decision to
+    /// submit ongoing, and application submitted and decision pending. It has no option for
+    /// <c>NoSubmissionIntended</c>. For a <see cref="FormControl.Radio"/> on a
+    /// <c>DesignationStatus?</c> property.
+    /// </summary>
+    public const string EuAtmpClassificationStatus = "eu-atmp-classification-status";
+
+    /// <summary>
+    /// The <c>AtmpClassification</c> reference data as a flat list, ordered by ID. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on an
+    /// <c>AtmpClassificationId</c> property. Archived options are hidden unless already saved.
+    /// </summary>
+    public const string AtmpClassifications = "atmp-classifications";
 
     /// <summary>
     /// The <c>PatientAccessSchemeRegion</c> flags enum: England, Wales, Scotland and Northern

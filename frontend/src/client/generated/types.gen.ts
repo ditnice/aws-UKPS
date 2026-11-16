@@ -202,7 +202,8 @@ export const FormControl = {
     HIERARCHICAL_SELECT: 'HierarchicalSelect',
     PRECISION_DATE: 'PrecisionDate',
     ACTUAL_MONTH: 'ActualMonth',
-    PREFIXED_NUMBER: 'PrefixedNumber'
+    PREFIXED_NUMBER: 'PrefixedNumber',
+    ACTUAL_DATE: 'ActualDate'
 } as const;
 
 /**
@@ -1163,7 +1164,8 @@ export type RecordPageDto = {
     previousPageId: null | string;
     /**
      * The page after this one in its task, or null on the task's last page, where saving returns
-     * to the task list.
+     * to the task list. When a later page depends on this page's own answers it is offered even
+     * if those answers do not yet lead to it, and saving then decides where to go.
      */
     nextPageId: null | string;
     /**

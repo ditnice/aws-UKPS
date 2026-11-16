@@ -12,9 +12,11 @@ internal static class MedicineOptionProviders
     {
         RegisterIndicationDetailsProviders(registry);
         RegisterHtaAndLaunchProviders(registry);
+        RegisterOrphanAndAtmpProviders(registry);
         RegisterLaboratoryTestingProviders(registry);
         RegisterPatientAndClinicalRequirementsProviders(registry);
         RegisterPricingAndBudgetImpactProviders(registry);
+        RegisterPimAndEamsProviders(registry);
         RegisterProductProviders(registry);
     }
 
@@ -25,6 +27,59 @@ internal static class MedicineOptionProviders
             (MedicineHtaAssessor.Nice, "NICE"),
             (MedicineHtaAssessor.Smc, "SMC"),
             (MedicineHtaAssessor.Awmsg, "AWMSG")
+        );
+    }
+
+    private static void RegisterOrphanAndAtmpProviders(OptionProviderRegistry registry)
+    {
+        registry.AddEnum(
+            OptionKeys.EuOrphanStatus,
+            (DesignationStatus.Granted, "Yes, orphan status granted"),
+            (DesignationStatus.NotGranted, "No, orphan status not granted"),
+            (DesignationStatus.DecisionToSubmitOngoing, "Decision to submit is ongoing"),
+            (
+                DesignationStatus.ApplicationSubmittedDecisionPending,
+                "Application submitted and decision pending"
+            ),
+            (DesignationStatus.NoSubmissionIntended, "No submission intended")
+        );
+
+        registry.AddEnum(
+            OptionKeys.EuAtmpClassificationStatus,
+            (DesignationStatus.Granted, "Yes"),
+            (DesignationStatus.NotGranted, "No"),
+            (DesignationStatus.DecisionToSubmitOngoing, "Decision to submit ongoing"),
+            (
+                DesignationStatus.ApplicationSubmittedDecisionPending,
+                "Application submitted - decision pending"
+            )
+        );
+
+        registry.AddReference<AtmpClassification>(
+            OptionKeys.AtmpClassifications,
+            q => q.OrderBy(x => x.Id),
+            x => new ReferenceOptionRow(x.Id, x.Label, x.IsArchived, null)
+        );
+    }
+
+    private static void RegisterPimAndEamsProviders(OptionProviderRegistry registry)
+    {
+        registry.AddEnum(
+            OptionKeys.PimDesignationStatus,
+            (DesignationStatus.Granted, "Granted"),
+            (DesignationStatus.NotGranted, "Not granted"),
+            (DesignationStatus.DecisionToSubmitOngoing, "Decision to submit is ongoing"),
+            (
+                DesignationStatus.ApplicationSubmittedDecisionPending,
+                "Application submitted and decision pending"
+            ),
+            (DesignationStatus.NoSubmissionIntended, "No submission intended")
+        );
+
+        registry.AddEnum(
+            OptionKeys.EamsOpinionDecision,
+            (EamsOpinionDecision.Positive, "Positive"),
+            (EamsOpinionDecision.Negative, "Negative")
         );
     }
 

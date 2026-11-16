@@ -24,7 +24,11 @@ export function RadioQuestion({
       legend={question.label}
       name={name}
       onBlur={onBlur}
-      onChange={onChange}
+      // A choice is a whole answer, so revalidate straight away rather than waiting for blur.
+      onChange={(next) => {
+        onChange(next)
+        onBlur()
+      }}
       value={value ?? null}
     >
       {question.options?.map((option) => (
