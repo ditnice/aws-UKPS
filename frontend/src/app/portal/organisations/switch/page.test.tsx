@@ -12,10 +12,15 @@ import { notFound, redirect } from '@/test-utils/nextNavigation'
 
 import SwitchOrganisationPage from './page'
 
-vi.mock('@/client/generated', () => ({
-  getCurrentUserOrganisations: vi.fn(),
-  getUsersMe: vi.fn(),
-}))
+vi.mock('@/client/generated', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/client/generated')>()
+
+  return {
+    ...actual,
+    getCurrentUserOrganisations: vi.fn(),
+    getUsersMe: vi.fn(),
+  }
+})
 
 vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(),
