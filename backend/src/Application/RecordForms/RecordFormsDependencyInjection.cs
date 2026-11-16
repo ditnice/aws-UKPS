@@ -18,6 +18,7 @@ internal static class RecordFormsDependencyInjection
         );
         services.AddHostedService<FormModelStartupCheck>();
         services.TryAddScoped<RecordFormPageLoader>();
+        services.TryAddScoped<RevisionChecker>();
         services.TryAddScoped<IRecordFormQueryService, RecordFormQueryService>();
         services.TryAddScoped<IRecordFormSaveService, RecordFormSaveService>();
         services.TryAddScoped<IRecordTaskListQueryService, RecordTaskListQueryService>();
