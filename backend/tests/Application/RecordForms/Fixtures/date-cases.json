@@ -37,6 +37,12 @@
     { "name": "actual month without a leading zero", "control": "ActualMonth", "answer": "2025-4", "error": "Enter a real date." },
     { "name": "actual month, no thirteenth month", "control": "ActualMonth", "answer": "2025-13", "error": "Enter a real date." },
     { "name": "actual month, not a quarter", "control": "ActualMonth", "answer": "2025-Q2", "error": "Enter a real date." },
-    { "name": "actual month, not a day", "control": "ActualMonth", "answer": "2025-04-15", "error": "Enter a real date." }
+    { "name": "actual month, not a day", "control": "ActualMonth", "answer": "2025-04-15", "error": "Enter a real date." },
+    { "name": "actual date control", "control": "ActualDate", "answer": "2025-04-15", "error": null, "precision": "ActualDate" },
+    { "name": "actual date control today", "control": "ActualDate", "answer": "2026-06-15", "error": null, "precision": "ActualDate" },
+    { "name": "actual date control tomorrow", "control": "ActualDate", "answer": "2026-06-16", "error": "An actual date must be today or in the past.", "precision": "ActualDate" },
+    { "name": "actual date control, not a month alone", "control": "ActualDate", "answer": "2025-04", "error": "Enter a real date." },
+    { "name": "actual date control, not a quarter", "control": "ActualDate", "answer": "2025-Q2", "error": "Enter a real date." },
+    { "name": "actual date control, no leap day in a common year", "control": "ActualDate", "answer": "2025-02-29", "error": "Enter a real date." }
   ]
 }

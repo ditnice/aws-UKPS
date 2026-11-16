@@ -47,6 +47,16 @@ internal static class MedicineFormTasks
     /// <summary>The "Health Technology Assessment (HTA) and launch" task's position within its section.</summary>
     public const int HtaAndLaunchOrder = 10;
 
+    /// <summary>The "Orphan medicine status and ATMP classification" task's ID.</summary>
+    public const string OrphanAndAtmp = "orphan-and-atmp";
+
+    /// <summary>The "Orphan medicine status and ATMP classification" task's title.</summary>
+    public const string OrphanAndAtmpTitle =
+        "Orphan medicine status and Advanced Therapy Medicinal Product (ATMP) classification";
+
+    /// <summary>The "Orphan medicine status and ATMP classification" task's position within its section.</summary>
+    public const int OrphanAndAtmpOrder = 10;
+
     /// <summary>The "Patient and clinical requirements" task's ID.</summary>
     public const string PatientAndClinicalRequirements = "patient-and-clinical-requirements";
 

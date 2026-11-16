@@ -265,7 +265,7 @@ in the entity and a missing one is a compile error. The scanner checks it suits 
 | `int` / `int?` foreign key to reference data | `Radio`, `Select`, `HierarchicalSelect` |
 | `[Flags]` enum | `Checkbox` |
 | navigation collection to a junction entity | `Checkbox`, `HierarchicalSelect` |
-| `int?` foreign key to `RegulatoryDate` | `PrecisionDate`, `ActualMonth` (with `[FormDateEvent]`) |
+| `int?` foreign key to `RegulatoryDate` | `PrecisionDate`, `ActualMonth`, `ActualDate` (with `[FormDateEvent]`) |
 
 Choice controls (`Radio`, `Select`, `Checkbox`, `HierarchicalSelect`) need an option provider,
 found by the property's type or named with `[FormOptions]`; `Text` and `Textarea` must not have

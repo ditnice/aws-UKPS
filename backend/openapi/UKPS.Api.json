@@ -5123,7 +5123,8 @@
           "HierarchicalSelect",
           "PrecisionDate",
           "ActualMonth",
-          "PrefixedNumber"
+          "PrefixedNumber",
+          "ActualDate"
         ],
         "type": "string",
         "description": "The input a record content question is rendered with. Part of the HTTP API contract: the\nmember names are sent to the frontend, so never rename or remove one."

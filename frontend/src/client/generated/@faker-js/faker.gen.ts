@@ -127,7 +127,8 @@ export const fakeFormControl = (options?: Options): FormControl => {
         'HierarchicalSelect',
         'PrecisionDate',
         'ActualMonth',
-        'PrefixedNumber'
+        'PrefixedNumber',
+        'ActualDate'
     ]);
 };
 
