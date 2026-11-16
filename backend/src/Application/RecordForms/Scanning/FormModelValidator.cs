@@ -202,12 +202,12 @@ internal static partial class FormModelValidator
             );
         }
         else if (
-            control == FormControl.PrecisionDate
+            control is FormControl.PrecisionDate or FormControl.ActualDate
             && string.IsNullOrWhiteSpace(question.DateEvent?.Name)
         )
         {
             problems.Add(
-                $"{question.Where} uses control PrecisionDate, whose [FormDateEvent] needs a Name for its error messages."
+                $"{question.Where} uses control {control}, whose [FormDateEvent] needs a Name for its error messages."
             );
         }
     }

@@ -175,6 +175,9 @@ public class FormModelValidatorTests
         "BrokenDatedEntity.NoNameDateId uses control PrecisionDate, whose [FormDateEvent] needs a Name for its error messages."
     )]
     [InlineData(
+        "BrokenDatedEntity.NoNameActualDateId uses control ActualDate, whose [FormDateEvent] needs a Name for its error messages."
+    )]
+    [InlineData(
         "BrokenDatedEntity.WrongControlDateId uses control Text which does not suit a RegulatoryDate binding."
     )]
     [InlineData(

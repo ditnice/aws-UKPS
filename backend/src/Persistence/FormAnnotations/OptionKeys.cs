@@ -148,4 +148,26 @@ internal static class OptionKeys
     /// <c>AtmpClassificationId</c> property. Archived options are hidden unless already saved.
     /// </summary>
     public const string AtmpClassifications = "atmp-classifications";
+
+    /// <summary>
+    /// The <c>MhraProcedureType</c> reference data that applies to medicines (every row but the
+    /// vaccines-only ones) as a flat list, ordered by ID. For a <see cref="FormControl.Radio"/> or
+    /// <see cref="FormControl.Select"/> on an <c>MhraProcedureTypeId</c> property. Archived
+    /// options are hidden unless already saved.
+    /// </summary>
+    public const string MedicineMhraProcedureTypes = "medicine-mhra-procedure-types";
+
+    /// <summary>
+    /// The <c>IrpReferenceRegulator</c> reference data as a flat list, ordered by ID. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on an
+    /// <c>IrpReferenceRegulatorId</c> property. Archived options are hidden unless already saved.
+    /// </summary>
+    public const string IrpReferenceRegulators = "irp-reference-regulators";
+
+    /// <summary>
+    /// The <c>IrpRoute</c> reference data as a flat list, ordered by ID. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on an
+    /// <c>IrpRouteId</c> property. Archived options are hidden unless already saved.
+    /// </summary>
+    public const string IrpRoutes = "irp-routes";
 }

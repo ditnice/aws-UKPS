@@ -96,8 +96,9 @@ internal static partial class DateAnswer
 
     /// <summary>
     /// The error for the answer, or null when it is a real date on the right side of today. A
-    /// <see cref="FormControl.PrecisionDate"/>'s errors name its date (<paramref name="dateName"/>);
-    /// one that is not real is taken as actual when it has a day, as the page sends it.
+    /// <see cref="FormControl.PrecisionDate"/>'s or <see cref="FormControl.ActualDate"/>'s errors
+    /// name its date (<paramref name="dateName"/>); a PrecisionDate that is not real is taken as
+    /// actual when it has a day, as the page sends it.
     /// </summary>
     public static string? Check(
         FormControl control,
@@ -106,7 +107,7 @@ internal static partial class DateAnswer
         string? dateName
     )
     {
-        if (control == FormControl.PrecisionDate)
+        if (control is FormControl.PrecisionDate or FormControl.ActualDate)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(dateName);
         }

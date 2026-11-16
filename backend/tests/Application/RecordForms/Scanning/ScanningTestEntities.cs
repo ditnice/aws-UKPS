@@ -495,11 +495,18 @@ internal sealed class BrokenDatedEntity
     [FormDateEvent(DateEventType.EamsSubmission)]
     public int? NoNameDateId { get; set; }
 
+    [FormTask("broken-dated-task", "Broken dated task", Order = 10)]
+    [FormPage("no-name-actual", "No name actual", Order = 70)]
+    [FormField("broken_dated_entity.no_name_actual_date", "No name actual", FormControl.ActualDate)]
+    [FormDateEvent(DateEventType.EamsOpinion)]
+    public int? NoNameActualDateId { get; set; }
+
     public RecordRevision? Revision { get; set; }
     public RegulatoryDate? NoEventDate { get; set; }
     public RegulatoryDate? WrongControlDate { get; set; }
     public RegulatoryDate? SameEventDate { get; set; }
     public RegulatoryDate? NoNameDate { get; set; }
+    public RegulatoryDate? NoNameActualDate { get; set; }
 }
 
 /// <summary>A question revealed by a reference data code.</summary>

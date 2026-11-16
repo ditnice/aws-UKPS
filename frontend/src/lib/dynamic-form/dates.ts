@@ -2,14 +2,14 @@ import type { FormControl } from '@/client/generated'
 
 import type { Answer } from './types'
 
-// Server messages; mirror RecordFormMessages. A PrecisionDate's messages name its date, for
-// example "submission".
+// Server messages; mirror RecordFormMessages. A PrecisionDate's or ActualDate's messages name its
+// date, for example "submission".
 export const invalidDateMessage = 'Enter a real date'
 export const actualMonthInFutureMessage = 'The date must be this month or in the past'
 export const dateNotRealMessage = (actual: boolean, name: string) =>
   `${actual ? 'Actual' : 'Estimated'} date of ${name} must be a real date`
 export const actualDateInFutureMessage = (name: string) =>
-  `Actual date of ${name} must be in the past`
+  `Actual date of ${name} must be today or in the past`
 export const estimatedDateInPastMessage = (name: string) =>
   `Estimated date of ${name} must be in the future`
 
@@ -99,8 +99,8 @@ const parseDateAnswer = (answer: string, control: DateControl): ParsedDate | nul
 
 /**
  * The error for a date answer, or null when it is a real date on the right side of today; mirrors
- * DateAnswer.Check. A PrecisionDate's errors name its date (`dateName`); one that is not real is
- * taken as actual when it has a day.
+ * DateAnswer.Check. A PrecisionDate's or ActualDate's errors name its date (`dateName`); a
+ * PrecisionDate that is not real is taken as actual when it has a day.
  */
 export const dateAnswerError = (
   answer: string,
@@ -108,8 +108,8 @@ export const dateAnswerError = (
   today: string,
   dateName: string | null,
 ): string | null => {
-  if (control === 'PrecisionDate' && !dateName?.trim()) {
-    throw new Error('A PrecisionDate question needs a dateName for its messages.')
+  if ((control === 'PrecisionDate' || control === 'ActualDate') && !dateName?.trim()) {
+    throw new Error(`A ${control} question needs a dateName for its messages.`)
   }
   const name = dateName ?? ''
   const parsed = parseDateAnswer(answer, control)

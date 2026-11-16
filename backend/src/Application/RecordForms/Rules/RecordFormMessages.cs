@@ -16,13 +16,14 @@ internal static class RecordFormMessages
     public const string InvalidDate = "Enter a real date";
     public const string ActualMonthInFuture = "The date must be this month or in the past";
 
-    // A PrecisionDate's messages name its date, for example "submission". The page also says
-    // "Enter the actual submission date" when a part is blank, which never reaches the server.
+    // A PrecisionDate's or ActualDate's messages name its date, for example "submission". The
+    // page also says "Enter the actual submission date" when a part is blank, which never
+    // reaches the server.
     public static string DateNotReal(bool actual, string name) =>
         $"{(actual ? "Actual" : "Estimated")} date of {name} must be a real date";
 
     public static string ActualDateInFuture(string name) =>
-        $"Actual date of {name} must be in the past";
+        $"Actual date of {name} must be today or in the past";
 
     public static string EstimatedDateInPast(string name) =>
         $"Estimated date of {name} must be in the future";

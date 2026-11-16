@@ -160,7 +160,7 @@ describe('precisionDateProblem', () => {
       parts: ['quarter', 'year'],
     })
     expect(problem({ precision: 'ActualDate', day: '16', month: '6', year: '2026' })).toEqual({
-      message: 'Actual date of submission must be in the past',
+      message: 'Actual date of submission must be today or in the past',
       parts: ['day', 'month', 'year'],
     })
   })
