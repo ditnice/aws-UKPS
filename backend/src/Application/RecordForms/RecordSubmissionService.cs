@@ -2,13 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
-using UKPS.Api.Application.RecordForms.Conditions;
-using UKPS.Api.Application.RecordForms.CrossPageRules;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
-using UKPS.Api.Application.RecordForms.Model;
-using UKPS.Api.Application.RecordForms.Options;
-using UKPS.Api.Application.RecordForms.Rules;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
 
@@ -17,7 +12,7 @@ namespace UKPS.Api.Application.RecordForms;
 internal sealed class RecordSubmissionService(
     AppDbContext dbContext,
     RecordFormPageLoader loader,
-    CrossPageRuleRegistry crossPageRules,
+    RevisionChecker revisionChecker,
     IOrganisationAuthoriser organisationAuthoriser,
     CurrentDbUserEntityService currentDbUserEntityService,
     IDateTimeProvider dateTimeProvider
@@ -46,27 +41,19 @@ internal sealed class RecordSubmissionService(
             return SubmitRecordResult.Err(error);
         }
 
-        // The hash is checked before the rules, so a user who hasn't seen the latest answers
+        // The hash is checked before the errors, so a user who hasn't seen the latest answers
         // reloads straight away rather than fixing errors in answers that have since changed.
-        var (answers, applicability) = await loader.LoadAllAnswersAsync(form, cancellationToken);
-        string hash = AnswerHash.ForRevision(form.Revision.Id, answers);
-        if (!string.Equals(command.RevisionHash, hash, StringComparison.Ordinal))
+        LoadedRevision revision = await revisionChecker.LoadAsync(form, cancellationToken);
+        if (!string.Equals(command.RevisionHash, revision.Hash, StringComparison.Ordinal))
         {
             return SubmitRecordResult.Err(new SubmitRecordError.RecordChanged());
         }
 
         // Checked again even when the hash matches, as date rules change with the date.
-        IReadOnlyList<SubmissionErrorDto> errors = RevisionValidator.Validate(
-            form.Model,
-            answers,
-            applicability,
-            await LoadOptionsAsync(form.Model, answers, applicability, cancellationToken),
-            crossPageRules.For(form.Record.RecordType),
-            DateAnswer.Today(dateTimeProvider.GetOffsetUtcNow())
-        );
-        if (errors.Count > 0)
+        RevisionCheck check = await revisionChecker.CheckAsync(form, revision, cancellationToken);
+        if (check.Errors.Count > 0)
         {
-            return SubmitRecordResult.Err(new SubmitRecordError.Invalid(errors));
+            return SubmitRecordResult.Err(new SubmitRecordError.Invalid(check.Errors));
         }
 
         User user = await currentDbUserEntityService.GetCurrentUser(cancellationToken);
@@ -113,30 +100,5 @@ internal sealed class RecordSubmissionService(
         }
 
         return null;
-    }
-
-    /// <summary>The options of every choice question on the pages that apply.</summary>
-    private async Task<Dictionary<string, IReadOnlyList<FormOption>>> LoadOptionsAsync(
-        FormModel model,
-        IReadOnlyDictionary<string, FormAnswer> answers,
-        Applicability applicability,
-        CancellationToken cancellationToken
-    )
-    {
-        Dictionary<string, IReadOnlyList<FormOption>> options = new(StringComparer.Ordinal);
-        foreach (FormPage page in model.Pages.Where(applicability.Applies))
-        {
-            var pageOptions = await loader.LoadOptionsAsync(
-                page,
-                PageAnswers.For(page, answers),
-                cancellationToken
-            );
-            foreach (var (questionId, questionOptions) in pageOptions)
-            {
-                options[questionId] = questionOptions;
-            }
-        }
-
-        return options;
     }
 }
