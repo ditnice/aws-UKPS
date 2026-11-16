@@ -35,6 +35,7 @@ public class RecordSubmissionServiceTests : DatabaseTestBase
     private const string ScreeningDetails = "medicines_patient_identification.screening_details";
     private const string Indication = "medicines_indication_detail.indication";
     private const string UkLaunchDate = "record_hta.uk_launch_date";
+    private const string UkLicenceDate = "record_mhra_date.uk_licence_date";
 
     private static readonly DateTime _now = new(2026, 10, 15, 9, 30, 0, DateTimeKind.Utc);
     private static readonly DateOnly _launchQuarter = new(2027, 4, 1);
@@ -260,11 +261,7 @@ public class RecordSubmissionServiceTests : DatabaseTestBase
     [Fact]
     public async Task Submit_EstimatedDateNowInThePast_IsReported()
     {
-        await Context
-            .RegulatoryDates.Where(d =>
-                d.RevisionId == _revision.Id && d.DateEvent == DateEventType.UkLaunch
-            )
-            .ExecuteUpdateAsync(s => s.SetProperty(d => d.DateValue, new DateOnly(2026, 4, 1)), Ct);
+        await MoveDate(DateEventType.UkLaunch, new DateOnly(2026, 4, 1));
 
         IReadOnlyList<SubmissionErrorDto> errors = await SubmitInvalid();
 
@@ -274,6 +271,37 @@ public class RecordSubmissionServiceTests : DatabaseTestBase
                 RecordFormMessages.EstimatedDateInPast(_model.FindQuestion(UkLaunchDate)!.DateName!)
             ),
         ]);
+    }
+
+    [Fact]
+    public async Task Submit_LaunchBeforeLicence_ReportsCr01OnBothDates()
+    {
+        await MoveDate(DateEventType.UkLicence, _launchQuarter.AddYears(1));
+        DateOrderRule rule = MedicineRule("CR-01");
+
+        IReadOnlyList<SubmissionErrorDto> errors = await SubmitInvalid();
+
+        errors.ShouldBe(
+            [Error(UkLicenceDate, rule.EarlierMessage), Error(UkLaunchDate, rule.LaterMessage)],
+            ignoreOrder: true
+        );
+    }
+
+    [Fact]
+    public async Task Submit_LaunchBeforeLicenceWhileSubmittingToEams_IsExemptFromCr01()
+    {
+        await MoveDate(DateEventType.UkLicence, _launchQuarter.AddYears(1));
+        await UpdateRow<MedicinesEamsPim>(x =>
+        {
+            x.PimDesignationStatus = DesignationStatus.Granted;
+            x.WillSubmitToEams = YesNoUnknown.Yes;
+        });
+
+        // The EAMS dates this reveals are unanswered, so the record is still invalid.
+        IEnumerable<string> questionIds = (await SubmitInvalid()).Select(static e => e.QuestionId);
+
+        questionIds.ShouldNotContain(UkLicenceDate);
+        questionIds.ShouldNotContain(UkLaunchDate);
     }
 
     [Fact]
@@ -336,6 +364,16 @@ public class RecordSubmissionServiceTests : DatabaseTestBase
         ).ShouldBeError();
         return error.ShouldBeOfType<SubmitRecordError.Invalid>().Errors;
     }
+
+    private static DateOrderRule MedicineRule(string id) =>
+        MedicineCrossPageRules
+            .All.OfType<DateOrderRule>()
+            .Single(r => string.Equals(r.Id, id, StringComparison.Ordinal));
+
+    private async Task MoveDate(DateEventType dateEvent, DateOnly value) =>
+        await Context
+            .RegulatoryDates.Where(d => d.RevisionId == _revision.Id && d.DateEvent == dateEvent)
+            .ExecuteUpdateAsync(s => s.SetProperty(d => d.DateValue, value), Ct);
 
     private static SubmissionErrorDto Error(string questionId, string message)
     {

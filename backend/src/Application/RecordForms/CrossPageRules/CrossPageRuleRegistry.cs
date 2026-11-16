@@ -7,10 +7,6 @@ namespace UKPS.Api.Application.RecordForms.CrossPageRules;
 /// <summary>The cross-page rules of each record type's form. A singleton.</summary>
 internal sealed class CrossPageRuleRegistry
 {
-    // Medicine rules are added as the questions they compare are annotated, for example the UK
-    // submission, licence and launch dates and the EAMS exemption.
-    private static readonly IReadOnlyList<CrossPageRule> _medicineRules = [];
-
     private readonly IReadOnlyDictionary<RecordType, IReadOnlyList<CrossPageRule>> _rules;
 
     private CrossPageRuleRegistry(
@@ -28,7 +24,7 @@ internal sealed class CrossPageRuleRegistry
             models,
             new Dictionary<RecordType, IReadOnlyList<CrossPageRule>>
             {
-                [RecordType.Medicine] = _medicineRules,
+                [RecordType.Medicine] = MedicineCrossPageRules.All,
             }
         );
 
