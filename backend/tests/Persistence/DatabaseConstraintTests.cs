@@ -250,14 +250,14 @@ public class DatabaseConstraintTests : DatabaseTestBase
     [InlineData(" example@email.com")]
     [InlineData("exa mple@email.com")]
     [InlineData("example@email.com\r")]
-    public async Task Database_rejects_stored_emails_containing_whitespace(string email)
+    public async Task SaveChangesAsync_UserWorkEmailWithWhitespace_ThrowsDbUpdateException(
+        string email
+    )
     {
         var user = new UserFaker().RuleFor(x => x.WorkEmail, _ => email).Generate();
-        await AddEntity(user, TestContext.Current.CancellationToken);
         var exception = await Should.ThrowAsync<DbUpdateException>(() =>
-            Context.SaveChangesAsync(TestContext.Current.CancellationToken)
+            AddEntity(user, TestContext.Current.CancellationToken)
         );
-
         PostgresException postgresException =
             exception.InnerException.ShouldBeOfType<PostgresException>();
         postgresException.ConstraintName.ShouldBe(ConstraintNames.WorkEmailNoWhitespace);
