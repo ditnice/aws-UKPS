@@ -19,6 +19,7 @@ public sealed record UpdateUserDetailsCommand
     /// </summary>
     [Required(AllowEmptyStrings = false)]
     [EmailAddress]
+    [NoWhitespace]
     public required string WorkEmail { get; init; }
 
     /// <summary>

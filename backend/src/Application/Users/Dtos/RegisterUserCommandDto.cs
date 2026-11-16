@@ -19,7 +19,12 @@ public sealed record RegisterUserCommandDto
     /// </summary>
     [Required]
     [EmailAddress]
-    public required string WorkEmail { get; init; }
+    [NoWhitespace]
+    public required string WorkEmail
+    {
+        get => field;
+        set => field = value?.Trim() ?? string.Empty;
+    }
 
     /// <summary>
     /// Gets the user phone number.
