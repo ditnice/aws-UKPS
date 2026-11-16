@@ -222,7 +222,10 @@ invalid model stops the API starting. It holds structure only: bindings receive 
 - **Form order** is section order, then task order, then page order. A user enters a task from
   the task list and steps through its pages: Back goes to the previous page in the task, and Save
   and continue goes to the next. On a task's first page, Back returns to the task list. On its last
-  page the button reads **Save and return to task list**, and saving returns to the task list.
+  page the button reads **Save and return to task list**, and saving returns to the task list. A
+  page opened from check your answers (a link with `?returnTo=check-your-answers`) has one button,
+  **Save and return to check your answers**: saving returns to check your answers, and Back goes
+  there too, whether or not the task has another page.
 - **No ties.** Two sections or pages with the same `Order`, or two questions on the same page
   with the same `Order`, fail startup. Attribute order in source is never relied on.
 
