@@ -5,7 +5,12 @@ import { createContext, useContext, useId, useState } from 'react'
 
 import '@nice-digital/nds-checkbox/scss/checkbox.scss'
 
-import { composeDescriptions, FormGroup, useFormGroup } from '@/components/FormGroup/FormGroup'
+import {
+  composeDescriptions,
+  firstOptionValue,
+  FormGroup,
+  useFormGroup,
+} from '@/components/FormGroup/FormGroup'
 import type { FormGroupProps } from '@/components/FormGroup/FormGroup'
 
 import styles from './Checkboxes.module.scss'
@@ -13,6 +18,8 @@ import styles from './Checkboxes.module.scss'
 import type { ComponentPropsWithRef, FocusEventHandler, ReactNode } from 'react'
 
 type Selection = {
+  /** Value of the first option, the only one styled as invalid for a group error. */
+  firstValue?: string
   name: string
   values: string[]
   toggle: (value: string, checked: boolean) => void
@@ -33,7 +40,10 @@ export type CheckboxesProps = Omit<
   onBlur?: FocusEventHandler<HTMLInputElement>
 }
 
-/** Multiple selections submit repeated name/value pairs (read with FormData.getAll). */
+/**
+ * Multiple selections submit repeated name/value pairs (read with FormData.getAll). `Checkbox`
+ * options go directly in `children` (or in Fragments) so the first can show a group error.
+ */
 export function Checkboxes({
   name,
   value,
@@ -53,8 +63,9 @@ export function Checkboxes({
     if (!controlled) setUncontrolledValue(next)
     onChange?.(next)
   }
+  const firstValue = firstOptionValue(children, Checkbox)
   return (
-    <CheckboxSelection.Provider value={{ name, values, toggle, onBlur }}>
+    <CheckboxSelection.Provider value={{ firstValue, name, values, toggle, onBlur }}>
       <FormGroup {...groupProps}>{children}</FormGroup>
     </CheckboxSelection.Provider>
   )
@@ -92,7 +103,9 @@ export function Checkbox({
   const inputId = id ?? generatedId
   const hintId = hint ? `${inputId}-hint` : undefined
   const errorId = error && errorMessage ? `${inputId}-error` : undefined
-  const isInvalid = error || group.error
+  // A group error marks only the first option of a Checkboxes group. Standalone checkboxes in a
+  // plain FormGroup are independent questions, so each one is marked.
+  const isInvalid = error || (group.error && (!selection || selection.firstValue === value))
   return (
     <>
       {errorId && (

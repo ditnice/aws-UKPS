@@ -1,17 +1,36 @@
 'use client'
 
 import clsx from 'clsx'
-import { createContext, useContext, useId } from 'react'
+import { Children, createContext, Fragment, isValidElement, useContext, useId } from 'react'
 
 import '@nice-digital/nds-form-group/scss/form-group.scss'
 
 import styles from './FormGroup.module.scss'
 
-import type { ComponentPropsWithRef, ReactNode } from 'react'
+import type { ComponentPropsWithRef, ElementType, ReactNode } from 'react'
 
 type GroupMetadata = { describedBy?: string; error: boolean; inline: boolean }
 const FormGroupContext = createContext<GroupMetadata>({ error: false, inline: false })
 export const useFormGroup = () => useContext(FormGroupContext)
+
+/**
+ * The `value` of the first `option` element among `children`, looking inside Fragments, so a group
+ * error can be styled on its first option only. Options must be rendered directly (or in Fragments
+ * or arrays); an option inside another wrapper component is not found.
+ */
+export function firstOptionValue(children: ReactNode, option: ElementType): string | undefined {
+  for (const child of Children.toArray(children)) {
+    if (!isValidElement<{ children?: ReactNode; value?: unknown }>(child)) continue
+    if (child.type === option) {
+      return typeof child.props.value === 'string' ? child.props.value : undefined
+    }
+    if (child.type === Fragment) {
+      const nested = firstOptionValue(child.props.children, option)
+      if (nested !== undefined) return nested
+    }
+  }
+  return undefined
+}
 
 /** Compose ID references without describing the same text twice. */
 export function composeDescriptions(...values: (string | undefined)[]) {
@@ -31,7 +50,10 @@ export type FormGroupProps = ComponentPropsWithRef<'fieldset'> & {
   identifier?: string
 }
 
-/** Presentational grouping only: children opt into metadata, and are never cloned. */
+/**
+ * Presentational grouping only: children opt into metadata, and are never cloned. Option groups may
+ * read their children (see `firstOptionValue`) but never change them.
+ */
 export function FormGroup({
   'aria-describedby': describedBy,
   children,
@@ -72,14 +94,14 @@ export function FormGroup({
             )}
           </legend>
         )}
-        {errorId && (
-          <p className="form-group__error-message" id={errorId}>
-            <span className="visually-hidden">Error:</span> {error}
-          </p>
-        )}
         {hintId && (
           <p className="form-group__hint" id={hintId}>
             {hint}
+          </p>
+        )}
+        {errorId && (
+          <p className="form-group__error-message" id={errorId}>
+            <span className="visually-hidden">Error:</span> {error}
           </p>
         )}
         {children}

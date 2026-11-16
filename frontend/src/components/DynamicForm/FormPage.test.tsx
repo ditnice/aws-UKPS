@@ -545,7 +545,7 @@ describe('FormPage', () => {
   })
 
   describe('controls', () => {
-    it('associates radio hints and errors and revalidates after selection and blur', async () => {
+    it('associates radio hints and errors and revalidates on selection', async () => {
       const user = userEvent.setup()
       render(
         <FormPage
@@ -581,8 +581,8 @@ describe('FormPage', () => {
       }
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
       await user.click(yes)
-      await user.tab()
       await waitFor(() => expect(screen.queryByText('Choose yes or no')).not.toBeInTheDocument())
+      expect(yes).toHaveFocus()
       expect(yes).toBeChecked()
       expect(yes).not.toHaveAttribute('aria-invalid')
       expect(screen.getByRole('group', { name: 'Choose an answer' })).not.toHaveAttribute(
@@ -657,7 +657,7 @@ describe('FormPage', () => {
       ).not.toHaveAccessibleDescription()
     })
 
-    it('associates checkbox hints and errors and revalidates on selection and blur', async () => {
+    it('associates checkbox hints and errors and revalidates on selection', async () => {
       const user = userEvent.setup()
       render(
         <FormPage
@@ -691,11 +691,12 @@ describe('FormPage', () => {
         )
       }
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+      expect(document.querySelectorAll('.checkbox--error')).toHaveLength(1)
       await user.click(first)
-      await user.tab()
       await waitFor(() =>
         expect(screen.queryByText('Choose at least one method')).not.toBeInTheDocument(),
       )
+      expect(first).toHaveFocus()
       expect(first).not.toHaveAttribute('aria-invalid')
       expect(screen.getByRole('group', { name: 'Choose contact methods' })).not.toHaveAttribute(
         'aria-invalid',
@@ -1187,7 +1188,9 @@ describe('FormPage', () => {
 
       const message = await screen.findByText('Enter the UK regulatory submission date')
       expect(message.closest('[data-component="radios-conditional"]')).toBeNull()
-      expect(container.querySelectorAll('.radio--error')).toHaveLength(3)
+      const invalid = container.querySelectorAll('.radio--error')
+      expect(invalid).toHaveLength(1)
+      expect(invalid[0]).toContainElement(screen.getByRole('radio', { name: 'Estimated quarter' }))
     })
 
     describe('actual month', () => {
@@ -1247,6 +1250,70 @@ describe('FormPage', () => {
 
         expect(
           await screen.findByText('The date must be this month or in the past.'),
+        ).toBeInTheDocument()
+        expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('actual date', () => {
+      const actualDatePage = (answer: string | null = null) =>
+        page({
+          page: { id: 'orphan', title: 'Orphan medicine status', commercialInConfidence: false },
+          questions: [
+            question({ id: 'region', type: 'Text', label: 'Where?', hint: null, rules: [] }),
+            question({
+              id: 'granted_date',
+              type: 'ActualDate',
+              label: 'Date EU orphan medicine status granted',
+              hint: null,
+              rules: [],
+            }),
+          ],
+          answers: { region: null, granted_date: answer },
+        })
+
+      it('sends the day, month and year beside another question', async () => {
+        const user = userEvent.setup()
+        render(<FormPage page={actualDatePage()} />)
+
+        expect(
+          screen.getByRole('group', { name: 'Date EU orphan medicine status granted' }),
+        ).toBeInTheDocument()
+        await user.type(screen.getByRole('textbox', { name: 'Day' }), '26')
+        await user.type(screen.getByRole('textbox', { name: 'Month' }), '7')
+        await user.type(screen.getByRole('textbox', { name: 'Year' }), '2025')
+        save()
+
+        await waitFor(() => {
+          expect(mocks.saveRecordFormPage).toHaveBeenCalledWith(
+            expect.objectContaining({
+              body: expect.objectContaining({
+                answers: { region: null, granted_date: '2025-07-26' },
+              }),
+            }),
+          )
+        })
+      })
+
+      it('loads a saved date into its parts', () => {
+        render(<FormPage page={actualDatePage('2025-07-26')} />)
+
+        expect(screen.getByRole('textbox', { name: 'Day' })).toHaveValue('26')
+        expect(screen.getByRole('textbox', { name: 'Month' })).toHaveValue('7')
+        expect(screen.getByRole('textbox', { name: 'Year' })).toHaveValue('2025')
+      })
+
+      it('rejects a date after today without saving', async () => {
+        const user = userEvent.setup()
+        render(<FormPage page={actualDatePage()} />)
+
+        await user.type(screen.getByRole('textbox', { name: 'Day' }), '1')
+        await user.type(screen.getByRole('textbox', { name: 'Month' }), '1')
+        await user.type(screen.getByRole('textbox', { name: 'Year' }), '2999')
+        save()
+
+        expect(
+          await screen.findByText('An actual date must be today or in the past.'),
         ).toBeInTheDocument()
         expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
       })
