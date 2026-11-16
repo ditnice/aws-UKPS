@@ -388,6 +388,26 @@ public class LoginServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task ConfirmNewPassword_WhenAResetRequestHasBeenInitiatedAndUserExistButPasswordUpdateFails_ShouldNotSendSecurityNotification()
+    {
+        Result<InitiateForgottenPasswordProcedureError> initiateResult =
+            await _harness.Service.InitiateForgottenPasswordProcedure(
+                new() { Email = _user.WorkEmail },
+                Ct
+            );
+        initiateResult.ShouldBeSuccess();
+
+        _ = await MakeValidConfirmPasswordRequest(x =>
+            x with
+            {
+                NewPassword = _harness.Cognito.InvalidPassword,
+            }
+        );
+
+        _harness.Emails.Sent.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task ConfirmNewPassword_WhenIncorrectConfirmationCodeIsProvided_ShouldReturnCodeMismatchError()
     {
         Result<InitiateForgottenPasswordProcedureError> initiateResult =

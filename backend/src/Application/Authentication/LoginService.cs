@@ -122,7 +122,7 @@ internal class LoginService : ILoginService
             cancellationToken
         );
 
-        if (user is null)
+        if (user is null || !result.IsOk)
             return result;
 
         await _emailService.SendEmail(
