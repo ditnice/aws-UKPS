@@ -16,5 +16,9 @@ public sealed record UpdateUserEmailCommand
     [Required(AllowEmptyStrings = false)]
     [EmailAddress]
     [MaxLength(255)]
-    public required string Value { get; init; }
+    public required string Value
+    {
+        get => field;
+        set => field = value?.Trim() ?? string.Empty;
+    }
 }
