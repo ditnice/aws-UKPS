@@ -15,7 +15,7 @@ public static class EmailDbFunctions
 {
     /// <summary>
     /// Normalises an email address for case-insensitive comparison by calling the
-    /// <c>public.normalise_email</c> database function.
+    /// <c>ukps.normalise_email</c> database function.
     /// </summary>
     /// <param name="email">The email address to normalise.</param>
     /// <returns>The normalised email address, as computed by the database.</returns>

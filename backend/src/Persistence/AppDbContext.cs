@@ -120,7 +120,7 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
                 )!
             )
             .HasName("normalise_email")
-            .HasSchema("public");
+            .HasSchema("ukps");
 
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);

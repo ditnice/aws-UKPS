@@ -189,7 +189,7 @@ internal sealed class User
         {
             CognitoUsername = command.CognitoUsername,
             FullName = command.FullName,
-            WorkEmail = command.WorkEmail,
+            WorkEmail = command.WorkEmail.Trim(),
             WorkTelephone = command.WorkTelephone,
             OnboardingRecord = userOnboardingRecord,
             UserType = command.UserType ?? UserType.PharmaUser,

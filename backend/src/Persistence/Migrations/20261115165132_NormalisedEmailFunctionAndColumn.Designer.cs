@@ -319,7 +319,7 @@ namespace UKPS.Api.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("text")
                         .HasColumnName("normalised_work_email")
-                        .HasComputedColumnSql("public.normalise_email(work_email)", true);
+                        .HasComputedColumnSql("ukps.normalise_email(work_email)", true);
 
                     b.Property<string>("Title")
                         .HasColumnType("text")

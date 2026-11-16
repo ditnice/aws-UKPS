@@ -19,7 +19,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.WorkEmail).IsRequired();
         builder
             .Property(u => u.NormalisedWorkEmail)
-            .HasComputedColumnSql("public.normalise_email(work_email)", stored: true);
+            .HasComputedColumnSql("ukps.normalise_email(work_email)", stored: true);
 
         builder
             .HasIndex(u => u.NormalisedWorkEmail)

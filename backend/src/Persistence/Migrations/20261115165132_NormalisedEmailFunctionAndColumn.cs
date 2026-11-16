@@ -11,7 +11,7 @@ namespace UKPS.Api.Persistence.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql("""
-            CREATE FUNCTION public.normalise_email(text) RETURNS text
+            CREATE FUNCTION ukps.normalise_email(text) RETURNS text
                 LANGUAGE sql IMMUTABLE PARALLEL SAFE
                 AS $$ SELECT UPPER($1 COLLATE "C") $$;
             """);
@@ -27,7 +27,7 @@ namespace UKPS.Api.Persistence.Migrations
                 table: "app_user",
                 type: "text",
                 nullable: false,
-                computedColumnSql: "public.normalise_email(work_email)",
+                computedColumnSql: "ukps.normalise_email(work_email)",
                 stored: true);
 
             migrationBuilder.CreateIndex(
@@ -66,7 +66,7 @@ namespace UKPS.Api.Persistence.Migrations
                 column: "work_email",
                 unique: true);
 
-            migrationBuilder.Sql("DROP FUNCTION public.normalise_email(text);");
+            migrationBuilder.Sql("DROP FUNCTION ukps.normalise_email(text);");
         }
     }
 }
