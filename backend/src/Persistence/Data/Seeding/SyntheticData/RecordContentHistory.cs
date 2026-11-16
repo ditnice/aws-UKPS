@@ -140,6 +140,7 @@ internal static class RecordContentHistory
             HtaAndDesignationFields(regulatory),
             PatientAndClinicalRequirementsFields(record.ServiceReadinessInformation),
             ServiceReadinessFields(record.ServiceReadinessInformation),
+            PricingAndBudgetImpactFields(record.ServiceReadinessInformation.PricingAndBudgetImpact),
         }
             .SelectMany(fields => fields)
             .ToDictionary(field => field.Path, field => field.Value, StringComparer.Ordinal);
@@ -432,9 +433,47 @@ internal static class RecordContentHistory
                 "medicines_service_impact.uk_patient_population_range_id",
                 readiness.PatientAndClinicalRequirements.UkPatientPopulationRange
             ),
+        ];
+
+    private static (string Path, string? Value)[] PricingAndBudgetImpactFields(
+        SyntheticPricingAndBudgetImpact pricing
+    ) =>
+        [
+            ("medicines_budget_impact.estimated_uptake", pricing.EstimatedUptake),
+            (
+                "medicines_budget_impact.compassionate_access_available",
+                pricing.CompassionateAccessAvailable?.ToString()
+            ),
+            (
+                "medicines_budget_impact.compassionate_access_details",
+                pricing.CompassionateAccessDetails
+            ),
+            (
+                "medicines_budget_impact.patient_access_scheme_planned",
+                pricing.PatientAccessSchemePlanned?.ToString()
+            ),
+            (
+                "medicines_budget_impact.patient_access_scheme_regions",
+                pricing.PatientAccessSchemeRegions is null
+                || pricing.PatientAccessSchemeRegions.Count == 0
+                    ? null
+                    : FieldAuditJson.Serialize(
+                        pricing
+                            .PatientAccessSchemeRegions.Select(region => region.ToString())
+                            .Order(StringComparer.Ordinal)
+                    )
+            ),
+            (
+                "medicines_budget_impact.indication_specific_pricing_planned",
+                pricing.IndicationSpecificPricingPlanned?.ToString()
+            ),
+            (
+                "medicines_budget_impact.indication_specific_pricing_details",
+                pricing.IndicationSpecificPricingDetails
+            ),
             (
                 "medicines_budget_impact.net_uk_budget_impact_band",
-                readiness.PricingAndBudgetImpact.NetUkBudgetImpactBand?.ToString()
+                pricing.NetUkBudgetImpactBand?.ToString()
             ),
         ];
 
