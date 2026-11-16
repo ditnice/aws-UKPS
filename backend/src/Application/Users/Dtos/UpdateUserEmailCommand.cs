@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using UKPS.Api.WebApi.Validators;
 
 namespace UKPS.Api.Application.Users.Dtos;
 
@@ -15,6 +16,7 @@ public sealed record UpdateUserEmailCommand
     /// </remarks>
     [Required(AllowEmptyStrings = false)]
     [EmailAddress]
+    [NoWhitespace]
     [MaxLength(255)]
     public required string Value
     {
