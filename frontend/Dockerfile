@@ -14,7 +14,7 @@ ADD --checksum=sha256:17c557502061c4879b844fff983288a2fb07d520f4cf2a5de60f5cda80
 
 # Node 24 on Debian 13 "trixie": keep the Node version and Debian release (glibc) in step
 # with the distroless runtime below.
-FROM --platform=${ECS_PLATFORM} node:24.22.2-trixie@sha256:5c6e2e57d7dd6652ce6f087ba0328312059d7c77f93baa8751865dbf103f1acb AS base
+FROM --platform=${ECS_PLATFORM} node:24.22.3-trixie@sha256:6e5d4c38403930b420404f190be8563396dca2bd156a6cb4722707b0efcf6fc1 AS base
 
 WORKDIR /app
 
