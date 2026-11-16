@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 import { PharmaceuticalEntity } from '@/client/generated'
 import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
-import { Button } from '@/components/Button/Button'
+import { Button, ButtonGroup } from '@/components/Button/Button'
 
 type CreateRecordActionBannerProps = {
   organisationId: string
@@ -26,7 +26,7 @@ export const CreateRecordActionBanner = ({
       variant="subtle"
       title="Create Record"
       cta={
-        <>
+        <ButtonGroup>
           {canCreateMedicine && (
             <Button
               elementType={Link}
@@ -44,7 +44,7 @@ export const CreateRecordActionBanner = ({
               Create vaccine record
             </Button>
           )}
-        </>
+        </ButtonGroup>
       }
     >
       To create a new record select the record type you want to create.{' '}
