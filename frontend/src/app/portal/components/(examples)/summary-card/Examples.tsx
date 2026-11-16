@@ -34,6 +34,25 @@ export function Examples() {
         </SummaryCard>
       </Example>
 
+      <Example title="Several section actions">
+        <SummaryCard
+          actions={[
+            <SummaryListAction href="#edit-trial" key="edit" visuallyHiddenText="trial 1">
+              Edit
+            </SummaryListAction>,
+            <SummaryListAction href="#remove-trial" key="remove" visuallyHiddenText="trial 1">
+              Remove
+            </SummaryListAction>,
+          ]}
+          title="Trial 1"
+          titleHeadingLevel={3}
+        >
+          <SummaryList variant="wide-value">
+            <SummaryListRow label="Study name" value="Lorem ipsum dolor sit amet" />
+          </SummaryList>
+        </SummaryCard>
+      </Example>
+
       <Example title="Text instead of a list">
         <SummaryCard
           actions={
