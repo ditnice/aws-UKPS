@@ -9,7 +9,8 @@ namespace UKPS.Api.Application.RecordForms.Model;
 /// <summary>
 /// The answer of a date question. A <see cref="FormControl.PrecisionDate"/> takes <c>yyyy-Qn</c>
 /// for an estimated quarter, <c>yyyy-MM</c> for an estimated month and <c>yyyy-MM-dd</c> for an
-/// actual date; an <see cref="FormControl.ActualMonth"/> takes <c>yyyy-MM</c> only. Quarters and
+/// actual date; an <see cref="FormControl.ActualMonth"/> takes <c>yyyy-MM</c> only and an
+/// <see cref="FormControl.ActualDate"/> takes <c>yyyy-MM-dd</c> only. Quarters and
 /// months are stored as their first day. Against today in UTC, an actual date is today or
 /// earlier, an actual month this month or earlier, and an estimate is for a quarter or month that
 /// has not ended.
@@ -53,7 +54,11 @@ internal static partial class DateAnswer
         value = default;
         Match match = Pattern().Match(answer);
         bool isMonth = match.Groups["month"].Success && !match.Groups["day"].Success;
-        if (!match.Success || (control == FormControl.ActualMonth && !isMonth))
+        if (
+            !match.Success
+            || (control == FormControl.ActualMonth && !isMonth)
+            || (control == FormControl.ActualDate && !match.Groups["day"].Success)
+        )
         {
             return false;
         }

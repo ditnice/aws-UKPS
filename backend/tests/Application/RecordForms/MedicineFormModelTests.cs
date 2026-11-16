@@ -14,9 +14,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.12";
+    private const string ExpectedVersion = "2026.11.14";
     private const string ExpectedFingerprint =
-        "5e14a908de0275e1b467ab6967f55ebc43f817228cfb69b1ac9dc6ae1b39e59d";
+        "8c86475636bfbfb92eb497c3f6d04aeca97b84ad7c508b6e496699b290838f7a";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -82,6 +82,22 @@ public class MedicineFormModelTests
     }
 
     [Fact]
+    public void Model_HasThePimAndEamsPagesInOrder()
+    {
+        Model
+            .Pages.Where(static p =>
+                string.Equals(p.TaskId, "pim-and-eams", StringComparison.Ordinal)
+            )
+            .Select(static p => (p.Id, p.CommercialInConfidence))
+            .ShouldBe([
+                ("pim-designation", true),
+                ("eams-submission-date", true),
+                ("eams-opinion-date", true),
+                ("eams-opinion-decision", true),
+            ]);
+    }
+
+    [Fact]
     public void Model_HasTheDevelopmentBackgroundPagesInOrder()
     {
         Model
@@ -101,6 +117,38 @@ public class MedicineFormModelTests
             )
             .Select(static p => p.Id)
             .ShouldBe(["hta-submission", "nice-aligned-pathway", "nice-ta-id", "uk-launch-date"]);
+    }
+
+    [Fact]
+    public void Model_HasTheOrphanAndAtmpPagesInOrder()
+    {
+        Model
+            .Pages.Where(static p =>
+                string.Equals(p.TaskId, "orphan-and-atmp", StringComparison.Ordinal)
+            )
+            .Select(static p => p.Id)
+            .ShouldBe(["orphan-status", "atmp-classification"]);
+    }
+
+    [Fact]
+    public void Model_OrphanAndAtmpDatesAreActualDates()
+    {
+        Model
+            .FindQuestion("medicines_eu_status.eu_orphan_granted_date")!
+            .Control.ShouldBe(FormControl.ActualDate);
+        Model
+            .FindQuestion("medicines_eu_status.atmp_recommendation_date")!
+            .Control.ShouldBe(FormControl.ActualDate);
+    }
+
+    [Fact]
+    public void Model_AtmpStatusDoesNotOfferNoSubmissionIntended()
+    {
+        string orphan = _options.Find(OptionKeys.EuOrphanStatus)!.Description;
+        string atmp = _options.Find(OptionKeys.EuAtmpClassificationStatus)!.Description;
+
+        orphan.ShouldContain("NoSubmissionIntended");
+        atmp.ShouldNotContain("NoSubmissionIntended");
     }
 
     [Fact]
@@ -138,6 +186,26 @@ public class MedicineFormModelTests
                     "AnswerIn record_hta.medicine_hta_submission_intended [Yes]"
                 ),
                 (
+                    "medicines_eu_status.eu_orphan_granted_date",
+                    "AnswerIn medicines_eu_status.eu_orphan_status [Granted]"
+                ),
+                (
+                    "medicines_eu_status.eu_orphan_status_number",
+                    "AnswerIn medicines_eu_status.eu_orphan_status [Granted]"
+                ),
+                (
+                    "medicines_eu_status.atmp_recommendation_date",
+                    "AnswerIn medicines_eu_status.eu_atmp_classification_status [Granted]"
+                ),
+                (
+                    "medicines_eu_status.atmp_classification_id",
+                    "AnswerIn medicines_eu_status.eu_atmp_classification_status [Granted]"
+                ),
+                (
+                    "medicines_eams_pim.will_submit_to_eams",
+                    "AnswerIn medicines_eams_pim.pim_designation_status [Granted]"
+                ),
+                (
                     "medicines_laboratory_testing.genomic_test_notes",
                     "AnswerIn medicines_laboratory_testing.genomic_test_mandatory_status [MandatoryNoAlternatives, MandatoryAlternativesMayExist]"
                 ),
@@ -164,6 +232,9 @@ public class MedicineFormModelTests
             .ShouldBe([
                 "nice-aligned-pathway",
                 "nice-ta-id",
+                "eams-submission-date",
+                "eams-opinion-date",
+                "eams-opinion-decision",
                 "biomarker-type",
                 "non-genomic-biomarker",
                 "genomic-target",
@@ -249,6 +320,7 @@ public class MedicineFormModelTests
             .ShouldBe([
                 "indication-and-development: indication-details, development-background",
                 "hta-and-launch: hta-and-launch",
+                "special-designation: orphan-and-atmp, pim-and-eams",
                 "service-readiness: laboratory-testing, patient-and-clinical-requirements",
             ]);
     }
@@ -261,6 +333,8 @@ public class MedicineFormModelTests
             .ShouldBe([
                 typeof(MedicinesDevelopmentBackground),
                 typeof(RecordHta),
+                typeof(MedicinesEuStatus),
+                typeof(MedicinesEamsPim),
                 typeof(MedicinesLaboratoryTesting),
                 typeof(MedicinesPatientIdentification),
                 typeof(MedicinesServiceImpact),
@@ -364,6 +438,33 @@ public class MedicineFormModelTests
             ("record_hta.hta_nice_aligned_pathway", FormControl.Radio, AnswerShape.Single),
             ("record_hta.nice_ta_development_id", FormControl.PrefixedNumber, AnswerShape.Single),
             ("record_hta.uk_launch_date", FormControl.PrecisionDate, AnswerShape.Single),
+            ("medicines_eu_status.eu_orphan_status", FormControl.Radio, AnswerShape.Single),
+            (
+                "medicines_eu_status.eu_orphan_granted_date",
+                FormControl.ActualDate,
+                AnswerShape.Single
+            ),
+            ("medicines_eu_status.eu_orphan_status_number", FormControl.Text, AnswerShape.Single),
+            (
+                "medicines_eu_status.eu_atmp_classification_status",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_eu_status.atmp_recommendation_date",
+                FormControl.ActualDate,
+                AnswerShape.Single
+            ),
+            ("medicines_eu_status.atmp_classification_id", FormControl.Radio, AnswerShape.Single),
+            ("medicines_eams_pim.pim_designation_status", FormControl.Radio, AnswerShape.Single),
+            ("medicines_eams_pim.will_submit_to_eams", FormControl.Radio, AnswerShape.Single),
+            (
+                "medicines_eams_pim.eams_submission_date",
+                FormControl.PrecisionDate,
+                AnswerShape.Single
+            ),
+            ("medicines_eams_pim.eams_opinion_date", FormControl.PrecisionDate, AnswerShape.Single),
+            ("medicines_eams_pim.eams_opinion_decision", FormControl.Radio, AnswerShape.Single),
             (
                 "medicines_laboratory_testing.diagnostic_test_required",
                 FormControl.Radio,
@@ -533,6 +634,10 @@ public class MedicineFormModelTests
         Next("hta-submission").ShouldBe("uk-launch-date");
         Previous("uk-launch-date").ShouldBe("hta-submission");
         Next("uk-launch-date").ShouldBeNull();
+        Previous("orphan-status").ShouldBeNull();
+        Next("orphan-status").ShouldBe("atmp-classification");
+        Previous("atmp-classification").ShouldBe("orphan-status");
+        Next("atmp-classification").ShouldBeNull();
         Previous("diagnostic-test-required").ShouldBeNull();
         // With no answers the conditional pages do not apply, so navigation skips to monitoring.
         Next("diagnostic-test-required").ShouldBe("monitoring-tests");

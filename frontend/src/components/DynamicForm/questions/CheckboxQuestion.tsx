@@ -17,7 +17,11 @@ export function CheckboxQuestion({
       legend={question.label}
       name={name}
       value={value}
-      onChange={onChange}
+      // Revalidate on every tick, not only on blur, so an error clears as soon as one is ticked.
+      onChange={(next) => {
+        onChange(next)
+        onBlur()
+      }}
       onBlur={onBlur}
     >
       {question.options?.map((option) => (

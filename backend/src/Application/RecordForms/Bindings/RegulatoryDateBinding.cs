@@ -86,7 +86,8 @@ internal sealed class RegulatoryDateBinding(
     /// The precision a stored date is read at, so the answer is always one the control accepts.
     /// A date stored at a precision the control does not offer (an older row, or one from before
     /// the control changed) would otherwise load as blank and could not be saved. An
-    /// <see cref="FormControl.ActualMonth"/> reads any date as its month; a
+    /// <see cref="FormControl.ActualMonth"/> reads any date as its month and an
+    /// <see cref="FormControl.ActualDate"/> as an actual date on its first day; a
     /// <see cref="FormControl.PrecisionDate"/> reads an actual month as an actual date on its first
     /// day, so it stays actual, not confidential and in the past. The row itself is unchanged until
     /// the answer is.
@@ -95,6 +96,7 @@ internal sealed class RegulatoryDateBinding(
         (control, stored) switch
         {
             (FormControl.ActualMonth, _) => DatePrecision.ActualMonth,
+            (FormControl.ActualDate, _) => DatePrecision.ActualDate,
             (_, DatePrecision.ActualMonth) => DatePrecision.ActualDate,
             _ => stored,
         };
