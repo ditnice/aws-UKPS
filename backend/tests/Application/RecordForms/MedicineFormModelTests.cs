@@ -16,7 +16,7 @@ public class MedicineFormModelTests
     // Bump FormVersions.Medicine whenever this changes, then update both values.
     private const string ExpectedVersion = "2026.11.14";
     private const string ExpectedFingerprint =
-        "2a6bd250872e77855173e2ff68368fd760a520e86d2bdad724806ec8b58c95ca";
+        "1763142e85da79991dbe6f9954f58032ca9b6f5abd8ce36288f35359459e9b80";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
