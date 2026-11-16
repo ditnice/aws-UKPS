@@ -1,14 +1,8 @@
 import Link from 'next/link'
 
 import { TableAndFiltersGrid } from '@/app/portal/components/_components/TableAndFiltersGrid'
-import {
-  getCurrentOrganisationChampions,
-  getUsersMe,
-  PharmaceuticalEntity,
-} from '@/client/generated'
+import { getCurrentOrganisationChampions, getUsersMe } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
-import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
-import { Button, ButtonGroup } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 import OrganisationPageWrapper from '../_components/OrganisationPageWrapper'

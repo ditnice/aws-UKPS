@@ -1,7 +1,12 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getCurrentUserOrganisations, getUsersMe, UserInformationDto } from '@/client/generated'
+import {
+  getCurrentUserOrganisations,
+  getUsersMe,
+  PharmaceuticalEntity,
+  UserInformationDto,
+} from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { notFound, redirect } from '@/test-utils/nextNavigation'
 
@@ -40,6 +45,7 @@ const currentUser: UserInformationDto = {
   userRole: 'Standard',
   status: 'Active',
   hasMultipleOrganisations: true,
+  allowedPharmaceuticalEntity: PharmaceuticalEntity.BOTH,
 }
 
 const organisations = [
