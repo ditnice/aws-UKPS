@@ -36,7 +36,7 @@ const validFormValues: FormValues = {
   recordTitle: 'record-title',
 }
 
-const otherIdentifiersLabel = 'Other names and identifiers (optional)'
+const otherIdentifiersLabel = 'Identifier'
 
 const setFieldValue = (label: string, value: string) => {
   fireEvent.change(screen.getByLabelText(label), {
@@ -156,7 +156,7 @@ describe('CreateMedicineRecordForm', () => {
 
       fireEvent.click(screen.getByText('Add another active substance'))
 
-      expect(screen.getByLabelText('Generic name')).toBeDefined()
+      expect(screen.getByLabelText('Generic name 1')).toBeDefined()
       expect(screen.getByLabelText('Generic name 2')).toBeDefined()
     })
 
@@ -167,7 +167,7 @@ describe('CreateMedicineRecordForm', () => {
 
       expect(screen.getByLabelText('Generic name 2')).toBeDefined()
 
-      fireEvent.click(screen.getByRole('button', { name: 'Remove additional active substance 2' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Remove Generic name 2' }))
 
       expect(screen.queryByLabelText('Generic name 2')).toBeNull()
     })
@@ -229,7 +229,7 @@ describe('CreateMedicineRecordForm', () => {
 
       expect(screen.getByLabelText(`${otherIdentifiersLabel} 2`)).toBeDefined()
 
-      fireEvent.click(screen.getByRole('button', { name: 'Remove additional identifier 2' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Remove Identifier 2' }))
 
       expect(screen.queryByLabelText(`${otherIdentifiersLabel} 2`)).toBeNull()
     })
@@ -492,8 +492,8 @@ describe('CreateMedicineRecordForm', () => {
 
     it.each([
       ['company code', 'CompanyCode', 'Company code'],
-      ['generic names', 'GenericNames', 'Generic name'],
-      ['other names and identifiers', 'OtherIdentifiers', otherIdentifiersLabel],
+      ['generic names', 'GenericNames', 'Generic name 1'],
+      ['other names and identifiers', 'OtherIdentifiers', `${otherIdentifiersLabel} 1`],
     ])(
       'allows resubmission after correcting %s rejected by the API',
       async (_, errorKey, label) => {

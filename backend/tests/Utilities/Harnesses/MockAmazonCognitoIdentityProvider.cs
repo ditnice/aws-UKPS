@@ -202,7 +202,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
             {
                 var request = callInfo.Arg<AssociateSoftwareTokenRequest>();
 
-                if (!IsSessionIdValid(request.Session))
+                if (request.AccessToken is null && !IsSessionIdValid(request.Session))
                 {
                     throw new NotAuthorizedException("Invalid authentication session.");
                 }

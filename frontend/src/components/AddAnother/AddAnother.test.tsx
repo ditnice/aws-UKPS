@@ -38,6 +38,11 @@ const getInputByLabelText = (labelText: string): HTMLInputElement => {
   return input as HTMLInputElement
 }
 
+const singleItemField: AddAnotherProps<string>['field'] = {
+  ...defaultProps.field,
+  state: { value: ['1'], meta: { errors: [] } },
+}
+
 afterEach(cleanup)
 
 describe('AddAnother', () => {
@@ -52,7 +57,7 @@ describe('AddAnother', () => {
   it('should render', () => {
     renderComponent()
 
-    const input = screen.getByLabelText(defaultProps.labelPrefix)
+    const input = screen.getByLabelText(`${defaultProps.labelPrefix} 1`)
 
     expect(input).toBeDefined()
   })
@@ -60,7 +65,7 @@ describe('AddAnother', () => {
   it('should render an input for each value', () => {
     renderComponent()
 
-    expect(getInputByLabelText('label-prefix')).toBeDefined()
+    expect(getInputByLabelText('label-prefix 1')).toBeDefined()
     expect(getInputByLabelText('label-prefix 2')).toBeDefined()
     expect(getInputByLabelText('label-prefix 3')).toBeDefined()
   })
@@ -68,7 +73,7 @@ describe('AddAnother', () => {
   it('should render each input with the expected name', () => {
     renderComponent()
 
-    expect(getInputByLabelText('label-prefix').getAttribute('name')).toBe('test-field[0]')
+    expect(getInputByLabelText('label-prefix 1').getAttribute('name')).toBe('test-field[0]')
     expect(getInputByLabelText('label-prefix 2').getAttribute('name')).toBe('test-field[1]')
     expect(getInputByLabelText('label-prefix 3').getAttribute('name')).toBe('test-field[2]')
   })
@@ -76,15 +81,31 @@ describe('AddAnother', () => {
   it('should render each input with the expected value', () => {
     renderComponent()
 
-    expect(getInputByLabelText('label-prefix').value).toBe('test-field[0]')
+    expect(getInputByLabelText('label-prefix 1').value).toBe('test-field[0]')
     expect(getInputByLabelText('label-prefix 2').value).toBe('test-field[1]')
     expect(getInputByLabelText('label-prefix 3').value).toBe('test-field[2]')
   })
 
-  it('should render the hint on the first input only', () => {
+  it('should render the hint above the first input and link it to that input only', () => {
     renderComponent()
 
-    expect(screen.getByText(defaultProps.hint)).toBeDefined()
+    expect(screen.getByText(defaultProps.hint)).toBeInTheDocument()
+    expect(getInputByLabelText('label-prefix 1')).toHaveAccessibleDescription(defaultProps.hint)
+    expect(getInputByLabelText('label-prefix 2')).not.toHaveAccessibleDescription(defaultProps.hint)
+  })
+
+  it('should not number the label when there is only one item', () => {
+    renderComponent({ field: singleItemField })
+
+    expect(screen.getByLabelText('label-prefix')).toBeInTheDocument()
+  })
+
+  it('should not render a remove button when there is only one item', () => {
+    renderComponent({ field: singleItemField })
+
+    expect(
+      screen.queryByRole('button', { name: new RegExp(defaultProps.removeItemLabel) }),
+    ).not.toBeInTheDocument()
   })
 
   it('should render a remove button for the first item', () => {
@@ -104,15 +125,15 @@ describe('AddAnother', () => {
     renderComponent()
 
     expect(screen.getByTestId('remove-button-1').textContent).toBe(
-      `${defaultProps.removeItemLabel} 2`,
+      `${defaultProps.removeItemLabel} label-prefix 2`,
     )
   })
 
   it('should give each remove button a distinct accessible name', () => {
     renderComponent()
 
-    expect(screen.getByRole('button', { name: 'remove-item-label 2' })).toBeDefined()
-    expect(screen.getByRole('button', { name: 'remove-item-label 3' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'remove-item-label label-prefix 2' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'remove-item-label label-prefix 3' })).toBeDefined()
   })
 
   it('should call removeValue with the item index when a remove button is clicked', () => {
@@ -242,7 +263,7 @@ describe('AddAnother', () => {
 
     renderComponent({ getSubfield })
 
-    fireEvent.blur(screen.getByLabelText('label-prefix'))
+    fireEvent.blur(screen.getByLabelText('label-prefix 1'))
 
     expect(handleBlur).toHaveBeenCalledTimes(1)
   })
@@ -304,7 +325,7 @@ describe('AddAnother', () => {
 
     renderComponent({ getSubfield })
 
-    expect(screen.getByLabelText('label-prefix').getAttribute('aria-invalid')).toBe('true')
+    expect(screen.getByLabelText('label-prefix 1').getAttribute('aria-invalid')).toBe('true')
   })
 
   it('should render no inputs when the field has no values', () => {

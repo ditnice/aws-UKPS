@@ -6,15 +6,30 @@ import { signInPath } from '@/lib/auth/routing'
 const cognitoIssuer = process.env.COGNITO_ISSUER
 const cognitoClientId = process.env.COGNITO_CLIENT_ID
 const authenticationMode = process.env.AUTHENTICATION_MODE
+const robotsNoIndex = process.env.ROBOTS_NOINDEX === 'true'
 const cognitoJwks = cognitoIssuer
   ? createRemoteJWKSet(new URL(`${cognitoIssuer}/.well-known/jwks.json`))
   : undefined
 
 export const config = {
-  matcher: ['/portal/:path*'],
+  matcher: ['/:path*'],
 }
 
+const portalPathPattern = /^\/portal(\/|$)/
+
 export async function proxy(req: NextRequest) {
+  const response = portalPathPattern.test(req.nextUrl.pathname)
+    ? await authorisePortalRequest(req)
+    : NextResponse.next()
+
+  if (robotsNoIndex) {
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+  }
+
+  return response
+}
+
+async function authorisePortalRequest(req: NextRequest) {
   const accessToken = req.cookies.get('access_token')?.value
 
   if (authenticationMode === 'DEV') {

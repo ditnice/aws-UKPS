@@ -93,10 +93,8 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             .Sections.Select(static s => (s.Id, s.Title))
             .ShouldBe([
                 ("indication-and-development", "Provide indication and development information"),
-                (
-                    "regulatory-access-and-launch",
-                    "Provide regulatory, access, and launch information"
-                ),
+                ("hta-and-launch", "Health technology assessment and launch"),
+                ("special-designation", "Provide special designation information"),
                 ("service-readiness", "Provide service readiness information (optional)"),
             ]);
         taskList
@@ -116,15 +114,21 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
                     RecordTaskStatus.NotStarted
                 ),
                 (
-                    "mhra-procedure-and-dates",
-                    "Medicines and Healthcare products Regulatory Agency (MHRA) procedure and dates",
-                    "uk-market-authorisation",
-                    RecordTaskStatus.NotStarted
-                ),
-                (
                     "hta-and-launch",
                     "Health Technology Assessment (HTA) and launch",
                     "hta-submission",
+                    RecordTaskStatus.NotStarted
+                ),
+                (
+                    "orphan-and-atmp",
+                    "Orphan medicine status and Advanced Therapy Medicinal Product (ATMP) classification",
+                    "orphan-status",
+                    RecordTaskStatus.NotStarted
+                ),
+                (
+                    "pim-and-eams",
+                    "Promising Innovative Medicine (PIM) and Early Access to Medicines Scheme (EAMS)",
+                    "pim-designation",
                     RecordTaskStatus.NotStarted
                 ),
                 (

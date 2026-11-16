@@ -44,6 +44,18 @@ describe('Checkbox', () => {
     ).toHaveLength(1)
   })
 
+  it('marks every standalone checkbox in a plain FormGroup with a group error', () => {
+    render(
+      <FormGroup error="Confirm both statements" legend="Declaration">
+        <Checkbox label="I agree to the terms" name="terms" value="yes" />
+        <Checkbox label="I confirm the details are correct" name="confirm" value="yes" />
+      </FormGroup>,
+    )
+    for (const input of screen.getAllByRole('checkbox')) {
+      expect(input.parentElement).toHaveClass('checkbox--error')
+    }
+  })
+
   it('supports native defaults, keyboard, blur, disabled, required, submission and reset', async () => {
     const user = userEvent.setup()
     const blur = vi.fn()

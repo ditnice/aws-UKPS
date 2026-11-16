@@ -169,7 +169,7 @@ public class FormModelValidatorTests
         "BrokenDatedEntity.NoEventDateId uses control PrecisionDate, which needs [FormDateEvent]."
     )]
     [InlineData(
-        "BrokenDatedEntity.TextEvent has [FormDateEvent], which only a PrecisionDate or ActualMonth uses."
+        "BrokenDatedEntity.TextEvent has [FormDateEvent], which only a PrecisionDate, ActualMonth or ActualDate uses."
     )]
     [InlineData(
         "BrokenDatedEntity.NoNameDateId uses control PrecisionDate, whose [FormDateEvent] needs a Name for its error messages."

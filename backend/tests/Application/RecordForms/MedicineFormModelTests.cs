@@ -5,7 +5,6 @@ using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Application.RecordForms.Scanning;
 using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
-using UKPS.Api.Persistence.Entities.ReferenceData;
 using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Persistence.FormAnnotations;
@@ -15,9 +14,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.13";
+    private const string ExpectedVersion = "2026.11.14";
     private const string ExpectedFingerprint =
-        "f1f8ae87b26163fb404ca8e1b2ed876f742bebe68b3dd382ad0d74240ab128b1";
+        "8c86475636bfbfb92eb497c3f6d04aeca97b84ad7c508b6e496699b290838f7a";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -83,6 +82,22 @@ public class MedicineFormModelTests
     }
 
     [Fact]
+    public void Model_HasThePimAndEamsPagesInOrder()
+    {
+        Model
+            .Pages.Where(static p =>
+                string.Equals(p.TaskId, "pim-and-eams", StringComparison.Ordinal)
+            )
+            .Select(static p => (p.Id, p.CommercialInConfidence))
+            .ShouldBe([
+                ("pim-designation", true),
+                ("eams-submission-date", true),
+                ("eams-opinion-date", true),
+                ("eams-opinion-decision", true),
+            ]);
+    }
+
+    [Fact]
     public void Model_HasTheDevelopmentBackgroundPagesInOrder()
     {
         Model
@@ -98,10 +113,42 @@ public class MedicineFormModelTests
     {
         Model
             .Pages.Where(static p =>
-                string.Equals(p.TaskId, "hta-and-launch", StringComparison.Ordinal)
+                string.Equals(p.SectionId, "hta-and-launch", StringComparison.Ordinal)
             )
             .Select(static p => p.Id)
             .ShouldBe(["hta-submission", "nice-aligned-pathway", "nice-ta-id", "uk-launch-date"]);
+    }
+
+    [Fact]
+    public void Model_HasTheOrphanAndAtmpPagesInOrder()
+    {
+        Model
+            .Pages.Where(static p =>
+                string.Equals(p.TaskId, "orphan-and-atmp", StringComparison.Ordinal)
+            )
+            .Select(static p => p.Id)
+            .ShouldBe(["orphan-status", "atmp-classification"]);
+    }
+
+    [Fact]
+    public void Model_OrphanAndAtmpDatesAreActualDates()
+    {
+        Model
+            .FindQuestion("medicines_eu_status.eu_orphan_granted_date")!
+            .Control.ShouldBe(FormControl.ActualDate);
+        Model
+            .FindQuestion("medicines_eu_status.atmp_recommendation_date")!
+            .Control.ShouldBe(FormControl.ActualDate);
+    }
+
+    [Fact]
+    public void Model_AtmpStatusDoesNotOfferNoSubmissionIntended()
+    {
+        string orphan = _options.Find(OptionKeys.EuOrphanStatus)!.Description;
+        string atmp = _options.Find(OptionKeys.EuAtmpClassificationStatus)!.Description;
+
+        orphan.ShouldContain("NoSubmissionIntended");
+        atmp.ShouldNotContain("NoSubmissionIntended");
     }
 
     [Fact]
@@ -139,6 +186,26 @@ public class MedicineFormModelTests
                     "AnswerIn record_hta.medicine_hta_submission_intended [Yes]"
                 ),
                 (
+                    "medicines_eu_status.eu_orphan_granted_date",
+                    "AnswerIn medicines_eu_status.eu_orphan_status [Granted]"
+                ),
+                (
+                    "medicines_eu_status.eu_orphan_status_number",
+                    "AnswerIn medicines_eu_status.eu_orphan_status [Granted]"
+                ),
+                (
+                    "medicines_eu_status.atmp_recommendation_date",
+                    "AnswerIn medicines_eu_status.eu_atmp_classification_status [Granted]"
+                ),
+                (
+                    "medicines_eu_status.atmp_classification_id",
+                    "AnswerIn medicines_eu_status.eu_atmp_classification_status [Granted]"
+                ),
+                (
+                    "medicines_eams_pim.will_submit_to_eams",
+                    "AnswerIn medicines_eams_pim.pim_designation_status [Granted]"
+                ),
+                (
                     "medicines_laboratory_testing.genomic_test_notes",
                     "AnswerIn medicines_laboratory_testing.genomic_test_mandatory_status [MandatoryNoAlternatives, MandatoryAlternativesMayExist]"
                 ),
@@ -163,13 +230,11 @@ public class MedicineFormModelTests
             .Pages.Where(static p => p.ShowWhen is not null)
             .Select(static p => p.Id)
             .ShouldBe([
-                "global-first-submission",
-                "international-recognition",
-                "international-submission-date",
-                "international-licence-date",
-                "international-conditional-approval",
                 "nice-aligned-pathway",
                 "nice-ta-id",
+                "eams-submission-date",
+                "eams-opinion-date",
+                "eams-opinion-decision",
                 "biomarker-type",
                 "non-genomic-biomarker",
                 "genomic-target",
@@ -186,67 +251,10 @@ public class MedicineFormModelTests
     }
 
     [Fact]
-    public void Model_HasTheMhraProcedureAndDatesPagesInOrder()
-    {
-        Model
-            .Pages.Where(static p =>
-                string.Equals(p.TaskId, "mhra-procedure-and-dates", StringComparison.Ordinal)
-            )
-            .Select(static p => (p.Id, p.ShowWhen?.Description))
-            .ShouldBe([
-                ("uk-market-authorisation", null),
-                ("uk-submission-date", null),
-                (
-                    "global-first-submission",
-                    "AnswerIn record_mhra_date.uk_submission_date [ActualDate]"
-                ),
-                ("uk-licence-date", null),
-                ("uk-conditional-approval", null),
-                (
-                    "international-recognition",
-                    "AnswerIn record_mhra_procedure.mhra_procedure_type_id [international-recognition]"
-                ),
-                (
-                    "international-submission-date",
-                    "AnswerIn record_mhra_procedure.mhra_procedure_type_id [international-recognition]"
-                ),
-                (
-                    "international-licence-date",
-                    "AnswerIn record_mhra_procedure.mhra_procedure_type_id [international-recognition]"
-                ),
-                (
-                    "international-conditional-approval",
-                    "AnswerIn record_mhra_procedure.mhra_procedure_type_id [international-recognition]"
-                ),
-            ]);
-    }
-
-    [Fact]
-    public void Model_SectionsGroupTasksPerDataset()
-    {
-        Model
-            .Sections.Select(static s =>
-                $"{s.Id}: {string.Join(", ", s.Tasks.Select(static t => t.Id))}"
-            )
-            .ShouldBe([
-                "indication-and-development: indication-details, development-background",
-                "regulatory-access-and-launch: mhra-procedure-and-dates, hta-and-launch",
-                "service-readiness: laboratory-testing, patient-and-clinical-requirements",
-            ]);
-    }
-
-    [Fact]
-    public void ReferenceTriggerTypes_HoldTheReferenceDataConditionsName()
-    {
-        Model.ReferenceTriggerTypes.ShouldBe([typeof(MhraProcedureType)]);
-    }
-
-    [Fact]
     public void EveryPage_ReadsAndSavesOnlyItsOwnRows()
     {
-        // Reveals are same-page, so they add no rows. Page conditions add the entities holding the
-        // triggers to every request, which navigation needs to know which pages apply, and a save
-        // adds the entities of the answers it may clear.
+        // Reveals are same-page, so they add no rows. Page conditions add one thing to every
+        // request: the entities holding the triggers, which navigation needs to know which pages apply.
         FormModel model = Model;
         FormEntity[] triggerEntities = model
             .Pages.Select(static p => p.ShowWhen)
@@ -263,13 +271,7 @@ public class MedicineFormModelTests
         {
             FormEntity[] expected = page.Entities.Union(triggerEntities).ToArray();
             model.EntitiesToRead(page).ShouldBe(expected, ignoreOrder: true, page.Id);
-            model
-                .EntitiesToSave(page)
-                .ShouldBe(
-                    expected.Union(model.AffectedBy(page).Select(static q => q.Entity)),
-                    ignoreOrder: true,
-                    page.Id
-                );
+            model.EntitiesToSave(page).ShouldBe(expected, ignoreOrder: true, page.Id);
 
             // Saving a page can only clear its own answers, plus those on pages it makes conditional.
             model
@@ -309,15 +311,30 @@ public class MedicineFormModelTests
     }
 
     [Fact]
+    public void Model_SectionsGroupTasksPerDataset()
+    {
+        Model
+            .Sections.Select(static s =>
+                $"{s.Id}: {string.Join(", ", s.Tasks.Select(static t => t.Id))}"
+            )
+            .ShouldBe([
+                "indication-and-development: indication-details, development-background",
+                "hta-and-launch: hta-and-launch",
+                "special-designation: orphan-and-atmp, pim-and-eams",
+                "service-readiness: laboratory-testing, patient-and-clinical-requirements",
+            ]);
+    }
+
+    [Fact]
     public void TriggerEntities_HoldTheEntitiesWithConditions()
     {
         Model
             .TriggerEntities.Select(static e => e.ClrType)
             .ShouldBe([
                 typeof(MedicinesDevelopmentBackground),
-                typeof(RecordMhraDate),
-                typeof(RecordMhraProcedure),
                 typeof(RecordHta),
+                typeof(MedicinesEuStatus),
+                typeof(MedicinesEamsPim),
                 typeof(MedicinesLaboratoryTesting),
                 typeof(MedicinesPatientIdentification),
                 typeof(MedicinesServiceImpact),
@@ -415,52 +432,39 @@ public class MedicineFormModelTests
                 FormControl.Text,
                 AnswerShape.Single
             ),
-            ("record_mhra_procedure.mhra_procedure_type_id", FormControl.Radio, AnswerShape.Single),
-            ("record_mhra_procedure.procedure_details", FormControl.Textarea, AnswerShape.Single),
-            ("record_mhra_date.uk_submission_date", FormControl.PrecisionDate, AnswerShape.Single),
-            (
-                "medicines_global_submission.global_first_submission_region",
-                FormControl.Text,
-                AnswerShape.Single
-            ),
-            (
-                "medicines_global_submission.global_submission_actual_date",
-                FormControl.ActualMonth,
-                AnswerShape.Single
-            ),
-            ("record_mhra_date.uk_licence_date", FormControl.PrecisionDate, AnswerShape.Single),
-            (
-                "record_mhra_date.uk_conditional_approval_anticipated",
-                FormControl.Radio,
-                AnswerShape.Single
-            ),
-            (
-                "record_mhra_procedure.irp_reference_regulator_id",
-                FormControl.Radio,
-                AnswerShape.Single
-            ),
-            ("medicines_intl_recognition.irp_route_id", FormControl.Radio, AnswerShape.Single),
-            (
-                "medicines_intl_recognition.intl_submission_date",
-                FormControl.PrecisionDate,
-                AnswerShape.Single
-            ),
-            (
-                "medicines_intl_recognition.intl_licence_date",
-                FormControl.PrecisionDate,
-                AnswerShape.Single
-            ),
-            (
-                "medicines_intl_recognition.intl_conditional_approval_anticipated",
-                FormControl.Radio,
-                AnswerShape.Single
-            ),
             ("record_hta.medicine_hta_submission_intended", FormControl.Radio, AnswerShape.Single),
             ("record_hta.medicine_hta_bodies", FormControl.Checkbox, AnswerShape.Multi),
             ("record_hta.hta_additional_details", FormControl.Textarea, AnswerShape.Single),
             ("record_hta.hta_nice_aligned_pathway", FormControl.Radio, AnswerShape.Single),
             ("record_hta.nice_ta_development_id", FormControl.PrefixedNumber, AnswerShape.Single),
             ("record_hta.uk_launch_date", FormControl.PrecisionDate, AnswerShape.Single),
+            ("medicines_eu_status.eu_orphan_status", FormControl.Radio, AnswerShape.Single),
+            (
+                "medicines_eu_status.eu_orphan_granted_date",
+                FormControl.ActualDate,
+                AnswerShape.Single
+            ),
+            ("medicines_eu_status.eu_orphan_status_number", FormControl.Text, AnswerShape.Single),
+            (
+                "medicines_eu_status.eu_atmp_classification_status",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_eu_status.atmp_recommendation_date",
+                FormControl.ActualDate,
+                AnswerShape.Single
+            ),
+            ("medicines_eu_status.atmp_classification_id", FormControl.Radio, AnswerShape.Single),
+            ("medicines_eams_pim.pim_designation_status", FormControl.Radio, AnswerShape.Single),
+            ("medicines_eams_pim.will_submit_to_eams", FormControl.Radio, AnswerShape.Single),
+            (
+                "medicines_eams_pim.eams_submission_date",
+                FormControl.PrecisionDate,
+                AnswerShape.Single
+            ),
+            ("medicines_eams_pim.eams_opinion_date", FormControl.PrecisionDate, AnswerShape.Single),
+            ("medicines_eams_pim.eams_opinion_decision", FormControl.Radio, AnswerShape.Single),
             (
                 "medicines_laboratory_testing.diagnostic_test_required",
                 FormControl.Radio,
@@ -625,15 +629,15 @@ public class MedicineFormModelTests
         Previous("repurposed-medicine").ShouldBeNull();
         Next("repurposed-medicine").ShouldBe("originator");
         Next("co-marketing").ShouldBeNull();
-        Previous("uk-market-authorisation").ShouldBeNull();
-        // With no answers the global first submission and IRP pages do not apply.
-        Next("uk-submission-date").ShouldBe("uk-licence-date");
-        Next("uk-conditional-approval").ShouldBeNull();
         Previous("hta-submission").ShouldBeNull();
         // With no answers the NICE pages do not apply, so the launch date follows the first page.
         Next("hta-submission").ShouldBe("uk-launch-date");
         Previous("uk-launch-date").ShouldBe("hta-submission");
         Next("uk-launch-date").ShouldBeNull();
+        Previous("orphan-status").ShouldBeNull();
+        Next("orphan-status").ShouldBe("atmp-classification");
+        Previous("atmp-classification").ShouldBe("orphan-status");
+        Next("atmp-classification").ShouldBeNull();
         Previous("diagnostic-test-required").ShouldBeNull();
         // With no answers the conditional pages do not apply, so navigation skips to monitoring.
         Next("diagnostic-test-required").ShouldBe("monitoring-tests");

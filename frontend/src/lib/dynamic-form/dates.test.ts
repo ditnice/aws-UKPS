@@ -43,6 +43,18 @@ describe('toDateValue', () => {
     expect(toDateValue('2025-07-26', 'ActualMonth')).toEqual({ ...empty, precision: 'ActualMonth' })
     expect(toDateValue(null, 'ActualMonth')).toEqual({ ...empty, precision: 'ActualMonth' })
   })
+
+  it('reads an actual date only as a date', () => {
+    expect(toDateValue('2025-07-26', 'ActualDate')).toEqual({
+      ...empty,
+      precision: 'ActualDate',
+      day: '26',
+      month: '7',
+      year: '2025',
+    })
+    expect(toDateValue('2025-07', 'ActualDate')).toEqual({ ...empty, precision: 'ActualDate' })
+    expect(toDateValue(null, 'ActualDate')).toEqual({ ...empty, precision: 'ActualDate' })
+  })
 })
 
 describe('utcToday', () => {
@@ -82,6 +94,7 @@ describe('toDateAnswer', () => {
     expect(toDateAnswer({ ...empty, year: '2027' })).toBeNull()
     expect(toDateAnswer({ ...empty, precision: 'ActualDate', quarter: '2' })).toBeNull()
     expect(toDateAnswer({ ...empty, precision: 'ActualMonth' })).toBeNull()
+    expect(toDateAnswer({ ...empty, precision: 'ActualDate' })).toBeNull()
   })
 
   it('leaves an incomplete date for validation to reject', () => {

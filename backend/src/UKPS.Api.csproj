@@ -62,6 +62,6 @@
     <PackageReference Include="Microsoft.OpenApi" Version="2.13.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageReference Include="NSubstitute" Version="6.2.0" />
-    <PackageReference Include="Scalar.AspNetCore" Version="2.20.0" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.21.0" />
   </ItemGroup>
 </Project>
