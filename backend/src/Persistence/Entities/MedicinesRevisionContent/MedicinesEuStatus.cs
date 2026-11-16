@@ -69,7 +69,7 @@ internal sealed class MedicinesEuStatus
         Order = 20,
         Hint = "Enter the date the orphan designation was formally granted by the EMA."
     )]
-    [FormDateEvent(DateEventType.EuOrphanGranted)]
+    [FormDateEvent(DateEventType.EuOrphanGranted, Name = "EU orphan medicine status")]
     [FormShowWhen("medicines_eu_status.eu_orphan_status", DesignationStatus.Granted)]
     [FormRequired("Enter the date that EU orphan medicine status was granted")]
     public int? EuOrphanGrantedDateId { get; set; }
@@ -108,7 +108,10 @@ internal sealed class MedicinesEuStatus
         FormControl.ActualDate,
         Order = 20
     )]
-    [FormDateEvent(DateEventType.AtmpClassificationRecommendation)]
+    [FormDateEvent(
+        DateEventType.AtmpClassificationRecommendation,
+        Name = "ATMP classification recommendation"
+    )]
     [FormShowWhen("medicines_eu_status.eu_atmp_classification_status", DesignationStatus.Granted)]
     [FormRequired("Enter the date the ATMP classification recommendation was provided")]
     public int? AtmpRecommendationDateId { get; set; }

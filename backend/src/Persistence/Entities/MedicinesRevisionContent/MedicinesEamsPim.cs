@@ -85,7 +85,7 @@ internal sealed class MedicinesEamsPim
         Order = 10,
         Hint = "Choose the level of detail you are currently able to provide. Estimate the date you expect to submit for EAMS for this product, or enter the actual date of submission."
     )]
-    [FormDateEvent(DateEventType.EamsSubmission)]
+    [FormDateEvent(DateEventType.EamsSubmission, Name = "EAMS submission")]
     [FormRequired("Select an option")]
     public int? EamsSubmissionDateId { get; set; }
 
@@ -107,7 +107,7 @@ internal sealed class MedicinesEamsPim
         Order = 10,
         Hint = "Choose the level of detail you are currently able to provide. Estimate the date you expect to receive the EAMS scientific opinion, or enter the actual date you received it."
     )]
-    [FormDateEvent(DateEventType.EamsOpinion)]
+    [FormDateEvent(DateEventType.EamsOpinion, Name = "EAMS scientific opinion")]
     [FormRequired("Select an option")]
     public int? EamsOpinionDateId { get; set; }
 

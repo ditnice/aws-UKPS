@@ -1,6 +1,7 @@
 import { Radio, Radios } from '@/components/Radios/Radios'
 import { Select, SelectOption } from '@/components/Select/Select'
-import type { DatePrecision, DateValue } from '@/lib/dynamic-form/dates'
+import { partsOf } from '@/lib/dynamic-form/dates'
+import type { DatePart, DatePrecision, DateValue } from '@/lib/dynamic-form/dates'
 
 import styles from '../DynamicForm.module.scss'
 
@@ -21,12 +22,12 @@ type ControlsProps = Omit<DatePartsProps, 'name' | 'onBlur' | 'parts'>
 
 /** A quarter of the year as a dropdown, with the year beside it. */
 function QuarterAndYear(props: Omit<DatePartsProps, 'onBlur' | 'parts'>) {
-  const { 'aria-describedby': describedBy, name, value, onChange, error } = props
+  const { 'aria-describedby': describedBy, name, value, onChange, invalid } = props
   return (
     <div className={styles.dateInput}>
       <Select
         aria-describedby={describedBy}
-        error={error}
+        error={invalid.includes('quarter')}
         label="Quarter"
         name={`${name}-quarter`}
         onChange={(event) => onChange({ ...value, quarter: event.target.value })}
@@ -55,13 +56,16 @@ export function PrecisionDateQuestion({
   onChange,
   onBlur,
   error,
+  errorParts,
   clearError,
 }: QuestionProps<DateValue>) {
   const errorId = `${name}-error`
-  // Once a precision is chosen, the error sits just above its controls and only they are marked
-  // as invalid; until then it is on the radios.
+  // Once a precision is chosen, the error sits just above its controls and only the parts it is
+  // about are marked as invalid (all of them for an error from the server); until then it is on
+  // the radios.
   const reveal = (precision: DatePrecision, controls: (props: ControlsProps) => ReactNode) => {
     const ownError = value.precision === precision ? error : undefined
+    const invalid = ownError ? ((errorParts as DatePart[] | undefined) ?? partsOf[precision]) : []
     return (
       <>
         {ownError && (
@@ -71,7 +75,7 @@ export function PrecisionDateQuestion({
         )}
         {controls({
           'aria-describedby': ownError ? errorId : undefined,
-          error: Boolean(ownError),
+          invalid,
           onChange,
           value,
         })}

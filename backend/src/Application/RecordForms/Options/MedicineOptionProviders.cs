@@ -18,6 +18,28 @@ internal static class MedicineOptionProviders
         RegisterPricingAndBudgetImpactProviders(registry);
         RegisterPimAndEamsProviders(registry);
         RegisterProductProviders(registry);
+        RegisterMhraProcedureAndDatesProviders(registry);
+    }
+
+    private static void RegisterMhraProcedureAndDatesProviders(OptionProviderRegistry registry)
+    {
+        registry.AddReference<MhraProcedureType>(
+            OptionKeys.MedicineMhraProcedureTypes,
+            q => q.Where(x => x.RelevantTo != ReferenceDataType.VaccinesOnly).OrderBy(x => x.Id),
+            x => new ReferenceOptionRow(x.Id, x.Label, x.IsArchived, null)
+        );
+
+        registry.AddReference<IrpReferenceRegulator>(
+            OptionKeys.IrpReferenceRegulators,
+            q => q.OrderBy(x => x.Id),
+            x => new ReferenceOptionRow(x.Id, x.Label, x.IsArchived, null)
+        );
+
+        registry.AddReference<IrpRoute>(
+            OptionKeys.IrpRoutes,
+            q => q.OrderBy(x => x.Id),
+            x => new ReferenceOptionRow(x.Id, x.Label, x.IsArchived, null)
+        );
     }
 
     private static void RegisterHtaAndLaunchProviders(OptionProviderRegistry registry)
