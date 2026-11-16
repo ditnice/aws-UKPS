@@ -56,4 +56,9 @@ public sealed record UserInformationDto
     /// Gets whether the user can select more than one organisation. Only set for the current user.
     /// </summary>
     public bool HasMultipleOrganisations { get; init; }
+
+    /// <summary>
+    /// Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.
+    /// </summary>
+    public required PharmaceuticalEntity AllowedPharmaceuticalEntity { get; set; }
 }

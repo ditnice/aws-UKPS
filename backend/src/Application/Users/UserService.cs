@@ -75,6 +75,7 @@ internal partial class UserService(
             UserRole = currentUser.UserRole,
             Status = membership.Status.ConvertToUserOrgStatus(),
             HasMultipleOrganisations = user.HasMultipleSelectableOrganisations(),
+            AllowedPharmaceuticalEntity = membership.AllowedPharmaceuticalEntity,
         };
     }
 
@@ -274,6 +275,7 @@ internal partial class UserService(
                 OrganisationName = m.Organisation!.OrganisationName,
                 UserRole = m.UserRole,
                 Status = (UserOrgStatus)m.Status,
+                AllowedPharmaceuticalEntity = m.AllowedPharmaceuticalEntity,
             })
             .FirstOrDefaultAsync(cancellationToken);
 

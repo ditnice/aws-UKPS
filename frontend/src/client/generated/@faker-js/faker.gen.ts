@@ -871,7 +871,8 @@ export const fakeUserInformationDto = (options?: Options): UserInformationDto =>
         organisationName: f.string.sample(),
         userRole: fakeUserRole(options),
         status: fakeUserOrgStatus(options),
-        hasMultipleOrganisations: f.datatype.boolean()
+        hasMultipleOrganisations: f.datatype.boolean(),
+        allowedPharmaceuticalEntity: fakePharmaceuticalEntity(options)
     };
 };
 

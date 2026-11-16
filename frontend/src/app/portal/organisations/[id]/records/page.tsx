@@ -1,10 +1,14 @@
 import Link from 'next/link'
 
 import { TableAndFiltersGrid } from '@/app/portal/components/_components/TableAndFiltersGrid'
-import { getCurrentOrganisationChampions, getUsersMe } from '@/client/generated'
+import {
+  getCurrentOrganisationChampions,
+  getUsersMe,
+  PharmaceuticalEntity,
+} from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
-import { Button } from '@/components/Button/Button'
+import { Button, ButtonGroup } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 import OrganisationPageWrapper from '../_components/OrganisationPageWrapper'
@@ -21,6 +25,11 @@ type OrganisationRecordsPage = {
   params: Promise<{ id: string }>
   searchParams: Promise<OrganisationRecordsSearchParams & RecordActionSearchParams>
 }
+type CreateMedicineRecordActionBannerProps = {
+  organisationId: string
+  allowedPharmaceuticalEntity: PharmaceuticalEntity | undefined
+}
+
 const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRecordsPage) => {
   const { id: organisationId } = await params
   const resolvedSearchParams = await searchParams
@@ -59,43 +68,66 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
                   </>
                 )}
               </div>
-              <CreateMedicineRecordActionBanner organisationId={organisationId} />
-              <TableAndFiltersGrid
-                title="Search and filter records"
-                filters={<RecordsTablesFilters query={query} />}
-                table={
-                  <RecordsFetch organisationId={organisation.id} query={query}>
-                    {(data) => (
-                      <>
-                        <RecordsQueryResultsSummary query={query} data={data} />
-                        <RecordsTable organisationId={organisation.id} data={data} query={query} />
-                      </>
-                    )}
-                  </RecordsFetch>
-                }
-              />
             </>
           )}
+          <CreateMedicineRecordActionBanner
+            organisationId={organisationId}
+            allowedPharmaceuticalEntity={currentUser?.allowedPharmaceuticalEntity}
+          />
+          <TableAndFiltersGrid
+            title="Search and filter records"
+            filters={<RecordsTablesFilters query={query} />}
+            table={
+              <RecordsFetch organisationId={organisation.id} query={query}>
+                {(data) => (
+                  <>
+                    <RecordsQueryResultsSummary query={query} data={data} />
+                    <RecordsTable organisationId={organisation.id} data={data} query={query} />
+                  </>
+                )}
+              </RecordsFetch>
+            }
+          />
         </>
       )}
     </OrganisationPageWrapper>
   )
 }
 
-const CreateMedicineRecordActionBanner = ({ organisationId }: { organisationId: string }) => {
+const CreateMedicineRecordActionBanner = ({
+  organisationId,
+  allowedPharmaceuticalEntity,
+}: CreateMedicineRecordActionBannerProps) => {
+  const canCreateMedicine =
+    allowedPharmaceuticalEntity === PharmaceuticalEntity.MEDICINES ||
+    allowedPharmaceuticalEntity === PharmaceuticalEntity.BOTH
+  const canCreateVaccine =
+    allowedPharmaceuticalEntity === PharmaceuticalEntity.VACCINES ||
+    allowedPharmaceuticalEntity === PharmaceuticalEntity.BOTH
   return (
     <ActionBanner
       variant="subtle"
       title="Create Record"
       cta={
-        <>
-          <Button
-            elementType={Link}
-            href={`/portal/organisations/${organisationId}/records/create`}
-          >
-            Create medicine record
-          </Button>
-        </>
+        <ButtonGroup>
+          {canCreateMedicine && (
+            <Button
+              elementType={Link}
+              href={`/portal/organisations/${organisationId}/records/create`}
+            >
+              Create medicine record
+            </Button>
+          )}
+
+          {canCreateVaccine && (
+            <Button
+              elementType={Link}
+              href={`/portal/organisations/${organisationId}/records/vaccines/create`}
+            >
+              Create vaccine record
+            </Button>
+          )}
+        </ButtonGroup>
       }
     >
       To create a new record select the record type you want to create.{' '}
@@ -105,5 +137,6 @@ const CreateMedicineRecordActionBanner = ({ organisationId }: { organisationId: 
   )
 }
 // TODO: Add the record template to the link
+// TODO: Add the link to the button to create a vaccine record
 
 export default OrganisationRecordsPage

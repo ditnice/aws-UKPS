@@ -138,6 +138,7 @@ public class UserServiceTests : DatabaseTestBase
                     UserRole = currentUserMembership.UserRole,
                     Status = currentUserMembership.Status.ConvertToUserOrgStatus(),
                     HasMultipleOrganisations = currentUser.HasMultipleSelectableOrganisations(),
+                    AllowedPharmaceuticalEntity = currentUserMembership.AllowedPharmaceuticalEntity,
                 }
             );
         }
@@ -1264,6 +1265,7 @@ public class UserServiceTests : DatabaseTestBase
                 OrganisationName = membership.Organisation!.OrganisationName,
                 UserRole = membership.UserRole,
                 Status = (UserOrgStatus)membership.Status,
+                AllowedPharmaceuticalEntity = membership.AllowedPharmaceuticalEntity,
             }
         );
     }
