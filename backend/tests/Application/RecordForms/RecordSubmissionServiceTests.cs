@@ -261,7 +261,9 @@ public class RecordSubmissionServiceTests : DatabaseTestBase
     public async Task Submit_EstimatedDateNowInThePast_IsReported()
     {
         await Context
-            .RegulatoryDates.Where(d => d.RevisionId == _revision.Id)
+            .RegulatoryDates.Where(d =>
+                d.RevisionId == _revision.Id && d.DateEvent == DateEventType.UkLaunch
+            )
             .ExecuteUpdateAsync(s => s.SetProperty(d => d.DateValue, new DateOnly(2026, 4, 1)), Ct);
 
         IReadOnlyList<SubmissionErrorDto> errors = await SubmitInvalid();

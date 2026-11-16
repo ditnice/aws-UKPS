@@ -124,7 +124,7 @@ public class DateOrderRuleTests
         IModel model = ScanningTestDbContext.CreateModel();
         var (entities, _) = FormModelScanner.Scan(
             model,
-            [typeof(ConditionalEntity), typeof(DatedEntity)]
+            [typeof(VaccineTestLayout), typeof(ConditionalEntity), typeof(DatedEntity)]
         );
         return FormModelBuilder.Build(entities, ScanningTestOptions.Create())[RecordType.Vaccine];
     }

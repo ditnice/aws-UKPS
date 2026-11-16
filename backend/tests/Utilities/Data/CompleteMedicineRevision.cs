@@ -8,19 +8,22 @@ namespace UKPS.Api.Tests.Utilities.Data;
 
 /// <summary>
 /// Writes answers to every required medicine question on a revision, taking the shortest route
-/// through the form: every gate that reveals follow-up questions is answered No.
+/// through the form: every gate that reveals follow-up questions is answered No, the MHRA
+/// procedure is national, and every UK date is an estimated quarter.
 /// </summary>
 internal static class CompleteMedicineRevision
 {
     /// <summary>Adds the rows and the reference data they point at.</summary>
     /// <param name="context">The context to add them with.</param>
     /// <param name="revisionId">The revision to complete.</param>
-    /// <param name="ukLaunchQuarter">The first day of the estimated launch quarter.</param>
+    /// <param name="ukQuarter">
+    /// The first day of the estimated quarter of the UK submission, licence and launch dates.
+    /// </param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     public static async Task AddAsync(
         AppDbContext context,
         int revisionId,
-        DateOnly ukLaunchQuarter,
+        DateOnly ukQuarter,
         CancellationToken cancellationToken
     )
     {
@@ -36,7 +39,12 @@ internal static class CompleteMedicineRevision
             Label = "1,000 to 5,000",
             SortOrder = 1,
         };
-        context.AddRange(bnfChapter, formulation, populationRange);
+        MhraProcedureType procedure = new()
+        {
+            Code = MhraProcedureTypeCodes.National,
+            Label = "National",
+        };
+        context.AddRange(bnfChapter, formulation, populationRange, procedure);
         await context.SaveChangesAsync(cancellationToken);
 
         context.AddRange(
@@ -96,12 +104,56 @@ internal static class CompleteMedicineRevision
                     RevisionId = revisionId,
                     DateEvent = DateEventType.UkLaunch,
                     DatePrecision = DatePrecision.EstimatedQuarter,
-                    DateValue = ukLaunchQuarter,
+                    DateValue = ukQuarter,
                     IsConfidential = true,
                 },
+            },
+            new RecordMhraProcedure { RevisionId = revisionId, MhraProcedureTypeId = procedure.Id },
+            new RecordMhraDate
+            {
+                RevisionId = revisionId,
+                UkSubmissionDate = EstimatedQuarter(
+                    revisionId,
+                    DateEventType.UkSubmission,
+                    ukQuarter
+                ),
+                UkLicenceDate = EstimatedQuarter(revisionId, DateEventType.UkLicence, ukQuarter),
+                UkConditionalApprovalAnticipated = YesNoUnknown.No,
+            },
+            new MedicinesEuStatus
+            {
+                RevisionId = revisionId,
+                EuOrphanStatus = DesignationStatus.NotGranted,
+                EuAtmpClassificationStatus = DesignationStatus.NotGranted,
+            },
+            new MedicinesEamsPim
+            {
+                RevisionId = revisionId,
+                PimDesignationStatus = DesignationStatus.NotGranted,
+            },
+            new MedicinesBudgetImpact
+            {
+                RevisionId = revisionId,
+                CompassionateAccessAvailable = YesNoUnknown.No,
+                PatientAccessSchemePlanned = YesNoUnknown.No,
+                IndicationSpecificPricingPlanned = YesNoUnknown.No,
+                NetUkBudgetImpactBand = NetUkBudgetImpactBand.Unknown,
             }
         );
         await context.SaveChangesAsync(cancellationToken);
         context.ChangeTracker.Clear();
     }
+
+    private static RegulatoryDate EstimatedQuarter(
+        int revisionId,
+        DateEventType dateEvent,
+        DateOnly quarter
+    ) =>
+        new()
+        {
+            RevisionId = revisionId,
+            DateEvent = dateEvent,
+            DatePrecision = DatePrecision.EstimatedQuarter,
+            DateValue = quarter,
+        };
 }
