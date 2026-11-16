@@ -13,7 +13,6 @@ using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
-using UKPS.Api.Tests.Utilities.Harnesses;
 using UKPS.Api.WebApi.InternalServices.Identity;
 using Record = UKPS.Api.Persistence.Entities.RecordWorkflow.Record;
 
@@ -138,6 +137,53 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task CheckAnswers_IncompleteDraft_ReturnsTheAnswersAndErrors()
+    {
+        await Context
+            .MedicinesIndicationDetails.Where(x => x.RevisionId == _revision.Id)
+            .ExecuteUpdateAsync(
+                s => s.SetProperty(x => x.IndicationIsCancer, (YesNoUnknown?)null),
+                Ct
+            );
+
+        JsonObject dto = await GetCheckAnswers();
+
+        dto["formVersion"]!.GetValue<string>().ShouldBe(FormVersions.Medicine);
+        dto["revisionHash"]!.GetValue<string>().ShouldNotBeNullOrEmpty();
+        dto["canSubmit"]!.GetValue<bool>().ShouldBeTrue();
+        JsonObject question = dto["sections"]!
+            .AsArray()
+            .SelectMany(static s => s!["tasks"]!.AsArray())
+            .SelectMany(static t => t!["questions"]!.AsArray())
+            .Single(q =>
+                string.Equals(
+                    q!["id"]!.GetValue<string>(),
+                    IndicationIsCancer,
+                    StringComparison.Ordinal
+                )
+            )!
+            .AsObject();
+        question["values"]!.AsArray().ShouldBeEmpty();
+        JsonObject error = dto["errors"]!.AsArray().ShouldHaveSingleItem()!.AsObject();
+        error["questionId"]!.GetValue<string>().ShouldBe(IndicationIsCancer);
+        error["pageId"]!.GetValue<string>().ShouldBe(question["pageId"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public async Task CheckAnswers_AnotherOrganisationsRecord_ReturnsNotFound()
+    {
+        Organisation other = await AddEntity(new OrganisationFaker().Generate(), Ct);
+        AuthenticateAs(UserRole.Standard, other.Id);
+
+        using HttpResponseMessage response = await _httpClient.GetAsync(
+            new Uri($"/records/{_record.Id}/check-answers", UriKind.Relative),
+            Ct
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task Submit_StaleHash_ReturnsRecordChangedConflict()
     {
         using HttpResponseMessage response = await PostSubmit("stale");
@@ -172,21 +218,15 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
             Ct
         );
 
-    /// <summary>The hash check your answers would give for the revision as it is now.</summary>
-    private async Task<string> CurrentHash()
-    {
-        ServiceTestHarness<RecordFormPageLoader> harness = new(Context);
-        harness.UpdateCurrentUser(x =>
-            x with
-            {
-                CognitoUsername = _user.CognitoUsername,
-                OrganisationId = _organisation.Id,
-                UserRole = UserRole.Standard,
-            }
-        );
-        RecordFormPageLoader loader = harness.Service;
-        var (form, _) = await loader.LoadFormAsync(_record.Id, track: false, Ct);
-        var (answers, _) = await loader.LoadAllAnswersAsync(form!, Ct);
-        return AnswerHash.ForRevision(form!.Revision.Id, answers);
-    }
+    /// <summary>The revision hash check your answers gives for the revision as it is now.</summary>
+    private async Task<string> CurrentHash() =>
+        (await GetCheckAnswers())["revisionHash"]!.GetValue<string>();
+
+    private async Task<JsonObject> GetCheckAnswers() =>
+        (
+            await _httpClient.GetFromJsonAsync<JsonObject>(
+                new Uri($"/records/{_record.Id}/check-answers", UriKind.Relative),
+                Ct
+            )
+        ).ShouldNotBeNull();
 }
