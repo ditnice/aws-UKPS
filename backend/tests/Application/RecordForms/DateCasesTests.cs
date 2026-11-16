@@ -30,7 +30,9 @@ public class DateCasesTests
         );
 
         FormControl control = dateCase.Control ?? FormControl.PrecisionDate;
-        DateAnswer.Check(control, dateCase.Answer, _file.Today).ShouldBe(dateCase.Error);
+        DateAnswer
+            .Check(control, dateCase.Answer, _file.Today, _file.DateName)
+            .ShouldBe(dateCase.Error);
         if (dateCase.Precision is null)
         {
             return;
@@ -97,7 +99,11 @@ public class DateCasesTests
         "CA1812",
         Justification = "Created by JSON deserialisation."
     )]
-    private sealed record DateCaseFile(DateOnly Today, IReadOnlyList<DateCase> Cases);
+    private sealed record DateCaseFile(
+        DateOnly Today,
+        string DateName,
+        IReadOnlyList<DateCase> Cases
+    );
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
         "Performance",

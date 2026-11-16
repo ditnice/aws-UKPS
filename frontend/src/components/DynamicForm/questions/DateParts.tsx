@@ -1,9 +1,9 @@
 import { Input } from '@/components/Input/Input'
-import type { DateValue } from '@/lib/dynamic-form/dates'
+import type { DatePart, DateValue } from '@/lib/dynamic-form/dates'
 
 import styles from '../DynamicForm.module.scss'
 
-type Part = 'day' | 'month' | 'year'
+type Part = Exclude<DatePart, 'quarter'>
 
 const partInputs: Record<Part, { label: string; width: 2 | 5 }> = {
   day: { label: 'Day', width: 2 },
@@ -17,8 +17,8 @@ export type DatePartsProps = {
   value: DateValue
   onChange: (value: DateValue) => void
   onBlur?: () => void
-  /** Styles the inputs as invalid; the message itself is shown by the caller. */
-  error: boolean
+  /** The parts to style as invalid; the message itself is shown by the caller. */
+  invalid: readonly DatePart[]
   /** The ID of an error message shown outside a fieldset that would otherwise describe them. */
   'aria-describedby'?: string
   parts: Part[]
@@ -32,14 +32,14 @@ export function DateParts({
   value,
   onChange,
   onBlur,
-  error,
+  invalid,
 }: DatePartsProps) {
   return (
     <div className={styles.dateInput}>
       {parts.map((part) => (
         <Input
           aria-describedby={describedBy}
-          error={error}
+          error={invalid.includes(part)}
           id={`${name}-${part}`}
           inputMode="numeric"
           key={part}

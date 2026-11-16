@@ -1276,6 +1276,11 @@ export type RecordPageQuestionDto = {
      * unaffected.
      */
     prefixes?: null | Array<string>;
+    /**
+     * What a FormControl.PrecisionDate question's date is of, for its error
+     * messages, for example `submission`; null for other questions.
+     */
+    dateName: null | string;
     showWhen: null | RecordPageConditionDto;
     /**
      * The rules, in evaluation order.

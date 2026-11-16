@@ -148,4 +148,41 @@ internal static class OptionKeys
     /// <c>AtmpClassificationId</c> property. Archived options are hidden unless already saved.
     /// </summary>
     public const string AtmpClassifications = "atmp-classifications";
+
+    /// <summary>
+    /// The <c>MhraProcedureType</c> reference data that applies to medicines (every row but the
+    /// vaccines-only ones) as a flat list, ordered by ID. For a <see cref="FormControl.Radio"/> or
+    /// <see cref="FormControl.Select"/> on an <c>MhraProcedureTypeId</c> property. Archived
+    /// options are hidden unless already saved.
+    /// </summary>
+    public const string MedicineMhraProcedureTypes = "medicine-mhra-procedure-types";
+
+    /// <summary>
+    /// The <c>IrpReferenceRegulator</c> reference data as a flat list, ordered by ID. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on an
+    /// <c>IrpReferenceRegulatorId</c> property. Archived options are hidden unless already saved.
+    /// </summary>
+    public const string IrpReferenceRegulators = "irp-reference-regulators";
+
+    /// <summary>
+    /// The <c>IrpRoute</c> reference data as a flat list, ordered by ID. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on an
+    /// <c>IrpRouteId</c> property. Archived options are hidden unless already saved.
+    /// </summary>
+    public const string IrpRoutes = "irp-routes";
+
+    /// <summary>
+    /// The <c>PatientAccessSchemeRegion</c> flags enum: England, Wales, Scotland and Northern
+    /// Ireland. For a <see cref="FormControl.Checkbox"/> on a <c>PatientAccessSchemeRegion?</c>
+    /// property.
+    /// </summary>
+    public const string PatientAccessSchemeRegion = "patient-access-scheme-region";
+
+    /// <summary>
+    /// The <c>NetUkBudgetImpactBand</c> enum: less than £5 million, £5 million to less than £40
+    /// million, and £40 million or more per year, and unknown at this stage. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
+    /// <c>NetUkBudgetImpactBand?</c> property.
+    /// </summary>
+    public const string NetUkBudgetImpactBand = "net-uk-budget-impact-band";
 }
