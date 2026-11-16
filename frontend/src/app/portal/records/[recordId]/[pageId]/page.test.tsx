@@ -19,8 +19,7 @@ vi.mock('@/client/generated', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/client/generated')>()),
   getRecordFormPage: vi.fn(),
 }))
-vi.mock('@/components/DynamicForm/FormPage', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/components/DynamicForm/FormPage')>()),
+vi.mock('@/components/DynamicForm/FormPage', () => ({
   FormPage: ({
     page,
     returnToCheckAnswers,
