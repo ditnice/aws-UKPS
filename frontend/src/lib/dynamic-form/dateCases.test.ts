@@ -20,15 +20,16 @@ const fixturePath = path.resolve(
   __dirname,
   '../../../../backend/tests/Application/RecordForms/Fixtures/date-cases.json',
 )
-const { today, cases } = JSON.parse(readFileSync(fixturePath, 'utf8')) as {
+const { today, dateName, cases } = JSON.parse(readFileSync(fixturePath, 'utf8')) as {
   today: string
+  dateName: string
   cases: DateCase[]
 }
 
 describe('shared date cases', () => {
   it.each(cases.map((c) => [c.name, c] as const))('%s', (_, dateCase) => {
     const control = dateCase.control ?? 'PrecisionDate'
-    expect(dateAnswerError(dateCase.answer, control, today)).toBe(dateCase.error)
+    expect(dateAnswerError(dateCase.answer, control, today, dateName)).toBe(dateCase.error)
     if (control === 'PrecisionDate') {
       expect(precisionOf(dateCase.answer)).toBe(dateCase.precision ?? null)
     }

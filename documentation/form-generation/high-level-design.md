@@ -2,7 +2,8 @@
 
 > **Status: first delivery implemented** (Medicine form, Indication details section), with
 > conditional questions and pages (Development background, Laboratory testing and Patient and
-> clinical requirements sections), and date questions. The
+> clinical requirements sections), date questions and reference data triggers (MHRA procedure
+> and dates section). The
 > decision is recorded in
 > [ADR-006](../ADR/ADR-006-attribute-annotated-record-content-forms.md).
 
@@ -192,8 +193,8 @@ The form model is `FormModel → FormSection → FormTask → FormPage → FormQ
 immutable object graph, so the rest of the system never touches attributes or reflection:
 
 - **`FormModel`**: one per `RecordType`. Holds the version, the ordered sections, a flat
-  ordered list of pages, `FindPage`, `FindQuestion`, `NextPage` and `PreviousPage` (which stay
-  within the task and skip pages that do not apply), and, for each page, the rows a request needs (`EntitiesToRead`,
+  ordered list of pages, `FindPage`, `FindQuestion`, `NextPage`, `PossibleNextPage` and `PreviousPage` (which stay
+  within the task and skip pages that do not apply; `PossibleNextPage` also offers a later page that depends on the current page's own answers), and, for each page, the rows a request needs (`EntitiesToRead`,
   `EntitiesToSave`) and the questions a save may clear (`AffectedBy`).
 - **`FormSection`**: ID, title and ordered tasks.
 - **`FormTask`**: ID, title and ordered pages; its first page is the task list's link.
@@ -265,7 +266,7 @@ in the entity and a missing one is a compile error. The scanner checks it suits 
 | `int` / `int?` foreign key to reference data | `Radio`, `Select`, `HierarchicalSelect` |
 | `[Flags]` enum | `Checkbox` |
 | navigation collection to a junction entity | `Checkbox`, `HierarchicalSelect` |
-| `int?` foreign key to `RegulatoryDate` | `PrecisionDate`, `ActualMonth` (with `[FormDateEvent]`) |
+| `int?` foreign key to `RegulatoryDate` | `PrecisionDate`, `ActualMonth`, `ActualDate` (with `[FormDateEvent]`) |
 
 Choice controls (`Radio`, `Select`, `Checkbox`, `HierarchicalSelect`) need an option provider,
 found by the property's type or named with `[FormOptions]`; `Text` and `Textarea` must not have
@@ -667,7 +668,7 @@ examples below use record 5, revision 7.
 | `recordId` | Used to build page URLs |
 | `section`, `task`, `page` | IDs and titles; the task title is the page caption |
 | `previousPageId` | Target of Back: the previous page in the task that applies, or `null` when there is none, where Back goes to the task list |
-| `nextPageId` | The next page in the task that applies given the saved answers, or `null` when there is none, where the button reads **Save and return to task list** |
+| `nextPageId` | The next page in the task that applies given the saved answers, or one that depends on this page's own answers and so could apply once they are saved (`PossibleNextPage`). `null` when there is none, where the button reads **Save and return to task list**. The save response, not this value, decides where saving goes |
 | `questions` | `id`, `type` (the `FormControl`), `multiple` (the answer is an array), `label`, `hint`, `display`, `placeholder`, `childLabel`, `childPlaceholder`, `addAnotherLabel`, `showWhen` (`kind`, `questionId`, `values`, or `null`), `rules` (`kind`, `value`, `message`), `options` (`value`, `label`, `children`) |
 | `answers` | Every page question: a string or `null`, or an array for multi-value questions |
 
@@ -795,7 +796,7 @@ reported under its own key:
   "status": 400,
   "errors": {
     "medicines_indication_detail_therapeutic_area": ["Select up to 3 therapeutic areas"],
-    "medicines_indication_detail.indication": ["This is not a question on this page."]
+    "medicines_indication_detail.indication": ["This is not a question on this page"]
   },
   "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
 }
@@ -805,11 +806,11 @@ The server has its own messages for problems that the attributes do not describe
 
 | Problem | Message |
 |---|---|
-| A page question is missing from `answers` | `Provide an answer for this question, or null if it is unanswered.` |
-| A key is not a question on this page | `This is not a question on this page.` |
-| Wrong JSON shape (for example a number, or a string for a checkbox) | `The answer is not in the expected format.` |
-| A value that is not an offered option | `Select a valid option.` |
-| A multi-value answer repeats a value | `You have selected the same option more than once.` |
+| A page question is missing from `answers` | `Provide an answer for this question, or null if it is unanswered` |
+| A key is not a question on this page | `This is not a question on this page` |
+| Wrong JSON shape (for example a number, or a string for a checkbox) | `The answer is not in the expected format` |
+| A value that is not an offered option | `Select a valid option` |
+| A multi-value answer repeats a value | `You have selected the same option more than once` |
 
 #### 403, 404 and 409
 

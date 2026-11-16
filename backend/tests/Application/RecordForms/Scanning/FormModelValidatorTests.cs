@@ -158,6 +158,7 @@ public class FormModelValidatorTests
             "regulatory-date:DatedEntity.SubmissionDateId:UkSubmission"
         );
         submission.OptionKey.ShouldBeNull();
+        submission.DateName.ShouldBe("submission");
         submission.Entity.Includes.ShouldBe(["SubmissionDate", "ActualDate"], ignoreOrder: true);
         form.FindPage("actual")!
             .ShowWhen!.Description.ShouldBe("AnswerIn dated_entity.submission_date [ActualDate]");
@@ -168,7 +169,13 @@ public class FormModelValidatorTests
         "BrokenDatedEntity.NoEventDateId uses control PrecisionDate, which needs [FormDateEvent]."
     )]
     [InlineData(
-        "BrokenDatedEntity.TextEvent has [FormDateEvent], which only a PrecisionDate or ActualMonth uses."
+        "BrokenDatedEntity.TextEvent has [FormDateEvent], which only a PrecisionDate, ActualMonth or ActualDate uses."
+    )]
+    [InlineData(
+        "BrokenDatedEntity.NoNameDateId uses control PrecisionDate, whose [FormDateEvent] needs a Name for its error messages."
+    )]
+    [InlineData(
+        "BrokenDatedEntity.NoNameActualDateId uses control ActualDate, whose [FormDateEvent] needs a Name for its error messages."
     )]
     [InlineData(
         "BrokenDatedEntity.WrongControlDateId uses control Text which does not suit a RegulatoryDate binding."

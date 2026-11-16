@@ -5259,7 +5259,8 @@
           "HierarchicalSelect",
           "PrecisionDate",
           "ActualMonth",
-          "PrefixedNumber"
+          "PrefixedNumber",
+          "ActualDate"
         ],
         "type": "string",
         "description": "The input a record content question is rendered with. Part of the HTTP API contract: the\nmember names are sent to the frontend, so never rename or remove one."
@@ -7155,7 +7156,7 @@
               "null",
               "string"
             ],
-            "description": "The page after this one in its task, or null on the task's last page, where saving returns\nto the task list."
+            "description": "The page after this one in its task, or null on the task's last page, where saving returns\nto the task list. When a later page depends on this page's own answers it is offered even\nif those answers do not yet lead to it, and saving then decides where to go."
           },
           "questions": {
             "type": "array",
@@ -7247,6 +7248,7 @@
           "childLabel",
           "childPlaceholder",
           "addAnotherLabel",
+          "dateName",
           "showWhen",
           "rules",
           "options"
@@ -7320,6 +7322,13 @@
               "type": "string"
             },
             "description": "The prefixes a `PrefixedNumber` question offers before its digits, in order, or\nnull for any other control. Not `required`, so existing clients and fixtures are\nunaffected."
+          },
+          "dateName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "What a FormControl.PrecisionDate question's date is of, for its error\nmessages, for example `submission`; null for other questions."
           },
           "showWhen": {
             "oneOf": [

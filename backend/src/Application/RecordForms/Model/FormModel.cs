@@ -77,6 +77,21 @@ internal sealed class FormModel
             .TakeWhile(p => SameTask(p, page))
             .FirstOrDefault(applicability.Applies);
 
+    /// <summary>
+    /// The page to offer as next when a page loads: the next page that applies, or one that could
+    /// apply depending on this page's own answers. The save response decides where saving goes.
+    /// </summary>
+    public FormPage? PossibleNextPage(FormPage page, Applicability applicability) =>
+        Pages
+            .Skip(_pageIndex[page.Id] + 1)
+            .TakeWhile(p => SameTask(p, page))
+            .FirstOrDefault(p => applicability.Applies(p) || DependsOnAnswersOn(p, page));
+
+    private bool DependsOnAnswersOn(FormPage later, FormPage page) =>
+        later.ShowWhen?.TriggerQuestionIds.Any(id =>
+            string.Equals(_questionPages[id].Id, page.Id, StringComparison.Ordinal)
+        ) == true;
+
     /// <summary>The previous page in the task that applies, or null when none does.</summary>
     public FormPage? PreviousPage(FormPage page, Applicability applicability) =>
         Pages

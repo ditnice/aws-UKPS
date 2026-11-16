@@ -11,6 +11,11 @@ export type QuestionProps<TValue extends FormValue = FormValue> = {
   onChange: (value: TValue) => void
   onBlur: () => void
   error?: string
+  /**
+   * The inputs the error is about, for a question entered in several parts such as a date; all
+   * of them when not given, as for an error from the server.
+   */
+  errorParts?: string[]
   /** Removes the question's error until it is next validated, such as when the user starts over. */
   clearError: () => void
   /** True on a single-question page, where the label is already the page heading. */

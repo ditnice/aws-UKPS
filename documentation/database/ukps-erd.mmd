@@ -22,10 +22,11 @@ erDiagram
             text full_name
             text job_title "nullable"
             timestamptz last_active "nullable"
+            text normalised_work_email UK
             text title "nullable"
             timestamptz updated_at "nullable"
             integer user_type
-            text work_email UK
+            text work_email
             text work_telephone "nullable"
         }
         organisation_audits:::identity {
