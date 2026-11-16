@@ -14,9 +14,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.13";
+    private const string ExpectedVersion = "2026.11.14";
     private const string ExpectedFingerprint =
-        "db185bbdcef713d7c160b58291b1a97e74586d5480361949463b741c84c5e183";
+        "8c86475636bfbfb92eb497c3f6d04aeca97b84ad7c508b6e496699b290838f7a";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -82,6 +82,22 @@ public class MedicineFormModelTests
     }
 
     [Fact]
+    public void Model_HasThePimAndEamsPagesInOrder()
+    {
+        Model
+            .Pages.Where(static p =>
+                string.Equals(p.TaskId, "pim-and-eams", StringComparison.Ordinal)
+            )
+            .Select(static p => (p.Id, p.CommercialInConfidence))
+            .ShouldBe([
+                ("pim-designation", true),
+                ("eams-submission-date", true),
+                ("eams-opinion-date", true),
+                ("eams-opinion-decision", true),
+            ]);
+    }
+
+    [Fact]
     public void Model_HasTheDevelopmentBackgroundPagesInOrder()
     {
         Model
@@ -108,7 +124,7 @@ public class MedicineFormModelTests
     {
         Model
             .Pages.Where(static p =>
-                string.Equals(p.SectionId, "special-designation", StringComparison.Ordinal)
+                string.Equals(p.TaskId, "orphan-and-atmp", StringComparison.Ordinal)
             )
             .Select(static p => p.Id)
             .ShouldBe(["orphan-status", "atmp-classification"]);
@@ -186,6 +202,10 @@ public class MedicineFormModelTests
                     "AnswerIn medicines_eu_status.eu_atmp_classification_status [Granted]"
                 ),
                 (
+                    "medicines_eams_pim.will_submit_to_eams",
+                    "AnswerIn medicines_eams_pim.pim_designation_status [Granted]"
+                ),
+                (
                     "medicines_laboratory_testing.genomic_test_notes",
                     "AnswerIn medicines_laboratory_testing.genomic_test_mandatory_status [MandatoryNoAlternatives, MandatoryAlternativesMayExist]"
                 ),
@@ -212,6 +232,9 @@ public class MedicineFormModelTests
             .ShouldBe([
                 "nice-aligned-pathway",
                 "nice-ta-id",
+                "eams-submission-date",
+                "eams-opinion-date",
+                "eams-opinion-decision",
                 "biomarker-type",
                 "non-genomic-biomarker",
                 "genomic-target",
@@ -297,7 +320,7 @@ public class MedicineFormModelTests
             .ShouldBe([
                 "indication-and-development: indication-details, development-background",
                 "hta-and-launch: hta-and-launch",
-                "special-designation: orphan-and-atmp",
+                "special-designation: orphan-and-atmp, pim-and-eams",
                 "service-readiness: laboratory-testing, patient-and-clinical-requirements",
             ]);
     }
@@ -311,6 +334,7 @@ public class MedicineFormModelTests
                 typeof(MedicinesDevelopmentBackground),
                 typeof(RecordHta),
                 typeof(MedicinesEuStatus),
+                typeof(MedicinesEamsPim),
                 typeof(MedicinesLaboratoryTesting),
                 typeof(MedicinesPatientIdentification),
                 typeof(MedicinesServiceImpact),
@@ -432,6 +456,15 @@ public class MedicineFormModelTests
                 AnswerShape.Single
             ),
             ("medicines_eu_status.atmp_classification_id", FormControl.Radio, AnswerShape.Single),
+            ("medicines_eams_pim.pim_designation_status", FormControl.Radio, AnswerShape.Single),
+            ("medicines_eams_pim.will_submit_to_eams", FormControl.Radio, AnswerShape.Single),
+            (
+                "medicines_eams_pim.eams_submission_date",
+                FormControl.PrecisionDate,
+                AnswerShape.Single
+            ),
+            ("medicines_eams_pim.eams_opinion_date", FormControl.PrecisionDate, AnswerShape.Single),
+            ("medicines_eams_pim.eams_opinion_decision", FormControl.Radio, AnswerShape.Single),
             (
                 "medicines_laboratory_testing.diagnostic_test_required",
                 FormControl.Radio,

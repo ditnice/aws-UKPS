@@ -6,12 +6,12 @@ namespace UKPS.Api.Persistence.Enums;
 public enum EamsOpinionDecision
 {
     /// <summary>
-    /// Indicates a positive decision.
+    /// Indicates a negative decision.
     /// </summary>
     Negative = 0,
 
     /// <summary>
-    /// Indicates a negative decision.
+    /// Indicates a positive decision.
     /// </summary>
     Positive = 1,
 }

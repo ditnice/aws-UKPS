@@ -15,6 +15,7 @@ internal static class MedicineOptionProviders
         RegisterOrphanAndAtmpProviders(registry);
         RegisterLaboratoryTestingProviders(registry);
         RegisterPatientAndClinicalRequirementsProviders(registry);
+        RegisterPimAndEamsProviders(registry);
         RegisterProductProviders(registry);
     }
 
@@ -57,6 +58,27 @@ internal static class MedicineOptionProviders
             OptionKeys.AtmpClassifications,
             q => q.OrderBy(x => x.Id),
             x => new ReferenceOptionRow(x.Id, x.Label, x.IsArchived, null)
+        );
+    }
+
+    private static void RegisterPimAndEamsProviders(OptionProviderRegistry registry)
+    {
+        registry.AddEnum(
+            OptionKeys.PimDesignationStatus,
+            (DesignationStatus.Granted, "Granted"),
+            (DesignationStatus.NotGranted, "Not granted"),
+            (DesignationStatus.DecisionToSubmitOngoing, "Decision to submit is ongoing"),
+            (
+                DesignationStatus.ApplicationSubmittedDecisionPending,
+                "Application submitted and decision pending"
+            ),
+            (DesignationStatus.NoSubmissionIntended, "No submission intended")
+        );
+
+        registry.AddEnum(
+            OptionKeys.EamsOpinionDecision,
+            (EamsOpinionDecision.Positive, "Positive"),
+            (EamsOpinionDecision.Negative, "Negative")
         );
     }
 

@@ -57,6 +57,16 @@ internal static class MedicineFormTasks
     /// <summary>The "Orphan medicine status and ATMP classification" task's position within its section.</summary>
     public const int OrphanAndAtmpOrder = 10;
 
+    /// <summary>The "PIM and EAMS" task's ID.</summary>
+    public const string PimAndEams = "pim-and-eams";
+
+    /// <summary>The "PIM and EAMS" task's title.</summary>
+    public const string PimAndEamsTitle =
+        "Promising Innovative Medicine (PIM) and Early Access to Medicines Scheme (EAMS)";
+
+    /// <summary>The "PIM and EAMS" task's position within its section, after Orphan and ATMP.</summary>
+    public const int PimAndEamsOrder = 20;
+
     /// <summary>The "Patient and clinical requirements" task's ID.</summary>
     public const string PatientAndClinicalRequirements = "patient-and-clinical-requirements";
 
