@@ -45,6 +45,8 @@ public class RecordFormServiceTests : DatabaseTestBase
         "medicines_indication_detail.medicine_technology_status";
 
     private const string LabPrefix = "medicines_laboratory_testing.";
+    private const string BudgetPrefix = "medicines_budget_impact.";
+    private const string PasRegions = "medicines_budget_impact.patient_access_scheme_regions";
     private const string HtaPrefix = "record_hta.";
     private const string NiceTaId = "record_hta.nice_ta_development_id";
     private const string UkLaunchDate = "record_hta.uk_launch_date";
@@ -63,6 +65,7 @@ public class RecordFormServiceTests : DatabaseTestBase
     private static readonly string[] _biosimilarAndNewIndication = ["Biosimilar", "NewIndication"];
     private static readonly string[] _niceAndSmc = ["Nice", "Smc"];
     private static readonly string[] _smcOnly = ["Smc"];
+    private static readonly string[] _englandAndScotland = ["England", "Scotland"];
 
     private Organisation _organisation = null!;
     private User _user = null!;
@@ -1179,6 +1182,151 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task SavePage_FirstPricingAndBudgetImpactSave_CreatesTheRow()
+    {
+        (
+            await Context.MedicinesBudgetImpacts.AnyAsync(x => x.RevisionId == _revision.Id, Ct)
+        ).ShouldBeFalse();
+
+        await SaveOk(
+            "estimated-uptake",
+            Answer($"{BudgetPrefix}estimated_uptake", "Around 500 patients in year one")
+        );
+
+        MedicinesBudgetImpact row = await BudgetImpactRow();
+        row.EstimatedUptake.ShouldBe("Around 500 patients in year one");
+        row.CompassionateAccessAvailable.ShouldBeNull();
+        row.PatientAccessSchemeRegions.ShouldBeNull();
+        row.NetUkBudgetImpactBand.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SavePage_StepsThroughEveryPricingAndBudgetImpactPage_StoringAndAuditingEachAnswer()
+    {
+        (string PageId, (string QuestionId, object Value, string AuditedValue)[] Answers)[] pages =
+        [
+            (
+                "estimated-uptake",
+                [($"{BudgetPrefix}estimated_uptake", "500 patients", "500 patients")]
+            ),
+            (
+                "compassionate-access",
+                [
+                    ($"{BudgetPrefix}compassionate_access_available", "Yes", "Yes"),
+                    (
+                        $"{BudgetPrefix}compassionate_access_details",
+                        "Named patient",
+                        "Named patient"
+                    ),
+                ]
+            ),
+            (
+                "patient-access-scheme",
+                [
+                    ($"{BudgetPrefix}patient_access_scheme_planned", "Yes", "Yes"),
+                    (
+                        PasRegions,
+                        _englandAndScotland,
+                        JsonSerializer.Serialize(_englandAndScotland.Order(StringComparer.Ordinal))
+                    ),
+                ]
+            ),
+            (
+                "indication-specific-pricing",
+                [
+                    ($"{BudgetPrefix}indication_specific_pricing_planned", "Yes", "Yes"),
+                    (
+                        $"{BudgetPrefix}indication_specific_pricing_details",
+                        "Lower price for second line",
+                        "Lower price for second line"
+                    ),
+                ]
+            ),
+            (
+                "net-budget-impact",
+                [($"{BudgetPrefix}net_uk_budget_impact_band", "Between5MAnd40M", "Between5MAnd40M")]
+            ),
+        ];
+
+        for (int i = 0; i < pages.Length; i++)
+        {
+            Dictionary<string, JsonElement> page = new(StringComparer.Ordinal);
+            foreach ((string questionId, object value, _) in pages[i].Answers)
+            {
+                page[questionId] = JsonSerializer.SerializeToElement(value);
+            }
+
+            SaveRecordPageDto saved = await SaveOk(pages[i].PageId, page);
+            saved.NextPageId.ShouldBe(i + 1 < pages.Length ? pages[i + 1].PageId : null);
+        }
+
+        MedicinesBudgetImpact row = await BudgetImpactRow();
+        row.EstimatedUptake.ShouldBe("500 patients");
+        row.CompassionateAccessAvailable.ShouldBe(YesNoUnknown.Yes);
+        row.CompassionateAccessDetails.ShouldBe("Named patient");
+        row.PatientAccessSchemePlanned.ShouldBe(YesNoUnknown.Yes);
+        row.PatientAccessSchemeRegions.ShouldBe(
+            PatientAccessSchemeRegion.England | PatientAccessSchemeRegion.Scotland
+        );
+        row.IndicationSpecificPricingPlanned.ShouldBe(YesNoUnknown.Yes);
+        row.IndicationSpecificPricingDetails.ShouldBe("Lower price for second line");
+        row.NetUkBudgetImpactBand.ShouldBe(NetUkBudgetImpactBand.Between5MAnd40M);
+
+        List<RecordFieldAudit> changes = await FieldAudits()
+            .OrderBy(static a => a.Id)
+            .ToListAsync(Ct);
+        changes
+            .Select(static c => (c.FieldPath, c.NewValue))
+            .ShouldBe(
+                pages.SelectMany(static p =>
+                    p.Answers.Select(static a => (a.QuestionId, (string?)a.AuditedValue))
+                )
+            );
+    }
+
+    [Fact]
+    public async Task SavePage_EstimatedUptakeBlank_IsAllowed()
+    {
+        SaveRecordPageDto saved = await SaveOk(
+            "estimated-uptake",
+            Answer<string?>($"{BudgetPrefix}estimated_uptake", null)
+        );
+
+        saved.NextPageId.ShouldBe("compassionate-access");
+    }
+
+    [Fact]
+    public async Task SavePage_PatientAccessSchemeYesWithNoRegions_ReportsTheRequiredMessage()
+    {
+        (await SaveInvalid("patient-access-scheme", PatientAccessScheme("Yes", []))).ShouldBe(
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                [PasRegions] = "Select all planned locations of discount arrangements",
+            }
+        );
+    }
+
+    [Fact]
+    public async Task SavePage_PatientAccessSchemeNoLongerPlanned_ClearsAndAuditsTheRegions()
+    {
+        await SaveOk("patient-access-scheme", PatientAccessScheme("Yes", _englandAndScotland));
+
+        await SaveOk("patient-access-scheme", PatientAccessScheme("No", _englandAndScotland));
+
+        MedicinesBudgetImpact row = await BudgetImpactRow();
+        row.PatientAccessSchemePlanned.ShouldBe(YesNoUnknown.No);
+        row.PatientAccessSchemeRegions.ShouldBeNull();
+        RecordFieldAudit cleared = await FieldAudits()
+            .Where(static a => a.FieldPath == PasRegions)
+            .OrderBy(static a => a.Id)
+            .LastAsync(Ct);
+        cleared.OldValue.ShouldBe(
+            JsonSerializer.Serialize(_englandAndScotland.Order(StringComparer.Ordinal))
+        );
+        cleared.NewValue.ShouldBeNull();
+    }
+
+    [Fact]
     public async Task SavePage_PathwayPointThatIsNotOffered_IsRejected()
     {
         await AddGenomicRoute();
@@ -1570,6 +1718,21 @@ public class RecordFormServiceTests : DatabaseTestBase
 
     private async Task<RecordHta> HtaRow() =>
         await Context.RecordHtas.AsNoTracking().SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+
+    private static Dictionary<string, JsonElement> PatientAccessScheme(
+        string planned,
+        string[] regions
+    ) =>
+        new(StringComparer.Ordinal)
+        {
+            [$"{BudgetPrefix}patient_access_scheme_planned"] = Json(planned),
+            [PasRegions] = Json(regions),
+        };
+
+    private async Task<MedicinesBudgetImpact> BudgetImpactRow() =>
+        await Context
+            .MedicinesBudgetImpacts.AsNoTracking()
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
 
     private async Task<MedicinesLaboratoryTesting> LaboratoryTestingRow() =>
         await Context
