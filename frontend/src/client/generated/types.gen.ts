@@ -3608,10 +3608,8 @@ export type UpdateUserEmailResponses = {
     /**
      * OK
      */
-    200: UserDetailsDto;
+    200: unknown;
 };
-
-export type UpdateUserEmailResponse = UpdateUserEmailResponses[keyof UpdateUserEmailResponses];
 
 export type PostUsersOnboardData = {
     /**

@@ -1749,7 +1749,7 @@ export const fakeUpdateUserEmailRequest = (options?: Options): Omit<UpdateUserEm
     };
 };
 
-export const fakeUpdateUserEmailResponse200 = (options?: Options): UpdateUserEmailResponses[200] => fakeUserDetailsDto(options);
+export const fakeUpdateUserEmailResponse200 = (): UpdateUserEmailResponses[200] => undefined;
 
 export const fakeUpdateUserEmailResponse400 = (options?: Options): UpdateUserEmailErrors[400] => fakeValidationProblemDetails(options);
 

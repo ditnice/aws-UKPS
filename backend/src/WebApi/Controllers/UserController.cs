@@ -198,7 +198,7 @@ public class UserController(IUserService userService) : ControllerBase
     /// <item><description><c>409 Conflict</c> if the specified email is already in use by another user.</description></item>
     /// </list>
     /// </returns>
-    [ProducesResponseType<UserDetailsDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]

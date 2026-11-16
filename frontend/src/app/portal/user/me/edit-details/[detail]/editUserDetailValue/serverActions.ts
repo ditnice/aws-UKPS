@@ -37,6 +37,7 @@ export const updateUserDetailsAction = async (
     if (error || !response?.ok) {
       return {
         ...initialFormState,
+        values,
         errors: [errorMessages.genericWithRetry],
       }
     }

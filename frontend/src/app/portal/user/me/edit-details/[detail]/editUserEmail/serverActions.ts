@@ -44,6 +44,7 @@ export const updateUserEmailAction = async (userId: number, prev: unknown, formD
     if (error || !response?.ok) {
       return {
         ...initialFormState,
+        values,
         errors: [errorMessages.genericWithRetry],
       }
     }
