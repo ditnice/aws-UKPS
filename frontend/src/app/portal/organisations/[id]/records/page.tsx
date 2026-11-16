@@ -13,6 +13,7 @@ import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 import OrganisationPageWrapper from '../_components/OrganisationPageWrapper'
 
+import { CreateRecordActionBanner } from './_components/CreateRecordActionBanner'
 import { RecordActionAlert } from './_components/RecordActionAlert'
 import { parseRecordAction, type RecordActionSearchParams } from './_lib/recordActionAlert'
 import { RecordsFetch } from './RecordsFetch'
@@ -24,10 +25,6 @@ import RecordsTablesFilters from './RecordsTablesFilters'
 type OrganisationRecordsPage = {
   params: Promise<{ id: string }>
   searchParams: Promise<OrganisationRecordsSearchParams & RecordActionSearchParams>
-}
-type CreateMedicineRecordActionBannerProps = {
-  organisationId: string
-  allowedPharmaceuticalEntity: PharmaceuticalEntity | undefined
 }
 
 const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRecordsPage) => {
@@ -70,7 +67,7 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
               </div>
             </>
           )}
-          <CreateMedicineRecordActionBanner
+          <CreateRecordActionBanner
             organisationId={organisationId}
             allowedPharmaceuticalEntity={currentUser?.allowedPharmaceuticalEntity}
           />
@@ -93,50 +90,6 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
     </OrganisationPageWrapper>
   )
 }
-
-const CreateMedicineRecordActionBanner = ({
-  organisationId,
-  allowedPharmaceuticalEntity,
-}: CreateMedicineRecordActionBannerProps) => {
-  const canCreateMedicine =
-    allowedPharmaceuticalEntity === PharmaceuticalEntity.MEDICINES ||
-    allowedPharmaceuticalEntity === PharmaceuticalEntity.BOTH
-  const canCreateVaccine =
-    allowedPharmaceuticalEntity === PharmaceuticalEntity.VACCINES ||
-    allowedPharmaceuticalEntity === PharmaceuticalEntity.BOTH
-  return (
-    <ActionBanner
-      variant="subtle"
-      title="Create Record"
-      cta={
-        <ButtonGroup>
-          {canCreateMedicine && (
-            <Button
-              elementType={Link}
-              href={`/portal/organisations/${organisationId}/records/create`}
-            >
-              Create medicine record
-            </Button>
-          )}
-
-          {canCreateVaccine && (
-            <Button
-              elementType={Link}
-              href={`/portal/organisations/${organisationId}/records/vaccines/create`}
-            >
-              Create vaccine record
-            </Button>
-          )}
-        </ButtonGroup>
-      }
-    >
-      To create a new record select the record type you want to create.{' '}
-      <a>View a record template (opens in new tab)</a> to check what information you will need to
-      provide.
-    </ActionBanner>
-  )
-}
 // TODO: Add the record template to the link
-// TODO: Add the link to the button to create a vaccine record
 
 export default OrganisationRecordsPage
