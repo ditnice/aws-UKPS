@@ -540,7 +540,7 @@ internal partial class UserService(
             }
 
             bool isTheCurrentUserModifyingTheirOwnDetails = currentUserInfoService.IsCurrentUser(
-                user.WorkEmail
+                user
             );
 
             if (!isTheCurrentUserModifyingTheirOwnDetails)
@@ -598,7 +598,7 @@ internal partial class UserService(
             }
 
             bool isTheCurrentUserModifyingTheirOwnDetails = currentUserInfoService.IsCurrentUser(
-                user.WorkEmail
+                user
             );
 
             if (!isTheCurrentUserModifyingTheirOwnDetails)
