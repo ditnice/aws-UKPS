@@ -3,12 +3,7 @@ using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
-[FormSection(
-    RecordType.Medicine,
-    MedicineFormSections.ServiceReadiness,
-    MedicineFormSections.ServiceReadinessTitle,
-    Order = MedicineFormSections.ServiceReadinessOrder
-)]
+[FormEntity]
 internal sealed class MedicinesServiceImpact
 {
     [FormIgnore("Database identity")]
@@ -20,12 +15,12 @@ internal sealed class MedicinesServiceImpact
     /// <summary>
     /// The extent of NHS service change required to deliver this medicine.
     /// </summary>
-    [FormTask(
-        MedicineFormTasks.PatientAndClinicalRequirements,
-        MedicineFormTasks.PatientAndClinicalRequirementsTitle,
-        Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
+    [FormPage(
+        MedicineFormLayout.PatientAndClinicalRequirements,
+        "nhs-service-changes",
+        "NHS service changes",
+        Order = 50
     )]
-    [FormPage("nhs-service-changes", "NHS service changes", Order = 50)]
     [FormField(
         "medicines_service_impact.nhs_service_changes_required",
         "Are any changes to NHS services required for the delivery of this product?",
@@ -39,12 +34,12 @@ internal sealed class MedicinesServiceImpact
     /// Conditional on NhsServiceChangesRequired = CompleteTransformation or SomeChange.
     /// Describes changes to staffing, equipment, pathway, or commissioning.
     /// </summary>
-    [FormTask(
-        MedicineFormTasks.PatientAndClinicalRequirements,
-        MedicineFormTasks.PatientAndClinicalRequirementsTitle,
-        Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
+    [FormPage(
+        MedicineFormLayout.PatientAndClinicalRequirements,
+        "nhs-service-changes",
+        "NHS service changes",
+        Order = 50
     )]
-    [FormPage("nhs-service-changes", "NHS service changes", Order = 50)]
     [FormField(
         "medicines_service_impact.nhs_service_changes_details",
         "Describe any changes to staffing, equipment, pathway, or commissioning needed for delivery of this medicine.",
@@ -63,12 +58,12 @@ internal sealed class MedicinesServiceImpact
     /// Are there specific requirements for the handling or storage of this product
     /// that may cause service issues?
     /// </summary>
-    [FormTask(
-        MedicineFormTasks.PatientAndClinicalRequirements,
-        MedicineFormTasks.PatientAndClinicalRequirementsTitle,
-        Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
+    [FormPage(
+        MedicineFormLayout.PatientAndClinicalRequirements,
+        "handling-storage",
+        "Handling and storage",
+        Order = 60
     )]
-    [FormPage("handling-storage", "Handling and storage", Order = 60)]
     [FormField(
         "medicines_service_impact.handling_storage_requirements",
         "Are there specific requirements for the handling or storage of this product that may cause service issues?",
@@ -82,12 +77,12 @@ internal sealed class MedicinesServiceImpact
     public YesNoUnknown? HandlingStorageRequirements { get; set; }
 
     /// <summary>Conditional on HandlingStorageRequirements = Yes.</summary>
-    [FormTask(
-        MedicineFormTasks.PatientAndClinicalRequirements,
-        MedicineFormTasks.PatientAndClinicalRequirementsTitle,
-        Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
+    [FormPage(
+        MedicineFormLayout.PatientAndClinicalRequirements,
+        "handling-storage",
+        "Handling and storage",
+        Order = 60
     )]
-    [FormPage("handling-storage", "Handling and storage", Order = 60)]
     [FormField(
         "medicines_service_impact.handling_storage_details",
         "Provide further details",
@@ -98,12 +93,12 @@ internal sealed class MedicinesServiceImpact
     [FormRequired("Enter details")]
     public string? HandlingStorageDetails { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.PatientAndClinicalRequirements,
-        MedicineFormTasks.PatientAndClinicalRequirementsTitle,
-        Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
+    [FormPage(
+        MedicineFormLayout.PatientAndClinicalRequirements,
+        "population-range",
+        "UK patient population",
+        Order = 70
     )]
-    [FormPage("population-range", "UK patient population", Order = 70)]
     [FormField(
         "medicines_service_impact.uk_patient_population_range_id",
         "UK patient population range for this condition",
@@ -115,12 +110,12 @@ internal sealed class MedicinesServiceImpact
     [FormRequired("Select a population size")]
     public int? UkPatientPopulationRangeId { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.PatientAndClinicalRequirements,
-        MedicineFormTasks.PatientAndClinicalRequirementsTitle,
-        Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
+    [FormPage(
+        MedicineFormLayout.PatientAndClinicalRequirements,
+        "population-range",
+        "UK patient population",
+        Order = 70
     )]
-    [FormPage("population-range", "UK patient population", Order = 70)]
     [FormField(
         "medicines_service_impact.uk_patient_population_notes",
         "Additional details about the UK patient population",
@@ -134,12 +129,8 @@ internal sealed class MedicinesServiceImpact
     /// <summary>
     /// Free text. Expected to contain a range along with supporting references and calculations.
     /// </summary>
-    [FormTask(
-        MedicineFormTasks.PatientAndClinicalRequirements,
-        MedicineFormTasks.PatientAndClinicalRequirementsTitle,
-        Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
-    )]
     [FormPage(
+        MedicineFormLayout.PatientAndClinicalRequirements,
         "eligible-population",
         "Enter the estimated UK eligible population range",
         Order = 80

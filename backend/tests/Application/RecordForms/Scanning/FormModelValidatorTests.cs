@@ -3,6 +3,7 @@ using Shouldly;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Application.RecordForms.Scanning;
+using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 using UKPS.Api.Persistence.Entities.ReferenceData;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Persistence.FormAnnotations;
@@ -21,9 +22,12 @@ public class FormModelValidatorTests
         IReadOnlyList<string> problems = Problems(typeof(ValidEntity));
         problems.ShouldBe(["The Vaccine form has no entry in FormVersions."]);
 
-        var (entities, scanProblems) = FormModelScanner.Scan(_model, [typeof(ValidEntity)]);
+        var (declarations, scanProblems) = FormModelScanner.Scan(
+            _model,
+            [typeof(VaccineTestLayout), typeof(ValidEntity)]
+        );
         scanProblems.ShouldBeEmpty();
-        FormModel form = FormModelBuilder.Build(entities, _options)[RecordType.Vaccine];
+        FormModel form = FormModelBuilder.Build(declarations, _options)[RecordType.Vaccine];
 
         form.Pages.Select(static p => p.Id).ShouldBe(["text", "chapter", "areas"]);
         FormTask task = form.Sections.Single().Tasks.Single();
@@ -63,9 +67,8 @@ public class FormModelValidatorTests
         "BrokenEntity.WrongEnum has [FormMaxLength], which needs a Text or Textarea control and a positive maximum."
     )]
     [InlineData("BrokenEntity.UnknownKey uses unknown option provider 'no-such-provider'.")]
-    [InlineData("BrokenEntity.NoTask has [FormField] but no [FormTask].")]
     [InlineData(
-        "BrokenEntity.BadTask declares task 'Bad Task' with a badly formed ID or a blank title."
+        "BrokenEntity.UnknownTask declares page 'unknown-task' in task 'no-such-task', which no FormLayout declares."
     )]
     [InlineData(
         "BrokenEntity.ReservedPage declares page 'task-list', which is reserved for the task list."
@@ -123,7 +126,7 @@ public class FormModelValidatorTests
         "BrokenConditionEntity [FormPageShowWhen] for page 'undeclared' names a page that BrokenConditionEntity does not declare."
     )]
     [InlineData(
-        "BrokenConditionEntity [FormPageShowWhen] for page 'first' is on the first page of task 'broken-task', which must always apply."
+        "BrokenConditionEntity [FormPageShowWhen] for page 'first' is on the first page of task 'broken-conditions-task', which must always apply."
     )]
     [InlineData("The Vaccine form has more than one [FormPageShowWhen] for page 'second'.")]
     public void Validate_BrokenConditions_ReportsTheProblem(string expected)
@@ -134,8 +137,11 @@ public class FormModelValidatorTests
     [Fact]
     public void Scan_ConditionalEntity_BuildsPageAndQuestionConditions()
     {
-        var (entities, _) = FormModelScanner.Scan(_model, [typeof(ConditionalEntity)]);
-        FormModel form = FormModelBuilder.Build(entities, _options)[RecordType.Vaccine];
+        var (declarations, _) = FormModelScanner.Scan(
+            _model,
+            [typeof(VaccineTestLayout), typeof(ConditionalEntity)]
+        );
+        FormModel form = FormModelBuilder.Build(declarations, _options)[RecordType.Vaccine];
 
         form.FindPage("gate")!.ShowWhen.ShouldBeNull();
         form.FindPage("follow-up")!
@@ -150,8 +156,11 @@ public class FormModelValidatorTests
     {
         Problems(typeof(DatedEntity)).ShouldBe(["The Vaccine form has no entry in FormVersions."]);
 
-        var (entities, _) = FormModelScanner.Scan(_model, [typeof(DatedEntity)]);
-        FormModel form = FormModelBuilder.Build(entities, _options)[RecordType.Vaccine];
+        var (declarations, _) = FormModelScanner.Scan(
+            _model,
+            [typeof(VaccineTestLayout), typeof(DatedEntity)]
+        );
+        FormModel form = FormModelBuilder.Build(declarations, _options)[RecordType.Vaccine];
 
         FormQuestion submission = form.FindQuestion("dated_entity.submission_date")!;
         submission.Binding.Description.ShouldBe(
@@ -196,8 +205,11 @@ public class FormModelValidatorTests
     {
         Problems(typeof(CodedEntity)).ShouldBe(["The Vaccine form has no entry in FormVersions."]);
 
-        var (entities, _) = FormModelScanner.Scan(_model, [typeof(CodedEntity)]);
-        FormModel form = FormModelBuilder.Build(entities, _options)[RecordType.Vaccine];
+        var (declarations, _) = FormModelScanner.Scan(
+            _model,
+            [typeof(VaccineTestLayout), typeof(CodedEntity)]
+        );
+        FormModel form = FormModelBuilder.Build(declarations, _options)[RecordType.Vaccine];
 
         form.FindQuestion("coded_entity.irp_details")!
             .ShowWhen!.Description.ShouldBe(
@@ -226,10 +238,13 @@ public class FormModelValidatorTests
         OptionProviderRegistry options = OptionProviderRegistry.CreateDefault();
         options.AddEnum("yes-no", (YesNoUnknown.Yes, "Yes"), (YesNoUnknown.No, "No"));
 
-        var (entities, _) = FormModelScanner.Scan(_model, [typeof(ValidEntity)]);
+        var (declarations, _) = FormModelScanner.Scan(
+            _model,
+            [typeof(VaccineTestLayout), typeof(ValidEntity)]
+        );
 
         FormModelValidator
-            .Validate(entities, options)
+            .Validate(declarations, options)
             .ShouldContain(
                 "ValidEntity.Choice has several Enum providers of YesNoUnknown ('yes-no', 'yes-no-unknown'); choose one with [FormOptions]."
             );
@@ -252,9 +267,6 @@ public class FormModelValidatorTests
         IReadOnlyList<string> problems = Problems(typeof(ValidEntity), typeof(DisagreeingEntity));
 
         problems.ShouldContain(
-            "The Vaccine form declares section 'valid' with different titles or orders."
-        );
-        problems.ShouldContain(
             "The Vaccine form declares page 'text' with different titles, orders or commercial in confidence flags."
         );
         problems.ShouldContain(
@@ -263,17 +275,64 @@ public class FormModelValidatorTests
     }
 
     [Fact]
-    public void Validate_TaskConflicts_AreReported()
+    public void Validate_PageInTwoTasks_IsReported()
     {
         IReadOnlyList<string> problems = Problems(typeof(ValidEntity), typeof(TaskConflictEntity));
 
-        problems.ShouldContain(
-            "The Vaccine form declares task 'valid-task' with different titles, orders or sections."
-        );
         problems.ShouldContain("The Vaccine form has page 'text' in more than one task.");
-        problems.ShouldContain(
-            "The Vaccine form, section 'valid', has task 'valid-task' and task 'other-task' with the same Order 10."
+    }
+
+    [Theory]
+    [InlineData(
+        "BrokenTestLayout declares section 'Bad Section' with a badly formed ID or a blank title."
+    )]
+    [InlineData(
+        "BrokenTestLayout declares task 'Bad Task' with a badly formed ID or a blank title."
+    )]
+    [InlineData(
+        "BrokenTestLayout, section 'Bad Section', has task 'Bad Task' and task 'tied-task' with the same Order 10."
+    )]
+    [InlineData("BrokenTestLayout declares section 'repeated' more than once.")]
+    [InlineData(
+        "BrokenTestLayout has section 'Bad Section' and section 'repeated' with the same Order 10."
+    )]
+    [InlineData("Task ID 'repeated-task' is declared more than once in the form layouts.")]
+    public void Validate_BrokenLayout_ReportsTheProblem(string expected)
+    {
+        var (declarations, problems) = FormModelScanner.Scan(_model, [typeof(BrokenTestLayout)]);
+
+        problems.ShouldBeEmpty();
+        FormModelValidator.Validate(declarations, _options).ShouldContain(expected);
+    }
+
+    [Fact]
+    public void Validate_TwoLayoutsForOneForm_AreReported()
+    {
+        var (declarations, _) = FormModelScanner.Scan(
+            _model,
+            [typeof(VaccineTestLayout), typeof(VaccineTestLayout)]
         );
+
+        FormModelValidator
+            .Validate(declarations, _options)
+            .ShouldContain(
+                "More than one FormLayout declares the Vaccine form (VaccineTestLayout, VaccineTestLayout)."
+            );
+    }
+
+    [Fact]
+    public void Validate_EntityInTwoForms_IsReported()
+    {
+        var (declarations, _) = FormModelScanner.Scan(
+            _model,
+            [typeof(VaccineTestLayout), typeof(MedicineFormLayout), typeof(SplitFormEntity)]
+        );
+
+        FormModelValidator
+            .Validate(declarations, _options)
+            .ShouldContain(
+                "SplitFormEntity has pages in more than one form (Medicine, Vaccine); an entity belongs to one form."
+            );
     }
 
     [Fact]
@@ -293,7 +352,11 @@ public class FormModelValidatorTests
     public void Create_InvalidModel_ThrowsWithEveryProblem()
     {
         FormModelException exception = Should.Throw<FormModelException>(() =>
-            FormModelFactory.Create(_model, _options, [typeof(BrokenEntity), typeof(RowsEntity)])
+            FormModelFactory.Create(
+                _model,
+                _options,
+                [typeof(VaccineTestLayout), typeof(BrokenEntity), typeof(RowsEntity)]
+            )
         );
 
         exception.Problems.Count.ShouldBeGreaterThan(10);
@@ -302,7 +365,10 @@ public class FormModelValidatorTests
 
     private static IReadOnlyList<string> Problems(params Type[] types)
     {
-        var (entities, problems) = FormModelScanner.Scan(_model, types);
-        return [.. problems, .. FormModelValidator.Validate(entities, _options)];
+        var (declarations, problems) = FormModelScanner.Scan(
+            _model,
+            [typeof(VaccineTestLayout), .. types]
+        );
+        return [.. problems, .. FormModelValidator.Validate(declarations, _options)];
     }
 }

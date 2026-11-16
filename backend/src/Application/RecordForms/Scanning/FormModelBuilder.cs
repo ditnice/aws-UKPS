@@ -11,20 +11,33 @@ namespace UKPS.Api.Application.RecordForms.Scanning;
 internal static class FormModelBuilder
 {
     public static Dictionary<RecordType, FormModel> Build(
-        IReadOnlyList<EntityDeclaration> entities,
+        FormDeclarations declarations,
         OptionProviderRegistry options
     )
     {
-        Dictionary<EntityDeclaration, FormQuestion[]> questions = entities.ToDictionary(
-            static e => e,
-            e => BuildQuestions(e, options)
-        );
+        PlacedQuestion[] questions = declarations
+            .Entities.SelectMany(e =>
+                e.Questions.Zip(
+                    BuildQuestions(e, options),
+                    (declaration, question) =>
+                        new PlacedQuestion(
+                            e,
+                            declaration,
+                            question,
+                            declarations.Place(declaration)!
+                        )
+                )
+            )
+            .ToArray();
 
-        return entities
-            .SelectMany(static e => e.Sections)
-            .Select(static s => s.RecordType)
-            .Distinct()
-            .ToDictionary(static t => t, t => BuildForm(t, entities, questions));
+        return declarations
+            .Layouts.Where(layout =>
+                questions.Any(q => q.Placement.RecordType == layout.RecordType)
+            )
+            .ToDictionary(
+                static layout => layout.RecordType,
+                layout => BuildForm(layout, questions)
+            );
     }
 
     private static FormQuestion[] BuildQuestions(
@@ -32,14 +45,6 @@ internal static class FormModelBuilder
         OptionProviderRegistry options
     )
     {
-        // Every section of an entity shares its row source; validation rejects disagreement only
-        // where it matters (FirstSave with required columns), so take the strictest.
-        FormRowSource rowSource = entity.Sections.Any(static s =>
-            s.RowSource == FormRowSource.RecordCreation
-        )
-            ? FormRowSource.RecordCreation
-            : FormRowSource.FirstSave;
-
         // Junction and regulatory date questions read their answers through a navigation.
         string[] includes = entity
             .Questions.Select(static q =>
@@ -55,7 +60,7 @@ internal static class FormModelBuilder
 
         FormEntity formEntity = new(
             entity.ClrType,
-            rowSource,
+            entity.RowSource,
             entity.ClrType.GetProperty("RevisionId")!,
             includes
         );
@@ -175,79 +180,86 @@ internal static class FormModelBuilder
             ),
         };
 
-    private static FormModel BuildForm(
-        RecordType recordType,
-        IReadOnlyList<EntityDeclaration> entities,
-        Dictionary<EntityDeclaration, FormQuestion[]> questions
-    )
+    private static FormModel BuildForm(FormLayout layout, PlacedQuestion[] allQuestions)
     {
-        var declared = entities
-            .SelectMany(e =>
-                e.Sections.Where(s => s.RecordType == recordType)
-                    .Select(s => (Section: s, Questions: e.Questions.Zip(questions[e])))
-            )
+        PlacedQuestion[] questions = allQuestions
+            .Where(q => q.Placement.RecordType == layout.RecordType)
             .ToArray();
 
-        Dictionary<string, FormPageShowWhenAttribute> pageConditions = entities
-            .Where(e => e.Sections.Any(s => s.RecordType == recordType))
+        Dictionary<string, FormPageShowWhenAttribute> pageConditions = questions
+            .Select(static q => q.Entity)
+            .Distinct()
             .SelectMany(static e => e.PageConditions)
             .ToDictionary(static c => c.PageId, StringComparer.Ordinal);
 
-        FormSection[] sections = declared
-            .GroupBy(static x => x.Section.Id, StringComparer.Ordinal)
-            .Select(group =>
-            {
-                FormSectionAttribute section = group.First().Section;
-                FormTask[] tasks = group
-                    .SelectMany(static x => x.Questions)
-                    .GroupBy(static x => x.First.Task.Id, StringComparer.Ordinal)
-                    .Select(task =>
-                    {
-                        FormTaskAttribute taskAttribute = task.First().First.Task;
-                        FormPage[] pages = task.GroupBy(
-                                static x => x.First.Page.Id,
-                                StringComparer.Ordinal
-                            )
-                            .Select(page => BuildPage(page, section, taskAttribute, pageConditions))
-                            .OrderBy(static p => p.Order)
-                            .ToArray();
-                        return new FormTask(
-                            taskAttribute.Id,
-                            taskAttribute.Title,
-                            taskAttribute.Order,
-                            pages
-                        );
-                    })
-                    .OrderBy(static t => t.Order)
-                    .ToArray();
-                return new FormSection(section.Id, section.Title, section.Order, tasks);
-            })
-            .OrderBy(static s => s.Order)
+        // Tasks and sections with no pages yet are left out of the form.
+        FormSection[] sections = layout
+            .Sections.OrderBy(static s => s.Order)
+            .Select(section => new FormSection(
+                section.Id,
+                section.Title,
+                section.Order,
+                section
+                    .Tasks.OrderBy(static t => t.Order)
+                    .Select(task => BuildTask(section, task, questions, pageConditions))
+                    .Where(static t => t.Pages.Count > 0)
+                    .ToArray()
+            ))
+            .Where(static s => s.Tasks.Count > 0)
             .ToArray();
 
-        return new FormModel(recordType, FormVersions.For(recordType)!, sections);
+        return new FormModel(layout.RecordType, FormVersions.For(layout.RecordType)!, sections);
     }
 
-    private static FormPage BuildPage(
-        IGrouping<string, (QuestionDeclaration First, FormQuestion Second)> page,
-        FormSectionAttribute section,
-        FormTaskAttribute task,
+    private static FormTask BuildTask(
+        FormLayoutSection section,
+        FormLayoutTask task,
+        PlacedQuestion[] questions,
         Dictionary<string, FormPageShowWhenAttribute> pageConditions
     ) =>
         new(
+            task.Id,
+            task.Title,
+            task.Order,
+            questions
+                .Where(q => string.Equals(q.Placement.Task.Id, task.Id, StringComparison.Ordinal))
+                .GroupBy(static q => q.Declaration.Page.Id, StringComparer.Ordinal)
+                .Select(page => BuildPage(page, section, task, pageConditions))
+                .OrderBy(static p => p.Order)
+                .ToArray()
+        );
+
+    private static FormPage BuildPage(
+        IGrouping<string, PlacedQuestion> page,
+        FormLayoutSection section,
+        FormLayoutTask task,
+        Dictionary<string, FormPageShowWhenAttribute> pageConditions
+    )
+    {
+        FormPageAttribute declared = page.First().Declaration.Page;
+        return new(
             page.Key,
-            page.First().First.Page.Title,
-            page.First().First.Page.Order,
+            declared.Title,
+            declared.Order,
             section.Id,
             section.Title,
             task.Id,
             task.Title,
-            page.Select(static x => x.Second).OrderBy(static q => q.Order).ToArray(),
-            CommercialInConfidence: page.First().First.Page.CommercialInConfidence
+            page.Select(static q => q.Question).OrderBy(static q => q.Order).ToArray(),
+            CommercialInConfidence: declared.CommercialInConfidence
         )
         {
             ShowWhen = pageConditions.TryGetValue(page.Key, out var condition)
                 ? Condition(condition.QuestionId, condition.Values)
                 : null,
         };
+    }
+
+    /// <summary>A built question with its declaration and where its page's task puts it.</summary>
+    private sealed record PlacedQuestion(
+        EntityDeclaration Entity,
+        QuestionDeclaration Declaration,
+        FormQuestion Question,
+        TaskPlacement Placement
+    );
 }

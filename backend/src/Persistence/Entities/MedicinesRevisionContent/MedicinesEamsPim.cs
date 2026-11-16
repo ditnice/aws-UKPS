@@ -7,12 +7,7 @@ namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 /// Holds the PIM designation and EAMS answers, and owns the EamsSubmission and EamsOpinion
 /// regulatory date rows.
 /// </summary>
-[FormSection(
-    RecordType.Medicine,
-    MedicineFormSections.SpecialDesignation,
-    MedicineFormSections.SpecialDesignationTitle,
-    Order = MedicineFormSections.SpecialDesignationOrder
-)]
+[FormEntity]
 [FormPageShowWhen(
     "eams-submission-date",
     "medicines_eams_pim.will_submit_to_eams",
@@ -32,12 +27,13 @@ internal sealed class MedicinesEamsPim
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.PimAndEams,
-        MedicineFormTasks.PimAndEamsTitle,
-        Order = MedicineFormTasks.PimAndEamsOrder
+    [FormPage(
+        MedicineFormLayout.PimAndEams,
+        "pim-designation",
+        "PIM designation",
+        Order = 10,
+        CommercialInConfidence = true
     )]
-    [FormPage("pim-designation", "PIM designation", Order = 10, CommercialInConfidence = true)]
     [FormField(
         "medicines_eams_pim.pim_designation_status",
         "Do you have, or are you seeking, Medicines and Healthcare Regulatory Agency (MHRA) PIM designation?",
@@ -50,12 +46,13 @@ internal sealed class MedicinesEamsPim
     public DesignationStatus? PimDesignationStatus { get; set; }
 
     /// <summary>Conditional on PimDesignationStatus = Granted.</summary>
-    [FormTask(
-        MedicineFormTasks.PimAndEams,
-        MedicineFormTasks.PimAndEamsTitle,
-        Order = MedicineFormTasks.PimAndEamsOrder
+    [FormPage(
+        MedicineFormLayout.PimAndEams,
+        "pim-designation",
+        "PIM designation",
+        Order = 10,
+        CommercialInConfidence = true
     )]
-    [FormPage("pim-designation", "PIM designation", Order = 10, CommercialInConfidence = true)]
     [FormField(
         "medicines_eams_pim.will_submit_to_eams",
         "Have you already or do you plan to submit to EAMS?",
@@ -67,12 +64,8 @@ internal sealed class MedicinesEamsPim
     [FormRequired("Select yes if you intend to submit or have submitted to EAMS")]
     public YesNoUnknown? WillSubmitToEams { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.PimAndEams,
-        MedicineFormTasks.PimAndEamsTitle,
-        Order = MedicineFormTasks.PimAndEamsOrder
-    )]
     [FormPage(
+        MedicineFormLayout.PimAndEams,
         "eams-submission-date",
         "EAMS submission date",
         Order = 20,
@@ -89,12 +82,8 @@ internal sealed class MedicinesEamsPim
     [FormRequired("Select an option")]
     public int? EamsSubmissionDateId { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.PimAndEams,
-        MedicineFormTasks.PimAndEamsTitle,
-        Order = MedicineFormTasks.PimAndEamsOrder
-    )]
     [FormPage(
+        MedicineFormLayout.PimAndEams,
         "eams-opinion-date",
         "EAMS scientific opinion date",
         Order = 30,
@@ -111,12 +100,8 @@ internal sealed class MedicinesEamsPim
     [FormRequired("Select an option")]
     public int? EamsOpinionDateId { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.PimAndEams,
-        MedicineFormTasks.PimAndEamsTitle,
-        Order = MedicineFormTasks.PimAndEamsOrder
-    )]
     [FormPage(
+        MedicineFormLayout.PimAndEams,
         "eams-opinion-decision",
         "EAMS scientific opinion decision",
         Order = 40,
