@@ -30,6 +30,30 @@
   }
 }
 
+// Narrow key and actions columns, so the value gets most of the width.
+.summary-list--wide-value {
+  @include media-queries.mq($from: sm) {
+    .summary-list__key {
+      width: 25%;
+    }
+
+    .summary-list__actions {
+      width: 15%;
+    }
+  }
+}
+
+// Puts a row's tag at the right of the value cell.
+.summary-list__value-with-tag {
+  display: flex;
+  gap: spacing.$medium * 1px;
+  justify-content: space-between;
+
+  > :last-child {
+    flex-shrink: 0;
+  }
+}
+
 .summary-list__row {
   border-bottom: 1px solid colours.$border;
   margin-bottom: spacing.$medium * 1px;

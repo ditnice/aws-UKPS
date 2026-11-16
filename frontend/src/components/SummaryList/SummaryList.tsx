@@ -16,6 +16,8 @@ type ValidSummaryListAction = ReactElement<SummaryListActionProps> | boolean | n
 export type SummaryListRowProps = {
   children?: ValidSummaryListAction | readonly ValidSummaryListAction[]
   label: ReactNode
+  /* Shown at the right of the value cell, e.g. a "Hidden" tag. */
+  tag?: ReactNode
   value: ReactNode
 }
 
@@ -35,7 +37,7 @@ type SummaryListProps = {
   variant?: SummaryListVariant
 }
 
-type SummaryListVariant = 'default' | 'two-column'
+type SummaryListVariant = 'default' | 'two-column' | 'wide-value'
 
 export function SummaryListAction({ children, href, visuallyHiddenText }: SummaryListActionProps) {
   const accessibleName = `${children} ${visuallyHiddenText}`
@@ -51,6 +53,7 @@ export function SummaryListAction({ children, href, visuallyHiddenText }: Summar
 export function SummaryListRow({
   children,
   label,
+  tag,
   listHasActions = false,
   variant = 'default',
   value,
@@ -69,7 +72,16 @@ export function SummaryListRow({
   return (
     <div className={rowClassName}>
       <dt className={styles['summary-list__key']}>{label}</dt>
-      <dd className={styles['summary-list__value']}>{value}</dd>
+      <dd className={styles['summary-list__value']}>
+        {tag ? (
+          <div className={styles['summary-list__value-with-tag']}>
+            <div>{value}</div>
+            {tag}
+          </div>
+        ) : (
+          value
+        )}
+      </dd>
       {actions.length > 0 && (
         <dd className={styles['summary-list__actions']}>
           {actions.length === 1 ? (
@@ -103,6 +115,7 @@ export function SummaryList({
   const rootClassName = clsx(
     styles['summary-list'],
     variant === 'two-column' && styles['summary-list--two-column'],
+    variant === 'wide-value' && styles['summary-list--wide-value'],
     className,
   )
 

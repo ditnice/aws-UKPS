@@ -114,4 +114,30 @@ describe('SummaryList', () => {
     expect(container.querySelector('[class*="summary-list__row--no-actions"]')).toBeNull()
     expect(asFragment()).toMatchSnapshot()
   })
+
+  it('supports a wide-value variant', () => {
+    const { container } = render(
+      <SummaryList variant="wide-value">
+        <SummaryListRow label="Name" value="Sarah Philips">
+          <SummaryListAction href="/change-name" visuallyHiddenText="name">
+            Change
+          </SummaryListAction>
+        </SummaryListRow>
+      </SummaryList>,
+    )
+
+    expect(container.querySelector('dl')?.className).toContain('summary-list--wide-value')
+  })
+
+  it('renders a row tag in the value cell', () => {
+    const { container } = render(
+      <SummaryList>
+        <SummaryListRow label="Record title" tag={<span>Hidden</span>} value="Early RA" />
+      </SummaryList>,
+    )
+
+    const valueCell = container.querySelector('dd') as HTMLElement
+    expect(within(valueCell).getByText('Hidden')).toBeInTheDocument()
+    expect(within(valueCell).getByText('Early RA')).toBeInTheDocument()
+  })
 })
