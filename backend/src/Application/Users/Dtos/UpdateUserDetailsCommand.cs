@@ -20,7 +20,11 @@ public sealed record UpdateUserDetailsCommand
     [Required(AllowEmptyStrings = false)]
     [EmailAddress]
     [NoWhitespace]
-    public required string WorkEmail { get; init; }
+    public required string WorkEmail
+    {
+        get => field;
+        set => field = value?.Trim() ?? string.Empty;
+    }
 
     /// <summary>
     /// Gets the user's work telephone number.

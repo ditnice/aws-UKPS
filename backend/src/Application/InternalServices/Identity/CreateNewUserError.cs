@@ -7,7 +7,7 @@ public abstract record CreateNewUserError
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="CreateNewUserError"/> class.
-    /// </summary>[]
+    /// </summary>
     protected CreateNewUserError() { }
 
     /// <summary>
