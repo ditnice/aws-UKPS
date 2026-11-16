@@ -30,6 +30,44 @@
   }
 }
 
+.summary-list__header {
+  align-items: baseline;
+  display: flex;
+  gap: spacing.$medium * 1px;
+  justify-content: space-between;
+}
+
+.summary-list__header-actions {
+  display: flex;
+  gap: spacing.$small * 1px;
+}
+
+// Inside a card the panel provides the spacing below the list.
+.summary-list__card {
+  background: colours.$card-callout-background;
+  border: 1px solid colours.$border;
+
+  .summary-list {
+    margin-bottom: 0;
+  }
+
+  @include media-queries.mq($from: sm) {
+    .summary-list__key {
+      width: 25%;
+    }
+
+    .summary-list__actions {
+      width: 15%;
+    }
+  }
+}
+
+.summary-list__value-with-tag {
+  display: flex;
+  gap: spacing.$medium * 1px;
+  justify-content: space-between;
+}
+
 .summary-list__row {
   border-bottom: 1px solid colours.$border;
   margin-bottom: spacing.$medium * 1px;

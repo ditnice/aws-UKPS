@@ -1,6 +1,8 @@
 import clsx from 'clsx'
 import { Children, cloneElement, isValidElement } from 'react'
 
+import { Panel } from '@nice-digital/nds-panel'
+
 import styles from './SummaryList.module.scss'
 
 import type { ReactElement, ReactNode } from 'react'
@@ -16,6 +18,8 @@ type ValidSummaryListAction = ReactElement<SummaryListActionProps> | boolean | n
 export type SummaryListRowProps = {
   children?: ValidSummaryListAction | readonly ValidSummaryListAction[]
   label: ReactNode
+  /* Shown at the right of the value cell, e.g. a "Hidden" tag. */
+  tag?: ReactNode
   value: ReactNode
 }
 
@@ -27,8 +31,14 @@ type InternalSummaryListRowProps = SummaryListRowProps & {
 type ValidSummaryListRow = ReactElement<InternalSummaryListRowProps> | boolean | null | undefined
 
 type SummaryListProps = {
-  children: ValidSummaryListRow | readonly ValidSummaryListRow[]
+  /* Links on the title line, e.g. `SummaryListAction`s such as "Edit section". */
+  actions?: ReactNode
+  /* Draws the title and rows inside an NDS panel. */
+  card?: boolean
+  children?: ValidSummaryListRow | readonly ValidSummaryListRow[]
   className?: string
+  /* Content between the title and the rows, e.g. "Not yet provided" for a section with no rows. */
+  intro?: ReactNode
   title?: ReactNode
   /* Defaults to 4. */
   titleHeadingLevel?: 2 | 3 | 4 | 5 | 6
@@ -51,6 +61,7 @@ export function SummaryListAction({ children, href, visuallyHiddenText }: Summar
 export function SummaryListRow({
   children,
   label,
+  tag,
   listHasActions = false,
   variant = 'default',
   value,
@@ -69,7 +80,16 @@ export function SummaryListRow({
   return (
     <div className={rowClassName}>
       <dt className={styles['summary-list__key']}>{label}</dt>
-      <dd className={styles['summary-list__value']}>{value}</dd>
+      <dd className={styles['summary-list__value']}>
+        {tag ? (
+          <div className={styles['summary-list__value-with-tag']}>
+            <div>{value}</div>
+            {tag}
+          </div>
+        ) : (
+          value
+        )}
+      </dd>
       {actions.length > 0 && (
         <dd className={styles['summary-list__actions']}>
           {actions.length === 1 ? (
@@ -90,8 +110,11 @@ export function SummaryListRow({
 }
 
 export function SummaryList({
+  actions,
+  card = false,
   children,
   className,
+  intro,
   title,
   titleHeadingLevel = 4,
   variant = 'default',
@@ -107,20 +130,29 @@ export function SummaryList({
   )
 
   const TitleHeading = `h${titleHeadingLevel}` as const
-  const list = (
-    <dl className={rootClassName} data-component="summary-list">
-      {rows.map((row) => cloneElement(row, { listHasActions: hasActions, variant }))}
-    </dl>
+  const titleElement = title ? (
+    <TitleHeading className={styles['summary-list__title']}>{title}</TitleHeading>
+  ) : null
+  const header = actions ? (
+    <div className={styles['summary-list__header']}>
+      {titleElement}
+      <div className={styles['summary-list__header-actions']}>{actions}</div>
+    </div>
+  ) : (
+    titleElement
   )
 
-  if (!title) {
-    return list
-  }
-
-  return (
+  const content = (
     <>
-      <TitleHeading className={styles['summary-list__title']}>{title}</TitleHeading>
-      {list}
+      {header}
+      {intro}
+      {rows.length > 0 && (
+        <dl className={rootClassName} data-component="summary-list">
+          {rows.map((row) => cloneElement(row, { listHasActions: hasActions, variant }))}
+        </dl>
+      )}
     </>
   )
+
+  return card ? <Panel className={styles['summary-list__card']}>{content}</Panel> : content
 }

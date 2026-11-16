@@ -39,6 +39,40 @@ exports[`SummaryList > adds hidden context to a row action child 1`] = `
 </DocumentFragment>
 `;
 
+exports[`SummaryList > draws the title and rows inside a panel when card is set 1`] = `
+<DocumentFragment>
+  <div
+    class="panel _summary-list__card_1509a2"
+    data-component="panel"
+  >
+    <h4
+      class="_summary-list__title_1509a2"
+    >
+      Names and identifiers
+    </h4>
+    <dl
+      class="_summary-list_1509a2"
+      data-component="summary-list"
+    >
+      <div
+        class="_summary-list__row_1509a2"
+      >
+        <dt
+          class="_summary-list__key_1509a2"
+        >
+          Company code
+        </dt>
+        <dd
+          class="_summary-list__value_1509a2"
+        >
+          GC22
+        </dd>
+      </div>
+    </dl>
+  </div>
+</DocumentFragment>
+`;
+
 exports[`SummaryList > renders a title as a heading above the list 1`] = `
 <DocumentFragment>
   <h4
