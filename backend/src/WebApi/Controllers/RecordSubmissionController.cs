@@ -8,14 +8,49 @@ using UKPS.Api.WebApi.CustomResponses;
 namespace UKPS.Api.WebApi.Controllers;
 
 /// <summary>
-/// Provides the endpoint for submitting a record's draft revision.
+/// Provides the endpoints for checking and submitting a record's draft revision.
 /// </summary>
+/// <param name="checkAnswersService">Service used to load check your answers.</param>
 /// <param name="submissionService">Service used to check and submit records.</param>
 [Authorize]
 [ApiController]
 [Route("records/{recordId:int}")]
-public class RecordSubmissionController(IRecordSubmissionService submissionService) : ControllerBase
+public class RecordSubmissionController(
+    IRecordCheckAnswersQueryService checkAnswersService,
+    IRecordSubmissionService submissionService
+) : ControllerBase
 {
+    /// <summary>
+    /// Retrieves every question that applies on the record's latest revision with its answer, the
+    /// errors that would stop it being submitted, and the revision hash to submit with.
+    /// </summary>
+    /// <param name="recordId">The record to check.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>The record's answers and errors.</returns>
+    /// <response code="200">Returns the record's answers and errors.</response>
+    /// <response code="404">
+    /// The record was not found or is not accessible to the caller.
+    /// </response>
+    [HttpGet("check-answers", Name = nameof(GetRecordCheckAnswers))]
+    [ProducesResponseType<RecordCheckAnswersDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<RecordCheckAnswersDto>> GetRecordCheckAnswers(
+        int recordId,
+        CancellationToken cancellationToken
+    )
+    {
+        GetCheckAnswersResult result = await checkAnswersService.GetCheckAnswers(
+            recordId,
+            cancellationToken
+        );
+
+        // ADR-004: not found and not allowed are indistinguishable.
+        return result.Match<ActionResult<RecordCheckAnswersDto>>(
+            checkAnswers => Ok(checkAnswers),
+            _ => RecordNotFound()
+        );
+    }
+
     /// <summary>
     /// Submits the record's draft revision, as it was when check your answers loaded. A medicine
     /// goes to QA review.

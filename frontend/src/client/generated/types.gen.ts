@@ -917,6 +917,130 @@ export const RecordAction = {
 export type RecordAction = typeof RecordAction[keyof typeof RecordAction];
 
 /**
+ * The whole of a record's latest revision for check your answers: every question that applies,
+ * grouped by section and task, and every error that would stop it being submitted.
+ */
+export type RecordCheckAnswersDto = {
+    /**
+     * The form's version. Send it back on submit.
+     */
+    formVersion: string;
+    /**
+     * The record the answers belong to.
+     */
+    recordId: number;
+    /**
+     * A hash of the whole revision. Send it back on submit; if anything in the revision has
+     * changed since, the submission is rejected.
+     */
+    revisionHash: string;
+    /**
+     * Whether the caller may submit the revision in its current state: it is a draft that can be
+     * submitted, and the caller can edit the record. Show Submit only when this is true and
+     * IReadOnlyList&lt;SubmissionErrorDto&gt; RecordCheckAnswersDto.Errors is empty.
+     */
+    canSubmit: boolean;
+    /**
+     * The sections with a question that applies, in form order.
+     */
+    sections: Array<RecordCheckAnswersSectionDto>;
+    /**
+     * The problems that would stop the record being submitted, in form order, each on a question
+     * in IReadOnlyList&lt;RecordCheckAnswersSectionDto&gt; RecordCheckAnswersDto.Sections.
+     */
+    errors: Array<SubmissionErrorDto>;
+};
+
+/**
+ * An option chosen in an answer.
+ */
+export type RecordCheckAnswersOptionDto = {
+    /**
+     * The answer value: an enum member name or a reference ID.
+     */
+    value: string;
+    /**
+     * The text shown for the option.
+     */
+    label: string;
+    /**
+     * The label of the option's parent in a hierarchical select, or null.
+     */
+    parentLabel: null | string;
+};
+
+/**
+ * A question that applies and its answer, as a row on check your answers.
+ */
+export type RecordCheckAnswersQuestionDto = {
+    /**
+     * The question ID, which errors are keyed by.
+     */
+    id: string;
+    /**
+     * The page the question is on, for its Change link.
+     */
+    pageId: string;
+    /**
+     * The question text.
+     */
+    label: string;
+    /**
+     * The control the question uses, which says how to format the answer.
+     */
+    type: FormControl;
+    /**
+     * True when the question takes several values rather than one.
+     */
+    multiple: boolean;
+    /**
+     * The saved values: at most one for a single-value question, and none when not yet provided.
+     */
+    values: Array<string>;
+    /**
+     * For a choice question, the chosen options in the order offered, so values can be shown by
+     * label; null for any other question.
+     */
+    selectedOptions: null | Array<RecordCheckAnswersOptionDto>;
+};
+
+/**
+ * A section on check your answers.
+ */
+export type RecordCheckAnswersSectionDto = {
+    /**
+     * The section ID.
+     */
+    id: string;
+    /**
+     * The section title.
+     */
+    title: string;
+    /**
+     * The tasks with a question that applies, in order.
+     */
+    tasks: Array<RecordCheckAnswersTaskDto>;
+};
+
+/**
+ * A task on check your answers.
+ */
+export type RecordCheckAnswersTaskDto = {
+    /**
+     * The task ID.
+     */
+    id: string;
+    /**
+     * The task title.
+     */
+    title: string;
+    /**
+     * The questions that apply, in page order, including optional questions with no answer.
+     */
+    questions: Array<RecordCheckAnswersQuestionDto>;
+};
+
+/**
  * Represents a clinical trial on a record.
  */
 export type RecordClinicalTrialDto = {
@@ -3393,6 +3517,44 @@ export type SaveRecordFormPageResponses = {
 };
 
 export type SaveRecordFormPageResponse = SaveRecordFormPageResponses[keyof SaveRecordFormPageResponses];
+
+export type GetRecordCheckAnswersData = {
+    body?: never;
+    path: {
+        /**
+         * The record to check.
+         */
+        recordId: number;
+    };
+    query?: never;
+    url: '/records/{recordId}/check-answers';
+};
+
+export type GetRecordCheckAnswersErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The record was not found or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type GetRecordCheckAnswersError = GetRecordCheckAnswersErrors[keyof GetRecordCheckAnswersErrors];
+
+export type GetRecordCheckAnswersResponses = {
+    /**
+     * Returns the record's answers and errors.
+     */
+    200: RecordCheckAnswersDto;
+};
+
+export type GetRecordCheckAnswersResponse = GetRecordCheckAnswersResponses[keyof GetRecordCheckAnswersResponses];
 
 export type SubmitRecordData = {
     /**
