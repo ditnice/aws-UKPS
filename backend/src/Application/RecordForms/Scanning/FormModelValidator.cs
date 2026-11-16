@@ -30,18 +30,13 @@ internal static partial class FormModelValidator
         List<string> problems = [];
         ValidateLayouts(declarations.Layouts, problems);
 
-        List<PlacedQuestion> placed = [];
         foreach (EntityDeclaration entity in declarations.Entities)
         {
             ValidateEntity(entity, declarations, problems);
             foreach (QuestionDeclaration question in entity.Questions)
             {
                 ValidateQuestion(question, options, problems);
-                if (declarations.Place(question) is { } placement)
-                {
-                    placed.Add(new PlacedQuestion(entity, question, placement));
-                }
-                else
+                if (declarations.Place(question) is null)
                 {
                     problems.Add(
                         $"{question.Where} declares page '{question.Page.Id}' in task '{question.Page.Task}', which no FormLayout declares."
@@ -51,7 +46,9 @@ internal static partial class FormModelValidator
         }
 
         foreach (
-            IGrouping<RecordType, PlacedQuestion> form in placed.GroupBy(static q => q.RecordType)
+            IGrouping<RecordType, PlacedQuestion> form in declarations.Placed.GroupBy(static q =>
+                q.RecordType
+            )
         )
         {
             ValidateForm(form.Key, [.. form], problems);
@@ -100,6 +97,11 @@ internal static partial class FormModelValidator
     private static void ValidateLayout(FormLayout layout, List<string> problems)
     {
         string name = layout.GetType().Name;
+        if (layout.Sections.Count == 0)
+        {
+            problems.Add($"{name} declares no sections.");
+        }
+
         foreach (FormLayoutSection section in layout.Sections)
         {
             if (!SlugPattern().IsMatch(section.Id) || string.IsNullOrWhiteSpace(section.Title))
@@ -107,6 +109,11 @@ internal static partial class FormModelValidator
                 problems.Add(
                     $"{name} declares section '{section.Id}' with a badly formed ID or a blank title."
                 );
+            }
+
+            if (section.Tasks.Count == 0)
+            {
+                problems.Add($"{name} declares section '{section.Id}' with no tasks.");
             }
 
             foreach (FormLayoutTask task in section.Tasks)
@@ -715,11 +722,23 @@ internal static partial class FormModelValidator
         {
             string where =
                 $"{entity.ClrType.Name} [FormPageShowWhen] for page '{condition.PageId}'";
-            QuestionDeclaration? onPage = entity.Questions.FirstOrDefault(q =>
-                string.Equals(q.Page.Id, condition.PageId, StringComparison.Ordinal)
+            PlacedQuestion? onPage = placed.FirstOrDefault(x =>
+                x.Entity == entity
+                && string.Equals(x.Question.Page.Id, condition.PageId, StringComparison.Ordinal)
             );
             if (onPage is null)
             {
+                // A page whose task no layout declares, or that is in another form, is reported
+                // elsewhere.
+                if (
+                    entity.Questions.Any(q =>
+                        string.Equals(q.Page.Id, condition.PageId, StringComparison.Ordinal)
+                    )
+                )
+                {
+                    continue;
+                }
+
                 problems.Add($"{where} names a page that {entity.ClrType.Name} does not declare.");
                 continue;
             }
@@ -730,9 +749,8 @@ internal static partial class FormModelValidator
                 continue;
             }
 
-            PlacedQuestion page = questions[onPage.Field.Id];
-            ValidateNotFirstInTask(where, page, questions, problems);
-            if (trigger.Position.CompareTo(page.Position) >= 0)
+            ValidateNotFirstInTask(where, onPage, questions, problems);
+            if (trigger.Position.CompareTo(onPage.Position) >= 0)
             {
                 problems.Add(
                     $"{where} names '{condition.QuestionId}', which must be on an earlier page."
@@ -879,21 +897,5 @@ internal static partial class FormModelValidator
                 $"{where} has {string.Join(" and ", tie.Select(describe))} with the same Order {tie.Key}."
             );
         }
-    }
-
-    /// <summary>A question with the task its page names, as the layout places it.</summary>
-    private sealed record PlacedQuestion(
-        EntityDeclaration Entity,
-        QuestionDeclaration Question,
-        TaskPlacement Placement
-    )
-    {
-        public RecordType RecordType => Placement.RecordType;
-
-        public string TaskId => Placement.Task.Id;
-
-        /// <summary>The page's position in the form: section, task, then page order.</summary>
-        public (int Section, int Task, int Page) Position =>
-            (Placement.Section.Order, Placement.Task.Order, Question.Page.Order);
     }
 }

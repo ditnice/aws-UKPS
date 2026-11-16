@@ -620,5 +620,46 @@ internal sealed class BrokenTestLayout()
                 20,
                 [new FormLayoutTask("repeated-task", "Repeated task", 10)]
             ),
+            new FormLayoutSection("empty", "Empty", 30, []),
         ]
     );
+
+/// <summary>Declares no sections. Scanned on its own.</summary>
+internal sealed class EmptyTestLayout() : FormLayout(RecordType.Vaccine, []);
+
+/// <summary>Has no parameterless constructor, so the scanner cannot create it.</summary>
+internal sealed class NoDefaultConstructorTestLayout(RecordType recordType)
+    : FormLayout(recordType, []);
+
+/// <summary>Throws while being created.</summary>
+internal sealed class ThrowingTestLayout() : FormLayout(RecordType.Vaccine, Fail())
+{
+    private static IReadOnlyList<FormLayoutSection> Fail() =>
+        throw new InvalidOperationException("Broken layout.");
+}
+
+/// <summary>
+/// Puts a [FormPageShowWhen] on a page whose task no layout declares, so the condition's page is
+/// not placed in any form.
+/// </summary>
+[FormEntity]
+[FormPageShowWhen("unplaced-follow-up", "unplaced_condition_entity.gate", YesNoUnknown.Yes)]
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class UnplacedConditionEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    [FormPage("valid-task", "unplaced-gate", "Gate", Order = 10)]
+    [FormField("unplaced_condition_entity.gate", "Gate", FormControl.Radio)]
+    public YesNoUnknown? Gate { get; set; }
+
+    [FormPage("no-such-task", "unplaced-follow-up", "Follow up", Order = 20)]
+    [FormField("unplaced_condition_entity.detail", "Detail", FormControl.Text)]
+    public string? Detail { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+}

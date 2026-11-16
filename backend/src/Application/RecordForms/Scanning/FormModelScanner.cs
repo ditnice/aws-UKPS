@@ -91,13 +91,27 @@ internal static class FormModelScanner
 
     private static FormLayout? CreateLayout(Type type, List<string> problems)
     {
-        if (type.GetConstructor(Type.EmptyTypes) is null)
+        ConstructorInfo? constructor = type.GetConstructor(
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+            Type.EmptyTypes
+        );
+        if (constructor is null)
         {
             problems.Add($"{type.Name} is a FormLayout with no parameterless constructor.");
             return null;
         }
 
-        return (FormLayout)Activator.CreateInstance(type)!;
+        try
+        {
+            return (FormLayout)constructor.Invoke(null);
+        }
+        catch (TargetInvocationException exception)
+        {
+            problems.Add(
+                $"{type.Name} threw while being created: {exception.InnerException?.Message}"
+            );
+            return null;
+        }
     }
 
     private static bool HasFormAttribute(PropertyInfo property) =>

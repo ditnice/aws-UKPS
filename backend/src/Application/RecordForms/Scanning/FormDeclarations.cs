@@ -27,11 +27,30 @@ internal sealed class FormDeclarations
                 }
             }
         }
+
+        Placed =
+        [
+            .. entities.SelectMany(entity =>
+                entity
+                    .Questions.Select(question =>
+                        Place(question) is { } placement
+                            ? new PlacedQuestion(entity, question, placement)
+                            : null
+                    )
+                    .OfType<PlacedQuestion>()
+            ),
+        ];
     }
 
     public IReadOnlyList<FormLayout> Layouts { get; }
 
     public IReadOnlyList<EntityDeclaration> Entities { get; }
+
+    /// <summary>
+    /// Every question whose page's task a layout declares, in entity and declaration order.
+    /// Questions naming an undeclared task are left out; the validator reports them.
+    /// </summary>
+    public IReadOnlyList<PlacedQuestion> Placed { get; }
 
     /// <summary>Where the question's page's task puts it, or null if no layout declares the task.</summary>
     public TaskPlacement? Place(QuestionDeclaration question) =>
@@ -39,9 +58,8 @@ internal sealed class FormDeclarations
 
     /// <summary>The forms the entity's pages are in.</summary>
     public RecordType[] RecordTypesOf(EntityDeclaration entity) =>
-        entity
-            .Questions.Select(Place)
-            .OfType<TaskPlacement>()
+        Placed
+            .Where(p => p.Entity == entity)
             .Select(static p => p.RecordType)
             .Distinct()
             .Order()

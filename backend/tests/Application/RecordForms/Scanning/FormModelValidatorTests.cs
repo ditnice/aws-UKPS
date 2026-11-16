@@ -297,12 +297,55 @@ public class FormModelValidatorTests
         "BrokenTestLayout has section 'Bad Section' and section 'repeated' with the same Order 10."
     )]
     [InlineData("Task ID 'repeated-task' is declared more than once in the form layouts.")]
+    [InlineData("BrokenTestLayout declares section 'empty' with no tasks.")]
     public void Validate_BrokenLayout_ReportsTheProblem(string expected)
     {
         var (declarations, problems) = FormModelScanner.Scan(_model, [typeof(BrokenTestLayout)]);
 
         problems.ShouldBeEmpty();
         FormModelValidator.Validate(declarations, _options).ShouldContain(expected);
+    }
+
+    [Fact]
+    public void Validate_LayoutWithNoSections_IsReported()
+    {
+        var (declarations, _) = FormModelScanner.Scan(_model, [typeof(EmptyTestLayout)]);
+
+        FormModelValidator
+            .Validate(declarations, _options)
+            .ShouldContain("EmptyTestLayout declares no sections.");
+    }
+
+    [Fact]
+    public void Scan_LayoutWithNoParameterlessConstructor_IsReported()
+    {
+        var (_, problems) = FormModelScanner.Scan(_model, [typeof(NoDefaultConstructorTestLayout)]);
+
+        problems.ShouldBe([
+            "NoDefaultConstructorTestLayout is a FormLayout with no parameterless constructor.",
+        ]);
+    }
+
+    [Fact]
+    public void Scan_LayoutThatThrows_IsReported()
+    {
+        var (_, problems) = FormModelScanner.Scan(_model, [typeof(ThrowingTestLayout)]);
+
+        problems.ShouldBe(["ThrowingTestLayout threw while being created: Broken layout."]);
+    }
+
+    [Fact]
+    public void Validate_PageConditionOnUnplacedPage_ReportsTheUnknownTask()
+    {
+        IReadOnlyList<string> problems = Problems(typeof(UnplacedConditionEntity));
+
+        problems.ShouldBe(
+            [
+                "UnplacedConditionEntity.Detail declares page 'unplaced-follow-up' in task 'no-such-task', which no FormLayout declares.",
+                "The Vaccine form has no entry in FormVersions.",
+            ],
+            ignoreOrder: true
+        );
     }
 
     [Fact]

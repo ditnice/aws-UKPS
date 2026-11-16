@@ -81,16 +81,25 @@ internal sealed class MedicineFormLayout()
     /// <summary>The "Development background" task's ID.</summary>
     public const string DevelopmentBackground = "development-background";
 
-    /// <summary>The "MHRA procedure and dates" task's ID.</summary>
+    /// <summary>
+    /// The "Medicines and Healthcare products Regulatory Agency (MHRA) procedure and dates" task's
+    /// ID.
+    /// </summary>
     public const string MhraProcedureAndDates = "mhra-procedure-and-dates";
 
     /// <summary>The "Health Technology Assessment (HTA) and launch" task's ID.</summary>
     public const string HtaAndLaunch = "hta-and-launch";
 
-    /// <summary>The "Orphan medicine status and ATMP classification" task's ID.</summary>
+    /// <summary>
+    /// The "Orphan medicine status and Advanced Therapy Medicinal Product (ATMP) classification"
+    /// task's ID.
+    /// </summary>
     public const string OrphanAndAtmp = "orphan-and-atmp";
 
-    /// <summary>The "PIM and EAMS" task's ID.</summary>
+    /// <summary>
+    /// The "Promising Innovative Medicine (PIM) and Early Access to Medicines Scheme (EAMS)" task's
+    /// ID.
+    /// </summary>
     public const string PimAndEams = "pim-and-eams";
 
     /// <summary>The "Laboratory testing" task's ID.</summary>

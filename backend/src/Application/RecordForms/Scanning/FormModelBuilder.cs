@@ -15,25 +15,15 @@ internal static class FormModelBuilder
         OptionProviderRegistry options
     )
     {
-        PlacedQuestion[] questions = declarations
-            .Entities.SelectMany(e =>
-                e.Questions.Zip(
-                    BuildQuestions(e, options),
-                    (declaration, question) =>
-                        new PlacedQuestion(
-                            e,
-                            declaration,
-                            question,
-                            declarations.Place(declaration)!
-                        )
-                )
-            )
+        Dictionary<QuestionDeclaration, FormQuestion> built = declarations
+            .Entities.SelectMany(e => e.Questions.Zip(BuildQuestions(e, options)))
+            .ToDictionary(static x => x.First, static x => x.Second);
+        BuiltQuestion[] questions = declarations
+            .Placed.Select(p => new BuiltQuestion(p, built[p.Question]))
             .ToArray();
 
         return declarations
-            .Layouts.Where(layout =>
-                questions.Any(q => q.Placement.RecordType == layout.RecordType)
-            )
+            .Layouts.Where(layout => questions.Any(q => q.Placed.RecordType == layout.RecordType))
             .ToDictionary(
                 static layout => layout.RecordType,
                 layout => BuildForm(layout, questions)
@@ -180,14 +170,14 @@ internal static class FormModelBuilder
             ),
         };
 
-    private static FormModel BuildForm(FormLayout layout, PlacedQuestion[] allQuestions)
+    private static FormModel BuildForm(FormLayout layout, BuiltQuestion[] allQuestions)
     {
-        PlacedQuestion[] questions = allQuestions
-            .Where(q => q.Placement.RecordType == layout.RecordType)
+        BuiltQuestion[] questions = allQuestions
+            .Where(q => q.Placed.RecordType == layout.RecordType)
             .ToArray();
 
         Dictionary<string, FormPageShowWhenAttribute> pageConditions = questions
-            .Select(static q => q.Entity)
+            .Select(static q => q.Placed.Entity)
             .Distinct()
             .SelectMany(static e => e.PageConditions)
             .ToDictionary(static c => c.PageId, StringComparer.Ordinal);
@@ -214,7 +204,7 @@ internal static class FormModelBuilder
     private static FormTask BuildTask(
         FormLayoutSection section,
         FormLayoutTask task,
-        PlacedQuestion[] questions,
+        BuiltQuestion[] questions,
         Dictionary<string, FormPageShowWhenAttribute> pageConditions
     ) =>
         new(
@@ -222,21 +212,21 @@ internal static class FormModelBuilder
             task.Title,
             task.Order,
             questions
-                .Where(q => string.Equals(q.Placement.Task.Id, task.Id, StringComparison.Ordinal))
-                .GroupBy(static q => q.Declaration.Page.Id, StringComparer.Ordinal)
+                .Where(q => string.Equals(q.Placed.TaskId, task.Id, StringComparison.Ordinal))
+                .GroupBy(static q => q.Placed.Question.Page.Id, StringComparer.Ordinal)
                 .Select(page => BuildPage(page, section, task, pageConditions))
                 .OrderBy(static p => p.Order)
                 .ToArray()
         );
 
     private static FormPage BuildPage(
-        IGrouping<string, PlacedQuestion> page,
+        IGrouping<string, BuiltQuestion> page,
         FormLayoutSection section,
         FormLayoutTask task,
         Dictionary<string, FormPageShowWhenAttribute> pageConditions
     )
     {
-        FormPageAttribute declared = page.First().Declaration.Page;
+        FormPageAttribute declared = page.First().Placed.Question.Page;
         return new(
             page.Key,
             declared.Title,
@@ -255,11 +245,6 @@ internal static class FormModelBuilder
         };
     }
 
-    /// <summary>A built question with its declaration and where its page's task puts it.</summary>
-    private sealed record PlacedQuestion(
-        EntityDeclaration Entity,
-        QuestionDeclaration Declaration,
-        FormQuestion Question,
-        TaskPlacement Placement
-    );
+    /// <summary>A placed question declaration with the question built from it.</summary>
+    private sealed record BuiltQuestion(PlacedQuestion Placed, FormQuestion Question);
 }
