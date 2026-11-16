@@ -170,6 +170,7 @@ describe('updateUserEmailAction', () => {
 
     expect(result).toEqual({
       ...initialFormState,
+      values,
       errors: [errorMessages.genericWithRetry],
     })
 
@@ -188,6 +189,7 @@ describe('updateUserEmailAction', () => {
 
     expect(result).toEqual({
       ...initialFormState,
+      values,
       errors: [errorMessages.genericWithRetry],
     })
   })

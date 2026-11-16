@@ -168,7 +168,11 @@ describe('updateUserDetailsAction', () => {
 
       const result = await updateUserDetailsAction(userId, undefined, formData)
 
-      expect(result).toEqual({ ...initialFormState, errors: [errorMessages.genericWithRetry] })
+      expect(result).toEqual({
+        ...initialFormState,
+        values,
+        errors: [errorMessages.genericWithRetry],
+      })
       expect(getFormStateServerErrors).not.toHaveBeenCalled()
       expect(redirect).not.toHaveBeenCalled()
     })
@@ -181,7 +185,11 @@ describe('updateUserDetailsAction', () => {
 
       const result = await updateUserDetailsAction(userId, undefined, formData)
 
-      expect(result).toEqual({ ...initialFormState, errors: [errorMessages.genericWithRetry] })
+      expect(result).toEqual({
+        ...initialFormState,
+        values,
+        errors: [errorMessages.genericWithRetry],
+      })
     })
 
     it('returns a generic error when there is no response at all', async () => {
@@ -192,7 +200,11 @@ describe('updateUserDetailsAction', () => {
 
       const result = await updateUserDetailsAction(userId, undefined, formData)
 
-      expect(result).toEqual({ ...initialFormState, errors: [errorMessages.genericWithRetry] })
+      expect(result).toEqual({
+        ...initialFormState,
+        values,
+        errors: [errorMessages.genericWithRetry],
+      })
     })
 
     it('rethrows when the API call itself throws', async () => {
