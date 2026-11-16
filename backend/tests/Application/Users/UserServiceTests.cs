@@ -1247,7 +1247,7 @@ public class UserServiceTests : DatabaseTestBase
                 var user =
                     Context.Users.Find(x)
                     ?? throw new InvalidOperationException("Could not find created user.");
-                _harness = _harness.UpdateCurrentUser(x => x with { Email = user.WorkEmail });
+                _harness = _harness.UpdateCurrentUser(user);
 
                 return user;
             },
