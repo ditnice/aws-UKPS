@@ -208,6 +208,14 @@ describe('FormPage', () => {
       ).toBe(screen.getByRole('textbox'))
     })
 
+    it('gives each question wrapper its question id, so error links can scroll to it', () => {
+      const { container } = render(<FormPage page={page()} />)
+
+      const wrapper = container.querySelector('[id="medicines_indication_detail.indication"]')
+      expect(wrapper).not.toBeNull()
+      expect(wrapper).toHaveAttribute('data-question-id', 'medicines_indication_detail.indication')
+    })
+
     it('uses the page title as the heading of a page with several questions', () => {
       render(
         <FormPage

@@ -160,6 +160,7 @@ export function FormPage({ page }: FormPageProps) {
                     <div
                       className={clsx(styles.question, labelAsHeading && styles.labelAsHeading)}
                       data-question-id={question.id}
+                      id={question.id}
                     >
                       <Component
                         clearError={() => field.setMeta((meta) => ({ ...meta, errorMap: {} }))}
