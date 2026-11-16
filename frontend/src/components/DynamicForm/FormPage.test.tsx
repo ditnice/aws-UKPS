@@ -1327,4 +1327,41 @@ describe('FormPage', () => {
       })
     })
   })
+
+  describe('when the user came from check your answers', () => {
+    const fromCheckAnswers = () =>
+      render(
+        <FormPage page={page({ questions: [question({ rules: [] })] })} returnToCheckAnswers />,
+      )
+
+    it('offers a single button that returns to check your answers', () => {
+      fromCheckAnswers()
+
+      expect(
+        screen.getByRole('button', { name: 'Save and return to check your answers' }),
+      ).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Save and continue' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Save and return to task list' })).toBeNull()
+    })
+
+    it('links back to check your answers', () => {
+      fromCheckAnswers()
+
+      expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
+        'href',
+        '/portal/records/5/check-your-answers',
+      )
+      expect(screen.getByRole('link', { name: 'Return to check your answers' })).toBeInTheDocument()
+    })
+
+    it('goes to check your answers after saving, even when the task has another page', async () => {
+      fromCheckAnswers()
+
+      fireEvent.click(screen.getByRole('button', { name: 'Save and return to check your answers' }))
+
+      await waitFor(() =>
+        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/check-your-answers'),
+      )
+    })
+  })
 })
