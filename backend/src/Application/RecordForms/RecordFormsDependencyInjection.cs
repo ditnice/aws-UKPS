@@ -22,6 +22,7 @@ internal static class RecordFormsDependencyInjection
         services.TryAddScoped<IRecordFormQueryService, RecordFormQueryService>();
         services.TryAddScoped<IRecordFormSaveService, RecordFormSaveService>();
         services.TryAddScoped<IRecordTaskListQueryService, RecordTaskListQueryService>();
+        services.TryAddScoped<IRecordCheckAnswersQueryService, RecordCheckAnswersQueryService>();
         services.TryAddScoped<IRecordSubmissionService, RecordSubmissionService>();
         return services;
     }
