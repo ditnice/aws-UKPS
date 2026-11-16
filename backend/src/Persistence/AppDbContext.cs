@@ -112,6 +112,16 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("ukps");
+        modelBuilder
+            .HasDbFunction(
+                typeof(EmailDbFunctions).GetMethod(
+                    nameof(EmailDbFunctions.Normalise),
+                    new[] { typeof(string) }
+                )!
+            )
+            .HasName("normalise_email")
+            .HasSchema("ukps");
+
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }

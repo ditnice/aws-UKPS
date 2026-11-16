@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Npgsql;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Identity;
@@ -564,13 +563,7 @@ internal partial class UserService(
             return UpdateUserDetailsResult.Ok(output);
         }
         catch (DbUpdateException updateException)
-            when (updateException.InnerException is PostgresException postgresException
-                && string.Equals(
-                    postgresException.ConstraintName,
-                    ConstraintNames.UserUniqueEmail,
-                    StringComparison.Ordinal
-                )
-            )
+            when (ConstraintExceptions.IsUniqueEmailException(updateException))
         {
             await transaction.RollbackAsync(cancellationToken);
             return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.ConflictingEmail());

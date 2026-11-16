@@ -171,6 +171,10 @@ public class UserCreationControllerTests : IClassFixture<WebApplicationFactory<P
             ),
             (
                 nameof(OnboardUserCommandDto.NewUserEmail),
+                x => x with { NewUserEmail = "ja ne@example.com" }
+            ),
+            (
+                nameof(OnboardUserCommandDto.NewUserEmail),
                 x => x with { NewUserEmail = string.Empty }
             ),
             (
