@@ -27,11 +27,10 @@ internal sealed class MedicinesBudgetImpact
     [FormPage("estimated-uptake", "Estimated uptake", Order = 10, CommercialInConfidence = true)]
     [FormField(
         "medicines_budget_impact.estimated_uptake",
-        "Enter the estimated uptake based on expected adoption patterns",
+        "Enter the estimated uptake based on expected adoption patterns (optional)",
         FormControl.Textarea,
         Hint = "Give your best estimate of how many patients are likely to receive this treatment in the first few years after launch, and any factors that might affect uptake, for example, whether it replaces an existing treatment or targets a new patient group.\n\nAny information provided is a crucial help for horizon scanners to assess the likely financial and service impact ahead of HTA review."
     )]
-    [FormRequired("Enter the estimated uptake")]
     public string? EstimatedUptake { get; set; }
 
     /// <summary>

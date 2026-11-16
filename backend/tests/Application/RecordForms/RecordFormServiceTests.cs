@@ -1285,16 +1285,14 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task SavePage_EstimatedUptakeBlank_ReportsTheRequiredMessage()
+    public async Task SavePage_EstimatedUptakeBlank_IsAllowed()
     {
-        (
-            await SaveInvalid("estimated-uptake", Answer($"{BudgetPrefix}estimated_uptake", "  "))
-        ).ShouldBe(
-            new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                [$"{BudgetPrefix}estimated_uptake"] = "Enter the estimated uptake",
-            }
+        SaveRecordPageDto saved = await SaveOk(
+            "estimated-uptake",
+            Answer<string?>($"{BudgetPrefix}estimated_uptake", null)
         );
+
+        saved.NextPageId.ShouldBe("compassionate-access");
     }
 
     [Fact]
