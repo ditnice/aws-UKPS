@@ -2,9 +2,10 @@ import { notFound } from 'next/navigation'
 
 import { getRecordFormPage } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
-import { checkAnswersReturnTo, FormPage } from '@/components/DynamicForm/FormPage'
+import { FormPage } from '@/components/DynamicForm/FormPage'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
+import { checkAnswersReturnTo } from '@/lib/dynamic-form/links'
 import { parsePositiveInteger } from '@/lib/valueParsing'
 
 const pageIdPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/

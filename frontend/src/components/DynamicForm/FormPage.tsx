@@ -18,6 +18,7 @@ import { buildPayload, fieldName, toFormValues } from '@/lib/dynamic-form/answer
 import { applyServerErrors } from '@/lib/dynamic-form/applyServerErrors'
 import { buildZodSchema } from '@/lib/dynamic-form/buildZodSchema'
 import { pageLayout, shownQuestionIds } from '@/lib/dynamic-form/conditions'
+import { pageHref, taskListHref, checkAnswersHref } from '@/lib/dynamic-form/links'
 import type { FormValue } from '@/lib/dynamic-form/types'
 import {
   getFieldErrorItems,
@@ -30,17 +31,6 @@ import styles from './DynamicForm.module.scss'
 import { questionRegistry } from './questionRegistry'
 
 import type { ReactNode } from 'react'
-
-export const pageHref = (page: Pick<RecordPageDto, 'recordId'>, pageId: string) =>
-  `/portal/records/${page.recordId}/${pageId}`
-
-export const taskListHref = (recordId: number) => `/portal/records/${recordId}/task-list`
-
-export const checkAnswersHref = (recordId: number) =>
-  `/portal/records/${recordId}/check-your-answers`
-
-/** The `returnTo` value on a page link that sends the user back to check your answers after saving. */
-export const checkAnswersReturnTo = 'check-your-answers'
 
 export const conflictCodes = [
   'record_not_editable',
