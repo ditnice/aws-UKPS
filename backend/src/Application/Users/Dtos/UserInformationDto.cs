@@ -60,5 +60,5 @@ public sealed record UserInformationDto
     /// <summary>
     /// Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.
     /// </summary>
-    public required PharmaceuticalEntity AllowedPharmaceuticalEntity { get; set; }
+    public required PharmaceuticalEntity AllowedPharmaceuticalEntity { get; init; }
 }

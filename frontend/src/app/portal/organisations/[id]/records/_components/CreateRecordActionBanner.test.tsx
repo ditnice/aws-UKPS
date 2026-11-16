@@ -5,7 +5,7 @@ import { PharmaceuticalEntity } from '@/client/generated'
 
 import { CreateRecordActionBanner } from './CreateRecordActionBanner'
 
-describe('CreateMedicineRecordActionBanner', () => {
+describe('CreateRecordActionBanner', () => {
   const organisationId = '4'
   it('shows only the medicine button when the user has medicines permission', () => {
     render(
@@ -38,16 +38,5 @@ describe('CreateMedicineRecordActionBanner', () => {
     )
     expect(screen.getByRole('link', { name: 'Create medicine record' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Create vaccine record' })).toBeInTheDocument()
-  })
-
-  it('shows neither button when the permission is undefined', () => {
-    render(
-      <CreateRecordActionBanner
-        organisationId={organisationId}
-        allowedPharmaceuticalEntity={undefined}
-      />,
-    )
-    expect(screen.queryByRole('link', { name: 'Create medicine record' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Create vaccine record' })).not.toBeInTheDocument()
   })
 })

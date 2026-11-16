@@ -1,5 +1,3 @@
-import Link from 'next/link'
-
 import { TableAndFiltersGrid } from '@/app/portal/components/_components/TableAndFiltersGrid'
 import { getCurrentOrganisationChampions, getUsersMe } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
@@ -26,10 +24,19 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
   const resolvedSearchParams = await searchParams
   const query = parseQueryFromSearchParams(resolvedSearchParams)
   const recordAction = parseRecordAction(resolvedSearchParams)
-  const apiClient = await createServerApiClient()
-  const { data: currentUser } = await getUsersMe({ client: apiClient })
+  const { data: currentUser, error: currentUserError } = await getUsersMe({
+    client: await createServerApiClient(),
+  })
+  if (currentUserError || !currentUser) {
+    return (
+      <section>
+        <PageHeader heading="Unable to load current user" />
+        <p role="alert">There was a problem retrieving the current user. Please try again.</p>
+      </section>
+    )
+  }
   const { data: championEmails } = await getCurrentOrganisationChampions({
-    client: apiClient,
+    client: await createServerApiClient(),
   })
 
   return (
