@@ -66,7 +66,7 @@ export function Examples() {
         </SummaryList>
       </Example>
 
-      <Example title="With a tag and a wide value">
+      <Example title="With a tag">
         <SummaryList variant="wide-value">
           <SummaryListRow label="Company code" value="GC22">
             <SummaryListAction href="#change-company-code" visuallyHiddenText="company code">
