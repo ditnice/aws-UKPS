@@ -30,27 +30,8 @@
   }
 }
 
-.summary-list__header {
-  align-items: baseline;
-  display: flex;
-  gap: spacing.$medium * 1px;
-  justify-content: space-between;
-}
-
-.summary-list__header-actions {
-  display: flex;
-  gap: spacing.$small * 1px;
-}
-
-// Inside a card the panel provides the spacing below the list.
-.summary-list__card {
-  background: colours.$card-callout-background;
-  border: 1px solid colours.$border;
-
-  .summary-list {
-    margin-bottom: 0;
-  }
-
+// Narrow key and actions columns, so the value gets most of the width.
+.summary-list--wide-value {
   @include media-queries.mq($from: sm) {
     .summary-list__key {
       width: 25%;
@@ -62,10 +43,15 @@
   }
 }
 
+// Puts a row's tag at the right of the value cell.
 .summary-list__value-with-tag {
   display: flex;
   gap: spacing.$medium * 1px;
   justify-content: space-between;
+
+  > :last-child {
+    flex-shrink: 0;
+  }
 }
 
 .summary-list__row {

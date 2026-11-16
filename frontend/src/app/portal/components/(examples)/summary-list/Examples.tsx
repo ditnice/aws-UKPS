@@ -65,17 +65,9 @@ export function Examples() {
           </SummaryListRow>
         </SummaryList>
       </Example>
-      <Example title="Card with a section action">
-        <SummaryList
-          actions={
-            <SummaryListAction href="#edit-section" visuallyHiddenText="names and identifiers">
-              Edit section
-            </SummaryListAction>
-          }
-          card
-          title="Names and identifiers"
-          titleHeadingLevel={2}
-        >
+
+      <Example title="With a tag and a wide value">
+        <SummaryList variant="wide-value">
           <SummaryListRow label="Company code" value="GC22">
             <SummaryListAction href="#change-company-code" visuallyHiddenText="company code">
               Change
@@ -91,37 +83,6 @@ export function Examples() {
             value="In combination with methotrexate"
           >
             <SummaryListAction href="#change-record-title" visuallyHiddenText="record title">
-              Change
-            </SummaryListAction>
-          </SummaryListRow>
-        </SummaryList>
-      </Example>
-
-      <Example title="Card with text instead of rows">
-        <SummaryList
-          actions={
-            <SummaryListAction href="#edit-pricing" visuallyHiddenText="pricing and budget impact">
-              Edit section
-            </SummaryListAction>
-          }
-          card
-          intro={<p>Not yet provided</p>}
-          title="Pricing and budget impact (optional)"
-          titleHeadingLevel={2}
-        />
-      </Example>
-
-      <Example title="Card with intro text above rows">
-        <SummaryList
-          card
-          intro={
-            <p>This task becomes mandatory within 12 months of the market authorisation date.</p>
-          }
-          title="Laboratory testing (optional)"
-          titleHeadingLevel={2}
-        >
-          <SummaryListRow label="Does the product require a specific biomarker?" value="No">
-            <SummaryListAction href="#change-biomarker" visuallyHiddenText="biomarker">
               Change
             </SummaryListAction>
           </SummaryListRow>

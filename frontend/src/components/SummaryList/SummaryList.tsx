@@ -1,8 +1,6 @@
 import clsx from 'clsx'
 import { Children, cloneElement, isValidElement } from 'react'
 
-import { Panel } from '@nice-digital/nds-panel'
-
 import styles from './SummaryList.module.scss'
 
 import type { ReactElement, ReactNode } from 'react'
@@ -31,21 +29,15 @@ type InternalSummaryListRowProps = SummaryListRowProps & {
 type ValidSummaryListRow = ReactElement<InternalSummaryListRowProps> | boolean | null | undefined
 
 type SummaryListProps = {
-  /* Links on the title line, e.g. `SummaryListAction`s such as "Edit section". */
-  actions?: ReactNode
-  /* Draws the title and rows inside an NDS panel. */
-  card?: boolean
-  children?: ValidSummaryListRow | readonly ValidSummaryListRow[]
+  children: ValidSummaryListRow | readonly ValidSummaryListRow[]
   className?: string
-  /* Content between the title and the rows, e.g. "Not yet provided" for a section with no rows. */
-  intro?: ReactNode
   title?: ReactNode
   /* Defaults to 4. */
   titleHeadingLevel?: 2 | 3 | 4 | 5 | 6
   variant?: SummaryListVariant
 }
 
-type SummaryListVariant = 'default' | 'two-column'
+type SummaryListVariant = 'default' | 'two-column' | 'wide-value'
 
 export function SummaryListAction({ children, href, visuallyHiddenText }: SummaryListActionProps) {
   const accessibleName = `${children} ${visuallyHiddenText}`
@@ -110,11 +102,8 @@ export function SummaryListRow({
 }
 
 export function SummaryList({
-  actions,
-  card = false,
   children,
   className,
-  intro,
   title,
   titleHeadingLevel = 4,
   variant = 'default',
@@ -126,33 +115,25 @@ export function SummaryList({
   const rootClassName = clsx(
     styles['summary-list'],
     variant === 'two-column' && styles['summary-list--two-column'],
+    variant === 'wide-value' && styles['summary-list--wide-value'],
     className,
   )
 
   const TitleHeading = `h${titleHeadingLevel}` as const
-  const titleElement = title ? (
-    <TitleHeading className={styles['summary-list__title']}>{title}</TitleHeading>
-  ) : null
-  const header = actions ? (
-    <div className={styles['summary-list__header']}>
-      {titleElement}
-      <div className={styles['summary-list__header-actions']}>{actions}</div>
-    </div>
-  ) : (
-    titleElement
+  const list = (
+    <dl className={rootClassName} data-component="summary-list">
+      {rows.map((row) => cloneElement(row, { listHasActions: hasActions, variant }))}
+    </dl>
   )
 
-  const content = (
+  if (!title) {
+    return list
+  }
+
+  return (
     <>
-      {header}
-      {intro}
-      {rows.length > 0 && (
-        <dl className={rootClassName} data-component="summary-list">
-          {rows.map((row) => cloneElement(row, { listHasActions: hasActions, variant }))}
-        </dl>
-      )}
+      <TitleHeading className={styles['summary-list__title']}>{title}</TitleHeading>
+      {list}
     </>
   )
-
-  return card ? <Panel className={styles['summary-list__card']}>{content}</Panel> : content
 }

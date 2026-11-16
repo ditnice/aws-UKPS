@@ -115,76 +115,18 @@ describe('SummaryList', () => {
     expect(asFragment()).toMatchSnapshot()
   })
 
-  it('draws the title and rows inside a panel when card is set', () => {
-    const { asFragment, container } = render(
-      <SummaryList card title="Names and identifiers">
-        <SummaryListRow label="Company code" value="GC22" />
-      </SummaryList>,
-    )
-
-    const panel = container.querySelector('.panel')
-    expect(panel).not.toBeNull()
-    expect(
-      within(panel as HTMLElement).getByRole('heading', { name: 'Names and identifiers' }),
-    ).toBeInTheDocument()
-    expect(panel?.querySelector('dl')).not.toBeNull()
-    expect(asFragment()).toMatchSnapshot()
-  })
-
-  it('does not render a panel unless card is set', () => {
+  it('supports a wide-value variant', () => {
     const { container } = render(
-      <SummaryList title="Names and identifiers">
-        <SummaryListRow label="Company code" value="GC22" />
-      </SummaryList>,
-    )
-
-    expect(container.querySelector('.panel')).toBeNull()
-  })
-
-  it('renders actions on the title line as links with hidden context', () => {
-    render(
-      <SummaryList
-        actions={
-          <SummaryListAction href="#edit-section" visuallyHiddenText="names and identifiers">
-            Edit section
+      <SummaryList variant="wide-value">
+        <SummaryListRow label="Name" value="Sarah Philips">
+          <SummaryListAction href="/change-name" visuallyHiddenText="name">
+            Change
           </SummaryListAction>
-        }
-        title="Names and identifiers"
-      >
-        <SummaryListRow label="Company code" value="GC22" />
+        </SummaryListRow>
       </SummaryList>,
     )
 
-    const heading = screen.getByRole('heading', { level: 4, name: 'Names and identifiers' })
-    const link = screen.getByRole('link', { name: 'Edit section names and identifiers' })
-    expect(link).toHaveAttribute('href', '#edit-section')
-    expect(heading.parentElement).toContainElement(link)
-  })
-
-  it('renders intro text without a list when there are no rows', () => {
-    const { container } = render(
-      <SummaryList card intro={<p>Not yet provided</p>} title="Pricing and budget impact" />,
-    )
-
-    expect(screen.getByText('Not yet provided')).toBeInTheDocument()
-    expect(container.querySelector('dl')).toBeNull()
-  })
-
-  it('renders intro above the rows', () => {
-    const { container } = render(
-      <SummaryList
-        intro={
-          <p>This task becomes mandatory within 12 months of the market authorisation date.</p>
-        }
-        title="Laboratory testing (optional)"
-      >
-        <SummaryListRow label="Does the product require a specific biomarker?" value="No" />
-      </SummaryList>,
-    )
-
-    const intro = screen.getByText(/mandatory within 12 months/)
-    const list = container.querySelector('dl') as HTMLElement
-    expect(intro.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(container.querySelector('dl')?.className).toContain('summary-list--wide-value')
   })
 
   it('renders a row tag in the value cell', () => {
