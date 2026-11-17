@@ -930,6 +930,10 @@ export type RecordCheckAnswersDto = {
      */
     recordId: number;
     /**
+     * The organisation that owns the record; used for links back to the records list.
+     */
+    organisationId: number;
+    /**
      * A hash of the whole revision. Send it back on submit; if anything in the revision has
      * changed since, the submission is rejected.
      */

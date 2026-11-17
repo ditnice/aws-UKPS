@@ -76,6 +76,7 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
         RecordCheckAnswersDto dto = await GetCheckAnswers();
 
         dto.RecordId.ShouldBe(_record.Id);
+        dto.OrganisationId.ShouldBe(_organisation.Id);
         dto.FormVersion.ShouldBe(FormVersions.Medicine);
         dto.CanSubmit.ShouldBeTrue();
         dto.Errors.ShouldBeEmpty();

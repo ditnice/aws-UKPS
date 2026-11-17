@@ -6836,6 +6836,7 @@
         "required": [
           "formVersion",
           "recordId",
+          "organisationId",
           "revisionHash",
           "canSubmit",
           "sections",
@@ -6850,6 +6851,11 @@
           "recordId": {
             "type": "integer",
             "description": "The record the answers belong to.",
+            "format": "int32"
+          },
+          "organisationId": {
+            "type": "integer",
+            "description": "The organisation that owns the record; used for links back to the records list.",
             "format": "int32"
           },
           "revisionHash": {
