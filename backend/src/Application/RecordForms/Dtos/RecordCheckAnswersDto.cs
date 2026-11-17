@@ -21,19 +21,12 @@ public sealed record RecordCheckAnswersDto
     /// </summary>
     public required string RevisionHash { get; init; }
 
-    /// <summary>
-    /// Whether the caller may submit the revision in its current state: it is a draft that can be
-    /// submitted, and the caller can edit the record. Show Submit only when this is true and
-    /// <see cref="Errors"/> is empty.
-    /// </summary>
-    public required bool CanSubmit { get; init; }
-
     /// <summary>The sections with a question that applies, in form order.</summary>
     public required IReadOnlyList<RecordCheckAnswersSectionDto> Sections { get; init; }
 
     /// <summary>
     /// The problems that would stop the record being submitted, in form order, each on a question
-    /// in <see cref="Sections"/>.
+    /// in <see cref="Sections"/>. The record can be submitted when this is empty.
     /// </summary>
     public required IReadOnlyList<SubmissionErrorDto> Errors { get; init; }
 }

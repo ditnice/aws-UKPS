@@ -28,12 +28,19 @@ public class RecordSubmissionController(
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>The record's answers and errors.</returns>
     /// <response code="200">Returns the record's answers and errors.</response>
+    /// <response code="403">The caller can read the record but not submit it.</response>
     /// <response code="404">
     /// The record was not found or is not accessible to the caller.
     /// </response>
+    /// <response code="409">
+    /// The record can't be submitted in its current state; <c>code</c> is
+    /// <c>record_not_submittable</c>.
+    /// </response>
     [HttpGet("check-answers", Name = nameof(GetRecordCheckAnswers))]
     [ProducesResponseType<RecordCheckAnswersDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<RecordCheckAnswersDto>> GetRecordCheckAnswers(
         int recordId,
         CancellationToken cancellationToken
@@ -44,10 +51,16 @@ public class RecordSubmissionController(
             cancellationToken
         );
 
-        // ADR-004: not found and not allowed are indistinguishable.
         return result.Match<ActionResult<RecordCheckAnswersDto>>(
             checkAnswers => Ok(checkAnswers),
-            _ => RecordNotFound()
+            error =>
+                error.Match(
+                    // ADR-004: not found and not allowed are indistinguishable.
+                    notFound: _ => RecordNotFound(),
+                    notAllowed: _ => RecordNotFound(),
+                    cannotSubmit: _ => CannotSubmit(),
+                    notSubmittable: _ => NotSubmittable()
+                )
         );
     }
 
@@ -101,17 +114,8 @@ public class RecordSubmissionController(
             // ADR-004: not found and not allowed are indistinguishable.
             notFound: _ => RecordNotFound(),
             notAllowed: _ => RecordNotFound(),
-            cannotSubmit: _ =>
-                Problem(
-                    statusCode: StatusCodes.Status403Forbidden,
-                    title: "Forbidden",
-                    detail: "You are not authorised to submit this record."
-                ),
-            notSubmittable: _ =>
-                this.ConflictProblem(
-                    "record_not_submittable",
-                    "This record can't be submitted because it has already been submitted, or is on hold or archived."
-                ),
+            cannotSubmit: _ => CannotSubmit(),
+            notSubmittable: _ => NotSubmittable(),
             formVersionChanged: _ =>
                 this.ConflictProblem(
                     "form_version_changed",
@@ -127,6 +131,19 @@ public class RecordSubmissionController(
     }
 
     private ObjectResult RecordNotFound() => this.NotFoundProblem("Record not found.");
+
+    private ObjectResult CannotSubmit() =>
+        Problem(
+            statusCode: StatusCodes.Status403Forbidden,
+            title: "Forbidden",
+            detail: "You are not authorised to submit this record."
+        );
+
+    private ObjectResult NotSubmittable() =>
+        this.ConflictProblem(
+            "record_not_submittable",
+            "This record can't be submitted because it has already been submitted, or is on hold or archived."
+        );
 
     private ObjectResult InvalidRecord(SubmitRecordError.Invalid invalid)
     {
