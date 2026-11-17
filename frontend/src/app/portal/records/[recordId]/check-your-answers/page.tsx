@@ -36,8 +36,6 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
     path: { recordId },
   })
 
-  console.log(data)
-
   if (response?.status === 404) {
     notFound()
   }
@@ -116,7 +114,7 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
           recordId={recordId}
           formVersion={data.formVersion}
           revisionHash={data.revisionHash}
-          returnHref={taskListHref(recordId)}
+          organisationId={data.organisationId}
         />
       )}
     </>
