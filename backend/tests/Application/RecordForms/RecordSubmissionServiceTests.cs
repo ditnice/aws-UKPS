@@ -17,6 +17,7 @@ using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
+using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Data;
@@ -36,6 +37,8 @@ public class RecordSubmissionServiceTests : DatabaseTestBase
     private const string Indication = "medicines_indication_detail.indication";
     private const string UkLaunchDate = "record_hta.uk_launch_date";
     private const string UkLicenceDate = "record_mhra_date.uk_licence_date";
+    private const string ClinicalTrials = "record_clinical_trial";
+    private const string RecruitingInUk = "record_clinical_trial_information.recruiting_in_uk";
 
     private static readonly DateTime _now = new(2026, 10, 15, 9, 30, 0, DateTimeKind.Utc);
     private static readonly DateOnly _launchQuarter = new(2027, 4, 1);
@@ -256,6 +259,45 @@ public class RecordSubmissionServiceTests : DatabaseTestBase
     {
         // Screening details only applies when screening is required, which it isn't.
         (await Submit(await CurrentHash())).ShouldBeSuccess();
+    }
+
+    [Fact]
+    public async Task Submit_CompleteDraftWithAClinicalTrial_GoesToQaReview()
+    {
+        await CompleteMedicineRevision.AddClinicalTrialAsync(Context, _revision.Id, Ct);
+
+        (await Submit(await CurrentHash())).ShouldBeSuccess();
+
+        (await RevisionStatus()).ShouldBe(WorkflowStatus.QAReview);
+    }
+
+    [Fact]
+    public async Task Submit_ClinicalTrialChangedSinceTheHashWasTaken_IsRecordChanged()
+    {
+        await CompleteMedicineRevision.AddClinicalTrialAsync(Context, _revision.Id, Ct);
+        string hash = await CurrentHash();
+
+        // A text list entry inside a group item, the deepest an answer can be nested.
+        await Context
+            .Set<OtherClinicalTrialNumber>()
+            .Where(n => n.ClinicalTrial!.RevisionId == _revision.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(n => n.OtherRegistryNumber, "EUCT-2025-1"), Ct);
+
+        (await Submit(hash)).ShouldBeError().ShouldBeOfType<SubmitRecordError.RecordChanged>();
+        (await RevisionStatus()).ShouldBe(WorkflowStatus.Draft);
+    }
+
+    [Fact]
+    public async Task Submit_YesToClinicalTrialsWithNoneAdded_ReportsTheRevealedPages()
+    {
+        await UpdateRow<RecordClinicalTrialInformation>(x => x.HasClinicalTrials = YesNo.Yes);
+
+        IReadOnlyList<SubmissionErrorDto> errors = await SubmitInvalid();
+
+        errors.ShouldBe([
+            Error(ClinicalTrials, Message(ClinicalTrials)),
+            Error(RecruitingInUk, Message(RecruitingInUk)),
+        ]);
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 using UKPS.Api.Persistence.Entities.ReferenceData;
@@ -10,6 +11,7 @@ namespace UKPS.Api.Tests.Utilities.Data;
 /// Writes answers to every required medicine question on a revision, taking the shortest route
 /// through the form: every gate that reveals follow-up questions is answered No, the MHRA
 /// procedure is national, and every UK date is an estimated quarter.
+/// <see cref="AddClinicalTrialAsync"/> takes the clinical trials route instead.
 /// </summary>
 internal static class CompleteMedicineRevision
 {
@@ -143,6 +145,48 @@ internal static class CompleteMedicineRevision
                 PatientAccessSchemePlanned = YesNoUnknown.No,
                 IndicationSpecificPricingPlanned = YesNoUnknown.No,
                 NetUkBudgetImpactBand = NetUkBudgetImpactBand.Unknown,
+            }
+        );
+        await context.SaveChangesAsync(cancellationToken);
+        context.ChangeTracker.Clear();
+    }
+
+    /// <summary>
+    /// Takes a completed revision down the clinical trials route instead: answers Yes to adding
+    /// clinical trials, answers whether any are recruiting in the UK, and adds one trial with one
+    /// other registry number. Call after <see cref="AddAsync"/>.
+    /// </summary>
+    /// <param name="context">The context to add them with.</param>
+    /// <param name="revisionId">The revision completed by <see cref="AddAsync"/>.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    public static async Task AddClinicalTrialAsync(
+        AppDbContext context,
+        int revisionId,
+        CancellationToken cancellationToken
+    )
+    {
+        RecordClinicalTrialInformation information =
+            await context.RecordClinicalTrialInformation.SingleAsync(
+                i => i.RevisionId == revisionId,
+                cancellationToken
+            );
+        information.HasClinicalTrials = YesNo.Yes;
+        information.RecruitingInUk = YesNoUnknown.No;
+        context.RecordClinicalTrials.Add(
+            new RecordClinicalTrial
+            {
+                RevisionId = revisionId,
+                DisplayOrder = 1,
+                StudyName = "SURVEYOR-1",
+                ClinicalTrialsGovNumber = "NCT01234567",
+                OtherClinicalTrialNumbers =
+                [
+                    new OtherClinicalTrialNumber
+                    {
+                        OtherRegistryNumber = "ISRCTN12345678",
+                        DisplayOrder = 1,
+                    },
+                ],
             }
         );
         await context.SaveChangesAsync(cancellationToken);
