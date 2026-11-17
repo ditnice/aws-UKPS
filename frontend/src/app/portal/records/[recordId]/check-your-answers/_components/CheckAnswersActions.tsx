@@ -3,11 +3,12 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
+import { buildRecordActionHref } from '@/app/portal/organisations/[id]/records/_lib/recordActionAlert'
 import { submitRecord } from '@/client/generated'
 import { Alert } from '@/components/Alert/Alert'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
-import { checkAnswersHref, taskListHref } from '@/lib/dynamic-form/links'
+import { checkAnswersHref } from '@/lib/dynamic-form/links'
 
 type SubmitState =
   { kind: 'idle' } | { kind: 'conflict'; detail: string } | { kind: 'failed' } | { kind: 'invalid' }
@@ -16,15 +17,14 @@ export type CheckAnswersActionsProps = {
   recordId: number
   formVersion: string
   revisionHash: string
-  /* Where "Return to my records" goes. */
-  returnHref: string
+  organisationId: number
 }
 
 export function CheckAnswersActions({
   recordId,
   formVersion,
   revisionHash,
-  returnHref,
+  organisationId,
 }: CheckAnswersActionsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
@@ -41,8 +41,7 @@ export function CheckAnswersActions({
       })
 
       if (response?.ok) {
-        // Placeholder until check your answers returns the organisation ID for the records list.
-        router.push(taskListHref(recordId))
+        router.push(buildRecordActionHref(organisationId, 'submitted'))
         // Stay disabled while navigating, so a second click cannot submit twice.
         return
       }
@@ -94,7 +93,7 @@ export function CheckAnswersActions({
         <Button disabled={isSubmitting} onClick={() => void submit()} variant="cta">
           Submit record for review
         </Button>
-        <Button to={returnHref} variant="secondary">
+        <Button to={buildRecordActionHref(organisationId, 'draft-saved')} variant="secondary">
           Return to my records
         </Button>
       </ButtonGroup>
