@@ -45,6 +45,9 @@ public class RecordFormServiceTests : DatabaseTestBase
         "medicines_indication_detail.medicine_technology_status";
 
     private const string LabPrefix = "medicines_laboratory_testing.";
+    private const string PathwayPoint = "medicines_laboratory_testing.patient_pathway_point_id";
+    private const string PathwayPointOther =
+        "medicines_laboratory_testing.genomic_test_pathway_point_other";
     private const string BudgetPrefix = "medicines_budget_impact.";
     private const string PasRegions = "medicines_budget_impact.patient_access_scheme_regions";
     private const string HtaPrefix = "record_hta.";
@@ -155,7 +158,11 @@ public class RecordFormServiceTests : DatabaseTestBase
         );
         _formulation = await AddEntity(new FormulationType { Label = "Tablet" }, Ct);
         _pathwayPoint = await AddEntity(
-            new PatientPathwayPoint { Label = "Initial presentation" },
+            new PatientPathwayPoint
+            {
+                Code = PatientPathwayPointCodes.InitialPresentation,
+                Label = "Initial presentation",
+            },
             Ct
         );
         _atmpClassification = await AddEntity(
@@ -874,7 +881,15 @@ public class RecordFormServiceTests : DatabaseTestBase
 
         RecordPageDto page = await GetPage("pathway-point");
 
-        RecordPageOptionDto option = page.Questions.Single().Options!.ShouldHaveSingleItem();
+        RecordPageOptionDto option = page
+            .Questions.Single(static q =>
+                string.Equals(
+                    q.Id,
+                    $"{LabPrefix}patient_pathway_point_id",
+                    StringComparison.Ordinal
+                )
+            )
+            .Options!.ShouldHaveSingleItem();
         (option.Value, option.Label).ShouldBe(($"{_pathwayPoint.Id}", "Initial presentation"));
     }
 
@@ -1129,6 +1144,7 @@ public class RecordFormServiceTests : DatabaseTestBase
         ];
 
         string notesQuestion = $"{LabPrefix}genomic_test_notes";
+        string otherQuestion = $"{LabPrefix}genomic_test_pathway_point_other";
 
         for (int i = 0; i < answers.Length; i++)
         {
@@ -1137,6 +1153,11 @@ public class RecordFormServiceTests : DatabaseTestBase
             {
                 // Mandatory testing shows the notes box, which is then required.
                 page[notesQuestion] = Json("Repeat testing at relapse");
+            }
+            else if (string.Equals(answers[i].PageId, "pathway-point", StringComparison.Ordinal))
+            {
+                // Every question on the page is submitted; the "Other" details are not shown.
+                page[otherQuestion] = Json<string?>(null);
             }
 
             SaveRecordPageDto saved = await SaveOk(answers[i].PageId, page);
@@ -1340,6 +1361,91 @@ public class RecordFormServiceTests : DatabaseTestBase
         errors.ShouldContainKey(question);
         (await LaboratoryTestingRow()).PatientPathwayPointId.ShouldBeNull();
     }
+
+    [Fact]
+    public async Task GetPage_PathwayPointOther_IsRevealedByTheIdOfTheOtherRow()
+    {
+        await AddGenomicRoute();
+        PatientPathwayPoint other = await AddOtherPathwayPoint();
+
+        RecordPageDto page = await GetPage("pathway-point");
+
+        page.Questions.Select(static q => q.Id).ShouldBe([PathwayPoint, PathwayPointOther]);
+        RecordPageConditionDto showWhen = page.Questions[1].ShowWhen.ShouldNotBeNull();
+        showWhen.Kind.ShouldBe(ConditionKind.AnswerIn);
+        showWhen.QuestionId.ShouldBe(PathwayPoint);
+        showWhen.Values.ShouldBe([$"{other.Id}"]);
+    }
+
+    [Fact]
+    public async Task SavePage_PathwayPointOtherWithNoDetails_ReportsTheRequiredMessage()
+    {
+        await AddGenomicRoute();
+        PatientPathwayPoint other = await AddOtherPathwayPoint();
+
+        (await SaveInvalid("pathway-point", PathwayPointAnswers(other.Id, "  "))).ShouldBe(
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                [PathwayPointOther] = "Enter details",
+            }
+        );
+    }
+
+    [Fact]
+    public async Task SavePage_PathwayPointOtherWithDetails_StoresTheDetails()
+    {
+        await AddGenomicRoute();
+        PatientPathwayPoint other = await AddOtherPathwayPoint();
+
+        SaveRecordPageDto saved = await SaveOk(
+            "pathway-point",
+            PathwayPointAnswers(other.Id, "After second relapse")
+        );
+
+        saved.NextPageId.ShouldBe("genomic-alterations");
+        MedicinesLaboratoryTesting row = await LaboratoryTestingRow();
+        row.PatientPathwayPointId.ShouldBe(other.Id);
+        row.GenomicTestPathwayPointOther.ShouldBe("After second relapse");
+    }
+
+    [Fact]
+    public async Task SavePage_PathwayPointNoLongerOther_ClearsAndAuditsTheDetails()
+    {
+        await AddGenomicRoute();
+        PatientPathwayPoint other = await AddOtherPathwayPoint();
+        await SaveOk("pathway-point", PathwayPointAnswers(other.Id, "After second relapse"));
+
+        await SaveOk(
+            "pathway-point",
+            PathwayPointAnswers(_pathwayPoint.Id, "After second relapse")
+        );
+
+        MedicinesLaboratoryTesting row = await LaboratoryTestingRow();
+        row.PatientPathwayPointId.ShouldBe(_pathwayPoint.Id);
+        row.GenomicTestPathwayPointOther.ShouldBeNull();
+        RecordFieldAudit cleared = await FieldAudits()
+            .Where(static a => a.FieldPath == PathwayPointOther)
+            .OrderBy(static a => a.Id)
+            .LastAsync(Ct);
+        cleared.OldValue.ShouldBe("After second relapse");
+        cleared.NewValue.ShouldBeNull();
+    }
+
+    private async Task<PatientPathwayPoint> AddOtherPathwayPoint() =>
+        await AddEntity(
+            new PatientPathwayPoint { Code = PatientPathwayPointCodes.Other, Label = "Other" },
+            Ct
+        );
+
+    private static Dictionary<string, JsonElement> PathwayPointAnswers(
+        int pathwayPointId,
+        string? otherDetails
+    ) =>
+        new(StringComparer.Ordinal)
+        {
+            [PathwayPoint] = Json($"{pathwayPointId}"),
+            [PathwayPointOther] = Json(otherDetails),
+        };
 
     [Fact]
     public async Task GetPage_PimPageWithNothingSaved_OffersTheSubmissionDatePageAsNext()
