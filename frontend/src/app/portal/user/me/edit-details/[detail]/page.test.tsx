@@ -241,7 +241,7 @@ describe('Edit user detail page', () => {
   })
 
   describe('pending email update', () => {
-    it('renders pending email update alert when', async () => {
+    it('renders pending email update alert when pending email shown', async () => {
       setDetail('email')
 
       const pendingWorkEmail = fakePendingWorkEmailChangeDto()

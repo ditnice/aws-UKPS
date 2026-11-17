@@ -33,11 +33,24 @@ namespace UKPS.Api.Persistence.Migrations
                 nullable: true,
                 computedColumnSql: "ukps.normalise_email(pending_work_email)",
                 stored: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_app_user_normalised_pending_work_email",
+                schema: "ukps",
+                table: "app_user",
+                column: "normalised_pending_work_email",
+                unique: true,
+                filter: "normalised_pending_work_email IS NOT NULL");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropIndex(
+                name: "ix_app_user_normalised_pending_work_email",
+                schema: "ukps",
+                table: "app_user");
+
             migrationBuilder.DropColumn(
                 name: "normalised_pending_work_email",
                 schema: "ukps",

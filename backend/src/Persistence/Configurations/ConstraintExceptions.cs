@@ -7,10 +7,30 @@ internal static class ConstraintExceptions
 {
     public static bool IsUniqueEmailException(DbUpdateException updateException)
     {
-        string[] uniqueEmailConstraintNames = [ConstraintNames.UserUniqueNormalisedEmail];
+        return UpdateExceptionMatchesConstraint(
+            updateException,
+            ConstraintNames.UserUniqueNormalisedEmail
+        );
+    }
+
+    internal static bool IsUniquePendingEmailException(DbUpdateException updateException)
+    {
+        return UpdateExceptionMatchesConstraint(
+            updateException,
+            ConstraintNames.UserUniqueNormalisedPendingEmail
+        );
+    }
+
+    private static bool UpdateExceptionMatchesConstraint(
+        DbUpdateException updateException,
+        string constraint
+    )
+    {
         return updateException.InnerException is PostgresException postgresException
-            && uniqueEmailConstraintNames.Any(c =>
-                string.Equals(postgresException.ConstraintName, c, StringComparison.Ordinal)
+            && string.Equals(
+                postgresException.ConstraintName,
+                constraint,
+                StringComparison.Ordinal
             );
     }
 }

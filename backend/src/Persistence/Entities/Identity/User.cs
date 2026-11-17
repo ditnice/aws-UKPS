@@ -164,7 +164,7 @@ internal sealed class User
 
     internal void UpdateEmail(string workEmail, DateTime dateTime)
     {
-        if (!string.Equals(WorkEmail, workEmail, StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(WorkEmail, workEmail, StringComparison.Ordinal))
         {
             PendingWorkEmail = workEmail;
             UpdatedAt = dateTime;

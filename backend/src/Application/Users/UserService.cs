@@ -612,7 +612,7 @@ internal partial class UserService(
             return Result<UpdateUserEmailError>.Ok();
         }
         catch (DbUpdateException updateException)
-            when (ConstraintExceptions.IsUniqueEmailException(updateException))
+            when (ConstraintExceptions.IsUniquePendingEmailException(updateException))
         {
             await transaction.RollbackAsync(cancellationToken);
             return Result<UpdateUserEmailError>.Err(new UpdateUserEmailError.ConflictingEmail());
@@ -744,7 +744,8 @@ internal partial class UserService(
             return new UpdateUserEmailError.MatchesCurrentEmail();
         }
 
-        bool emailAlreadyExistInTheDatabase = await dbContext.Users.AnyAsync(
+        IQueryable<User> otherUsers = dbContext.Users.Where(x => x.Id != user.Id);
+        bool emailAlreadyExistInTheDatabase = await otherUsers.AnyAsync(
             x =>
                 x.NormalisedPendingWorkEmail == EmailDbFunctions.Normalise(command.Value)
                 || x.NormalisedWorkEmail == EmailDbFunctions.Normalise(command.Value),

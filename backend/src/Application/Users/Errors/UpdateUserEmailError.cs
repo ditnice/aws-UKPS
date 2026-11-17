@@ -40,7 +40,7 @@ public abstract record UpdateUserEmailError
             UserDoesNotExist => userDoesNotExist(),
             ConflictingEmail => conflictingEmail(),
             MatchesCurrentEmail => matchesCurrentEmail(),
-            _ => throw new UnreachableException($"Unrecognised {nameof(UpdateUserDetailsError)}"),
+            _ => throw new UnreachableException($"Unrecognised {nameof(UpdateUserEmailError)}"),
         };
     }
 }

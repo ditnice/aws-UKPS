@@ -7,7 +7,6 @@ import {
 } from '@/client/generated/@faker-js/faker.gen'
 
 import { buildUpdateUserDetailsHref, UserDetail } from '../edit-details/[detail]/navigation'
-import { buildUpdateUserDetailsHref, UserDetail } from '../edit-details/[detail]/navigation'
 
 import { UserDetails } from './UserDetails'
 

@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261117091638_AddColumnsRequiredForPendingEmailFeature")]
+    [Migration("20261117114018_AddColumnsRequiredForPendingEmailFeature")]
     partial class AddColumnsRequiredForPendingEmailFeature
     {
         /// <inheritdoc />
@@ -358,6 +358,11 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_app_user");
+
+                    b.HasIndex("NormalisedPendingWorkEmail")
+                        .IsUnique()
+                        .HasDatabaseName("ix_app_user_normalised_pending_work_email")
+                        .HasFilter("normalised_pending_work_email IS NOT NULL");
 
                     b.HasIndex("NormalisedWorkEmail")
                         .IsUnique()
