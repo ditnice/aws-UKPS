@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { errorMessages } from '@/lib/form/errorMessages'
 
+import { buildMyDetailsHref } from '../../../navigation'
+
 import { updateUserEmailAction } from './serverActions'
 
 // ---- Mocks -----------------------------------------------------------------
@@ -84,7 +86,7 @@ describe('updateUserEmailAction', () => {
       body: values,
     })
 
-    expect(redirectMock).toHaveBeenCalledWith('/portal/user/me?updated=true')
+    expect(redirectMock).toHaveBeenCalledWith(buildMyDetailsHref({ requestedNewEmail: true }))
   })
 
   it('returns an email conflict error when the API responds with 409', async () => {
