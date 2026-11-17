@@ -3,12 +3,7 @@ using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
-[FormSection(
-    RecordType.Medicine,
-    MedicineFormSections.ServiceReadiness,
-    MedicineFormSections.ServiceReadinessTitle,
-    Order = MedicineFormSections.ServiceReadinessOrder
-)]
+[FormEntity]
 internal sealed class MedicinesPatientIdentification
 {
     [FormIgnore("Database identity")]
@@ -17,12 +12,8 @@ internal sealed class MedicinesPatientIdentification
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.PatientAndClinicalRequirements,
-        MedicineFormTasks.PatientAndClinicalRequirementsTitle,
-        Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
-    )]
     [FormPage(
+        MedicineFormLayout.PatientAndClinicalRequirements,
         "screening-programme",
         "Screening or surveillance",
         Order = 10,
@@ -42,12 +33,8 @@ internal sealed class MedicinesPatientIdentification
     public YesNoUnknown? ScreeningRequired { get; set; }
 
     /// <summary>Conditional on ScreeningRequired = Yes.</summary>
-    [FormTask(
-        MedicineFormTasks.PatientAndClinicalRequirements,
-        MedicineFormTasks.PatientAndClinicalRequirementsTitle,
-        Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
-    )]
     [FormPage(
+        MedicineFormLayout.PatientAndClinicalRequirements,
         "screening-programme",
         "Screening or surveillance",
         Order = 10,
@@ -64,12 +51,8 @@ internal sealed class MedicinesPatientIdentification
     [FormRequired("Enter details")]
     public string? ScreeningDetails { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.PatientAndClinicalRequirements,
-        MedicineFormTasks.PatientAndClinicalRequirementsTitle,
-        Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
-    )]
     [FormPage(
+        MedicineFormLayout.PatientAndClinicalRequirements,
         "urgent-identification",
         "Urgent patient identification",
         Order = 20,
@@ -89,12 +72,8 @@ internal sealed class MedicinesPatientIdentification
     public YesNoUnknown? UrgentIdentificationRequired { get; set; }
 
     /// <summary>Conditional on UrgentIdentificationRequired = Yes.</summary>
-    [FormTask(
-        MedicineFormTasks.PatientAndClinicalRequirements,
-        MedicineFormTasks.PatientAndClinicalRequirementsTitle,
-        Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
-    )]
     [FormPage(
+        MedicineFormLayout.PatientAndClinicalRequirements,
         "urgent-identification",
         "Urgent patient identification",
         Order = 20,

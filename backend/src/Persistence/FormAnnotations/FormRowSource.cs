@@ -1,9 +1,8 @@
 namespace UKPS.Api.Persistence.FormAnnotations;
 
 /// <summary>
-/// How the revision's row for a form section entity comes to exist. Set it with
-/// <see cref="FormSectionAttribute.RowSource"/>. If an entity has several sections that
-/// disagree, <see cref="RecordCreation"/> wins.
+/// How the revision's row for a form entity comes to exist. Set it with
+/// <see cref="FormEntityAttribute.RowSource"/>.
 /// </summary>
 public enum FormRowSource
 {

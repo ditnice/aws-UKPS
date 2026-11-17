@@ -8,12 +8,7 @@ namespace UKPS.Api.Persistence.Entities.SharedRevisionContent;
 /// Answers about the record's clinical trials as a whole, and the trials themselves, which share
 /// its <see cref="RevisionId"/>.
 /// </summary>
-[FormSection(
-    RecordType.Medicine,
-    MedicineFormSections.ClinicalTrialInformation,
-    MedicineFormSections.ClinicalTrialInformationTitle,
-    Order = MedicineFormSections.ClinicalTrialInformationOrder
-)]
+[FormEntity]
 [FormPageShowWhen(
     "clinical-trial-details",
     "record_clinical_trial_information.has_clinical_trials",
@@ -33,12 +28,12 @@ internal sealed class RecordClinicalTrialInformation
     public int RevisionId { get; set; }
 
     /// <summary>Does the user wish to add clinical trials to the record?</summary>
-    [FormTask(
-        MedicineFormTasks.ClinicalTrials,
-        MedicineFormTasks.ClinicalTrialsTitle,
-        Order = MedicineFormTasks.ClinicalTrialsOrder
+    [FormPage(
+        MedicineFormLayout.ClinicalTrials,
+        "add-clinical-trial",
+        "Add a clinical trial",
+        Order = 10
     )]
-    [FormPage("add-clinical-trial", "Add a clinical trial", Order = 10)]
     [FormField(
         "record_clinical_trial_information.has_clinical_trials",
         "Do you wish to add a clinical trial?",
@@ -49,12 +44,8 @@ internal sealed class RecordClinicalTrialInformation
     public YesNo? HasClinicalTrials { get; set; }
 
     /// <summary>Are any of the record's clinical trials recruiting in the UK?</summary>
-    [FormTask(
-        MedicineFormTasks.ClinicalTrials,
-        MedicineFormTasks.ClinicalTrialsTitle,
-        Order = MedicineFormTasks.ClinicalTrialsOrder
-    )]
     [FormPage(
+        MedicineFormLayout.ClinicalTrials,
         "recruiting-in-uk",
         "Recruiting in the UK",
         Order = 30,
@@ -73,12 +64,12 @@ internal sealed class RecordClinicalTrialInformation
     public RecordWorkflow.RecordRevision? Revision { get; set; }
 
     /// <summary>The revision's clinical trials, joined on <see cref="RevisionId"/>.</summary>
-    [FormTask(
-        MedicineFormTasks.ClinicalTrials,
-        MedicineFormTasks.ClinicalTrialsTitle,
-        Order = MedicineFormTasks.ClinicalTrialsOrder
+    [FormPage(
+        MedicineFormLayout.ClinicalTrials,
+        "clinical-trial-details",
+        "Clinical trial details",
+        Order = 20
     )]
-    [FormPage("clinical-trial-details", "Clinical trial details", Order = 20)]
     [FormField(
         "record_clinical_trial",
         "Enter clinical trial details",

@@ -376,6 +376,10 @@ internal static class RecordContentHistory
                 lab.GenomicTurnaroundTimeDetails
             ),
             ("medicines_laboratory_testing.patient_pathway_point_id", lab.PatientPathwayPoint),
+            (
+                "medicines_laboratory_testing.genomic_test_pathway_point_other",
+                lab.GenomicTestPathwayPointOther
+            ),
             ("medicines_laboratory_testing.genomic_alterations", lab.GenomicAlterations),
             (
                 "medicines_laboratory_testing.additional_genomic_factors",

@@ -89,6 +89,27 @@ public class DatabaseConstraintTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task SaveChangesAsync_DuplicatePendingWorkEmail_ThrowsDbUpdateException()
+    {
+        var duplicateEmail = "duplicate@example.com";
+        var userFaker = _userFaker.RuleFor(
+            x => x.PendingWorkEmail,
+            f => f.GetRandomlyCapitalisedString(duplicateEmail)
+        );
+        User user1 = userFaker.Generate();
+        User user2 = userFaker.Generate();
+        Context.Users.Add(user1);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        Context.Users.Add(user2);
+
+        DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
+            Context.SaveChangesAsync()
+        );
+        ConstraintExceptions.IsUniquePendingEmailException(exception).ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task SaveChangesAsync_InvalidOrganisationReference_ThrowDbUpdateException()
     {
         UserOrgMembership entity = _membershipFaker

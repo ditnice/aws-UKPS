@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Bogus;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Persistence.Data.Fakers;
@@ -8,8 +9,16 @@ public sealed class UpdateUserDetailsCommandFaker : Faker<UpdateUserDetailsComma
 {
     public UpdateUserDetailsCommandFaker()
     {
-        RuleFor(x => x.FullName, f => f.Name.FullName());
-        RuleFor(x => x.WorkEmail, f => f.Internet.Email());
-        RuleFor(x => x.WorkTelephone, _ => new TelephoneNumberFaker().Generate());
+        RuleFor(x => x.Property, f => f.PickRandom<EditableUserDetail>());
+        RuleFor(
+            x => x.Value,
+            (f, o) =>
+                o.Property switch
+                {
+                    EditableUserDetail.FullName => f.Name.FullName(),
+                    EditableUserDetail.WorkPhone => new TelephoneNumberFaker().Generate(),
+                    _ => throw new UnreachableException(),
+                }
+        );
     }
 }

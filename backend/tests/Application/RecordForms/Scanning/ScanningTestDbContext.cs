@@ -48,5 +48,7 @@ internal sealed class ScanningTestDbContext(DbContextOptions<ScanningTestDbConte
             .WithMany(x => x.Numbers)
             .HasForeignKey(x => x.GroupEntityItemId);
         modelBuilder.Entity<BrokenGroupEntity>();
+        modelBuilder.Entity<SplitFormEntity>();
+        modelBuilder.Entity<UnplacedConditionEntity>();
     }
 }

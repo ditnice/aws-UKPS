@@ -17,7 +17,7 @@ public class MedicineFormModelTests
     // Bump FormVersions.Medicine whenever this changes, then update both values.
     private const string ExpectedVersion = "2026.11.17.1";
     private const string ExpectedFingerprint =
-        "0d859165947807c3e81c3af42cd2e90cdf1272461cfaabbbb261d06c0477cd07";
+        "db29152097e0b43d0cd60ecb7b22e14b6785c0d93b42a53f241986df3fb334fe";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -207,6 +207,10 @@ public class MedicineFormModelTests
                     "AnswerIn medicines_eams_pim.pim_designation_status [Granted]"
                 ),
                 (
+                    "medicines_laboratory_testing.genomic_test_pathway_point_other",
+                    "AnswerIn medicines_laboratory_testing.patient_pathway_point_id [other]"
+                ),
+                (
                     "medicines_laboratory_testing.genomic_test_notes",
                     "AnswerIn medicines_laboratory_testing.genomic_test_mandatory_status [MandatoryNoAlternatives, MandatoryAlternativesMayExist]"
                 ),
@@ -312,7 +316,7 @@ public class MedicineFormModelTests
         FormTask task = Model
             .Sections.SelectMany(static s => s.Tasks)
             .Single(static t =>
-                string.Equals(t.Id, MedicineFormTasks.ClinicalTrials, StringComparison.Ordinal)
+                string.Equals(t.Id, MedicineFormLayout.ClinicalTrials, StringComparison.Ordinal)
             );
 
         task.Pages.Select(static p => (p.Id, p.CommercialInConfidence))
@@ -383,7 +387,10 @@ public class MedicineFormModelTests
     [Fact]
     public void ReferenceTriggerTypes_HoldTheReferenceDataConditionsName()
     {
-        Model.ReferenceTriggerTypes.ShouldBe([typeof(MhraProcedureType)]);
+        Model.ReferenceTriggerTypes.ShouldBe([
+            typeof(MhraProcedureType),
+            typeof(PatientPathwayPoint),
+        ]);
     }
 
     [Fact]
@@ -695,6 +702,11 @@ public class MedicineFormModelTests
             (
                 "medicines_laboratory_testing.patient_pathway_point_id",
                 FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_laboratory_testing.genomic_test_pathway_point_other",
+                FormControl.Textarea,
                 AnswerShape.Single
             ),
             (

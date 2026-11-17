@@ -6,6 +6,12 @@ format:
 format-check:
     dotnet csharpier check .
 
+# Applies the .editorconfig code-style and analyzer fixes that the pre-commit build
+# (dotnet build -p:EnforceCodeStyle=true) checks for.
+fix-style:
+    dotnet format style UKPS.Api.slnx
+    dotnet format analyzers UKPS.Api.slnx
+
 build:
     dotnet build
 
@@ -20,7 +26,8 @@ test:
     dotnet test
 
 coverage:
-    dotnet test /p:CollectCoverage=true
+    rm -rf tests/TestResults/Coverage tests/TestResults/CoverageReport
+    dotnet test --coverlet --coverlet-output-format cobertura --coverlet-include "[UKPS.Api]*" --coverlet-exclude-by-file "**/Program.cs" --coverlet-exclude-by-file "**/obj/**/*.cs" --coverlet-threshold 80 --coverlet-threshold-type line,branch --coverlet-threshold-stat Total --results-directory tests/TestResults/Coverage
     dotnet tool run reportgenerator
 
 erd:

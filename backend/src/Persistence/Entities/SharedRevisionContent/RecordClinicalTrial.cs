@@ -6,7 +6,7 @@ namespace UKPS.Api.Persistence.Entities.SharedRevisionContent;
 /// <summary>
 /// One of a revision's clinical trials. Its questions are asked of each item of the
 /// <c>record_clinical_trial</c> group on <see cref="RecordClinicalTrialInformation"/>, so they
-/// take that group's task and page.
+/// take that group's page.
 /// </summary>
 internal sealed class RecordClinicalTrial
 {

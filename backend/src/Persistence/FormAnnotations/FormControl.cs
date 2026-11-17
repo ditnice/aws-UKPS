@@ -94,7 +94,7 @@ public enum FormControl
     /// A repeating group of items, each holding several questions, shown stacked with an add
     /// another button and a remove button per item. For a collection navigation to a child entity
     /// whose own properties are annotated with <see cref="FormFieldAttribute"/> (and no
-    /// <see cref="FormTaskAttribute"/> or <see cref="FormPageAttribute"/>). The answer is an array
+    /// <see cref="FormPageAttribute"/>; they take the group's page). The answer is an array
     /// of objects keyed by child question ID. A child may be a <see cref="TextList"/>, but not
     /// another group. May have <see cref="FormRequiredAttribute"/> (at least one item) and
     /// <see cref="FormMaxItemsAttribute"/>; needs <see cref="FormFieldAttribute.ItemLabel"/>.

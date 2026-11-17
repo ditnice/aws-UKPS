@@ -94,11 +94,9 @@ static void WriteFile(string path, string content)
     File.WriteAllText(path, content);
 }
 
-/// <summary>
-/// Builds the context exactly as <c>Program.cs</c> does (Npgsql + snake_case naming) so the
-/// model is identical to production, but never opens a connection: reading
-/// <see cref="DbContext.Model"/> is purely in-memory.
-/// </summary>
+// Builds the context exactly as Program.cs does (Npgsql + snake_case naming) so the
+// model is identical to production, but never opens a connection: reading
+// DbContext.Model is purely in-memory.
 static AppDbContext CreateDesignTimeContext()
 {
     DbContextOptions<AppDbContext> dbOptions = new DbContextOptionsBuilder<AppDbContext>()

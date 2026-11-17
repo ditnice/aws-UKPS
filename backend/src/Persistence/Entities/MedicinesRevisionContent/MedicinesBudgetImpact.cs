@@ -4,12 +4,7 @@ using UKPS.Api.Persistence.FormAnnotations;
 namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
 /// <summary>Pricing and budget impact.</summary>
-[FormSection(
-    RecordType.Medicine,
-    MedicineFormSections.ServiceReadiness,
-    MedicineFormSections.ServiceReadinessTitle,
-    Order = MedicineFormSections.ServiceReadinessOrder
-)]
+[FormEntity]
 internal sealed class MedicinesBudgetImpact
 {
     [FormIgnore("Database identity")]
@@ -19,12 +14,13 @@ internal sealed class MedicinesBudgetImpact
     public int RevisionId { get; set; }
 
     /// <summary>Enter the estimated uptake based on expected adoption patterns. CiC.</summary>
-    [FormTask(
-        MedicineFormTasks.PricingAndBudgetImpact,
-        MedicineFormTasks.PricingAndBudgetImpactTitle,
-        Order = MedicineFormTasks.PricingAndBudgetImpactOrder
+    [FormPage(
+        MedicineFormLayout.PricingAndBudgetImpact,
+        "estimated-uptake",
+        "Estimated uptake",
+        Order = 10,
+        CommercialInConfidence = true
     )]
-    [FormPage("estimated-uptake", "Estimated uptake", Order = 10, CommercialInConfidence = true)]
     [FormField(
         "medicines_budget_impact.estimated_uptake",
         "Enter the estimated uptake based on expected adoption patterns (optional)",
@@ -37,12 +33,12 @@ internal sealed class MedicinesBudgetImpact
     /// Will UK patients be able to access this product on a compassionate or early access
     /// basis, outside of clinical trials?
     /// </summary>
-    [FormTask(
-        MedicineFormTasks.PricingAndBudgetImpact,
-        MedicineFormTasks.PricingAndBudgetImpactTitle,
-        Order = MedicineFormTasks.PricingAndBudgetImpactOrder
+    [FormPage(
+        MedicineFormLayout.PricingAndBudgetImpact,
+        "compassionate-access",
+        "Compassionate or early access",
+        Order = 20
     )]
-    [FormPage("compassionate-access", "Compassionate or early access", Order = 20)]
     [FormField(
         "medicines_budget_impact.compassionate_access_available",
         "Will UK patients be able to access this product on a compassionate or early access basis, outside of clinical trials?",
@@ -56,12 +52,12 @@ internal sealed class MedicinesBudgetImpact
     public YesNoUnknown? CompassionateAccessAvailable { get; set; }
 
     /// <summary>Conditional on CompassionateAccessAvailable = Yes.</summary>
-    [FormTask(
-        MedicineFormTasks.PricingAndBudgetImpact,
-        MedicineFormTasks.PricingAndBudgetImpactTitle,
-        Order = MedicineFormTasks.PricingAndBudgetImpactOrder
+    [FormPage(
+        MedicineFormLayout.PricingAndBudgetImpact,
+        "compassionate-access",
+        "Compassionate or early access",
+        Order = 20
     )]
-    [FormPage("compassionate-access", "Compassionate or early access", Order = 20)]
     [FormField(
         "medicines_budget_impact.compassionate_access_details",
         "Provide further details",
@@ -77,12 +73,8 @@ internal sealed class MedicinesBudgetImpact
     /// Is a Patient Access Scheme or alternative discount arrangement planned
     /// for this indication? Gates the PatientAccessSchemeRegions selection. CiC.
     /// </summary>
-    [FormTask(
-        MedicineFormTasks.PricingAndBudgetImpact,
-        MedicineFormTasks.PricingAndBudgetImpactTitle,
-        Order = MedicineFormTasks.PricingAndBudgetImpactOrder
-    )]
     [FormPage(
+        MedicineFormLayout.PricingAndBudgetImpact,
         "patient-access-scheme",
         "Patient Access Scheme",
         Order = 30,
@@ -102,12 +94,8 @@ internal sealed class MedicinesBudgetImpact
     public YesNoUnknown? PatientAccessSchemePlanned { get; set; }
 
     /// <summary>Multi-select. Conditional on PatientAccessSchemePlanned = Yes.</summary>
-    [FormTask(
-        MedicineFormTasks.PricingAndBudgetImpact,
-        MedicineFormTasks.PricingAndBudgetImpactTitle,
-        Order = MedicineFormTasks.PricingAndBudgetImpactOrder
-    )]
     [FormPage(
+        MedicineFormLayout.PricingAndBudgetImpact,
         "patient-access-scheme",
         "Patient Access Scheme",
         Order = 30,
@@ -124,12 +112,8 @@ internal sealed class MedicinesBudgetImpact
     public PatientAccessSchemeRegion? PatientAccessSchemeRegions { get; set; }
 
     /// <summary>CiC — Commercially in Confidence.</summary>
-    [FormTask(
-        MedicineFormTasks.PricingAndBudgetImpact,
-        MedicineFormTasks.PricingAndBudgetImpactTitle,
-        Order = MedicineFormTasks.PricingAndBudgetImpactOrder
-    )]
     [FormPage(
+        MedicineFormLayout.PricingAndBudgetImpact,
         "indication-specific-pricing",
         "Indication specific pricing",
         Order = 40,
@@ -147,12 +131,8 @@ internal sealed class MedicinesBudgetImpact
     public YesNoUnknown? IndicationSpecificPricingPlanned { get; set; }
 
     /// <summary>Conditional on IndicationSpecificPricingPlanned = Yes.</summary>
-    [FormTask(
-        MedicineFormTasks.PricingAndBudgetImpact,
-        MedicineFormTasks.PricingAndBudgetImpactTitle,
-        Order = MedicineFormTasks.PricingAndBudgetImpactOrder
-    )]
     [FormPage(
+        MedicineFormLayout.PricingAndBudgetImpact,
         "indication-specific-pricing",
         "Indication specific pricing",
         Order = 40,
@@ -172,12 +152,13 @@ internal sealed class MedicinesBudgetImpact
     /// <summary>
     /// Estimated net UK budget impact over the first 3 years of NHS use. CiC.
     /// </summary>
-    [FormTask(
-        MedicineFormTasks.PricingAndBudgetImpact,
-        MedicineFormTasks.PricingAndBudgetImpactTitle,
-        Order = MedicineFormTasks.PricingAndBudgetImpactOrder
+    [FormPage(
+        MedicineFormLayout.PricingAndBudgetImpact,
+        "net-budget-impact",
+        "Net budget impact",
+        Order = 50,
+        CommercialInConfidence = true
     )]
-    [FormPage("net-budget-impact", "Net budget impact", Order = 50, CommercialInConfidence = true)]
     [FormField(
         "medicines_budget_impact.net_uk_budget_impact_band",
         "What is the estimated net budget impact for the UK over the first 3 years of NHS use?",

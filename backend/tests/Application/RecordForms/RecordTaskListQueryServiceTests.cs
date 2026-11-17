@@ -74,7 +74,11 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
         );
         _formulation = await AddEntity(new FormulationType { Label = "Tablet" }, Ct);
         _pathwayPoint = await AddEntity(
-            new PatientPathwayPoint { Label = "Initial presentation" },
+            new PatientPathwayPoint
+            {
+                Code = PatientPathwayPointCodes.InitialPresentation,
+                Label = "Initial presentation",
+            },
             Ct
         );
     }

@@ -14,73 +14,86 @@ internal static class FormModelScanner
 {
     private static readonly string _annotationNamespace = typeof(FormFieldAttribute).Namespace!;
 
-    public static (IReadOnlyList<EntityDeclaration> Entities, IReadOnlyList<string> Problems) Scan(
+    public static (FormDeclarations Declarations, IReadOnlyList<string> Problems) Scan(
         IModel model,
         IEnumerable<Type> types
     )
     {
+        List<FormLayout> layouts = [];
         List<EntityDeclaration> entities = [];
         List<string> problems = [];
         Type[] allTypes = types.ToArray();
         HashSet<Type> groupItemTypes = allTypes
-            .Where(static t => t.IsDefined(typeof(FormSectionAttribute), false))
+            .Where(static t => t.IsDefined(typeof(FormEntityAttribute), false))
             .SelectMany(GroupItemTypes)
             .ToHashSet();
 
         foreach (Type type in allTypes)
         {
-            FormSectionAttribute[] sections = type.GetCustomAttributes<FormSectionAttribute>(false)
-                .ToArray();
-            PropertyInfo[] properties = type.GetProperties(
-                BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly
-            );
-
-            FormPageShowWhenAttribute[] pageConditions =
-                type.GetCustomAttributes<FormPageShowWhenAttribute>(false).ToArray();
-
-            if (sections.Length == 0)
+            if (type.IsSubclassOf(typeof(FormLayout)) && !type.IsAbstract)
             {
-                // A group's child entity is scanned through the group that holds it.
-                if (!groupItemTypes.Contains(type))
+                if (CreateLayout(type, problems) is { } layout)
                 {
-                    ReportUnsectioned(type, properties, pageConditions, problems);
-                }
-
-                continue;
-            }
-
-            IEntityType? entityType = model.FindEntityType(type);
-            if (entityType is null)
-            {
-                problems.Add($"{type.Name} has [FormSection] but is not an EF entity.");
-                continue;
-            }
-
-            List<QuestionDeclaration> questions = [];
-            foreach (PropertyInfo property in properties)
-            {
-                QuestionDeclaration? question = ScanProperty(
-                    type,
-                    entityType,
-                    property,
-                    parent: null,
-                    problems
-                );
-                if (question is not null)
-                {
-                    questions.Add(question);
+                    layouts.Add(layout);
                 }
             }
-
-            entities.Add(
-                new EntityDeclaration(type, entityType, sections, questions, pageConditions)
-            );
+            else if (ScanEntity(model, type, groupItemTypes, problems) is { } entity)
+            {
+                entities.Add(entity);
+            }
         }
 
-        return (entities, problems);
+        return (new FormDeclarations(layouts, entities), problems);
     }
 
-    private static void ReportUnsectioned(
+    private static EntityDeclaration? ScanEntity(
+        IModel model,
+        Type type,
+        HashSet<Type> groupItemTypes,
+        List<string> problems
+    )
+    {
+        FormEntityAttribute? formEntity = type.GetCustomAttribute<FormEntityAttribute>(false);
+        PropertyInfo[] properties = type.GetProperties(
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly
+        );
+
+        FormPageShowWhenAttribute[] pageConditions =
+            type.GetCustomAttributes<FormPageShowWhenAttribute>(false).ToArray();
+
+        if (formEntity is null)
+        {
+            // A group's child entity is scanned through the group that holds it.
+            if (!groupItemTypes.Contains(type))
+            {
+                ReportUnannotated(type, properties, pageConditions, problems);
+            }
+
+            return null;
+        }
+
+        IEntityType? entityType = model.FindEntityType(type);
+        if (entityType is null)
+        {
+            problems.Add($"{type.Name} has [FormEntity] but is not an EF entity.");
+            return null;
+        }
+
+        QuestionDeclaration[] questions = properties
+            .Select(property => ScanProperty(type, entityType, property, parent: null, problems))
+            .OfType<QuestionDeclaration>()
+            .ToArray();
+
+        return new EntityDeclaration(
+            type,
+            entityType,
+            formEntity.RowSource,
+            questions,
+            pageConditions
+        );
+    }
+
+    private static void ReportUnannotated(
         Type type,
         PropertyInfo[] properties,
         FormPageShowWhenAttribute[] pageConditions,
@@ -89,16 +102,41 @@ internal static class FormModelScanner
     {
         if (pageConditions.Length > 0)
         {
-            problems.Add($"{type.Name} has [FormPageShowWhen] but no [FormSection].");
+            problems.Add($"{type.Name} has [FormPageShowWhen] but no [FormEntity].");
         }
 
         problems.AddRange(
             properties
                 .Where(HasFormAttribute)
                 .Select(p =>
-                    $"{type.Name}.{p.Name} has form attributes but {type.Name} has no [FormSection]."
+                    $"{type.Name}.{p.Name} has form attributes but {type.Name} has no [FormEntity]."
                 )
         );
+    }
+
+    private static FormLayout? CreateLayout(Type type, List<string> problems)
+    {
+        ConstructorInfo? constructor = type.GetConstructor(
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+            Type.EmptyTypes
+        );
+        if (constructor is null)
+        {
+            problems.Add($"{type.Name} is a FormLayout with no parameterless constructor.");
+            return null;
+        }
+
+        try
+        {
+            return (FormLayout)constructor.Invoke(null);
+        }
+        catch (TargetInvocationException exception)
+        {
+            problems.Add(
+                $"{type.Name} threw while being created: {exception.InnerException?.Message}"
+            );
+            return null;
+        }
     }
 
     /// <summary>The child entities of the type's group questions.</summary>
@@ -122,7 +160,7 @@ internal static class FormModelScanner
 
     /// <summary>
     /// Reads one property. A group's child questions pass the group as <paramref name="parent"/>:
-    /// they take its task and page, and must not declare their own.
+    /// they take its page, and must not declare their own.
     /// </summary>
     private static QuestionDeclaration? ScanProperty(
         Type type,
@@ -134,7 +172,6 @@ internal static class FormModelScanner
     {
         string where = $"{type.Name}.{property.Name}";
         FormFieldAttribute? field = property.GetCustomAttribute<FormFieldAttribute>();
-        FormTaskAttribute? task = property.GetCustomAttribute<FormTaskAttribute>();
         FormPageAttribute? page = property.GetCustomAttribute<FormPageAttribute>();
         IProperty? column = entityType.FindProperty(property.Name);
         INavigation? navigation = entityType.FindNavigation(property.Name);
@@ -144,8 +181,8 @@ internal static class FormModelScanner
             return null;
         }
 
-        (task, page) = PlaceQuestion(where, task, page, parent, problems);
-        if (task is null || page is null)
+        page = PlaceQuestion(where, page, parent, problems);
+        if (page is null)
         {
             return null;
         }
@@ -166,7 +203,6 @@ internal static class FormModelScanner
         {
             EntityType = type,
             Property = property,
-            Task = task,
             Page = page,
             Field = field,
             Required = property.GetCustomAttribute<FormRequiredAttribute>(),
@@ -190,12 +226,11 @@ internal static class FormModelScanner
     }
 
     /// <summary>
-    /// The task and page of a question: its own, or for a group's question the group's, which it
-    /// must not declare itself. Null when one is missing.
+    /// The page of a question: its own, or for a group's question the group's, which it must not
+    /// declare itself. Null when it is missing.
     /// </summary>
-    private static (FormTaskAttribute? Task, FormPageAttribute? Page) PlaceQuestion(
+    private static FormPageAttribute? PlaceQuestion(
         string where,
-        FormTaskAttribute? task,
         FormPageAttribute? page,
         QuestionDeclaration? parent,
         List<string> problems
@@ -203,19 +238,14 @@ internal static class FormModelScanner
     {
         if (parent is not null)
         {
-            if (task is not null || page is not null)
+            if (page is not null)
             {
                 problems.Add(
-                    $"{where} is a question of group {parent.Where}, so it takes the group's task and page and must not declare [FormTask] or [FormPage]."
+                    $"{where} is a question of group {parent.Where}, so it takes the group's page and must not declare [FormPage]."
                 );
             }
 
-            return (parent.Task, parent.Page);
-        }
-
-        if (task is null)
-        {
-            problems.Add($"{where} has [FormField] but no [FormTask].");
+            return parent.Page;
         }
 
         if (page is null)
@@ -223,7 +253,7 @@ internal static class FormModelScanner
             problems.Add($"{where} has [FormField] but no [FormPage].");
         }
 
-        return (task, page);
+        return page;
     }
 
     /// <summary>The questions declared on a group's child entity.</summary>
@@ -354,7 +384,6 @@ internal static class FormModelScanner
 
     private static bool HasQuestionDetail(PropertyInfo property) =>
         property.IsDefined(typeof(FormPageAttribute), false)
-        || property.IsDefined(typeof(FormTaskAttribute), false)
         || property.IsDefined(typeof(FormRequiredAttribute), false)
         || property.IsDefined(typeof(FormMaxLengthAttribute), false)
         || property.IsDefined(typeof(FormValuePrefixesAttribute), false)

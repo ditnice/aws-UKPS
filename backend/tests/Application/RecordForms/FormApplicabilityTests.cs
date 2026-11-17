@@ -232,11 +232,18 @@ public class FormApplicabilityTests
     private static FormModel BuildForm(params Type[] types)
     {
         IModel model = ScanningTestDbContext.CreateModel();
-        var (entities, _) = FormModelScanner.Scan(
+        var (declarations, _) = FormModelScanner.Scan(
             model,
-            types.Length > 0 ? types : [typeof(ConditionalEntity), typeof(ConditionalExtraEntity)]
+            [
+                typeof(VaccineTestLayout),
+                .. types.Length > 0
+                    ? types
+                    : [typeof(ConditionalEntity), typeof(ConditionalExtraEntity)],
+            ]
         );
-        return FormModelBuilder.Build(entities, ScanningTestOptions.Create())[RecordType.Vaccine];
+        return FormModelBuilder.Build(declarations, ScanningTestOptions.Create())[
+            RecordType.Vaccine
+        ];
     }
 
     /// <summary>Every question unanswered, apart from those given.</summary>

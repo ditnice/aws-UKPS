@@ -9,12 +9,7 @@ namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 /// Vaccines capture international regulatory activity as a simple gate plus free
 /// text instead; see VaccinesRevisionContent.VaccinesIntlSubmission.
 /// </summary>
-[FormSection(
-    RecordType.Medicine,
-    MedicineFormSections.RegulatoryAccessAndLaunch,
-    MedicineFormSections.RegulatoryAccessAndLaunchTitle,
-    Order = MedicineFormSections.RegulatoryAccessAndLaunchOrder
-)]
+[FormEntity]
 [FormPageShowWhen(
     "international-recognition",
     "record_mhra_procedure.mhra_procedure_type_id",
@@ -43,12 +38,8 @@ internal sealed class MedicinesIntlRecognition
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.MhraProcedureAndDates,
-        MedicineFormTasks.MhraProcedureAndDatesTitle,
-        Order = MedicineFormTasks.MhraProcedureAndDatesOrder
-    )]
     [FormPage(
+        MedicineFormLayout.MhraProcedureAndDates,
         "international-recognition",
         "International Recognition Procedure (IRP)",
         Order = 60,
@@ -63,12 +54,8 @@ internal sealed class MedicinesIntlRecognition
     [FormRequired("Select intended route")]
     public int? IrpRouteId { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.MhraProcedureAndDates,
-        MedicineFormTasks.MhraProcedureAndDatesTitle,
-        Order = MedicineFormTasks.MhraProcedureAndDatesOrder
-    )]
     [FormPage(
+        MedicineFormLayout.MhraProcedureAndDates,
         "international-submission-date",
         "International regulatory submission date",
         Order = 70,
@@ -84,12 +71,8 @@ internal sealed class MedicinesIntlRecognition
     [FormRequired("Select an option")]
     public int? IntlSubmissionDateId { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.MhraProcedureAndDates,
-        MedicineFormTasks.MhraProcedureAndDatesTitle,
-        Order = MedicineFormTasks.MhraProcedureAndDatesOrder
-    )]
     [FormPage(
+        MedicineFormLayout.MhraProcedureAndDates,
         "international-licence-date",
         "International regulatory licence date",
         Order = 80,
@@ -105,12 +88,8 @@ internal sealed class MedicinesIntlRecognition
     [FormRequired("Select an option")]
     public int? IntlLicenceDateId { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.MhraProcedureAndDates,
-        MedicineFormTasks.MhraProcedureAndDatesTitle,
-        Order = MedicineFormTasks.MhraProcedureAndDatesOrder
-    )]
     [FormPage(
+        MedicineFormLayout.MhraProcedureAndDates,
         "international-conditional-approval",
         "International conditional approval",
         Order = 90

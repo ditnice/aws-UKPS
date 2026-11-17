@@ -3,12 +3,7 @@ using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
-[FormSection(
-    RecordType.Medicine,
-    MedicineFormSections.IndicationAndDevelopment,
-    MedicineFormSections.IndicationAndDevelopmentTitle,
-    Order = MedicineFormSections.IndicationAndDevelopmentOrder
-)]
+[FormEntity]
 internal sealed class MedicinesDevelopmentBackground
 {
     [FormIgnore("Database identity")]
@@ -17,12 +12,12 @@ internal sealed class MedicinesDevelopmentBackground
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.DevelopmentBackground,
-        MedicineFormTasks.DevelopmentBackgroundTitle,
-        Order = MedicineFormTasks.DevelopmentBackgroundOrder
+    [FormPage(
+        MedicineFormLayout.DevelopmentBackground,
+        "repurposed-medicine",
+        "Repurposed medicine",
+        Order = 10
     )]
-    [FormPage("repurposed-medicine", "Repurposed medicine", Order = 10)]
     [FormField(
         "medicines_development_background.is_repurposed_medicine",
         "Is this product a repurposed medicine?",
@@ -34,12 +29,12 @@ internal sealed class MedicinesDevelopmentBackground
     public YesNoUnknown? IsRepurposedMedicine { get; set; }
 
     /// <summary>Differences from the current licensed indications.</summary>
-    [FormTask(
-        MedicineFormTasks.DevelopmentBackground,
-        MedicineFormTasks.DevelopmentBackgroundTitle,
-        Order = MedicineFormTasks.DevelopmentBackgroundOrder
+    [FormPage(
+        MedicineFormLayout.DevelopmentBackground,
+        "repurposed-medicine",
+        "Repurposed medicine",
+        Order = 10
     )]
-    [FormPage("repurposed-medicine", "Repurposed medicine", Order = 10)]
     [FormField(
         "medicines_development_background.repurposed_medicine_details",
         "Enter the differences from the current licensed indications (optional)",
@@ -50,12 +45,12 @@ internal sealed class MedicinesDevelopmentBackground
     [FormMaxLength(2000, "Differences must be 2000 characters or fewer")]
     public string? RepurposedMedicineDetails { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.DevelopmentBackground,
-        MedicineFormTasks.DevelopmentBackgroundTitle,
-        Order = MedicineFormTasks.DevelopmentBackgroundOrder
+    [FormPage(
+        MedicineFormLayout.DevelopmentBackground,
+        "originator",
+        "Original developer",
+        Order = 20
     )]
-    [FormPage("originator", "Original developer", Order = 20)]
     [FormField(
         "medicines_development_background.is_originator_company",
         "Is your company the original developer of this product?",
@@ -67,12 +62,12 @@ internal sealed class MedicinesDevelopmentBackground
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IsOriginatorCompany { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.DevelopmentBackground,
-        MedicineFormTasks.DevelopmentBackgroundTitle,
-        Order = MedicineFormTasks.DevelopmentBackgroundOrder
+    [FormPage(
+        MedicineFormLayout.DevelopmentBackground,
+        "originator",
+        "Original developer",
+        Order = 20
     )]
-    [FormPage("originator", "Original developer", Order = 20)]
     [FormField(
         "medicines_development_background.originator_company_name",
         "Originator company name",
@@ -85,12 +80,7 @@ internal sealed class MedicinesDevelopmentBackground
     [FormMaxLength(200, "Originator company name must be 200 characters or fewer")]
     public string? OriginatorCompanyName { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.DevelopmentBackground,
-        MedicineFormTasks.DevelopmentBackgroundTitle,
-        Order = MedicineFormTasks.DevelopmentBackgroundOrder
-    )]
-    [FormPage("co-marketing", "Co-marketing", Order = 30)]
+    [FormPage(MedicineFormLayout.DevelopmentBackground, "co-marketing", "Co-marketing", Order = 30)]
     [FormField(
         "medicines_development_background.is_co_marketed",
         "Is this product co-marketed?",
@@ -102,12 +92,7 @@ internal sealed class MedicinesDevelopmentBackground
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IsCoMarketed { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.DevelopmentBackground,
-        MedicineFormTasks.DevelopmentBackgroundTitle,
-        Order = MedicineFormTasks.DevelopmentBackgroundOrder
-    )]
-    [FormPage("co-marketing", "Co-marketing", Order = 30)]
+    [FormPage(MedicineFormLayout.DevelopmentBackground, "co-marketing", "Co-marketing", Order = 30)]
     [FormField(
         "medicines_development_background.co_marketing_company_name",
         "Co-marketing company name",
