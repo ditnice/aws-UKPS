@@ -16,6 +16,9 @@ internal sealed class RecordClinicalTrial
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
+    [FormIgnore("Display order is supplied by the server")]
+    public int? DisplayOrder { get; set; }
+
     [FormField(
         "study_name",
         "Study name",

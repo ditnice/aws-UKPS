@@ -248,6 +248,56 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
             .ShouldBe(["Second", "Third"]);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task SavePage_CrossingTrialKeys_PreservesSubmittedOrderAndAllowsIdenticalRetry(
+        bool swapNumbers
+    )
+    {
+        await SaveOk(GatePage, Answer(HasTrials, "Yes"));
+        await SaveOk(
+            DetailsPage,
+            TrialsAnswer(Trial("First", "NCT00000001", "A1"), Trial("Second", "NCT00000002", "B1"))
+        );
+        Dictionary<string, int> rowIds = (await StoredTrials()).ToDictionary(
+            static t => t.ClinicalTrialsGovNumber,
+            static t => t.Id,
+            StringComparer.Ordinal
+        );
+        RecordPageDto before = await GetPage(DetailsPage);
+        Dictionary<string, JsonElement> answers = swapNumbers
+            ? TrialsAnswer(
+                Trial("First", "NCT00000002", "A1"),
+                Trial("Second", "NCT00000001", "B1")
+            )
+            : TrialsAnswer(
+                Trial("Second", "NCT00000002", "B1"),
+                Trial("First", "NCT00000001", "A1")
+            );
+        SaveRecordPageCommand command = new()
+        {
+            FormVersion = FormVersions.Medicine,
+            Answers = answers,
+            PageHash = before.PageHash,
+        };
+
+        (
+            await _saveHarness.Service.SavePage(_record.Id, DetailsPage, command, Ct)
+        ).ShouldBeSuccess();
+
+        RecordPageDto after = await GetPage(DetailsPage);
+        JsonElement.DeepEquals(after.Answers[Trials], answers[Trials]).ShouldBeTrue();
+        (await StoredTrials()).ShouldAllBe(t => rowIds[t.ClinicalTrialsGovNumber] == t.Id);
+        int audits = await Context.RecordFieldAudits.CountAsync(Ct);
+
+        // A retry carries the original hash, not the one returned by a subsequent GET.
+        (
+            await _saveHarness.Service.SavePage(_record.Id, DetailsPage, command, Ct)
+        ).ShouldBeSuccess();
+        (await Context.RecordFieldAudits.CountAsync(Ct)).ShouldBe(audits);
+    }
+
     [Fact]
     public async Task SavePage_BlankRegistryNumbers_AreDropped()
     {
@@ -377,7 +427,8 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
         await Context
             .RecordClinicalTrials.AsNoTracking()
             .Include(static t => t.OtherClinicalTrialNumbers)
-            .OrderBy(static t => t.Id)
+            .OrderBy(static t => t.DisplayOrder ?? int.MaxValue)
+            .ThenBy(static t => t.Id)
             .ToArrayAsync(Ct);
 
     private async Task<RecordTaskStatus> TaskStatus() =>

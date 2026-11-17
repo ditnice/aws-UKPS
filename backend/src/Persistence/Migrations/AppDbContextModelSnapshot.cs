@@ -2021,6 +2021,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("clinical_trials_gov_number");
 
+                    b.Property<int?>("DisplayOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("display_order");
+
                     b.Property<int>("RevisionId")
                         .HasColumnType("integer")
                         .HasColumnName("revision_id");

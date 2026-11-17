@@ -337,6 +337,8 @@ metadata, so attributes never contain expressions:
   position when there is no `ItemKey`), delete rows left over after clearing their own child rows,
   and add missing ones. Its audit value is
   one JSON object keyed by the `ItemKey` question's answer.
+  Clinical trials persist `DisplayOrder` independently of their row identity, so changing or
+  reordering trial numbers preserves the submitted order on subsequent reads.
 - **`TextListBinding`** stores an ordered `string[]` as child rows with one string column each,
   matched by position, with `DisplayOrder` written from 1.
 

@@ -79,9 +79,11 @@ internal sealed class RecordContentFactory
                 RecruitingInUk = section.RecruitingInUk,
             };
         }
-        foreach (SyntheticClinicalTrial trial in section.ClinicalTrials)
+        foreach (
+            var (trial, index) in section.ClinicalTrials.Select((trial, index) => (trial, index))
+        )
         {
-            yield return ClinicalTrial(trial, revision);
+            yield return ClinicalTrial(trial, revision, index + 1);
         }
     }
 
@@ -208,11 +210,13 @@ internal sealed class RecordContentFactory
 
     private static RecordClinicalTrial ClinicalTrial(
         SyntheticClinicalTrial trial,
-        RecordRevision revision
+        RecordRevision revision,
+        int displayOrder
     ) =>
         new()
         {
             Revision = revision,
+            DisplayOrder = displayOrder,
             StudyName = trial.StudyName,
             ClinicalTrialsGovNumber = trial.ClinicalTrialsGovNumber,
             TrialPhase = trial.TrialPhase,
