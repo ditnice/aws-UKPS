@@ -1,0 +1,13 @@
+<Project>
+  <!--
+    EnforceCodeStyle (see Directory.Build.props): IDE0005 is only reported on build when an XML
+    documentation file is generated. Projects that don't generate docs themselves get one just for
+    this build, with CS1591 (missing XML comments) suppressed because they don't require doc
+    comments. Projects that opt in (e.g. UKPS.Api) are left alone, so CS1591 still fails for them.
+    This lives in a .targets file because it must run after each project's own properties.
+  -->
+  <PropertyGroup Condition="'$(EnforceCodeStyle)' == 'true' AND '$(GenerateDocumentationFile)' != 'true'">
+    <DocumentationFile>$(IntermediateOutputPath)$(AssemblyName).xml</DocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+</Project>

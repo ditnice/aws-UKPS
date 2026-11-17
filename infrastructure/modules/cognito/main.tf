@@ -6,6 +6,54 @@ locals {
   name_prefix = "${var.project}-${var.environment}-${var.service_name}"
 }
 
+resource "aws_iam_role" "cognito_sms" {
+  name = "${local.name_prefix}-cognito-sms"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "cognito-idp.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+        Condition = {
+          StringEquals = {
+            "sts:ExternalId"    = local.name_prefix
+            "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+          }
+        }
+      }
+    ]
+  })
+
+  tags = merge(var.tags, {
+    Name        = "${local.name_prefix}-cognito-sms"
+    Environment = var.environment
+    Project     = var.project
+    Service     = var.service_name
+  })
+}
+
+resource "aws_iam_role_policy" "cognito_sms" {
+  name = "${local.name_prefix}-cognito-sms"
+  role = aws_iam_role.cognito_sms.id
+
+  # checkov:skip=CKV_AWS_355:SNS SMS publishing requires Resource "*" because there is no topic ARN.
+  # checkov:skip=CKV_AWS_290:SNS SMS publishing requires Resource "*" because there is no topic ARN.
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "sns:Publish"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 resource "aws_cognito_user_pool" "users" {
   name                = "${local.name_prefix}-users"
   deletion_protection = "ACTIVE"
@@ -61,6 +109,14 @@ resource "aws_cognito_user_pool" "users" {
     enabled = true
   }
 
+  sms_configuration {
+    external_id    = local.name_prefix
+    sns_caller_arn = aws_iam_role.cognito_sms.arn
+    sns_region     = data.aws_region.current.region
+  }
+
+  sms_authentication_message = "Your security code is {####}."
+
   user_attribute_update_settings {
     attributes_require_verification_before_update = ["email"]
   }
@@ -84,6 +140,7 @@ resource "aws_cognito_user_pool" "users" {
     Service     = var.service_name
   })
 
+  depends_on = [aws_iam_role_policy.cognito_sms]
   lifecycle {
     prevent_destroy = true
 

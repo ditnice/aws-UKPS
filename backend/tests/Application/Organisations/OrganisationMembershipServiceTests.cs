@@ -642,7 +642,11 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     [Fact]
     public async Task UpdateUserRole_ShouldReturnError_WhenTheMembershipBelongsToTheCurrentUser()
     {
-        var userOrgMembership = await SetupUserOrgMembership();
+        var userOrgMembership = await SetupUserOrgMembership(
+            overrideMembershipFaker: _membershipFaker
+                .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Active)
+                .RuleFor(x => x.UserRole, _ => UserRole.Champion)
+        );
         UserRole originalRole = userOrgMembership.UserRole;
         var harness = await CreateHarnessActingAsMembershipOwner(userOrgMembership);
 
@@ -669,10 +673,9 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
     public async Task DeactivateMembership_ShouldReturnError_WhenTheMembershipBelongsToTheCurrentUser()
     {
         var userOrgMembership = await SetupUserOrgMembership(
-            overrideMembershipFaker: _membershipFaker.RuleFor(
-                x => x.Status,
-                _ => UserOrgMembershipStatus.Active
-            )
+            overrideMembershipFaker: _membershipFaker
+                .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Active)
+                .RuleFor(x => x.UserRole, _ => UserRole.Champion)
         );
         var harness = await CreateHarnessActingAsMembershipOwner(userOrgMembership);
 
@@ -1222,7 +1225,7 @@ public class OrganisationMembershipServiceTests : DatabaseTestBase
         User owner = await Context.Users.SingleAsync(u => u.Id == membership.UserId);
 
         return new ServiceTestHarness<IOrganisationMembershipService>(Context).UpdateCurrentUser(
-            currentUser => currentUser with { Email = owner.WorkEmail }
+            owner
         );
     }
 
