@@ -281,6 +281,29 @@ export type InitiateForgottenPasswordProcedureCommand = {
 };
 
 /**
+ * The problems that stop a record being submitted. `errors` is keyed by question ID;
+ * `fields` adds each problem's page and task.
+ */
+export type InvalidRecordProblemDetails = {
+    type?: null | string;
+    title?: null | string;
+    status?: null | number;
+    detail?: null | string;
+    instance?: null | string;
+    /**
+     * Identifies the problem; always `record_invalid`.
+     */
+    code: null | string;
+    /**
+     * Each problem with its page and task, in form order.
+     */
+    fields: Array<SubmissionErrorDto>;
+    errors: {
+        [key: string]: Array<string>;
+    };
+};
+
+/**
  * Represents the credentials provided by a user when attempting to authenticate.
  */
 export type LoginRequest = {
@@ -868,6 +891,130 @@ export const RecordAction = {
  * Defines the actions a user can take on a record.
  */
 export type RecordAction = typeof RecordAction[keyof typeof RecordAction];
+
+/**
+ * The whole of a record's latest revision for check your answers: every question that applies,
+ * grouped by section and task, and every error that would stop it being submitted.
+ */
+export type RecordCheckAnswersDto = {
+    /**
+     * The form's version. Send it back on submit.
+     */
+    formVersion: string;
+    /**
+     * The record the answers belong to.
+     */
+    recordId: number;
+    /**
+     * A hash of the whole revision. Send it back on submit; if anything in the revision has
+     * changed since, the submission is rejected.
+     */
+    revisionHash: string;
+    /**
+     * Whether the caller may submit the revision in its current state: it is a draft that can be
+     * submitted, and the caller can edit the record. Show Submit only when this is true and
+     * IReadOnlyList&lt;SubmissionErrorDto&gt; RecordCheckAnswersDto.Errors is empty.
+     */
+    canSubmit: boolean;
+    /**
+     * The sections with a question that applies, in form order.
+     */
+    sections: Array<RecordCheckAnswersSectionDto>;
+    /**
+     * The problems that would stop the record being submitted, in form order, each on a question
+     * in IReadOnlyList&lt;RecordCheckAnswersSectionDto&gt; RecordCheckAnswersDto.Sections.
+     */
+    errors: Array<SubmissionErrorDto>;
+};
+
+/**
+ * An option chosen in an answer.
+ */
+export type RecordCheckAnswersOptionDto = {
+    /**
+     * The answer value: an enum member name or a reference ID.
+     */
+    value: string;
+    /**
+     * The text shown for the option.
+     */
+    label: string;
+    /**
+     * The label of the option's parent in a hierarchical select, or null.
+     */
+    parentLabel: null | string;
+};
+
+/**
+ * A question that applies and its answer, as a row on check your answers.
+ */
+export type RecordCheckAnswersQuestionDto = {
+    /**
+     * The question ID, which errors are keyed by.
+     */
+    id: string;
+    /**
+     * The page the question is on, for its Change link.
+     */
+    pageId: string;
+    /**
+     * The question text.
+     */
+    label: string;
+    /**
+     * The control the question uses, which says how to format the answer.
+     */
+    type: FormControl;
+    /**
+     * True when the question takes several values rather than one.
+     */
+    multiple: boolean;
+    /**
+     * The saved values: at most one for a single-value question, and none when not yet provided.
+     */
+    values: Array<string>;
+    /**
+     * For a choice question, the chosen options in the order offered, so values can be shown by
+     * label; null for any other question.
+     */
+    selectedOptions: null | Array<RecordCheckAnswersOptionDto>;
+};
+
+/**
+ * A section on check your answers.
+ */
+export type RecordCheckAnswersSectionDto = {
+    /**
+     * The section ID.
+     */
+    id: string;
+    /**
+     * The section title.
+     */
+    title: string;
+    /**
+     * The tasks with a question that applies, in order.
+     */
+    tasks: Array<RecordCheckAnswersTaskDto>;
+};
+
+/**
+ * A task on check your answers.
+ */
+export type RecordCheckAnswersTaskDto = {
+    /**
+     * The task ID.
+     */
+    id: string;
+    /**
+     * The task title.
+     */
+    title: string;
+    /**
+     * The questions that apply, in page order, including optional questions with no answer.
+     */
+    questions: Array<RecordCheckAnswersQuestionDto>;
+};
 
 /**
  * Represents a clinical trial on a record.
@@ -1715,6 +1862,43 @@ export const SortDirection = { ASCENDING: 'Ascending', DESCENDING: 'Descending' 
  * Specifies the direction in which query results are sorted.
  */
 export type SortDirection = typeof SortDirection[keyof typeof SortDirection];
+
+/**
+ * A problem that stops a record being submitted, and the question it is on.
+ */
+export type SubmissionErrorDto = {
+    /**
+     * The question to highlight, which is also its key in `errors`.
+     */
+    questionId: string;
+    /**
+     * The page the question is on, to link to.
+     */
+    pageId: string;
+    /**
+     * The task the page belongs to.
+     */
+    taskId: string;
+    /**
+     * What is wrong and how to fix it.
+     */
+    message: string;
+};
+
+/**
+ * Submits a record's draft revision, as it was when check your answers loaded.
+ */
+export type SubmitRecordCommand = {
+    /**
+     * The form version check your answers was loaded with.
+     */
+    formVersion: string;
+    /**
+     * The hash of the whole revision check your answers was loaded with. If anything in the
+     * revision has changed since, the submission is rejected.
+     */
+    revisionHash: string;
+};
 
 export const TrialPhase = {
     PRECLINICAL: 'Preclinical',
@@ -3273,6 +3457,97 @@ export type SaveRecordFormPageResponses = {
 };
 
 export type SaveRecordFormPageResponse = SaveRecordFormPageResponses[keyof SaveRecordFormPageResponses];
+
+export type GetRecordCheckAnswersData = {
+    body?: never;
+    path: {
+        /**
+         * The record to check.
+         */
+        recordId: number;
+    };
+    query?: never;
+    url: '/records/{recordId}/check-answers';
+};
+
+export type GetRecordCheckAnswersErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The record was not found or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type GetRecordCheckAnswersError = GetRecordCheckAnswersErrors[keyof GetRecordCheckAnswersErrors];
+
+export type GetRecordCheckAnswersResponses = {
+    /**
+     * Returns the record's answers and errors.
+     */
+    200: RecordCheckAnswersDto;
+};
+
+export type GetRecordCheckAnswersResponse = GetRecordCheckAnswersResponses[keyof GetRecordCheckAnswersResponses];
+
+export type SubmitRecordData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: SubmitRecordCommand;
+    path: {
+        /**
+         * The record to submit.
+         */
+        recordId: number;
+    };
+    query?: never;
+    url: '/records/{recordId}/submit';
+};
+
+export type SubmitRecordErrors = {
+    /**
+     * The request body is missing or malformed.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but not submit it.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record can't be submitted in its current state, or the form or revision changed since
+     * check your answers loaded. The `code` member says which.
+     */
+    409: AuthenticationProblemDetails;
+    /**
+     * The revision has problems to fix first. `errors` is keyed by question ID, and
+     * `fields` lists each problem with its page and task, in form order.
+     */
+    422: InvalidRecordProblemDetails;
+};
+
+export type SubmitRecordError = SubmitRecordErrors[keyof SubmitRecordErrors];
+
+export type SubmitRecordResponses = {
+    /**
+     * The record was submitted.
+     */
+    200: unknown;
+};
 
 export type GetRecordTaskListData = {
     body?: never;
