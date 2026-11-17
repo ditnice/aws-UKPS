@@ -4,12 +4,7 @@ using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Persistence.Entities.SharedRevisionContent;
 
-[FormSection(
-    RecordType.Medicine,
-    MedicineFormSections.RegulatoryAccessAndLaunch,
-    MedicineFormSections.RegulatoryAccessAndLaunchTitle,
-    Order = MedicineFormSections.RegulatoryAccessAndLaunchOrder
-)]
+[FormEntity]
 internal sealed class RecordMhraDate
 {
     [FormIgnore("Database identity")]
@@ -18,12 +13,8 @@ internal sealed class RecordMhraDate
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.MhraProcedureAndDates,
-        MedicineFormTasks.MhraProcedureAndDatesTitle,
-        Order = MedicineFormTasks.MhraProcedureAndDatesOrder
-    )]
     [FormPage(
+        MedicineFormLayout.MhraProcedureAndDates,
         "uk-submission-date",
         "UK regulatory submission date",
         Order = 20,
@@ -39,12 +30,8 @@ internal sealed class RecordMhraDate
     [FormRequired("Select an option")]
     public int? UkSubmissionDateId { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.MhraProcedureAndDates,
-        MedicineFormTasks.MhraProcedureAndDatesTitle,
-        Order = MedicineFormTasks.MhraProcedureAndDatesOrder
-    )]
     [FormPage(
+        MedicineFormLayout.MhraProcedureAndDates,
         "uk-licence-date",
         "UK regulatory licence date",
         Order = 40,
@@ -60,12 +47,8 @@ internal sealed class RecordMhraDate
     [FormRequired("Select an option")]
     public int? UkLicenceDateId { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.MhraProcedureAndDates,
-        MedicineFormTasks.MhraProcedureAndDatesTitle,
-        Order = MedicineFormTasks.MhraProcedureAndDatesOrder
-    )]
     [FormPage(
+        MedicineFormLayout.MhraProcedureAndDates,
         "uk-conditional-approval",
         "UK conditional approval",
         Order = 50,

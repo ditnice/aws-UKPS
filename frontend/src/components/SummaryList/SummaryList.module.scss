@@ -37,7 +37,8 @@
       width: 25%;
     }
 
-    .summary-list__actions {
+    .summary-list__actions,
+    .summary-list__row--no-actions:after {
       width: 15%;
     }
   }
@@ -106,9 +107,9 @@
   }
 }
 
-.summary-list__value {
-  margin-bottom: spacing.$medium * 1px;
-
+// The value's content is the cell's children, or the content wrapper's when the row has a tag.
+.summary-list__value,
+.summary-list__value-content {
   > p {
     margin-bottom: spacing.$small * 1px;
   }
@@ -116,6 +117,10 @@
   > :last-child {
     margin-bottom: 0;
   }
+}
+
+.summary-list__value {
+  margin-bottom: spacing.$medium * 1px;
 
   @include media-queries.mq($from: sm) {
     margin-bottom: 0;

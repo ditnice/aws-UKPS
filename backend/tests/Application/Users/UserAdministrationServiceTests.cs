@@ -363,6 +363,31 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         _harness.Emails.Sent.ShouldBeEmpty();
     }
 
+    [Fact]
+    public async Task OnboardUser_ShouldTrimWhitespaceFromUsersWorkEmail()
+    {
+        var email = "    \tnew-user@email.com   \n";
+        OnboardUserCommandDto command = await GenerateValidOnboardingCommand() with
+        {
+            NewUserEmail = email,
+        };
+        OnboardUserResult result = await _harness.Service.OnboardUser(
+            command,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeSuccess();
+
+        var foundUser = await _harness
+            .GetClearedContext()
+            .Users.GetByEmailOrDefault(
+                command.NewUserEmail.Trim(),
+                TestContext.Current.CancellationToken
+            );
+
+        foundUser.ShouldNotBeNull();
+        foundUser.WorkEmail.ShouldBe(email.Trim());
+    }
+
     private IServiceTestHarness<IUserAdministrationService> GetTestHarness()
     {
         var harness = new ServiceTestHarness<IUserAdministrationService>(Context)

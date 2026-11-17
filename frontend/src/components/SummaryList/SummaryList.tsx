@@ -16,7 +16,7 @@ type ValidSummaryListAction = ReactElement<SummaryListActionProps> | boolean | n
 export type SummaryListRowProps = {
   children?: ValidSummaryListAction | readonly ValidSummaryListAction[]
   label: ReactNode
-  /* Shown at the right of the value cell, e.g. a "Hidden" tag. */
+  /** Shown at the right of the value cell, e.g. a "Hidden" tag. */
   tag?: ReactNode
   value: ReactNode
 }
@@ -32,7 +32,7 @@ type SummaryListProps = {
   children: ValidSummaryListRow | readonly ValidSummaryListRow[]
   className?: string
   title?: ReactNode
-  /* Defaults to 4. */
+  /** Defaults to 4. */
   titleHeadingLevel?: 2 | 3 | 4 | 5 | 6
   variant?: SummaryListVariant
 }
@@ -75,7 +75,7 @@ export function SummaryListRow({
       <dd className={styles['summary-list__value']}>
         {tag ? (
           <div className={styles['summary-list__value-with-tag']}>
-            <div>{value}</div>
+            <div className={styles['summary-list__value-content']}>{value}</div>
             {tag}
           </div>
         ) : (

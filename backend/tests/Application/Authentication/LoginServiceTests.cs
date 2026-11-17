@@ -8,6 +8,7 @@ using Shouldly;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
+using UKPS.Api.Application.Authentication.SecurityNotification;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Persistence.Data.Fakers;
@@ -359,6 +360,51 @@ public class LoginServiceTests : DatabaseTestBase
                 UpdatedPassword = updatedPassword,
             }
         );
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenAResetRequestHasBeenInitiatedAndUserExist_ShouldSendSecurityNotification()
+    {
+        Result<InitiateForgottenPasswordProcedureError> initiateResult =
+            await _harness.Service.InitiateForgottenPasswordProcedure(
+                new() { Email = _user.WorkEmail },
+                Ct
+            );
+        initiateResult.ShouldBeSuccess();
+
+        var updatedPassword = "new-password";
+        var result = await MakeValidConfirmPasswordRequest(x =>
+            x with
+            {
+                NewPassword = updatedPassword,
+            }
+        );
+        result.ShouldBeSuccess();
+
+        _harness
+            .Emails.Sent.ShouldHaveSingleItem()
+            .ShouldBeOfType<SecurityNotificationEmail>()
+            .ChangedValue.ShouldBe(ChangedUserData.Password);
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenAResetRequestHasBeenInitiatedAndUserExistButPasswordUpdateFails_ShouldNotSendSecurityNotification()
+    {
+        Result<InitiateForgottenPasswordProcedureError> initiateResult =
+            await _harness.Service.InitiateForgottenPasswordProcedure(
+                new() { Email = _user.WorkEmail },
+                Ct
+            );
+        initiateResult.ShouldBeSuccess();
+
+        _ = await MakeValidConfirmPasswordRequest(x =>
+            x with
+            {
+                NewPassword = _harness.Cognito.InvalidPassword,
+            }
+        );
+
+        _harness.Emails.Sent.ShouldBeEmpty();
     }
 
     [Fact]

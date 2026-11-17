@@ -521,6 +521,10 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                 x => x with { WorkEmail = "not a valid email" }
             ),
             (
+                nameof(UpdateUserDetailsCommand.WorkEmail),
+                x => x with { WorkEmail = "jan e@email.com" }
+            ),
+            (
                 nameof(UpdateUserDetailsCommand.WorkTelephone),
                 x => x with { WorkTelephone = string.Empty }
             ),

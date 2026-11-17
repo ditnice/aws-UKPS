@@ -5,6 +5,7 @@ using Shouldly;
 using UKPS.Api.Persistence.Configurations;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Tests.Application.Common;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
 
@@ -50,11 +51,14 @@ public class DatabaseConstraintTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task SaveChangesAsync_DuplicateWorkEmail_ThrowsDbUpdateException()
+    public async Task SaveChangesAsync_DuplicateWorkEmailWithCaseDifferences_ThrowsDbUpdateException()
     {
         var duplicateEmail = "duplicate@example.com";
-        var user1 = _userFaker.Generate().Update(x => x.WorkEmail = duplicateEmail);
-        var user2 = _userFaker.Generate().Update(x => x.WorkEmail = duplicateEmail);
+        User user1 = _userFaker.RuleFor(x => x.WorkEmail, _ => duplicateEmail).Generate();
+        User user2 = _userFaker
+            .RuleFor(x => x.WorkEmail, f => f.GetRandomlyCapitalisedString(duplicateEmail))
+            .Generate();
+
         Context.Users.Add(user1);
         await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -63,7 +67,25 @@ public class DatabaseConstraintTests : DatabaseTestBase
         DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
             Context.SaveChangesAsync()
         );
-        AssertUniqueViolation(exception, ConstraintNames.UserUniqueEmail);
+        ConstraintExceptions.IsUniqueEmailException(exception).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_DuplicateWorkEmail_ThrowsDbUpdateException()
+    {
+        var duplicateEmail = "duplicate@example.com";
+        var userFaker = _userFaker.RuleFor(x => x.WorkEmail, _ => duplicateEmail);
+        User user1 = userFaker.Generate();
+        User user2 = userFaker.Generate();
+        Context.Users.Add(user1);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        Context.Users.Add(user2);
+
+        DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
+            Context.SaveChangesAsync()
+        );
+        ConstraintExceptions.IsUniqueEmailException(exception).ShouldBeTrue();
     }
 
     [Fact]
@@ -220,6 +242,25 @@ public class DatabaseConstraintTests : DatabaseTestBase
         postgresException.ConstraintName.ShouldBe(
             ConstraintNames.UsersCannotHaveMultipleSelectedCurrentOrganisations
         );
+    }
+
+    [Theory]
+    [InlineData("example@email.com\t")]
+    [InlineData("example@email.com\n")]
+    [InlineData(" example@email.com")]
+    [InlineData("exa mple@email.com")]
+    [InlineData("example@email.com\r")]
+    public async Task SaveChangesAsync_UserWorkEmailWithWhitespace_ThrowsDbUpdateException(
+        string email
+    )
+    {
+        var user = new UserFaker().RuleFor(x => x.WorkEmail, _ => email).Generate();
+        var exception = await Should.ThrowAsync<DbUpdateException>(() =>
+            AddEntity(user, TestContext.Current.CancellationToken)
+        );
+        PostgresException postgresException =
+            exception.InnerException.ShouldBeOfType<PostgresException>();
+        postgresException.ConstraintName.ShouldBe(ConstraintNames.WorkEmailNoWhitespace);
     }
 
     private static void AssertUniqueViolation(DbUpdateException exception, string constraintName)

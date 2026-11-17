@@ -23,28 +23,35 @@ internal static partial class FormModelValidator
     private const string TaskListRoute = "task-list";
 
     public static IReadOnlyList<string> Validate(
-        IReadOnlyList<EntityDeclaration> entities,
+        FormDeclarations declarations,
         OptionProviderRegistry options
     )
     {
         List<string> problems = [];
+        ValidateLayouts(declarations.Layouts, problems);
 
-        foreach (EntityDeclaration entity in entities)
+        foreach (EntityDeclaration entity in declarations.Entities)
         {
-            ValidateEntity(entity, problems);
+            ValidateEntity(entity, declarations, problems);
             foreach (QuestionDeclaration question in entity.Questions)
             {
                 ValidateQuestion(question, options, problems);
+                if (declarations.Place(question) is null)
+                {
+                    problems.Add(
+                        $"{question.Where} declares page '{question.Page.Id}' in task '{question.Page.Task}', which no FormLayout declares."
+                    );
+                }
             }
         }
 
-        IEnumerable<RecordType> recordTypes = entities
-            .SelectMany(static e => e.Sections)
-            .Select(static s => s.RecordType)
-            .Distinct();
-        foreach (RecordType recordType in recordTypes)
+        foreach (
+            IGrouping<RecordType, PlacedQuestion> form in declarations.Placed.GroupBy(static q =>
+                q.RecordType
+            )
+        )
         {
-            ValidateForm(recordType, entities, problems);
+            ValidateForm(form.Key, [.. form], problems);
         }
 
         return problems;
@@ -56,7 +63,101 @@ internal static partial class FormModelValidator
     [GeneratedRegex(@"^[a-z0-9_]+(\.[a-z0-9_]+)?$", RegexOptions.ExplicitCapture, 1000)]
     private static partial Regex QuestionIdPattern();
 
-    private static void ValidateEntity(EntityDeclaration entity, List<string> problems)
+    private static void ValidateLayouts(IReadOnlyList<FormLayout> layouts, List<string> problems)
+    {
+        foreach (
+            IGrouping<RecordType, FormLayout> duplicate in layouts
+                .GroupBy(static l => l.RecordType)
+                .Where(static g => g.Count() > 1)
+        )
+        {
+            string names = string.Join(", ", duplicate.Select(static l => l.GetType().Name));
+            problems.Add($"More than one FormLayout declares the {duplicate.Key} form ({names}).");
+        }
+
+        foreach (
+            IGrouping<string, FormLayoutTask> duplicate in layouts
+                .SelectMany(static l => l.Sections)
+                .SelectMany(static s => s.Tasks)
+                .GroupBy(static t => t.Id, StringComparer.Ordinal)
+                .Where(static g => g.Count() > 1)
+        )
+        {
+            problems.Add(
+                $"Task ID '{duplicate.Key}' is declared more than once in the form layouts."
+            );
+        }
+
+        foreach (FormLayout layout in layouts)
+        {
+            ValidateLayout(layout, problems);
+        }
+    }
+
+    private static void ValidateLayout(FormLayout layout, List<string> problems)
+    {
+        string name = layout.GetType().Name;
+        if (layout.Sections.Count == 0)
+        {
+            problems.Add($"{name} declares no sections.");
+        }
+
+        foreach (FormLayoutSection section in layout.Sections)
+        {
+            if (!SlugPattern().IsMatch(section.Id) || string.IsNullOrWhiteSpace(section.Title))
+            {
+                problems.Add(
+                    $"{name} declares section '{section.Id}' with a badly formed ID or a blank title."
+                );
+            }
+
+            if (section.Tasks.Count == 0)
+            {
+                problems.Add($"{name} declares section '{section.Id}' with no tasks.");
+            }
+
+            foreach (FormLayoutTask task in section.Tasks)
+            {
+                if (!SlugPattern().IsMatch(task.Id) || string.IsNullOrWhiteSpace(task.Title))
+                {
+                    problems.Add(
+                        $"{name} declares task '{task.Id}' with a badly formed ID or a blank title."
+                    );
+                }
+            }
+
+            ReportTies(
+                section.Tasks,
+                static t => t.Order,
+                static t => $"task '{t.Id}'",
+                $"{name}, section '{section.Id}',",
+                problems
+            );
+        }
+
+        foreach (
+            IGrouping<string, FormLayoutSection> duplicate in layout
+                .Sections.GroupBy(static s => s.Id, StringComparer.Ordinal)
+                .Where(static g => g.Count() > 1)
+        )
+        {
+            problems.Add($"{name} declares section '{duplicate.Key}' more than once.");
+        }
+
+        ReportTies(
+            layout.Sections,
+            static s => s.Order,
+            static s => $"section '{s.Id}'",
+            name,
+            problems
+        );
+    }
+
+    private static void ValidateEntity(
+        EntityDeclaration entity,
+        FormDeclarations declarations,
+        List<string> problems
+    )
     {
         string name = entity.ClrType.Name;
 
@@ -72,7 +173,7 @@ internal static partial class FormModelValidator
             problems.Add($"{name} has no int RevisionId foreign key to RecordRevision.");
         }
 
-        if (entity.Sections.Any(static s => s.RowSource == FormRowSource.FirstSave))
+        if (entity.RowSource == FormRowSource.FirstSave)
         {
             string[] required = entity
                 .EntityType.GetProperties()
@@ -93,28 +194,17 @@ internal static partial class FormModelValidator
             }
         }
 
-        foreach (
-            IGrouping<RecordType, FormSectionAttribute> duplicate in entity
-                .Sections.GroupBy(static s => s.RecordType)
-                .Where(static g => g.Count() > 1)
-        )
+        RecordType[] forms = declarations.RecordTypesOf(entity);
+        if (forms.Length > 1)
         {
-            problems.Add($"{name} declares more than one [FormSection] for {duplicate.Key}.");
-        }
-
-        foreach (FormSectionAttribute section in entity.Sections)
-        {
-            if (!SlugPattern().IsMatch(section.Id) || string.IsNullOrWhiteSpace(section.Title))
-            {
-                problems.Add(
-                    $"{name} declares section '{section.Id}' with a badly formed ID or a blank title."
-                );
-            }
+            problems.Add(
+                $"{name} has pages in more than one form ({string.Join(", ", forms)}); an entity belongs to one form."
+            );
         }
 
         if (entity.Questions.Count == 0)
         {
-            problems.Add($"{name} declares [FormSection] but has no questions.");
+            problems.Add($"{name} declares [FormEntity] but has no questions.");
         }
     }
 
@@ -130,16 +220,6 @@ internal static partial class FormModelValidator
         if (!QuestionIdPattern().IsMatch(field.Id))
         {
             problems.Add($"{where} has a badly formed question ID '{field.Id}'.");
-        }
-
-        if (
-            !SlugPattern().IsMatch(question.Task.Id)
-            || string.IsNullOrWhiteSpace(question.Task.Title)
-        )
-        {
-            problems.Add(
-                $"{where} declares task '{question.Task.Id}' with a badly formed ID or a blank title."
-            );
         }
 
         if (
@@ -452,7 +532,7 @@ internal static partial class FormModelValidator
 
     private static void ValidateForm(
         RecordType recordType,
-        IReadOnlyList<EntityDeclaration> entities,
+        PlacedQuestion[] questions,
         List<string> problems
     )
     {
@@ -462,38 +542,8 @@ internal static partial class FormModelValidator
             problems.Add($"{form} has no entry in FormVersions.");
         }
 
-        var sections = entities
-            .SelectMany(e =>
-                e.Sections.Where(s => s.RecordType == recordType)
-                    .Select(s => (Entity: e, Section: s))
-            )
-            .ToArray();
-
-        foreach (var group in sections.GroupBy(static x => x.Section.Id, StringComparer.Ordinal))
-        {
-            if (group.Select(static x => (x.Section.Title, x.Section.Order)).Distinct().Count() > 1)
-            {
-                problems.Add(
-                    $"{form} declares section '{group.Key}' with different titles or orders."
-                );
-            }
-        }
-
-        ReportTies(
-            sections.DistinctBy(static x => x.Section.Id, StringComparer.Ordinal),
-            static x => x.Section.Order,
-            static x => $"section '{x.Section.Id}'",
-            form,
-            problems
-        );
-
-        var questions = sections
-            .SelectMany(static x =>
-                x.Entity.Questions.Select(q => (Question: q, SectionId: x.Section.Id))
-            )
-            .ToArray();
-        ValidateTasks(form, questions, problems);
-        ValidateConditions(form, sections, problems);
+        ValidatePages(form, questions, problems);
+        ValidateConditions(form, questions, problems);
 
         foreach (
             var duplicate in questions
@@ -513,7 +563,7 @@ internal static partial class FormModelValidator
     /// </summary>
     private static void ValidateDateEvents(
         string form,
-        (QuestionDeclaration Question, string SectionId)[] questions,
+        PlacedQuestion[] questions,
         List<string> problems
     )
     {
@@ -535,65 +585,16 @@ internal static partial class FormModelValidator
         }
     }
 
-    private static void ValidateTasks(
-        string form,
-        (QuestionDeclaration Question, string SectionId)[] questions,
-        List<string> problems
-    )
-    {
-        var tasks = questions
-            .GroupBy(static x => x.Question.Task.Id, StringComparer.Ordinal)
-            .ToArray();
-        ValidateTaskMetadata(form, tasks, problems);
-        ValidatePages(form, questions, problems);
-    }
-
-    private static void ValidateTaskMetadata(
-        string form,
-        IGrouping<string, (QuestionDeclaration Question, string SectionId)>[] tasks,
-        List<string> problems
-    )
-    {
-        foreach (var task in tasks)
-        {
-            if (
-                task.Select(static x => (x.Question.Task.Title, x.Question.Task.Order, x.SectionId))
-                    .Distinct()
-                    .Count() > 1
-            )
-            {
-                problems.Add(
-                    $"{form} declares task '{task.Key}' with different titles, orders or sections."
-                );
-            }
-        }
-
-        foreach (
-            var section in tasks
-                .Select(static task => task.First())
-                .GroupBy(static x => x.SectionId, StringComparer.Ordinal)
-        )
-        {
-            ReportTies(
-                section,
-                static x => x.Question.Task.Order,
-                static x => $"task '{x.Question.Task.Id}'",
-                $"{form}, section '{section.Key}',",
-                problems
-            );
-        }
-    }
-
     private static void ValidatePages(
         string form,
-        (QuestionDeclaration Question, string SectionId)[] questions,
+        PlacedQuestion[] questions,
         List<string> problems
     )
     {
         var pages = questions
             .GroupBy(
-                static x => (x.SectionId, TaskId: x.Question.Task.Id, x.Question.Page.Id),
-                EqualityComparer<(string SectionId, string TaskId, string Id)>.Default
+                static x => (x.TaskId, x.Question.Page.Id),
+                EqualityComparer<(string TaskId, string Id)>.Default
             )
             .ToArray();
         ValidatePageMetadata(form, pages, problems);
@@ -608,12 +609,10 @@ internal static partial class FormModelValidator
             );
         }
 
-        // Grouping by task ID alone is safe: ValidateTaskMetadata reports a task ID declared in more
-        // than one section, so within a valid form each task ID names exactly one task.
         foreach (
             var task in pages
                 .Select(static p => p.First())
-                .GroupBy(static x => x.Question.Task.Id, StringComparer.Ordinal)
+                .GroupBy(static x => x.TaskId, StringComparer.Ordinal)
         )
         {
             ReportTies(
@@ -629,8 +628,7 @@ internal static partial class FormModelValidator
             var page in questions
                 .GroupBy(static x => x.Question.Page.Id, StringComparer.Ordinal)
                 .Where(static page =>
-                    page.Select(x => x.Question.Task.Id).Distinct(StringComparer.Ordinal).Count()
-                    > 1
+                    page.Select(x => x.TaskId).Distinct(StringComparer.Ordinal).Count() > 1
                 )
         )
         {
@@ -644,29 +642,24 @@ internal static partial class FormModelValidator
     /// </summary>
     private static void ValidateConditions(
         string form,
-        (EntityDeclaration Entity, FormSectionAttribute Section)[] sections,
+        PlacedQuestion[] placed,
         List<string> problems
     )
     {
-        // Form position of each question: section order, task order, page order, then question
-        // order.
-        Dictionary<string, (QuestionDeclaration Question, int SectionOrder)> questions = sections
-            .SelectMany(static x =>
-                x.Entity.Questions.Select(q => (Question: q, SectionOrder: x.Section.Order))
-            )
+        Dictionary<string, PlacedQuestion> questions = placed
             .DistinctBy(static x => x.Question.Field.Id, StringComparer.Ordinal)
             .ToDictionary(static x => x.Question.Field.Id, StringComparer.Ordinal);
 
         ValidateQuestionConditions(questions, problems);
-        ValidatePageConditions(form, sections, questions, problems);
+        ValidatePageConditions(form, placed, questions, problems);
     }
 
     private static void ValidateQuestionConditions(
-        Dictionary<string, (QuestionDeclaration Question, int SectionOrder)> questions,
+        Dictionary<string, PlacedQuestion> questions,
         List<string> problems
     )
     {
-        foreach (var (question, _) in questions.Values)
+        foreach (QuestionDeclaration question in questions.Values.Select(static x => x.Question))
         {
             if (question.ShowWhen is not { } showWhen)
             {
@@ -703,14 +696,15 @@ internal static partial class FormModelValidator
 
     private static void ValidatePageConditions(
         string form,
-        (EntityDeclaration Entity, FormSectionAttribute Section)[] sections,
-        Dictionary<string, (QuestionDeclaration Question, int SectionOrder)> questions,
+        PlacedQuestion[] placed,
+        Dictionary<string, PlacedQuestion> questions,
         List<string> problems
     )
     {
-        var pageConditions = sections
-            .DistinctBy(static x => x.Entity)
-            .SelectMany(static x => x.Entity.PageConditions.Select(c => (x.Entity, Condition: c)))
+        var pageConditions = placed
+            .Select(static x => x.Entity)
+            .Distinct()
+            .SelectMany(static e => e.PageConditions.Select(c => (Entity: e, Condition: c)))
             .ToArray();
 
         foreach (
@@ -728,11 +722,23 @@ internal static partial class FormModelValidator
         {
             string where =
                 $"{entity.ClrType.Name} [FormPageShowWhen] for page '{condition.PageId}'";
-            QuestionDeclaration? onPage = entity.Questions.FirstOrDefault(q =>
-                string.Equals(q.Page.Id, condition.PageId, StringComparison.Ordinal)
+            PlacedQuestion? onPage = placed.FirstOrDefault(x =>
+                x.Entity == entity
+                && string.Equals(x.Question.Page.Id, condition.PageId, StringComparison.Ordinal)
             );
             if (onPage is null)
             {
+                // A page whose task no layout declares, or that is in another form, is reported
+                // elsewhere.
+                if (
+                    entity.Questions.Any(q =>
+                        string.Equals(q.Page.Id, condition.PageId, StringComparison.Ordinal)
+                    )
+                )
+                {
+                    continue;
+                }
+
                 problems.Add($"{where} names a page that {entity.ClrType.Name} does not declare.");
                 continue;
             }
@@ -744,14 +750,7 @@ internal static partial class FormModelValidator
             }
 
             ValidateNotFirstInTask(where, onPage, questions, problems);
-            int pageSectionOrder = questions[onPage.Field.Id].SectionOrder;
-            if (
-                (
-                    trigger.SectionOrder,
-                    trigger.Question.Task.Order,
-                    trigger.Question.Page.Order
-                ).CompareTo((pageSectionOrder, onPage.Task.Order, onPage.Page.Order)) >= 0
-            )
+            if (trigger.Position.CompareTo(onPage.Position) >= 0)
             {
                 problems.Add(
                     $"{where} names '{condition.QuestionId}', which must be on an earlier page."
@@ -765,20 +764,18 @@ internal static partial class FormModelValidator
     /// <summary>The task list links to a task's first page, so it must always apply.</summary>
     private static void ValidateNotFirstInTask(
         string where,
-        QuestionDeclaration onPage,
-        Dictionary<string, (QuestionDeclaration Question, int SectionOrder)> questions,
+        PlacedQuestion onPage,
+        Dictionary<string, PlacedQuestion> questions,
         List<string> problems
     )
     {
         int firstPageOrder = questions
-            .Values.Where(x =>
-                string.Equals(x.Question.Task.Id, onPage.Task.Id, StringComparison.Ordinal)
-            )
+            .Values.Where(x => string.Equals(x.TaskId, onPage.TaskId, StringComparison.Ordinal))
             .Min(static x => x.Question.Page.Order);
-        if (onPage.Page.Order == firstPageOrder)
+        if (onPage.Question.Page.Order == firstPageOrder)
         {
             problems.Add(
-                $"{where} is on the first page of task '{onPage.Task.Id}', which must always apply."
+                $"{where} is on the first page of task '{onPage.TaskId}', which must always apply."
             );
         }
     }
@@ -861,10 +858,7 @@ internal static partial class FormModelValidator
 
     private static void ValidatePageMetadata(
         string form,
-        IGrouping<
-            (string SectionId, string TaskId, string Id),
-            (QuestionDeclaration Question, string SectionId)
-        >[] pages,
+        IGrouping<(string TaskId, string Id), PlacedQuestion>[] pages,
         List<string> problems
     )
     {

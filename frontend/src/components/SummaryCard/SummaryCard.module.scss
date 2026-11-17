@@ -18,7 +18,8 @@
 .header {
   align-items: baseline;
   display: flex;
-  gap: utils.rem(spacing.$medium);
+  flex-wrap: wrap;
+  gap: utils.rem(spacing.$small spacing.$medium);
   justify-content: space-between;
   margin-bottom: utils.rem(spacing.$small);
 }
@@ -31,7 +32,24 @@
   margin: 0;
 }
 
+// Several actions are a list, separated by borders like the summary list's row actions.
 .actions {
   display: flex;
   gap: utils.rem(spacing.$small);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.action {
+  margin: 0;
+
+  &:not(:first-child) {
+    border-left: 1px solid colours.$border;
+    padding-left: utils.rem(spacing.$small);
+  }
+
+  a:focus {
+    isolation: isolate;
+  }
 }

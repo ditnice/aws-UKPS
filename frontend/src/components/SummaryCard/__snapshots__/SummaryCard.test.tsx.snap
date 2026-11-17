@@ -1,0 +1,129 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`SummaryCard > renders a single action as a link between the title and the children 1`] = `
+<DocumentFragment>
+  <div
+    class="_summaryCard_1750df"
+  >
+    <div
+      class="_header_1750df"
+    >
+      <h2
+        class="_title_1750df"
+      >
+        Names and identifiers
+      </h2>
+      <div
+        class="_actions_1750df"
+      >
+        <a
+          aria-label="Edit section names and identifiers"
+          href="#edit-section"
+        >
+          Edit section
+          <span
+            class="visually-hidden"
+          >
+            names and identifiers
+          </span>
+        </a>
+      </div>
+    </div>
+    <p>
+      Not yet provided
+    </p>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`SummaryCard > renders several actions as a list 1`] = `
+<DocumentFragment>
+  <div
+    class="_summaryCard_1750df"
+  >
+    <div
+      class="_header_1750df"
+    >
+      <h2
+        class="_title_1750df"
+      >
+        Trial 1
+      </h2>
+      <ul
+        class="_actions_1750df"
+      >
+        <li
+          class="_action_1750df"
+        >
+          <a
+            aria-label="Edit trial 1"
+            href="#edit"
+          >
+            Edit
+            <span
+              class="visually-hidden"
+            >
+              trial 1
+            </span>
+          </a>
+        </li>
+        <li
+          class="_action_1750df"
+        >
+          <a
+            aria-label="Remove trial 1"
+            href="#remove"
+          >
+            Remove
+            <span
+              class="visually-hidden"
+            >
+              trial 1
+            </span>
+          </a>
+        </li>
+      </ul>
+    </div>
+    <p>
+      Study name
+    </p>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`SummaryCard > renders the title as a level 2 heading above the children 1`] = `
+<DocumentFragment>
+  <div
+    class="_summaryCard_1750df"
+  >
+    <div
+      class="_header_1750df"
+    >
+      <h2
+        class="_title_1750df"
+      >
+        Names and identifiers
+      </h2>
+    </div>
+    <dl
+      class="_summary-list_1509a2"
+      data-component="summary-list"
+    >
+      <div
+        class="_summary-list__row_1509a2"
+      >
+        <dt
+          class="_summary-list__key_1509a2"
+        >
+          Company code
+        </dt>
+        <dd
+          class="_summary-list__value_1509a2"
+        >
+          GC22
+        </dd>
+      </div>
+    </dl>
+  </div>
+</DocumentFragment>
+`;
