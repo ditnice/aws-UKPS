@@ -155,7 +155,11 @@ public class RecordFormServiceTests : DatabaseTestBase
         );
         _formulation = await AddEntity(new FormulationType { Label = "Tablet" }, Ct);
         _pathwayPoint = await AddEntity(
-            new PatientPathwayPoint { Label = "Initial presentation" },
+            new PatientPathwayPoint
+            {
+                Code = PatientPathwayPointCodes.InitialPresentation,
+                Label = "Initial presentation",
+            },
             Ct
         );
         _atmpClassification = await AddEntity(
@@ -874,7 +878,15 @@ public class RecordFormServiceTests : DatabaseTestBase
 
         RecordPageDto page = await GetPage("pathway-point");
 
-        RecordPageOptionDto option = page.Questions.Single().Options!.ShouldHaveSingleItem();
+        RecordPageOptionDto option = page
+            .Questions.Single(static q =>
+                string.Equals(
+                    q.Id,
+                    $"{LabPrefix}patient_pathway_point_id",
+                    StringComparison.Ordinal
+                )
+            )
+            .Options!.ShouldHaveSingleItem();
         (option.Value, option.Label).ShouldBe(($"{_pathwayPoint.Id}", "Initial presentation"));
     }
 
@@ -1129,6 +1141,7 @@ public class RecordFormServiceTests : DatabaseTestBase
         ];
 
         string notesQuestion = $"{LabPrefix}genomic_test_notes";
+        string otherQuestion = $"{LabPrefix}genomic_test_pathway_point_other";
 
         for (int i = 0; i < answers.Length; i++)
         {
@@ -1137,6 +1150,11 @@ public class RecordFormServiceTests : DatabaseTestBase
             {
                 // Mandatory testing shows the notes box, which is then required.
                 page[notesQuestion] = Json("Repeat testing at relapse");
+            }
+            else if (string.Equals(answers[i].PageId, "pathway-point", StringComparison.Ordinal))
+            {
+                // Every question on the page is submitted; the "Other" details are not shown.
+                page[otherQuestion] = Json<string?>(null);
             }
 
             SaveRecordPageDto saved = await SaveOk(answers[i].PageId, page);
