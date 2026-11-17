@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
+import { UserInformationDto } from '@/client/generated'
 import {
   fakePendingWorkEmailChangeDto,
   fakeUserInformationDto,
@@ -10,7 +11,7 @@ import { buildUpdateUserDetailsHref, UserDetail } from '../edit-details/[detail]
 
 import { UserDetails } from './UserDetails'
 
-const user = fakeUserInformationDto()
+const user: UserInformationDto = { ...fakeUserInformationDto(), pendingWorkEmail: undefined }
 
 const expectedDetails: UserDetail[] = ['fullName', 'email', 'contactNumber']
 
