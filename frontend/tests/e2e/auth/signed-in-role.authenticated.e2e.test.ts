@@ -11,9 +11,8 @@ test.describe('Signed-in role', { tag: forRoles(allRoles) }, () => {
     const email = signedInEmail(userRole)
     if (!email) throw new Error(`No signed-in email is known for the ${userRole} user`)
 
-    await page.goto('/portal/user/me/edit-details')
+    await page.goto('/portal/user/me/edit-details/email')
 
-    await expect(page.getByRole('heading', { name: 'Edit personal details' })).toBeVisible()
     await expect(page.getByLabel('Work email address')).toHaveValue(email)
   })
 })

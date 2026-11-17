@@ -46,4 +46,6 @@ export const errorMessages = {
 
   updatingUserDetailsError: 'An error occurred when updating user details.',
   creatingNewRecordError: 'An error occurred when creating a new medicine record.',
+
+  genericWithRetry: 'An unexpected error occurred. Please try again.',
 } as const

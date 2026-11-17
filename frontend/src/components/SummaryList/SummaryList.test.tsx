@@ -114,4 +114,45 @@ describe('SummaryList', () => {
     expect(container.querySelector('[class*="summary-list__row--no-actions"]')).toBeNull()
     expect(asFragment()).toMatchSnapshot()
   })
+
+  it('supports a wide-value variant', () => {
+    const { asFragment, container } = render(
+      <SummaryList variant="wide-value">
+        <SummaryListRow label="Email" value="sarah@example.com" />
+        <SummaryListRow label="Name" value="Sarah Philips">
+          <SummaryListAction href="/change-name" visuallyHiddenText="name">
+            Change
+          </SummaryListAction>
+        </SummaryListRow>
+      </SummaryList>,
+    )
+
+    expect(container.querySelector('dl')?.className).toContain('summary-list--wide-value')
+    expect(container.querySelector('[class*="summary-list__row--no-actions"]')).not.toBeNull()
+    expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('renders a row tag in the value cell', () => {
+    const { asFragment, container } = render(
+      <SummaryList>
+        <SummaryListRow label="Record title" tag={<span>Hidden</span>} value="Early RA" />
+      </SummaryList>,
+    )
+
+    const valueCell = container.querySelector('dd') as HTMLElement
+    expect(within(valueCell).getByText('Hidden')).toBeInTheDocument()
+    expect(within(valueCell).getByText('Early RA')).toBeInTheDocument()
+    expect(asFragment()).toMatchSnapshot()
+  })
+
+  it('wraps a tagged row value so it keeps the value content styles', () => {
+    render(
+      <SummaryList>
+        <SummaryListRow label="Notes" tag={<span>Hidden</span>} value={<p>First note</p>} />
+      </SummaryList>,
+    )
+
+    const paragraph = screen.getByText('First note')
+    expect(paragraph.parentElement?.className).toContain('summary-list__value-content')
+  })
 })
