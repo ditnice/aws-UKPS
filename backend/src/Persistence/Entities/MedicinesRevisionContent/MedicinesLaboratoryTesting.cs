@@ -225,6 +225,10 @@ internal sealed class MedicinesLaboratoryTesting
     [FormRequired("Select the point in the patient pathway the test should be conducted")]
     public int? PatientPathwayPointId { get; set; }
 
+    /// <summary>
+    /// Describes when in the care pathway the test takes place, if none of the listed points fit.
+    /// Required. Conditional on PatientPathwayPoint = Other.
+    /// </summary>
     [FormPage(
         MedicineFormLayout.LaboratoryTesting,
         "pathway-point",

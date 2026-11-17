@@ -630,7 +630,7 @@ public class RecordViewServiceTests : DatabaseTestBase
         Record record = await AddRecord(RecordStatus.Published);
         RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
         var pathwayPoint = await AddEntity(
-            new PatientPathwayPoint { Code = "diagnosis", Label = "Diagnosis" },
+            new PatientPathwayPoint { Code = PatientPathwayPointCodes.Other, Label = "Other" },
             ct
         );
         var populationRange = await AddEntity(
@@ -808,7 +808,7 @@ public class RecordViewServiceTests : DatabaseTestBase
                 PatientPathwayPoint = new ReferenceDataDto
                 {
                     Id = pathwayPoint.Id,
-                    Label = "Diagnosis",
+                    Label = "Other",
                 },
                 GenomicTestPathwayPointOther = "Other point",
                 GenomicAlterations = "Alterations",
