@@ -81,6 +81,31 @@ public class DateOrderRuleTests
     }
 
     [Fact]
+    public void Problems_MissingExemptionReferences_AreDistinctAndDoNotBecomeErrorFields()
+    {
+        DateOrderRule rule = Rule(allowSame: true) with
+        {
+            ExemptWhen = new RepeatedTriggerCondition(),
+        };
+
+        rule.Problems(_form)
+            .ShouldBe([
+                "Cross-page rule 'TEST-01' exemption names question 'missing.gate', which is not in the form.",
+            ]);
+        rule.QuestionIds.ShouldBe([Actual, Submission]);
+    }
+
+    private sealed record RepeatedTriggerCondition : FormCondition
+    {
+        public override ConditionKind Kind => ConditionKind.AnswerIn;
+        public override IReadOnlyList<string> TriggerQuestionIds =>
+            ["missing.gate", "missing.gate"];
+        public override string Description => "Repeated missing trigger";
+
+        public override bool IsMet(Func<string, FormAnswer> answerOf) => false;
+    }
+
+    [Fact]
     public void Problems_QuestionsNotInTheFormOrNotDates_AreReported()
     {
         DateOrderRule rule = Rule(allowSame: true) with

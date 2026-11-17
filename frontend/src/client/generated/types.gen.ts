@@ -1764,6 +1764,27 @@ export const SortDirection = { ASCENDING: 'Ascending', DESCENDING: 'Descending' 
 export type SortDirection = typeof SortDirection[keyof typeof SortDirection];
 
 /**
+ * A submission or selected-organisation conflict. Schema only: runtime responses use the
+ * problem details factory and extensions to preserve tracing metadata.
+ */
+export type SubmissionConflictProblemDetails = {
+    type?: null | string;
+    title?: null | string;
+    status?: null | number;
+    detail?: null | string;
+    instance?: null | string;
+    /**
+     * The domain code (record_not_submittable, form_version_changed or record_changed),
+     * or the authentication code SelectedOrganisationMismatch.
+     */
+    code: string;
+    /**
+     * The organisation requested, when it differs from the selected organisation.
+     */
+    organisationId?: null | number;
+};
+
+/**
  * A problem that stops a record being submitted, and the question it is on.
  */
 export type SubmissionErrorDto = {
@@ -3399,9 +3420,9 @@ export type SubmitRecordErrors = {
     404: ProblemDetails;
     /**
      * The record can't be submitted in its current state, or the form or revision changed since
-     * check your answers loaded. The `code` member says which.
+     * check your answers loaded, or the selected organisation differs. The `code` member says which.
      */
-    409: AuthenticationProblemDetails;
+    409: SubmissionConflictProblemDetails;
     /**
      * The revision has problems to fix first. `errors` is keyed by question ID, and
      * `fields` lists each problem with its page and task, in form order.

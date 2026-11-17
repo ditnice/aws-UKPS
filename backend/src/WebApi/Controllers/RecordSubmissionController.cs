@@ -32,7 +32,7 @@ public class RecordSubmissionController(IRecordSubmissionService submissionServi
     /// </response>
     /// <response code="409">
     /// The record can't be submitted in its current state, or the form or revision changed since
-    /// check your answers loaded. The <c>code</c> member says which.
+    /// check your answers loaded, or the selected organisation differs. The <c>code</c> member says which.
     /// </response>
     /// <response code="422">
     /// The revision has problems to fix first. <c>errors</c> is keyed by question ID, and
@@ -43,7 +43,7 @@ public class RecordSubmissionController(IRecordSubmissionService submissionServi
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<SubmissionConflictProblemDetails>(StatusCodes.Status409Conflict)]
     [ProducesResponseType<InvalidRecordProblemDetails>(StatusCodes.Status422UnprocessableEntity)]
     public async Task<ActionResult> SubmitRecord(
         int recordId,

@@ -1,5 +1,6 @@
 using Shouldly;
 using UKPS.Api.Application.RecordForms;
+using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.CrossPageRules;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
@@ -49,6 +50,37 @@ public class CrossPageRuleRegistryTests
         exception.Problems.ShouldBe([
             "Cross-page rule 'TEST-01' names question 'no_such.question', which is not in the form.",
         ]);
+    }
+
+    [Fact]
+    public void Create_MissingExemptionQuestion_ThrowsBeforeEvaluation()
+    {
+        DateOrderRule rule = Rule("TEST-01", Actual) with
+        {
+            ExemptWhen = new AnswerInCondition("missing.gate", ["Yes"]),
+        };
+
+        FormModelException exception = Should.Throw<FormModelException>(() => Create([rule]));
+
+        exception.Problems.ShouldBe([
+            "Cross-page rule 'TEST-01' exemption names question 'missing.gate', which is not in the form.",
+        ]);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Create_NullOrExistingNonDateExemption_IsValid(bool hasExemption)
+    {
+        DateOrderRule rule = Rule("TEST-01", Actual) with
+        {
+            ExemptWhen = hasExemption
+                ? new AnswerInCondition("conditional_entity.gate", ["Yes"])
+                : null,
+        };
+
+        Create([rule]).For(RecordType.Vaccine).ShouldBe([rule]);
+        rule.QuestionIds.ShouldBe([Actual, Submission]);
     }
 
     [Fact]

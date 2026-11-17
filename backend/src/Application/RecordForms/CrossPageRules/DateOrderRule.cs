@@ -71,6 +71,14 @@ internal sealed record DateOrderRule(
                     .OfType<FormQuestion>()
                     .Where(static q => !ControlRules.IsDate(q.Control))
                     .Select(q => $"Cross-page rule '{Id}' compares '{q.Id}', which is not a date.")
+            )
+            .Concat(
+                (ExemptWhen?.TriggerQuestionIds ?? [])
+                    .Distinct(StringComparer.Ordinal)
+                    .Where(id => model.FindQuestion(id) is null)
+                    .Select(id =>
+                        $"Cross-page rule '{Id}' exemption names question '{id}', which is not in the form."
+                    )
             );
 
     private static bool TryGetRange(

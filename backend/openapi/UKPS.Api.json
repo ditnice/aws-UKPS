@@ -3629,21 +3629,21 @@
             }
           },
           "409": {
-            "description": "The record can't be submitted in its current state, or the form or revision changed since\ncheck your answers loaded. The `code` member says which.",
+            "description": "The record can't be submitted in its current state, or the form or revision changed since\ncheck your answers loaded, or the selected organisation differs. The `code` member says which.",
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
                 }
               }
             }
@@ -8118,6 +8118,58 @@
         ],
         "type": "string",
         "description": "Specifies the direction in which query results are sorted."
+      },
+      "SubmissionConflictProblemDetails": {
+        "required": [
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "The domain code (record_not_submittable, form_version_changed or record_changed),\nor the authentication code SelectedOrganisationMismatch."
+          },
+          "organisationId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The organisation requested, when it differs from the selected organisation.",
+            "format": "int32"
+          }
+        },
+        "description": "A submission or selected-organisation conflict. Schema only: runtime responses use the\nproblem details factory and extensions to preserve tracing metadata."
       },
       "SubmissionErrorDto": {
         "required": [
