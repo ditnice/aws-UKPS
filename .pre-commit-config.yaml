@@ -72,18 +72,32 @@ repos:
   # Frontend
   - repo: local
     hooks:
+      # Prettier and ESLint check only the staged files (paths are made relative to frontend/).
+      # A change to their config re-checks the whole frontend via the *-all hooks below.
       - id: frontend-prettier
         name: Prettier (frontend)
         language: system
-        entry: bash -c 'cd frontend && pnpm format:check'
+        entry: bash -c 'cd frontend && pnpm exec prettier --check --ignore-unknown "${@#frontend/}"' --
         files: ^frontend/
-        pass_filenames: false
 
       - id: frontend-eslint
         name: ESLint (frontend)
         language: system
-        entry: bash -c 'cd frontend && pnpm lint'
+        entry: bash -c 'cd frontend && NODE_OPTIONS=--no-deprecation pnpm exec eslint --no-warn-ignored "${@#frontend/}"' --
         files: ^frontend/.*\.(js|jsx|ts|tsx|mjs)$
+
+      - id: frontend-prettier-all
+        name: Prettier (frontend, config changed)
+        language: system
+        entry: bash -c 'cd frontend && pnpm format:check'
+        files: ^frontend/(\.prettierrc[^/]*|prettier\.config\.[^/]+|\.prettierignore|package\.json)$
+        pass_filenames: false
+
+      - id: frontend-eslint-all
+        name: ESLint (frontend, config changed)
+        language: system
+        entry: bash -c 'cd frontend && pnpm lint'
+        files: ^frontend/(eslint\.config\.mjs|tsconfig\.json|package\.json)$
         pass_filenames: false
 
       - id: frontend-stylelint
@@ -104,13 +118,9 @@ repos:
   # Backend
   - repo: local
     hooks:
-      - id: backend-format
-        name: Run Dotnet Formatter
-        language: system
-        entry: bash -c 'cd backend && dotnet format UKPS.Api.slnx'
-        files: ^backend/.*\.cs$
-        pass_filenames: false
-
+      # No separate `dotnet format` hook: analyzers are enforced by `dotnet build`, and the
+      # .editorconfig code-style rules by the pre-commit build below (-p:EnforceCodeStyle=true,
+      # see Directory.Build.props).
       - id: backend-csharpier
         name: CSharpier (backend)
         language: system
@@ -121,7 +131,7 @@ repos:
       - id: backend-dotnet-build
         name: dotnet build (backend)
         language: system
-        entry: bash -c 'cd backend && dotnet restore && dotnet build --no-restore'
+        entry: bash -c 'cd backend && dotnet restore && dotnet build --no-restore -p:EnforceCodeStyle=true'
         files: ^backend/.*\.(cs|csproj|props|targets)$
         pass_filenames: false
 
