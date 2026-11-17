@@ -168,6 +168,8 @@ internal sealed class User
         {
             PendingWorkEmail = workEmail;
             UpdatedAt = dateTime;
+            PendingEmailVerifiedAt = null;
+            _events.Add(new PendingEmailUpdatedEvent() { RequestedEmail = PendingWorkEmail });
         }
     }
 
@@ -251,9 +253,26 @@ internal sealed class User
         }
     }
 
+    internal void MarkPendingEmailAsVerified(DateTime dateTime)
+    {
+        if (PendingWorkEmail is null)
+        {
+            throw new InvalidOperationException(
+                "Cannot mark the pending work email as verified because there is no pending work email."
+            );
+        }
+
+        PendingEmailVerifiedAt = dateTime;
+    }
+
     internal record EmailUpdatedEvent : IUserDomainEvent
     {
         public required string PreviousWorkEmail { get; init; }
         public required string NewWorkEmail { get; init; }
+    }
+
+    internal record PendingEmailUpdatedEvent : IUserDomainEvent
+    {
+        public required string RequestedEmail { get; init; }
     }
 }

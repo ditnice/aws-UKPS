@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Communication;
+using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Organisations.Dtos;
@@ -44,6 +46,8 @@ internal partial class UserService(
     IIdentityService identityService,
     CurrentDbUserEntityService currentDbUserEntityService,
     ICurrentUserInfoService currentUserInfoService,
+    IEmailService emailService,
+    IEmailVerificationLinkCreator emailVerificationLinkCreator,
     ILogger<UserService> logger
 ) : IUserService
 {
@@ -625,6 +629,76 @@ internal partial class UserService(
         }
     }
 
+    public async Task<VerifyPendingEmailAddressResult> VerifyPendingEmailAddress(
+        int userId,
+        VerifyPendingEmailAddressCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
+
+            var error = ValidatePendingEmailVerificationPermitted(user, command);
+            if (error is not null)
+            {
+                return VerifyPendingEmailAddressResult.Err(error);
+            }
+
+            user!.MarkPendingEmailAsVerified(timeProvider.GetUtcNow());
+            await HandleUserEvents(user, cancellationToken);
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            return VerifyPendingEmailAddressResult.Ok();
+        }
+        catch (Exception ex)
+        {
+            LogUpdatePendingEmailAsVerifiedFailed(ex);
+            throw;
+        }
+    }
+
+    private VerifyPendingEmailAddressError? ValidatePendingEmailVerificationPermitted(
+        User? user,
+        VerifyPendingEmailAddressCommand command
+    )
+    {
+        if (user is null)
+        {
+            return new VerifyPendingEmailAddressError.UserNotFound();
+        }
+
+        bool isTheCurrentUserModifyingTheirOwnDetails = currentUserInfoService.IsCurrentUser(user);
+        if (!isTheCurrentUserModifyingTheirOwnDetails)
+        {
+            return new VerifyPendingEmailAddressError.Unauthorised();
+        }
+
+        if (user.PendingWorkEmail is null)
+        {
+            return new VerifyPendingEmailAddressError.NoPendingEmailToVerify();
+        }
+
+        if (user.PendingEmailVerifiedAt is not null)
+        {
+            return new VerifyPendingEmailAddressError.EmailAlreadyVerified();
+        }
+
+        string pendingWorkEmailToken = Tokeniser.Generate(user.PendingWorkEmail);
+        bool providedTokenMatchesPendingEmail = string.Equals(
+            command.VerificationToken,
+            pendingWorkEmailToken,
+            StringComparison.OrdinalIgnoreCase // sent in url so should be case insensitive
+        );
+        if (!providedTokenMatchesPendingEmail)
+        {
+            return new VerifyPendingEmailAddressError.InvalidTokenProvided();
+        }
+
+        return null;
+    }
+
     public async Task<RemoveUserResult> RemoveUser(int userId, CancellationToken cancellationToken)
     {
         CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
@@ -872,8 +946,30 @@ internal partial class UserService(
                 case User.EmailUpdatedEvent emailUpdatedEvent:
                     await HandleUserEvent(user, emailUpdatedEvent, cancellationToken);
                     break;
+                case User.PendingEmailUpdatedEvent pendingEmailUpdatedEvent:
+                    await HandleUserEvent(user, pendingEmailUpdatedEvent, cancellationToken);
+                    break;
             }
         }
+    }
+
+    private async Task HandleUserEvent(
+        User user,
+        User.PendingEmailUpdatedEvent pendingEmailUpdatedEvent,
+        CancellationToken cancellationToken
+    )
+    {
+        var token = Tokeniser.Generate(pendingEmailUpdatedEvent.RequestedEmail);
+        var link = emailVerificationLinkCreator.GetVerificationLink(token);
+        await emailService.SendEmail(
+            new SendEmailCommand()
+            {
+                RecipientAddress = pendingEmailUpdatedEvent.RequestedEmail,
+                PersonIdentifier = user.CognitoUsername,
+                Email = new EmailChangeVerificationRequestEmail() { EmailVerificationLink = link },
+            },
+            cancellationToken
+        );
     }
 
     private async Task HandleUserEvent(
@@ -907,6 +1003,12 @@ internal partial class UserService(
         Message = "An error occur whilst updating user details."
     )]
     private partial void LogUpdatingUserDetailsFailed(Exception ex);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "An error occur whilst attempting to mark the pending email as verified."
+    )]
+    private partial void LogUpdatePendingEmailAsVerifiedFailed(Exception ex);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "An error occurred whilst removing a user.")]
     private partial void LogRemovingUserFailed(Exception ex);
