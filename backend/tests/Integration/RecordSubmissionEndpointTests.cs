@@ -196,7 +196,7 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
     public async Task CheckAnswers_AlreadySubmitted_ReturnsNotSubmittableConflict()
     {
         using HttpResponseMessage submitted = await PostSubmit(await CurrentHash());
-        submitted.StatusCode.ShouldBe(HttpStatusCode.OK);
+        submitted.StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         using HttpResponseMessage response = await GetCheckAnswersResponse();
 
