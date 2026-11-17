@@ -72,8 +72,10 @@ repos:
   # Frontend
   - repo: local
     hooks:
-      # Prettier and ESLint check only the staged files (paths are made relative to frontend/).
-      # A change to their config re-checks the whole frontend via the *-all hooks below.
+      # Prettier, ESLint and Stylelint check only the staged files (paths are made relative to
+      # frontend/). A change to their config or dependencies re-checks the whole frontend via the
+      # *-all hooks. Staged-only ESLint can't see breakage in unstaged files (e.g. an import of a
+      # renamed or deleted module), so run `pnpm lint:check` after moving files around.
       - id: frontend-prettier
         name: Prettier (frontend)
         language: system
@@ -90,21 +92,27 @@ repos:
         name: Prettier (frontend, config changed)
         language: system
         entry: bash -c 'cd frontend && pnpm format:check'
-        files: ^frontend/(\.prettierrc[^/]*|prettier\.config\.[^/]+|\.prettierignore|package\.json)$
+        files: ^frontend/(\.prettierrc[^/]*|prettier\.config\.[^/]+|\.prettierignore|\.editorconfig|package\.json|pnpm-lock\.yaml)$
         pass_filenames: false
 
       - id: frontend-eslint-all
         name: ESLint (frontend, config changed)
         language: system
         entry: bash -c 'cd frontend && pnpm lint'
-        files: ^frontend/(eslint\.config\.mjs|tsconfig\.json|package\.json)$
+        files: ^frontend/(eslint\.config\.mjs|tsconfig\.json|package\.json|pnpm-lock\.yaml)$
         pass_filenames: false
 
       - id: frontend-stylelint
         name: Stylelint (frontend)
         language: system
-        entry: bash -c 'cd frontend && pnpm lint:style'
+        entry: bash -c 'cd frontend && pnpm exec stylelint --allow-empty-input "${@#frontend/}"' --
         files: ^frontend/.*\.(css|scss)$
+
+      - id: frontend-stylelint-all
+        name: Stylelint (frontend, config changed)
+        language: system
+        entry: bash -c 'cd frontend && pnpm lint:style'
+        files: ^frontend/(\.stylelintrc[^/]*|stylelint\.config\.[^/]+|package\.json|pnpm-lock\.yaml)$
         pass_filenames: false
 
       # TODO - to be uncommented once development starts
@@ -120,7 +128,7 @@ repos:
     hooks:
       # No separate `dotnet format` hook: analyzers are enforced by `dotnet build`, and the
       # .editorconfig code-style rules by the pre-commit build below (-p:EnforceCodeStyle=true,
-      # see Directory.Build.props).
+      # see Directory.Build.props). `just fix-style` applies the available fixes.
       - id: backend-csharpier
         name: CSharpier (backend)
         language: system
