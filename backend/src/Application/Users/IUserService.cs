@@ -58,6 +58,24 @@ public interface IUserService
     );
 
     /// <summary>
+    /// Updates the email address for an existing user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user whose email address is to be updated.</param>
+    /// <param name="command">The email update request details.</param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result indicates whether the
+    /// email address was updated or the reason the update failed.
+    /// </returns>
+    Task<Result<UpdateUserEmailError>> UpdateUserEmail(
+        int userId,
+        UpdateUserEmailCommand command,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
     /// Retrieves the details of a user, along with their membership of the specified organisation.
     /// </summary>
     /// <param name="userId">The unique identifier of the user to retrieve.</param>

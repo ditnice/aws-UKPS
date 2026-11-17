@@ -5,7 +5,12 @@ import { createContext, useContext, useId, useState } from 'react'
 
 import '@nice-digital/nds-radio/scss/radio.scss'
 
-import { composeDescriptions, FormGroup, useFormGroup } from '@/components/FormGroup/FormGroup'
+import {
+  composeDescriptions,
+  firstOptionValue,
+  FormGroup,
+  useFormGroup,
+} from '@/components/FormGroup/FormGroup'
 import type { FormGroupProps } from '@/components/FormGroup/FormGroup'
 
 import styles from './Radios.module.scss'
@@ -13,6 +18,8 @@ import styles from './Radios.module.scss'
 import type { ComponentPropsWithoutRef, FocusEventHandler, ReactNode } from 'react'
 
 type RadiosContextValue = {
+  /** Value of the first option, the only one styled as invalid for a group error. */
+  firstValue?: string
   name: string
   onBlur?: FocusEventHandler<HTMLInputElement>
   select: (value: string) => void
@@ -31,11 +38,12 @@ function useRadiosContext(): RadiosContextValue {
 
 export type RadiosProps = {
   'aria-describedby'?: string
+  /** `Radio` options, rendered directly or in Fragments so the first can show a group error. */
   children: ReactNode
   className?: string
   /** Initial selection when uncontrolled. */
   defaultValue?: string
-  /** Error message shown above the options; also styles every option as invalid. */
+  /** Error message shown above the options; also styles the first option as invalid. */
   error?: string
   /** Renders the legend inside a heading of this level, e.g. on a single-question page. */
   headingLevel?: FormGroupProps['headingLevel']
@@ -79,6 +87,7 @@ export function Radios({
   const [uncontrolledValue, setUncontrolledValue] = useState<string | null>(defaultValue ?? null)
   const isControlled = value !== undefined
   const selectedValue = isControlled ? value : uncontrolledValue
+  const firstValue = firstOptionValue(children, Radio)
 
   function select(next: string) {
     if (!isControlled) {
@@ -91,6 +100,7 @@ export function Radios({
     <div className={className} data-component="radios">
       <RadiosContext.Provider
         value={{
+          firstValue,
           name,
           onBlur,
           select,
@@ -146,9 +156,9 @@ export function Radio({
   value,
   ...inputProps
 }: RadioProps) {
-  const { name, onBlur, select, selectedValue } = useRadiosContext()
+  const { firstValue, name, onBlur, select, selectedValue } = useRadiosContext()
   const { describedBy: groupDescriptions, error: groupError, inline } = useFormGroup()
-  const error = groupError || optionError
+  const error = (groupError && value === firstValue) || optionError
   const generatedId = useId()
   const inputId = id ?? generatedId
   const hintId = hint ? `${inputId}-hint` : undefined

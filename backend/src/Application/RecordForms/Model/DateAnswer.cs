@@ -9,7 +9,8 @@ namespace UKPS.Api.Application.RecordForms.Model;
 /// <summary>
 /// The answer of a date question. A <see cref="FormControl.PrecisionDate"/> takes <c>yyyy-Qn</c>
 /// for an estimated quarter, <c>yyyy-MM</c> for an estimated month and <c>yyyy-MM-dd</c> for an
-/// actual date; an <see cref="FormControl.ActualMonth"/> takes <c>yyyy-MM</c> only. Quarters and
+/// actual date; an <see cref="FormControl.ActualMonth"/> takes <c>yyyy-MM</c> only and an
+/// <see cref="FormControl.ActualDate"/> takes <c>yyyy-MM-dd</c> only. Quarters and
 /// months are stored as their first day. Against today in UTC, an actual date is today or
 /// earlier, an actual month this month or earlier, and an estimate is for a quarter or month that
 /// has not ended.
@@ -53,7 +54,11 @@ internal static partial class DateAnswer
         value = default;
         Match match = Pattern().Match(answer);
         bool isMonth = match.Groups["month"].Success && !match.Groups["day"].Success;
-        if (!match.Success || (control == FormControl.ActualMonth && !isMonth))
+        if (
+            !match.Success
+            || (control == FormControl.ActualMonth && !isMonth)
+            || (control == FormControl.ActualDate && !match.Groups["day"].Success)
+        )
         {
             return false;
         }
@@ -90,18 +95,33 @@ internal static partial class DateAnswer
     }
 
     /// <summary>
-    /// The error for the answer, or null when it is a real date on the right side of today.
+    /// The error for the answer, or null when it is a real date on the right side of today. A
+    /// <see cref="FormControl.PrecisionDate"/>'s or <see cref="FormControl.ActualDate"/>'s errors
+    /// name its date (<paramref name="dateName"/>); a PrecisionDate that is not real is taken as
+    /// actual when it has a day, as the page sends it.
     /// </summary>
-    public static string? Check(FormControl control, string answer, DateOnly today)
+    public static string? Check(
+        FormControl control,
+        string answer,
+        DateOnly today,
+        string? dateName
+    )
     {
+        if (control is FormControl.PrecisionDate or FormControl.ActualDate)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(dateName);
+        }
+
         if (!TryParse(control, answer, out DatePrecision precision, out DateOnly value))
         {
-            return RecordFormMessages.InvalidDate;
+            return control == FormControl.PrecisionDate
+                ? RecordFormMessages.DateNotReal(answer.Count(static c => c == '-') == 2, dateName!)
+                : RecordFormMessages.InvalidDate;
         }
 
         if (precision == DatePrecision.ActualDate)
         {
-            return value > today ? RecordFormMessages.ActualDateInFuture : null;
+            return value > today ? RecordFormMessages.ActualDateInFuture(dateName!) : null;
         }
 
         if (precision == DatePrecision.ActualMonth)
@@ -112,7 +132,7 @@ internal static partial class DateAnswer
         // The last day is found within the period, as the day after it may be past DateOnly.MaxValue.
         int lastMonth = value.Month + (precision == DatePrecision.EstimatedQuarter ? 2 : 0);
         DateOnly lastDay = new(value.Year, lastMonth, DateTime.DaysInMonth(value.Year, lastMonth));
-        return lastDay < today ? RecordFormMessages.EstimatedDateInPast : null;
+        return lastDay < today ? RecordFormMessages.EstimatedDateInPast(dateName!) : null;
     }
 
     /// <summary>

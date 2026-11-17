@@ -117,6 +117,11 @@ export const componentDefinitions = [
     slug: 'stacked-nav',
   },
   {
+    description: 'Put related summary information in a titled box with optional actions.',
+    label: 'Summary Card',
+    slug: 'summary-card',
+  },
+  {
     description: 'Summarise key-value information with optional actions.',
     label: 'Summary List',
     slug: 'summary-list',

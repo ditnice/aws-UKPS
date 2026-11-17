@@ -13,6 +13,7 @@ export const errorMessages = {
   personalEmailRequired: 'Enter your email address',
   workEmailRequired: 'Enter your work email address',
   personalContactNumberRequired: 'Enter your contact number',
+  personalPhoneRequired: 'Enter your phone number',
   passwordRequired: 'Enter your password',
   securityCodeRequired: 'Enter your security code',
   organisationRequired: 'Select an organisation',
@@ -25,7 +26,7 @@ export const errorMessages = {
   //// Records
   companyCodeRequired: 'Enter company code',
   genericNameRequired: 'Enter generic name',
-  recordTitleRequired: 'Enter record title',
+  recordTitleRequired: 'Enter a record title',
 
   // Formatting
   emailFormat: 'Enter an email address in the correct format, like name@example.com',
@@ -37,7 +38,7 @@ export const errorMessages = {
   passwordWhitespace: 'Your password cannot contain spaces',
 
   genericNamesDistinct: 'Generic names must be distinct',
-  recordTitleTooLong: 'Record title cannot be greater than 100 characters',
+  recordTitleTooLong: 'Record title must be between 1 and 100 characters',
 
   // Data retrieval
   failedToRetrieveCurrentUser: 'Failed to retrieve the current user.',
@@ -46,4 +47,6 @@ export const errorMessages = {
 
   updatingUserDetailsError: 'An error occurred when updating user details.',
   creatingNewRecordError: 'An error occurred when creating a new medicine record.',
+
+  genericWithRetry: 'An unexpected error occurred. Please try again.',
 } as const

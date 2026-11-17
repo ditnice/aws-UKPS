@@ -120,7 +120,7 @@ exports[`Radios > renders a legend, hint and options sharing the group name 1`] 
 </DocumentFragment>
 `;
 
-exports[`Radios > renders the error message and styles every option as invalid 1`] = `
+exports[`Radios > renders the error message and styles only the first option as invalid 1`] = `
 <DocumentFragment>
   <div
     data-component="radios"
@@ -185,7 +185,7 @@ exports[`Radios > renders the error message and styles every option as invalid 1
         />
       </fieldset>
       <div
-        class="radio radio--error"
+        class="radio"
         data-component="radio"
       >
         <input
@@ -222,7 +222,7 @@ exports[`Radios > renders the error message and styles every option as invalid 1
         />
       </fieldset>
       <div
-        class="radio radio--error"
+        class="radio"
         data-component="radio"
       >
         <input

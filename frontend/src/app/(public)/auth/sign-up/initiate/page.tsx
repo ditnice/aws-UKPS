@@ -34,7 +34,7 @@ export default async function SignUpInitiate({ searchParams }: SignUpInitiatePro
   }
 
   if (result.response?.status === 410) {
-    return <RequestNewLink setupToken={setupToken} />
+    return <RequestNewLink setupToken={setupToken} supportEmail={process.env.QA_SUPPORT_EMAIL} />
   }
 
   return (

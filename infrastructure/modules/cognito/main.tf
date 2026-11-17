@@ -20,7 +20,8 @@ resource "aws_iam_role" "cognito_sms" {
         Action = "sts:AssumeRole"
         Condition = {
           StringEquals = {
-            "sts:ExternalId" = local.name_prefix
+            "sts:ExternalId"    = local.name_prefix
+            "aws:SourceAccount" = data.aws_caller_identity.current.account_id
           }
         }
       }
@@ -139,6 +140,7 @@ resource "aws_cognito_user_pool" "users" {
     Service     = var.service_name
   })
 
+  depends_on = [aws_iam_role_policy.cognito_sms]
   lifecycle {
     prevent_destroy = true
 

@@ -8,16 +8,17 @@ import { errorMessages } from '@/lib/form/errorMessages'
 
 import { UserAuthenticationDetails } from './_components/UserAuthenticationDetails'
 import { UserDetails } from './_components/UserDetails'
+import { parseTypedParamsFromSearchParams, SearchParams } from './navigation'
 
 export const dynamic = 'force-dynamic'
 
-export default async function Me({
-  searchParams,
-}: {
-  searchParams: Promise<{ updated?: string }>
-}) {
-  const { updated: updateString } = await searchParams
-  const updated = updateString?.toLocaleLowerCase() === `${true}`
+const mfaUpdatedMessages = {
+  primary: 'Your primary authentication method has been updated.',
+  secondary: 'Your backup authentication method has been updated.',
+} as const
+
+export default async function Me({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const { updated, mfaUpdated } = parseTypedParamsFromSearchParams(await searchParams)
   const apiClient = await createServerApiClient()
   const { data: me, error } = await getUsersMe({
     client: apiClient,
@@ -29,6 +30,13 @@ export default async function Me({
         <Alert type="success">
           <h3>Details changed successfully</h3>
           <p>You can update your details at any time from manage my details.</p>
+        </Alert>
+      )}
+      {mfaUpdated && (
+        <Alert type="success">
+          <h3>Two-step verification updated</h3>
+          <p>{mfaUpdatedMessages[mfaUpdated]}</p>
+          <p>You can change your security settings at any time from manage my details.</p>
         </Alert>
       )}
       <PageHeader backLink={<BackLinkBrowser />} heading="Manage details" />

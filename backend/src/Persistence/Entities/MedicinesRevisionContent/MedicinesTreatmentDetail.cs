@@ -1,14 +1,8 @@
-using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
-[FormSection(
-    RecordType.Medicine,
-    MedicineFormSections.ServiceReadiness,
-    MedicineFormSections.ServiceReadinessTitle,
-    Order = MedicineFormSections.ServiceReadinessOrder
-)]
+[FormEntity]
 internal sealed class MedicinesTreatmentDetail
 {
     [FormIgnore("Database identity")]
@@ -18,12 +12,12 @@ internal sealed class MedicinesTreatmentDetail
     public int RevisionId { get; set; }
 
     /// <summary>Includes likely comparators.</summary>
-    [FormTask(
-        MedicineFormTasks.PatientAndClinicalRequirements,
-        MedicineFormTasks.PatientAndClinicalRequirementsTitle,
-        Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
+    [FormPage(
+        MedicineFormLayout.PatientAndClinicalRequirements,
+        "place-in-therapy",
+        "Proposed place in therapy",
+        Order = 30
     )]
-    [FormPage("place-in-therapy", "Proposed place in therapy", Order = 30)]
     [FormField(
         "medicines_treatment_detail.proposed_place_in_therapy",
         "Enter the proposed place in therapy and likely comparators",
@@ -34,12 +28,8 @@ internal sealed class MedicinesTreatmentDetail
     public string? ProposedPlaceInTherapy { get; set; }
 
     /// <summary>CiC — Commercially in Confidence.</summary>
-    [FormTask(
-        MedicineFormTasks.PatientAndClinicalRequirements,
-        MedicineFormTasks.PatientAndClinicalRequirementsTitle,
-        Order = MedicineFormTasks.PatientAndClinicalRequirementsOrder
-    )]
     [FormPage(
+        MedicineFormLayout.PatientAndClinicalRequirements,
         "treatment-duration",
         "Estimated duration of treatment",
         Order = 40,

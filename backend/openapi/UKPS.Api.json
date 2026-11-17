@@ -1272,6 +1272,192 @@
         }
       }
     },
+    "/mfa/update": {
+      "post": {
+        "tags": [
+          "MultiFactorAuthentication"
+        ],
+        "summary": "Initiates the process of updating the authenticated user's multi-factor authentication settings.",
+        "operationId": "InitiateUpdateMultiFactorAuthentication",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultiFactorAuthenticationUpdateDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultiFactorAuthenticationUpdateDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultiFactorAuthenticationUpdateDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mfa/verify": {
+      "post": {
+        "tags": [
+          "MultiFactorAuthentication"
+        ],
+        "summary": "Verifies the multi-factor authentication code provided by the authenticated user\nto complete the update of their multi-factor authentication settings.",
+        "operationId": "VerifyMultiFactorAuthenticationUpdate",
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationUpdateCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationUpdateCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationUpdateCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/organisations/{id}": {
       "get": {
         "tags": [
@@ -4043,6 +4229,7 @@
           "User"
         ],
         "summary": "Updates the details of the specified user.",
+        "operationId": "UpdateUserDetails",
         "parameters": [
           {
             "name": "userId",
@@ -4137,8 +4324,8 @@
               }
             }
           },
-          "409": {
-            "description": "The request conflicts with the existing data such as another users email.",
+          "401": {
+            "description": "Unauthorized",
             "content": {
               "text/plain": {
                 "schema": {
@@ -4157,8 +4344,8 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized",
+          "409": {
+            "description": "The request conflicts with the existing data such as another users email.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -4300,6 +4487,133 @@
           },
           "409": {
             "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/email": {
+      "patch": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Updates the email address of the specified user.",
+        "operationId": "UpdateUserEmail",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "The unique identifier of the user whose email address is to be updated.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A token that can be used to cancel the request.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserEmailCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserEmailCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserEmailCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
             "content": {
               "text/plain": {
                 "schema": {
@@ -5132,6 +5446,14 @@
         ],
         "type": "string"
       },
+      "EditableUserDetail": {
+        "enum": [
+          "FullName",
+          "WorkPhone"
+        ],
+        "type": "string",
+        "description": "Specifies the user details that can be edited."
+      },
       "FormControl": {
         "enum": [
           "Text",
@@ -5142,7 +5464,8 @@
           "HierarchicalSelect",
           "PrecisionDate",
           "ActualMonth",
-          "PrefixedNumber"
+          "PrefixedNumber",
+          "ActualDate"
         ],
         "type": "string",
         "description": "The input a record content question is rendered with. Part of the HTTP API contract: the\nmember names are sent to the frontend, so never rename or remove one."
@@ -6009,6 +6332,20 @@
           }
         },
         "description": "Represents the details required for a user to complete multi-factor authentication setup."
+      },
+      "MultiFactorAuthenticationUpdateDto": {
+        "required": [
+          "otpAuthUri"
+        ],
+        "type": "object",
+        "properties": {
+          "otpAuthUri": {
+            "type": "string",
+            "description": "Gets the OTP authentication URI used to configure an authenticator application.",
+            "format": "uri"
+          }
+        },
+        "description": "Represents the details required for a user to complete multi-factor authentication update."
       },
       "NameAndIdentifierType": {
         "enum": [
@@ -7038,7 +7375,7 @@
               "null",
               "string"
             ],
-            "description": "The page after this one in its task, or null on the task's last page, where saving returns\nto the task list."
+            "description": "The page after this one in its task, or null on the task's last page, where saving returns\nto the task list. When a later page depends on this page's own answers it is offered even\nif those answers do not yet lead to it, and saving then decides where to go."
           },
           "questions": {
             "type": "array",
@@ -7130,6 +7467,7 @@
           "childLabel",
           "childPlaceholder",
           "addAnotherLabel",
+          "dateName",
           "showWhen",
           "rules",
           "options"
@@ -7203,6 +7541,13 @@
               "type": "string"
             },
             "description": "The prefixes a `PrefixedNumber` question offers before its digits, in order, or\nnull for any other control. Not `required`, so existing clients and fixtures are\nunaffected."
+          },
+          "dateName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "What a FormControl.PrecisionDate question's date is of, for its error\nmessages, for example `submission`; null for other questions."
           },
           "showWhen": {
             "oneOf": [
@@ -7864,26 +8209,35 @@
       },
       "UpdateUserDetailsCommand": {
         "required": [
-          "fullName",
-          "workEmail",
-          "workTelephone"
+          "property",
+          "value"
         ],
         "type": "object",
         "properties": {
-          "fullName": {
-            "type": "string",
-            "description": "Gets the user's full name."
+          "property": {
+            "description": "Gets the user detail that should be updated.",
+            "$ref": "#/components/schemas/EditableUserDetail"
           },
-          "workEmail": {
+          "value": {
             "type": "string",
-            "description": "Gets the user's work email address."
-          },
-          "workTelephone": {
-            "type": "string",
-            "description": "Gets the user's work telephone number."
+            "description": "Gets the new value to assign to the specified EditableUserDetail UpdateUserDetailsCommand.Property."
           }
         },
         "description": "Represents the details to update for an existing user."
+      },
+      "UpdateUserEmailCommand": {
+        "required": [
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "maxLength": 255,
+            "type": "string",
+            "description": "Gets the new email address for the user."
+          }
+        },
+        "description": "Represents the command to update the email address of an existing user."
       },
       "UserDetailsDto": {
         "required": [
@@ -8158,8 +8512,8 @@
       "VerifyMultiFactorAuthenticationCommand": {
         "required": [
           "setupToken",
-          "code",
-          "authenticationSession"
+          "authenticationSession",
+          "code"
         ],
         "type": "object",
         "properties": {
@@ -8168,16 +8522,29 @@
             "description": "Gets the unique token associated with the user onboarding record.",
             "format": "uuid"
           },
-          "code": {
-            "type": "string",
-            "description": "Gets the verification code generated by the user's authenticator application."
-          },
           "authenticationSession": {
             "type": "string",
             "description": "Gets the authentication session identifier required to complete the\nmulti-factor authentication verification flow."
+          },
+          "code": {
+            "type": "string",
+            "description": "Gets the verification code generated by the user's authenticator application."
           }
         },
         "description": "Represents the details required to verify a user's multi-factor authentication setup."
+      },
+      "VerifyMultiFactorAuthenticationUpdateCommand": {
+        "required": [
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Gets the verification code generated by the user's authenticator application."
+          }
+        },
+        "description": "Represents a command to verify a multi-factor authentication update by supplying\na verification code from the user's authenticator application."
       },
       "VerifySmsMultiFactorAuthenticationCommand": {
         "required": [
@@ -8223,6 +8590,9 @@
     },
     {
       "name": "CurrentUserOrganisation"
+    },
+    {
+      "name": "MultiFactorAuthentication"
     },
     {
       "name": "Organisation"

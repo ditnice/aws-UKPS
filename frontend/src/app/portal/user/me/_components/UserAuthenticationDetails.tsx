@@ -7,6 +7,8 @@ import {
 } from '@/components/SummaryList/SummaryList'
 import { errorMessages } from '@/lib/form/errorMessages'
 
+import { buildUpdateUserMfaLink } from '../update-mfa/navigate'
+
 export const UserAuthenticationDetails = ({
   currentUser,
 }: {
@@ -44,7 +46,7 @@ export const UserAuthenticationDetails = ({
             Send recovery link
           </SummaryListAction>
           <SummaryListAction
-            href="#update-primary-authentication-method"
+            href={buildUpdateUserMfaLink()}
             visuallyHiddenText="update-primary-method"
           >
             Change

@@ -26,7 +26,12 @@ public record OnboardUserCommandDto
     /// </summary>
     [Required]
     [EmailAddress]
-    public required string NewUserEmail { get; init; }
+    [NoWhitespace]
+    public required string NewUserEmail
+    {
+        get => field;
+        set => field = value?.Trim() ?? string.Empty;
+    }
 
     /// <summary>
     /// Specifies the organisation that the new user will be created for.

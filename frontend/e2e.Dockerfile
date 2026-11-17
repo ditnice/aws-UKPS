@@ -6,7 +6,7 @@
 # Node 24 on Debian 13 "trixie", the same base as the frontend build stage (see
 # Dockerfile). Playwright supports Debian 13 for `install --with-deps`.
 # checkov:skip=CKV_DOCKER_2: Short-lived test runner; readiness is handled by tests/e2e/scripts/wait-for-stack.mjs.
-FROM node:24.22.2-trixie@sha256:5c6e2e57d7dd6652ce6f087ba0328312059d7c77f93baa8751865dbf103f1acb
+FROM node:24.22.3-trixie@sha256:6e5d4c38403930b420404f190be8563396dca2bd156a6cb4722707b0efcf6fc1
 
 WORKDIR /app
 
