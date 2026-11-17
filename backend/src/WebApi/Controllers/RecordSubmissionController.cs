@@ -15,7 +15,7 @@ namespace UKPS.Api.WebApi.Controllers;
 [Authorize]
 [ApiController]
 [Route("records/{recordId:int}")]
-public class RecordSubmissionController(
+public sealed class RecordSubmissionController(
     IRecordCheckAnswersQueryService checkAnswersService,
     IRecordSubmissionService submissionService
 ) : ControllerBase
@@ -33,14 +33,14 @@ public class RecordSubmissionController(
     /// The record was not found or is not accessible to the caller.
     /// </response>
     /// <response code="409">
-    /// The record can't be submitted in its current state; <c>code</c> is
-    /// <c>record_not_submittable</c>.
+    /// The record can't be submitted in its current state, or the selected organisation differs.
+    /// The <c>code</c> member says which.
     /// </response>
     [HttpGet("check-answers", Name = nameof(GetRecordCheckAnswers))]
     [ProducesResponseType<RecordCheckAnswersDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<SubmissionConflictProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<RecordCheckAnswersDto>> GetRecordCheckAnswers(
         int recordId,
         CancellationToken cancellationToken

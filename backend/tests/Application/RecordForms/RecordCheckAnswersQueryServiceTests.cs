@@ -9,6 +9,7 @@ using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Entities.ReferenceData;
+using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Data;
@@ -30,6 +31,8 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
     private const string TherapeuticAreas = "medicines_indication_detail_therapeutic_area";
     private const string UkLicenceDate = "record_mhra_date.uk_licence_date";
     private const string UkLaunchDate = "record_hta.uk_launch_date";
+    private const string BiomarkerTypeQuestion = "medicines_laboratory_testing.biomarker_type";
+    private const string MhraProcedureQuestion = "record_mhra_procedure.mhra_procedure_type_id";
 
     private static readonly DateTime _now = new(2026, 10, 15, 9, 30, 0, DateTimeKind.Utc);
 
@@ -114,6 +117,46 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
 
         Question(dto, ScreeningDetails).Values.ShouldBeEmpty();
         dto.Errors.ShouldHaveSingleItem().QuestionId.ShouldBe(ScreeningDetails);
+    }
+
+    [Fact]
+    public async Task GetCheckAnswers_QuestionOnAPageHiddenByItsTrigger_IsLeftOutEvenWhenAnswered()
+    {
+        // The biomarker type page only applies when a diagnostic test is required, which it
+        // isn't; the answer saved on it is ignored rather than shown or checked.
+        await UpdateRow<MedicinesLaboratoryTesting>(x =>
+            x.BiomarkerType = BiomarkerType.GenomicBiomarker
+        );
+
+        RecordCheckAnswersDto dto = await GetCheckAnswers();
+
+        QuestionIds(dto).ShouldNotContain(BiomarkerTypeQuestion);
+        dto.Errors.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCheckAnswers_ChosenValueNoLongerOffered_IsLeftOutOfTheOptionsAndReported()
+    {
+        // A vaccine-only procedure isn't offered on a medicine.
+        MhraProcedureType vaccineOnly = await AddEntity(
+            new MhraProcedureType
+            {
+                Code = "VACCINE_ONLY",
+                Label = "Vaccine only",
+                RelevantTo = ReferenceDataType.VaccinesOnly,
+            },
+            Ct
+        );
+        await UpdateRow<RecordMhraProcedure>(x => x.MhraProcedureTypeId = vaccineOnly.Id);
+
+        RecordCheckAnswersDto dto = await GetCheckAnswers();
+
+        RecordCheckAnswersQuestionDto question = Question(dto, MhraProcedureQuestion);
+        question.Values.ShouldBe([$"{vaccineOnly.Id}"]);
+        question.SelectedOptions.ShouldNotBeNull().ShouldBeEmpty();
+        dto.Errors.ShouldContain(e =>
+            string.Equals(e.QuestionId, MhraProcedureQuestion, StringComparison.Ordinal)
+        );
     }
 
     [Fact]

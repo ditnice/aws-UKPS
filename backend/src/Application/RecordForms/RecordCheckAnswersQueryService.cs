@@ -1,4 +1,3 @@
-using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
 using UKPS.Api.Application.RecordForms.Model;
@@ -8,8 +7,7 @@ namespace UKPS.Api.Application.RecordForms;
 
 internal sealed class RecordCheckAnswersQueryService(
     RecordFormPageLoader loader,
-    RevisionChecker revisionChecker,
-    IOrganisationAuthoriser organisationAuthoriser
+    RevisionChecker revisionChecker
 ) : IRecordCheckAnswersQueryService
 {
     public async Task<GetCheckAnswersResult> GetCheckAnswers(
@@ -28,24 +26,17 @@ internal sealed class RecordCheckAnswersQueryService(
         }
 
         // Check your answers is only for submitting, so it is refused as submit would be.
-        if (
-            !organisationAuthoriser.CanPerformOperationOnOrganisation(
-                Operation.EditRecordContent,
-                form.Record.OrganisationId
-            )
-        )
+        switch (revisionChecker.FindSubmitBlocker(form))
         {
-            return GetCheckAnswersResult.Err(new GetCheckAnswersError.CannotSubmit());
-        }
-
-        if (!form.Record.CanSubmit(form.Revision))
-        {
-            return GetCheckAnswersResult.Err(new GetCheckAnswersError.NotSubmittable());
+            case SubmitBlocker.CannotSubmit:
+                return GetCheckAnswersResult.Err(new GetCheckAnswersError.CannotSubmit());
+            case SubmitBlocker.NotSubmittable:
+                return GetCheckAnswersResult.Err(new GetCheckAnswersError.NotSubmittable());
         }
 
         LoadedRevision revision = await revisionChecker.LoadAsync(form, cancellationToken);
         RevisionCheck check = await revisionChecker.CheckAsync(form, revision, cancellationToken);
-        Summary summary = new(form.Model, revision, check);
+        SummaryBuilder summary = new(form.Model, revision, check);
         return GetCheckAnswersResult.Ok(
             new RecordCheckAnswersDto
             {
@@ -56,7 +47,7 @@ internal sealed class RecordCheckAnswersQueryService(
                 Sections =
                 [
                     .. form
-                        .Model.Sections.Select(summary.ToDto)
+                        .Model.Sections.Select(summary.ToSection)
                         .Where(static section => section.Tasks.Count > 0),
                 ],
                 Errors = check.Errors,
@@ -68,39 +59,46 @@ internal sealed class RecordCheckAnswersQueryService(
     /// Builds the summary rows of the questions that apply, leaving out tasks and sections with
     /// none.
     /// </summary>
-    private sealed record Summary(FormModel Model, LoadedRevision Revision, RevisionCheck Check)
+    private sealed class SummaryBuilder(
+        FormModel model,
+        LoadedRevision revision,
+        RevisionCheck check
+    )
     {
-        public RecordCheckAnswersSectionDto ToDto(FormSection section) =>
+        public RecordCheckAnswersSectionDto ToSection(FormSection section) =>
             new()
             {
                 Id = section.Id,
                 Title = section.Title,
                 Tasks =
                 [
-                    .. section.Tasks.Select(ToDto).Where(static task => task.Questions.Count > 0),
+                    .. section.Tasks.Select(ToTask).Where(static task => task.Questions.Count > 0),
                 ],
             };
 
-        private RecordCheckAnswersTaskDto ToDto(FormTask task) =>
+        private RecordCheckAnswersTaskDto ToTask(FormTask task) =>
             new()
             {
                 Id = task.Id,
                 Title = task.Title,
-                Questions = [.. task.Questions.Where(Revision.Applicability.Applies).Select(ToDto)],
+                Questions =
+                [
+                    .. task.Questions.Where(revision.Applicability.Applies).Select(ToQuestion),
+                ],
             };
 
-        private RecordCheckAnswersQuestionDto ToDto(FormQuestion question)
+        private RecordCheckAnswersQuestionDto ToQuestion(FormQuestion question)
         {
-            FormAnswer answer = Revision.Answers[question.Id];
+            FormAnswer answer = revision.Answers[question.Id];
             return new()
             {
                 Id = question.Id,
-                PageId = Model.PageOf(question).Id,
+                PageId = model.PageOf(question).Id,
                 Label = question.Label,
                 Type = question.Control,
                 Multiple = question.Shape == AnswerShape.Multi,
                 Values = [.. answer.AllValues()],
-                SelectedOptions = Check.Options.TryGetValue(
+                SelectedOptions = check.Options.TryGetValue(
                     question.Id,
                     out IReadOnlyList<FormOption>? options
                 )
@@ -113,6 +111,10 @@ internal sealed class RecordCheckAnswersQueryService(
         /// The options the answer chose, in the order offered. A value that is not offered is left
         /// out; it is reported as an error.
         /// </summary>
+        /// <remarks>
+        /// Options are at most two levels deep, which the tree option provider enforces, so a
+        /// chosen option is either a parent or one of its children.
+        /// </remarks>
         private static RecordCheckAnswersOptionDto[] SelectedOptions(
             FormAnswer answer,
             IReadOnlyList<FormOption> options

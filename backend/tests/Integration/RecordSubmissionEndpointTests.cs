@@ -13,6 +13,7 @@ using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
+using UKPS.Api.Tests.Utilities.Harnesses;
 using UKPS.Api.WebApi.InternalServices.Identity;
 using Record = UKPS.Api.Persistence.Entities.RecordWorkflow.Record;
 
@@ -149,7 +150,7 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
         JsonObject dto = await GetCheckAnswers();
 
         dto["formVersion"]!.GetValue<string>().ShouldBe(FormVersions.Medicine);
-        dto["revisionHash"]!.GetValue<string>().ShouldNotBeNullOrEmpty();
+        dto["revisionHash"]!.GetValue<string>().ShouldBe(await CurrentHash());
         JsonObject question = dto["sections"]!
             .AsArray()
             .SelectMany(static s => s!["tasks"]!.AsArray())
@@ -176,6 +177,17 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
 
         using HttpResponseMessage response = await _httpClient.GetAsync(
             new Uri($"/records/{_record.Id}/check-answers", UriKind.Relative),
+            Ct
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task CheckAnswers_UnknownRecord_ReturnsNotFound()
+    {
+        using HttpResponseMessage response = await _httpClient.GetAsync(
+            new Uri($"/records/{_record.Id + 1000}/check-answers", UriKind.Relative),
             Ct
         );
 
@@ -242,9 +254,33 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
             Ct
         );
 
-    /// <summary>The revision hash check your answers gives for the revision as it is now.</summary>
-    private async Task<string> CurrentHash() =>
-        (await GetCheckAnswers())["revisionHash"]!.GetValue<string>();
+    /// <summary>
+    /// The revision hash check your answers gives for the revision as it is now, worked out with
+    /// the services directly so submit tests don't depend on the check your answers endpoint.
+    /// </summary>
+    private async Task<string> CurrentHash()
+    {
+        var (form, _) = await Harness<RecordFormPageLoader>()
+            .Service.LoadFormAsync(_record.Id, track: false, Ct);
+        LoadedRevision revision = await Harness<RevisionChecker>()
+            .Service.LoadAsync(form.ShouldNotBeNull(), Ct);
+        return revision.Hash;
+    }
+
+    private ServiceTestHarness<TService> Harness<TService>()
+        where TService : notnull
+    {
+        ServiceTestHarness<TService> harness = new(Context);
+        harness.UpdateCurrentUser(x =>
+            x with
+            {
+                CognitoUsername = _user.CognitoUsername,
+                OrganisationId = _organisation.Id,
+                UserRole = UserRole.Standard,
+            }
+        );
+        return harness;
+    }
 
     private async Task<JsonObject> GetCheckAnswers() =>
         (

@@ -3534,10 +3534,10 @@ export type GetRecordCheckAnswersErrors = {
      */
     404: ProblemDetails;
     /**
-     * The record can't be submitted in its current state; `code` is
-     * `record_not_submittable`.
+     * The record can't be submitted in its current state, or the selected organisation differs.
+     * The `code` member says which.
      */
-    409: AuthenticationProblemDetails;
+    409: SubmissionConflictProblemDetails;
 };
 
 export type GetRecordCheckAnswersError = GetRecordCheckAnswersErrors[keyof GetRecordCheckAnswersErrors];

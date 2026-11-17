@@ -1756,7 +1756,7 @@ export const fakeGetRecordCheckAnswersResponse403 = (options?: Options): GetReco
 
 export const fakeGetRecordCheckAnswersResponse404 = (options?: Options): GetRecordCheckAnswersErrors[404] => fakeProblemDetails(options);
 
-export const fakeGetRecordCheckAnswersResponse409 = (options?: Options): GetRecordCheckAnswersErrors[409] => fakeAuthenticationProblemDetails(options);
+export const fakeGetRecordCheckAnswersResponse409 = (options?: Options): GetRecordCheckAnswersErrors[409] => fakeSubmissionConflictProblemDetails(options);
 
 export const fakeSubmitRecordRequest = (options?: Options): Omit<SubmitRecordData, 'url'> => {
     const f = options?.faker ?? faker;
