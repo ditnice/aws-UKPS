@@ -6426,6 +6426,24 @@
         "type": "string",
         "description": "Patient Access Scheme regions selected for a medicine record.\nMulti-select — see MedicinesBudgetImpact.PatientAccessSchemeRegions."
       },
+      "PendingWorkEmailChangeDto": {
+        "required": [
+          "value",
+          "verifiedByEmail"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "Gets the new work email address that has been requested."
+          },
+          "verifiedByEmail": {
+            "type": "boolean",
+            "description": "Gets whether the new work email address has been verified by email."
+          }
+        },
+        "description": "Represents a requested change to a user's work email address that is awaiting completion."
+      },
       "PharmaceuticalEntity": {
         "enum": [
           "Medicines",
@@ -8101,6 +8119,17 @@
           "hasMultipleOrganisations": {
             "type": "boolean",
             "description": "Gets whether the user can select more than one organisation. Only set for the current user."
+          },
+          "pendingWorkEmail": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the details of a requested change to the user's work email address that has not yet been\ncompleted, or `null` if there is no pending change.",
+                "$ref": "#/components/schemas/PendingWorkEmailChangeDto"
+              }
+            ]
           }
         },
         "description": "Represents information about a user and their membership within an organisation."

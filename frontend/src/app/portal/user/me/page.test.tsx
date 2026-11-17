@@ -7,6 +7,7 @@ import { getUsersMe } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { errorMessages } from '@/lib/form/errorMessages'
 
+import { SearchParams } from './navigation'
 import Me from './page'
 
 vi.mock('@/client/generated/sdk.gen', () => ({
@@ -40,7 +41,7 @@ beforeEach(() => {
 
 const exampleUser = fakeUserInformationDto()
 
-const renderPage = async (searchParams: { updated?: string } = {}) => {
+const renderPage = async (searchParams: SearchParams = {}) => {
   render(await Me({ searchParams: Promise.resolve(searchParams) }))
 }
 
@@ -108,6 +109,21 @@ describe('Me (direct invocation)', () => {
       screen.getByText('You can update your details at any time from manage my details.'),
     ).toBeInTheDocument()
   })
+
+  it.each(['true', 'TRUE'])(
+    'renders the email updated alert when requestedNewEmail is %s',
+    async (requestedNewEmail) => {
+      mockedGetUsersMe.mockResolvedValue({
+        data: exampleUser,
+      } as Awaited<ReturnType<typeof getUsersMe>>)
+
+      await renderPage({ requestedNewEmail })
+
+      expect(
+        screen.getByRole('heading', { level: 3, name: 'Email update requested' }),
+      ).toBeInTheDocument()
+    },
+  )
 
   it.each([undefined, 'false', 'yes'])(
     'does not render the success alert when updated is %s',
