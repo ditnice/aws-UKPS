@@ -1,3 +1,4 @@
+using UKPS.Api.Persistence.Entities.ReferenceData;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Persistence.FormAnnotations;
 
@@ -218,12 +219,34 @@ internal sealed class MedicinesLaboratoryTesting
         "medicines_laboratory_testing.patient_pathway_point_id",
         "At which point of the patient pathway should the test be conducted?",
         FormControl.Radio,
+        Order = 10,
         Hint = "Select when in the care pathway the test is expected to take place."
     )]
     [FormRequired("Select the point in the patient pathway the test should be conducted")]
     public int? PatientPathwayPointId { get; set; }
 
-    [FormIgnore("Conditional reveal not supported yet")]
+    /// <summary>
+    /// Describes when in the care pathway the test takes place, if none of the listed points fit.
+    /// Required. Conditional on PatientPathwayPoint = Other.
+    /// </summary>
+    [FormPage(
+        MedicineFormLayout.LaboratoryTesting,
+        "pathway-point",
+        "Patient pathway",
+        Order = 80,
+        CommercialInConfidence = true
+    )]
+    [FormField(
+        "medicines_laboratory_testing.genomic_test_pathway_point_other",
+        "Describe when in the care pathway the test is expected to take place",
+        FormControl.Textarea,
+        Order = 20
+    )]
+    [FormShowWhen(
+        "medicines_laboratory_testing.patient_pathway_point_id",
+        PatientPathwayPointCodes.Other
+    )]
+    [FormRequired("Enter details")]
     public string? GenomicTestPathwayPointOther { get; set; }
 
     /// <summary>What genomic alterations determine patient eligibility?</summary>

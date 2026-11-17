@@ -10,7 +10,7 @@ import { buildUpdateUserDetailsHref, UserDetail } from '../edit-details/[detail]
 
 import { UserDetails } from './UserDetails'
 
-const user = fakeUserInformationDto()
+const user: UserInformationDto = { ...fakeUserInformationDto(), pendingWorkEmail: undefined }
 
 const expectedDetails: UserDetail[] = ['fullName', 'email', 'contactNumber']
 

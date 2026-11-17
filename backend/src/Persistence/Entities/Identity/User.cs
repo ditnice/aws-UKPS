@@ -180,6 +180,7 @@ internal sealed class User
         JobTitle = RemovedPersonalValue;
         WorkTelephone = RemovedPersonalValue;
         WorkEmail = $"removed-user-{Id}@removed.invalid";
+        PendingWorkEmail = null;
         UpdatedAt = dateTime;
     }
 
