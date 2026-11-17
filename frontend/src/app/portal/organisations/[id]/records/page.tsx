@@ -24,20 +24,17 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
   const resolvedSearchParams = await searchParams
   const query = parseQueryFromSearchParams(resolvedSearchParams)
   const recordAction = parseRecordAction(resolvedSearchParams)
-  const { data: currentUser, error: currentUserError } = await getUsersMe({
+  const { data: currentUser } = await getUsersMe({
     client: await createServerApiClient(),
   })
-  if (currentUserError || !currentUser) {
-    return (
-      <section>
-        <PageHeader heading="Unable to load current user" />
-        <p role="alert">There was a problem retrieving the current user. Please try again.</p>
-      </section>
-    )
+
+  let championEmails: string[] = []
+  if (currentUser?.userRole == 'Standard') {
+    const { data } = await getCurrentOrganisationChampions({
+      client: await createServerApiClient(),
+    })
+    championEmails = data ?? []
   }
-  const { data: championEmails } = await getCurrentOrganisationChampions({
-    client: await createServerApiClient(),
-  })
 
   return (
     <OrganisationPageWrapper organisationId={organisationId}>
@@ -45,7 +42,7 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
         <>
           {recordAction && <RecordActionAlert action={recordAction} />}
           <PageHeader heading={`${organisation.organisationName}`} />
-          {currentUser?.userRole === 'Standard' && championEmails && championEmails.length > 0 && (
+          {currentUser?.userRole === 'Standard' && championEmails.length > 0 && (
             <>
               <div className="champion-user">
                 {championEmails.length === 1 ? (
@@ -68,10 +65,12 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
               </div>
             </>
           )}
-          <CreateRecordActionBanner
-            organisationId={organisationId}
-            allowedPharmaceuticalEntity={currentUser?.allowedPharmaceuticalEntity}
-          />
+          {currentUser && (
+            <CreateRecordActionBanner
+              organisationId={organisationId}
+              allowedPharmaceuticalEntity={currentUser?.allowedPharmaceuticalEntity}
+            />
+          )}
           <TableAndFiltersGrid
             title="Search and filter records"
             filters={<RecordsTablesFilters query={query} />}
@@ -91,6 +90,4 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
     </OrganisationPageWrapper>
   )
 }
-// TODO: Add the record template to the link
-
 export default OrganisationRecordsPage

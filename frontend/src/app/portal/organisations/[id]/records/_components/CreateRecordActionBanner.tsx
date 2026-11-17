@@ -53,4 +53,5 @@ export const CreateRecordActionBanner = ({
     </ActionBanner>
   )
 }
+// TODO: Add the record template to the link
 // TODO: Add the link to the button to create a vaccine record

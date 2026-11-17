@@ -256,24 +256,15 @@ describe('OrganisationRecordsPage (direct invocation)', () => {
     )
   })
 
-  it('shows an error when the current user cannot be loaded', async () => {
+  it('shows the records table but hides user-dependent components when the current user cannot be loaded', async () => {
     vi.mocked(getUsersMe).mockResolvedValue({
       data: undefined,
       error: {},
     } as never)
 
     await renderPage()
-
-    expect(screen.getByRole('heading', { name: 'Unable to load current user' })).toBeVisible()
-
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'There was a problem retrieving the current user',
-    )
-
     expect(getCurrentOrganisationChampions).not.toHaveBeenCalled()
-
     expect(screen.queryByTestId('create-record-action-banner')).not.toBeInTheDocument()
-
-    expect(screen.queryByTestId('records-table')).not.toBeInTheDocument()
+    expect(screen.getByTestId('records-table')).toBeInTheDocument()
   })
 })
