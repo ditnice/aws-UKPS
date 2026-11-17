@@ -3605,21 +3605,21 @@
             }
           },
           "409": {
-            "description": "The record can't be submitted in its current state; `code` is\n`record_not_submittable`.",
+            "description": "The record can't be submitted in its current state, or the selected organisation differs.\nThe `code` member says which.",
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
                 }
               }
             }
