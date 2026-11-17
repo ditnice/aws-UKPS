@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.RecordForms;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
+using UKPS.Api.WebApi.CustomResponses;
 
 namespace UKPS.Api.WebApi.Controllers;
 
@@ -20,8 +21,6 @@ public class RecordFormController(
     IRecordFormSaveService saveService
 ) : ControllerBase
 {
-    private const string CodeExtension = "code";
-
     /// <summary>
     /// Retrieves a page of a record's content form: its questions, rules, options and the current
     /// answers on the record's latest revision.
@@ -115,41 +114,28 @@ public class RecordFormController(
                     detail: "You are not authorised to edit this record."
                 ),
             notEditable: _ =>
-                Conflict(
+                this.ConflictProblem(
                     "record_not_editable",
                     "This record can no longer be edited because it has been submitted."
                 ),
             formVersionChanged: _ =>
-                Conflict(
+                this.ConflictProblem(
                     "form_version_changed",
                     "This form has changed since the page was loaded."
                 ),
             concurrentUpdate: _ =>
-                Conflict("concurrent_update", "This record was modified concurrently."),
+                this.ConflictProblem("concurrent_update", "This record was modified concurrently."),
             pageAnswersChanged: _ =>
-                Conflict("page_answers_changed", "This page has changed since it was loaded."),
+                this.ConflictProblem(
+                    "page_answers_changed",
+                    "This page has changed since it was loaded."
+                ),
             invalid: InvalidAnswers
         );
     }
 
     private ObjectResult PageNotFound() =>
-        Problem(
-            statusCode: StatusCodes.Status404NotFound,
-            title: "Not Found",
-            detail: "The specified page could not be found."
-        );
-
-    private ObjectResult Conflict(string code, string detail)
-    {
-        ProblemDetails problem = ProblemDetailsFactory.CreateProblemDetails(
-            HttpContext,
-            statusCode: StatusCodes.Status409Conflict,
-            title: "Conflict",
-            detail: detail
-        );
-        problem.Extensions[CodeExtension] = code;
-        return new ObjectResult(problem) { StatusCode = StatusCodes.Status409Conflict };
-    }
+        this.NotFoundProblem("The specified page could not be found.");
 
     private ActionResult InvalidAnswers(SaveRecordPageError.Invalid invalid)
     {
