@@ -74,6 +74,81 @@ internal sealed class Record
             .GetPermittedCommands()
             .Contains(RecordLifecycleStateMachine.Command.EditDraft);
 
+    /// <summary>
+    /// Whether the latest revision can be submitted. Only a draft can be, and not while the
+    /// record is on hold or archived.
+    /// </summary>
+    /// <param name="latestRevision">The record's latest revision.</param>
+    internal bool CanSubmit(RecordRevision latestRevision) =>
+        new RecordLifecycleStateMachine(new(RecordStatus, latestRevision.WorkflowStatus))
+            .GetPermittedCommands()
+            .Contains(RecordLifecycleStateMachine.Command.Submit);
+
+    /// <summary>
+    /// Submits the latest revision, if the record's state permits. A medicine revision goes to QA
+    /// review, with a pending QA review and the timeline event. The record status and
+    /// <see cref="ReviewedAt"/> are unchanged until QA approves it.
+    /// </summary>
+    /// <param name="latestRevision">The record's latest revision.</param>
+    /// <param name="time">When the revision was submitted.</param>
+    /// <param name="submittedBy">The user who submitted it.</param>
+    /// <returns>Whether the revision was submitted. Nothing is changed when it can't be.</returns>
+    internal bool TrySubmit(RecordRevision latestRevision, DateTime time, User submittedBy)
+    {
+        var result = new RecordLifecycleStateMachine(
+            new(RecordStatus, latestRevision.WorkflowStatus)
+        ).TrySendCommand(RecordLifecycleStateMachine.Command.Submit);
+        if (!result.Success)
+        {
+            return false;
+        }
+
+        switch (RecordType)
+        {
+            case RecordType.Medicine:
+                SubmitToQa(
+                    latestRevision,
+                    result.CurrentState.LatestRevisionStatus,
+                    time,
+                    submittedBy
+                );
+                return true;
+            case RecordType.Vaccine:
+                // TODO: vaccines skip QA review and are published on submission. Needs a vaccine
+                // Submit transition in RecordLifecycleStateMachine, then: revision and record to
+                // published, a status history row on first publication only, ReviewedAt = time,
+                // and a RecordPublished event.
+                throw new NotSupportedException(
+                    "Submitting a vaccine record is not supported yet."
+                );
+            default:
+                throw new InvalidOperationException($"Unsupported record type {RecordType}.");
+        }
+    }
+
+    private void SubmitToQa(
+        RecordRevision latestRevision,
+        WorkflowStatus toStatus,
+        DateTime time,
+        User submittedBy
+    )
+    {
+        latestRevision.WorkflowStatus = toStatus;
+        QaReview review = new() { Revision = latestRevision };
+        latestRevision.QaReviews.Add(review);
+        Events.Add(
+            new RecordEvent
+            {
+                Record = this,
+                Revision = latestRevision,
+                QaReview = review,
+                EventType = RecordEventType.SubmittedToQa,
+                PerformedAt = time,
+                PerformedByUser = submittedBy,
+            }
+        );
+    }
+
     private static RecordAction? ConvertCommandToAction(
         RecordLifecycleStateMachine.Command command,
         RecordStatus recordStatus

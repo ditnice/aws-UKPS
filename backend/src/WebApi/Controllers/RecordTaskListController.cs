@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.RecordForms;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
+using UKPS.Api.WebApi.CustomResponses;
 
 namespace UKPS.Api.WebApi.Controllers;
 
@@ -49,9 +50,5 @@ public sealed class RecordTaskListController(IRecordTaskListQueryService querySe
     }
 
     private ObjectResult TaskListNotFound() =>
-        Problem(
-            statusCode: StatusCodes.Status404NotFound,
-            title: "Not Found",
-            detail: "The specified task list could not be found."
-        );
+        this.NotFoundProblem("The specified task list could not be found.");
 }
