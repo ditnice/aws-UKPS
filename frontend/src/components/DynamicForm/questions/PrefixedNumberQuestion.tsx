@@ -7,8 +7,60 @@ import styles from '../DynamicForm.module.scss'
 
 import type { QuestionProps } from '../types'
 
-/** A dropdown of prefixes beside a box for the digits; the value is the two joined. */
-export function PrefixedNumberQuestion({
+/**
+ * A dropdown of prefixes beside a box for the digits; the value is the two joined. With only one
+ * prefix there is nothing to choose, so it is shown as a fixed prefix on the box instead.
+ */
+export function PrefixedNumberQuestion(props: QuestionProps<string>) {
+  return (props.question.prefixes ?? []).length === 1 ? (
+    <FixedPrefixNumber {...props} />
+  ) : (
+    <ChosenPrefixNumber {...props} />
+  )
+}
+
+/** A box for the digits after a single, fixed prefix, such as "NCT". */
+function FixedPrefixNumber({
+  question,
+  name,
+  value,
+  onChange,
+  onBlur,
+  error,
+  labelAsHeading,
+}: QuestionProps<string>) {
+  const prefix = question.prefixes![0]
+  const { number } = splitPrefixedNumber([prefix], value)
+  // A whole ID pasted with its prefix is kept as it is, rather than prefixed again.
+  const changeNumber = (typed: string) =>
+    onChange(typed.startsWith(prefix) ? typed : prefix + typed)
+
+  return (
+    <>
+      {labelAsHeading && (
+        <label className="visually-hidden" htmlFor={name}>
+          {question.label}
+        </label>
+      )}
+      <Input
+        autoComplete="off"
+        error={Boolean(error)}
+        errorMessage={error}
+        hint={question.hint ?? undefined}
+        inputMode="numeric"
+        label={labelAsHeading ? null : question.label}
+        name={name}
+        onBlur={onBlur}
+        onChange={(event) => changeNumber(event.target.value)}
+        prefix={prefix}
+        value={number}
+        width={10}
+      />
+    </>
+  )
+}
+
+function ChosenPrefixNumber({
   question,
   name,
   value,

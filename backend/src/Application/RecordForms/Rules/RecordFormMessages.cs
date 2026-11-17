@@ -16,6 +16,8 @@ internal static class RecordFormMessages
     public const string InvalidDate = "Enter a real date";
     public const string ActualMonthInFuture = "The date must be this month or in the past";
 
+    public static string IdDigits(int digits) => $"ID must be {digits} digits";
+
     // A PrecisionDate's or ActualDate's messages name its date, for example "submission". The
     // page also says "Enter the actual submission date" when a part is blank, which never
     // reaches the server.

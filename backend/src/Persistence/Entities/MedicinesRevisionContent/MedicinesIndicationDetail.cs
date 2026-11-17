@@ -80,6 +80,7 @@ internal sealed class MedicinesIndicationDetail
         FormControl.Radio
     )]
     [FormRequired("Select whether this product is intended to treat cancer")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IndicationIsCancer { get; set; }
 
     [FormTask(
@@ -95,6 +96,7 @@ internal sealed class MedicinesIndicationDetail
         Hint = "A disease is considered rare if fewer than 5 in 10,000 people have it. Select yes if this medicine is intended to treat a rare disease, even if you have not applied for orphan status."
     )]
     [FormRequired("Select whether this product treats a rare disease")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IndicationIsRareDisease { get; set; }
 
     [FormTask(
@@ -168,6 +170,7 @@ internal sealed class MedicinesIndicationDetail
         Hint = "Personalised medicines are treatments chosen or adjusted to suit a person's genetic, biomarker, molecular or clinical characteristics. This can improve how well the treatment works and reduce side effects."
     )]
     [FormRequired("Select yes if the product is a personalised medicine")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IsPersonalisedMedicine { get; set; }
 
     /// <summary>Multi-select technology status types for this record.</summary>

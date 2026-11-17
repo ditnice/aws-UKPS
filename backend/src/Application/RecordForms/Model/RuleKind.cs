@@ -15,4 +15,10 @@ public enum RuleKind
 
     /// <summary>At most a number of options may be chosen.</summary>
     MaxItems = 2,
+
+    /// <summary>
+    /// No value may be repeated, ignoring case: the entries of a text list, or a group child's
+    /// answer across the group's items.
+    /// </summary>
+    Distinct = 3,
 }

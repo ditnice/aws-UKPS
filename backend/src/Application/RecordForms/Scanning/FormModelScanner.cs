@@ -21,8 +21,13 @@ internal static class FormModelScanner
     {
         List<EntityDeclaration> entities = [];
         List<string> problems = [];
+        Type[] allTypes = types.ToArray();
+        HashSet<Type> groupItemTypes = allTypes
+            .Where(static t => t.IsDefined(typeof(FormSectionAttribute), false))
+            .SelectMany(GroupItemTypes)
+            .ToHashSet();
 
-        foreach (Type type in types)
+        foreach (Type type in allTypes)
         {
             FormSectionAttribute[] sections = type.GetCustomAttributes<FormSectionAttribute>(false)
                 .ToArray();
@@ -35,18 +40,12 @@ internal static class FormModelScanner
 
             if (sections.Length == 0)
             {
-                if (pageConditions.Length > 0)
+                // A group's child entity is scanned through the group that holds it.
+                if (!groupItemTypes.Contains(type))
                 {
-                    problems.Add($"{type.Name} has [FormPageShowWhen] but no [FormSection].");
+                    ReportUnsectioned(type, properties, pageConditions, problems);
                 }
 
-                problems.AddRange(
-                    properties
-                        .Where(HasFormAttribute)
-                        .Select(p =>
-                            $"{type.Name}.{p.Name} has form attributes but {type.Name} has no [FormSection]."
-                        )
-                );
                 continue;
             }
 
@@ -60,7 +59,13 @@ internal static class FormModelScanner
             List<QuestionDeclaration> questions = [];
             foreach (PropertyInfo property in properties)
             {
-                QuestionDeclaration? question = ScanProperty(type, entityType, property, problems);
+                QuestionDeclaration? question = ScanProperty(
+                    type,
+                    entityType,
+                    property,
+                    parent: null,
+                    problems
+                );
                 if (question is not null)
                 {
                     questions.Add(question);
@@ -75,6 +80,39 @@ internal static class FormModelScanner
         return (entities, problems);
     }
 
+    private static void ReportUnsectioned(
+        Type type,
+        PropertyInfo[] properties,
+        FormPageShowWhenAttribute[] pageConditions,
+        List<string> problems
+    )
+    {
+        if (pageConditions.Length > 0)
+        {
+            problems.Add($"{type.Name} has [FormPageShowWhen] but no [FormSection].");
+        }
+
+        problems.AddRange(
+            properties
+                .Where(HasFormAttribute)
+                .Select(p =>
+                    $"{type.Name}.{p.Name} has form attributes but {type.Name} has no [FormSection]."
+                )
+        );
+    }
+
+    /// <summary>The child entities of the type's group questions.</summary>
+    private static IEnumerable<Type> GroupItemTypes(Type type) =>
+        type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            .Where(static p =>
+                p.GetCustomAttribute<FormFieldAttribute>()?.Control == FormControl.Group
+            )
+            .Select(static p => CollectionItemType(p.PropertyType))
+            .OfType<Type>();
+
+    private static Type? CollectionItemType(Type type) =>
+        type.IsGenericType && type.GetGenericArguments() is [Type item] ? item : null;
+
     private static bool HasFormAttribute(PropertyInfo property) =>
         property
             .GetCustomAttributes(false)
@@ -82,10 +120,15 @@ internal static class FormModelScanner
                 string.Equals(a.GetType().Namespace, _annotationNamespace, StringComparison.Ordinal)
             );
 
+    /// <summary>
+    /// Reads one property. A group's child questions pass the group as <paramref name="parent"/>:
+    /// they take its task and page, and must not declare their own.
+    /// </summary>
     private static QuestionDeclaration? ScanProperty(
         Type type,
         IEntityType entityType,
         PropertyInfo property,
+        QuestionDeclaration? parent,
         List<string> problems
     )
     {
@@ -101,43 +144,123 @@ internal static class FormModelScanner
             return null;
         }
 
+        (task, page) = PlaceQuestion(where, task, page, parent, problems);
         if (task is null || page is null)
         {
-            if (task is null)
-            {
-                problems.Add($"{where} has [FormField] but no [FormTask].");
-            }
-
-            if (page is null)
-            {
-                problems.Add($"{where} has [FormField] but no [FormPage].");
-            }
-
             return null;
         }
 
-        BindingInfo? binding = column is not null
-            ? DescribeColumn(where, column, problems)
-            : DescribeJunction(where, navigation!, problems);
+        BindingInfo? binding = (column, field!.Control) switch
+        {
+            ({ }, _) => DescribeColumn(where, column, problems),
+            (null, FormControl.Group) => DescribeChildren(where, navigation!, problems),
+            (null, FormControl.TextList) => DescribeTextList(where, navigation!, problems),
+            _ => DescribeJunction(where, navigation!, problems),
+        };
+        if (binding is null)
+        {
+            return null;
+        }
 
-        return binding is null
-            ? null
-            : new QuestionDeclaration
+        QuestionDeclaration question = new()
+        {
+            EntityType = type,
+            Property = property,
+            Task = task,
+            Page = page,
+            Field = field,
+            Required = property.GetCustomAttribute<FormRequiredAttribute>(),
+            MaxLength = property.GetCustomAttribute<FormMaxLengthAttribute>(),
+            MaxItems = property.GetCustomAttribute<FormMaxItemsAttribute>(),
+            Prefixes = property.GetCustomAttribute<FormValuePrefixesAttribute>(),
+            Options = property.GetCustomAttribute<FormOptionsAttribute>(),
+            ShowWhen = property.GetCustomAttribute<FormShowWhenAttribute>(),
+            DateEvent = property.GetCustomAttribute<FormDateEventAttribute>(),
+            Distinct = property.GetCustomAttribute<FormDistinctAttribute>(),
+            Binding = binding,
+            IsGroupChild = parent is not null,
+        };
+
+        return binding.Kind == BindingKind.Group
+            ? question with
             {
-                EntityType = type,
-                Property = property,
-                Task = task,
-                Page = page,
-                Field = field!,
-                Required = property.GetCustomAttribute<FormRequiredAttribute>(),
-                MaxLength = property.GetCustomAttribute<FormMaxLengthAttribute>(),
-                MaxItems = property.GetCustomAttribute<FormMaxItemsAttribute>(),
-                Prefixes = property.GetCustomAttribute<FormValuePrefixesAttribute>(),
-                Options = property.GetCustomAttribute<FormOptionsAttribute>(),
-                ShowWhen = property.GetCustomAttribute<FormShowWhenAttribute>(),
-                DateEvent = property.GetCustomAttribute<FormDateEventAttribute>(),
-                Binding = binding,
-            };
+                Children = ScanGroupChildren(question, navigation!.TargetEntityType, problems),
+            }
+            : question;
+    }
+
+    /// <summary>
+    /// The task and page of a question: its own, or for a group's question the group's, which it
+    /// must not declare itself. Null when one is missing.
+    /// </summary>
+    private static (FormTaskAttribute? Task, FormPageAttribute? Page) PlaceQuestion(
+        string where,
+        FormTaskAttribute? task,
+        FormPageAttribute? page,
+        QuestionDeclaration? parent,
+        List<string> problems
+    )
+    {
+        if (parent is not null)
+        {
+            if (task is not null || page is not null)
+            {
+                problems.Add(
+                    $"{where} is a question of group {parent.Where}, so it takes the group's task and page and must not declare [FormTask] or [FormPage]."
+                );
+            }
+
+            return (parent.Task, parent.Page);
+        }
+
+        if (task is null)
+        {
+            problems.Add($"{where} has [FormField] but no [FormTask].");
+        }
+
+        if (page is null)
+        {
+            problems.Add($"{where} has [FormField] but no [FormPage].");
+        }
+
+        return (task, page);
+    }
+
+    /// <summary>The questions declared on a group's child entity.</summary>
+    private static QuestionDeclaration[] ScanGroupChildren(
+        QuestionDeclaration group,
+        IEntityType childType,
+        List<string> problems
+    )
+    {
+        List<QuestionDeclaration> children = [];
+        foreach (
+            PropertyInfo property in childType.ClrType.GetProperties(
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly
+            )
+        )
+        {
+            QuestionDeclaration? child = ScanProperty(
+                childType.ClrType,
+                childType,
+                property,
+                group,
+                problems
+            );
+            if (child is not null)
+            {
+                children.Add(child);
+            }
+        }
+
+        if (children.Count == 0)
+        {
+            problems.Add(
+                $"{group.Where} is a group, but {childType.ClrType.Name} has no questions."
+            );
+        }
+
+        return [.. children];
     }
 
     /// <summary>
@@ -238,7 +361,8 @@ internal static class FormModelScanner
         || property.IsDefined(typeof(FormMaxItemsAttribute), false)
         || property.IsDefined(typeof(FormOptionsAttribute), false)
         || property.IsDefined(typeof(FormShowWhenAttribute), false)
-        || property.IsDefined(typeof(FormDateEventAttribute), false);
+        || property.IsDefined(typeof(FormDateEventAttribute), false)
+        || property.IsDefined(typeof(FormDistinctAttribute), false);
 
     private static BindingInfo? DescribeColumn(
         string where,
@@ -324,6 +448,89 @@ internal static class FormModelScanner
             ReferenceType = referenceKeys[0].PrincipalEntityType.ClrType,
             JunctionType = junction.ClrType,
             JunctionReferenceIdProperty = referenceKeys[0].Properties[0].PropertyInfo,
+        };
+    }
+
+    private static BindingInfo? DescribeChildren(
+        string where,
+        INavigation navigation,
+        List<string> problems
+    )
+    {
+        BindingInfo? children = DescribeChildCollection(where, navigation, "Group", problems);
+        return children is null ? null : children with { Kind = BindingKind.Group };
+    }
+
+    private static BindingInfo? DescribeTextList(
+        string where,
+        INavigation navigation,
+        List<string> problems
+    )
+    {
+        BindingInfo? children = DescribeChildCollection(where, navigation, "TextList", problems);
+        if (children is null)
+        {
+            return null;
+        }
+
+        IProperty[] values = navigation
+            .TargetEntityType.GetProperties()
+            .Where(static p => p.ClrType == typeof(string) && !p.IsKey() && !p.IsForeignKey())
+            .ToArray();
+        if (values is not [{ PropertyInfo: { } value }])
+        {
+            problems.Add(
+                $"{where} uses TextList, but {navigation.TargetEntityType.ClrType.Name} does not have exactly one string column to hold each entry."
+            );
+            return null;
+        }
+
+        return children with
+        {
+            Kind = BindingKind.TextList,
+            ChildValueProperty = value,
+        };
+    }
+
+    /// <summary>
+    /// The child entity of a collection navigation, its int primary key and its optional
+    /// <c>int? DisplayOrder</c>.
+    /// </summary>
+    private static BindingInfo? DescribeChildCollection(
+        string where,
+        INavigation navigation,
+        string control,
+        List<string> problems
+    )
+    {
+        IEntityType child = navigation.TargetEntityType;
+        IReadOnlyList<IProperty>? key = child.FindPrimaryKey()?.Properties;
+        if (
+            !navigation.IsCollection
+            || key is not [{ PropertyInfo: { } id }]
+            || id.PropertyType != typeof(int)
+        )
+        {
+            problems.Add(
+                $"{where} uses {control}, which needs a collection navigation to an entity with an int primary key."
+            );
+            return null;
+        }
+
+        IProperty? displayOrder = child.FindProperty("DisplayOrder");
+        if (displayOrder is not null && displayOrder.ClrType != typeof(int?))
+        {
+            problems.Add(
+                $"{where} uses {control}, but {child.ClrType.Name}.DisplayOrder is not an int?."
+            );
+            return null;
+        }
+
+        return new BindingInfo(BindingKind.Group)
+        {
+            ChildType = child.ClrType,
+            ChildIdProperty = id,
+            ChildDisplayOrderProperty = displayOrder?.PropertyInfo,
         };
     }
 }

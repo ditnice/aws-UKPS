@@ -93,6 +93,7 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             .Sections.Select(static s => (s.Id, s.Title))
             .ShouldBe([
                 ("indication-and-development", "Provide indication and development information"),
+                ("clinical-trial-information", "Provide clinical trial information"),
                 (
                     "regulatory-access-and-launch",
                     "Provide regulatory, access, and launch information"
@@ -114,6 +115,12 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
                     "development-background",
                     "Development background",
                     "repurposed-medicine",
+                    RecordTaskStatus.NotStarted
+                ),
+                (
+                    "clinical-trials",
+                    "Clinical trials",
+                    "add-clinical-trial",
                     RecordTaskStatus.NotStarted
                 ),
                 (

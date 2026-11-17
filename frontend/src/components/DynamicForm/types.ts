@@ -16,6 +16,11 @@ export type QuestionProps<TValue extends FormValue = FormValue> = {
    * of them when not given, as for an error from the server.
    */
   errorParts?: string[]
+  /**
+   * The errors of a text list's entries or a group's items, keyed as in `QuestionError.items`
+   * (lib/dynamic-form/answers.ts), such as `0.study_name`.
+   */
+  errorItems?: Record<string, string>
   /** Removes the question's error until it is next validated, such as when the user starts over. */
   clearError: () => void
   /** True on a single-question page, where the label is already the page heading. */

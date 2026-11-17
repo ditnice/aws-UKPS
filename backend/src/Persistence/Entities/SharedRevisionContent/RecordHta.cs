@@ -45,6 +45,7 @@ internal sealed class RecordHta
         Order = 10
     )]
     [FormRequired("Select yes if you intend to submit for a HTA")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? MedicineHtaSubmissionIntended { get; set; }
 
     /// <summary>
@@ -97,6 +98,7 @@ internal sealed class RecordHta
         Order = 10
     )]
     [FormRequired("Select yes if you intend to follow the MHRA/NICE aligned pathway")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? HtaNiceAlignedPathway { get; set; }
 
     /// <summary>

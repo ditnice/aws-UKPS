@@ -89,6 +89,67 @@ public class FormModelValidatorTests
     }
 
     [Fact]
+    public void Scan_GroupEntity_BuildsTheGroupAndItsQuestions()
+    {
+        Problems(typeof(GroupEntity)).ShouldBe(["The Vaccine form has no entry in FormVersions."]);
+
+        var (entities, _) = FormModelScanner.Scan(_model, [typeof(GroupEntity)]);
+        FormModel form = FormModelBuilder.Build(entities, _options)[RecordType.Vaccine];
+        FormQuestion group = form.FindPage("items")!.Questions.Single();
+
+        (group.Id, group.Control, group.Shape).ShouldBe(
+            ("group_entity_item", FormControl.Group, AnswerShape.Group)
+        );
+        (group.ItemLabel, group.AddAnotherLabel, group.RemoveLabel, group.ItemKey).ShouldBe(
+            ("Item", "Add another item", "Remove item", "code")
+        );
+        group.Rules.Select(static r => r.Kind).ShouldBe([RuleKind.Required, RuleKind.MaxItems]);
+        group.Entity.Includes.ShouldBe(["Items", "Items.Numbers"]);
+        group
+            .Children.Select(static c => (c.Id, c.Control, c.Shape))
+            .ShouldBe([
+                ("name", FormControl.Text, AnswerShape.Single),
+                ("code", FormControl.PrefixedNumber, AnswerShape.Single),
+                ("numbers", FormControl.TextList, AnswerShape.List),
+            ]);
+        group.Children[1].PrefixDigits.ShouldBe(8);
+        group
+            .Children[1]
+            .Rules.Select(static r => r.Kind)
+            .ShouldBe([RuleKind.Required, RuleKind.Distinct]);
+        group.Children[2].Rules.Single().Kind.ShouldBe(RuleKind.Distinct);
+        form.FindQuestion("name").ShouldBeNull("a group's questions are not form questions");
+    }
+
+    [Theory]
+    [InlineData("BrokenGroupEntity.Items uses Group, which needs an ItemLabel.")]
+    [InlineData(
+        "BrokenGroupEntity.Items has ItemKey 'free_text', which must name a single-value question of the group with [FormRequired] and [FormDistinct]."
+    )]
+    [InlineData("BrokenGroupEntity.Text sets ItemLabel, which only a Group uses.")]
+    [InlineData("BrokenGroupEntity.Text sets RemoveLabel, which only a Group or a TextList uses.")]
+    [InlineData(
+        "BrokenGroupEntity.Text has [FormDistinct], which only a TextList or a single-value question of a group uses."
+    )]
+    [InlineData(
+        "BrokenGroupItem.Dotted is a question of group BrokenGroupEntity.Items, so it takes the group's task and page and must not declare [FormTask] or [FormPage]."
+    )]
+    [InlineData(
+        "BrokenGroupItem.Dotted is a question of group BrokenGroupEntity.Items, so its ID 'broken.dotted' must be lowercase words joined by underscores, with no dotted prefix."
+    )]
+    [InlineData(
+        "BrokenGroupItem.Choice uses control Radio, which a group's question cannot use; use Text, Textarea, PrefixedNumber or TextList."
+    )]
+    [InlineData(
+        "BrokenGroupItem.RequiredName is bound to a non-nullable column, so it needs [FormRequired]."
+    )]
+    [InlineData("BrokenGroupEntity.Items has more than one question with Order 10.")]
+    public void Validate_BrokenGroup_ReportsTheProblem(string expected)
+    {
+        Problems(typeof(BrokenGroupEntity)).ShouldContain(expected);
+    }
+
+    [Fact]
     public void Validate_ConditionalEntity_HasNoConditionProblems()
     {
         Problems(typeof(ConditionalEntity), typeof(ConditionalExtraEntity))
@@ -223,15 +284,9 @@ public class FormModelValidatorTests
     [Fact]
     public void Validate_SeveralProvidersOfOneType_AsksForFormOptions()
     {
-        OptionProviderRegistry options = OptionProviderRegistry.CreateDefault();
-        options.AddEnum("yes-no", (YesNoUnknown.Yes, "Yes"), (YesNoUnknown.No, "No"));
-
-        var (entities, _) = FormModelScanner.Scan(_model, [typeof(ValidEntity)]);
-
-        FormModelValidator
-            .Validate(entities, options)
+        Problems(typeof(AmbiguousChoiceEntity))
             .ShouldContain(
-                "ValidEntity.Choice has several Enum providers of YesNoUnknown ('yes-no', 'yes-no-unknown'); choose one with [FormOptions]."
+                "AmbiguousChoiceEntity.Choice has several Enum providers of YesNoUnknown ('clinical-trials-recruiting-in-uk', 'yes-no-unknown'); choose one with [FormOptions]."
             );
     }
 

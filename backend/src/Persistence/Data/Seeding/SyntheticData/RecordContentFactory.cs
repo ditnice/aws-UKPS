@@ -67,11 +67,15 @@ internal sealed class RecordContentFactory
         RecordRevision revision
     )
     {
-        if (section.RecruitingInUk is not null)
+        // Trials hang off their revision's information row, so it is needed whenever there are
+        // trials, as well as for the recruiting answer.
+        bool hasTrials = section.ClinicalTrials.Count > 0;
+        if (section.RecruitingInUk is not null || hasTrials)
         {
             yield return new RecordClinicalTrialInformation
             {
                 Revision = revision,
+                HasClinicalTrials = hasTrials ? YesNo.Yes : null,
                 RecruitingInUk = section.RecruitingInUk,
             };
         }

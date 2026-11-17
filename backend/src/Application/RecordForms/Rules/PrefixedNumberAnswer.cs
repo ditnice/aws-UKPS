@@ -12,8 +12,12 @@ internal static class PrefixedNumberAnswer
     /// The value to save and the message describing why it is invalid. A prefix with no digits is
     /// saved as blank, so it is never an error.
     /// </summary>
+    /// <param name="prefixes">The prefixes offered.</param>
+    /// <param name="digits">The exact number of digits needed, or null for up to 5.</param>
+    /// <param name="value">The answer.</param>
     public static (string? Value, string? Error) Evaluate(
         IReadOnlyList<string> prefixes,
+        int? digits,
         string? value
     )
     {
@@ -39,6 +43,11 @@ internal static class PrefixedNumberAnswer
         if (!number.All(char.IsAsciiDigit) || number.All(c => c == '0'))
         {
             return (value, RecordFormMessages.IdDigitsOnly);
+        }
+
+        if (digits is { } exact)
+        {
+            return (value, number.Length != exact ? RecordFormMessages.IdDigits(exact) : null);
         }
 
         return (value, number.Length > MaxDigits ? RecordFormMessages.IdOutOfRange : null);

@@ -2052,6 +2052,10 @@ namespace UKPS.Api.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("HasClinicalTrials")
+                        .HasColumnType("integer")
+                        .HasColumnName("has_clinical_trials");
+
                     b.Property<int?>("RecruitingInUk")
                         .HasColumnType("integer")
                         .HasColumnName("recruiting_in_uk");
@@ -2062,6 +2066,9 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_record_clinical_trial_information");
+
+                    b.HasAlternateKey("RevisionId")
+                        .HasName("ak_record_clinical_trial_information_revision_id");
 
                     b.HasIndex("RevisionId")
                         .IsUnique()
@@ -3269,6 +3276,14 @@ namespace UKPS.Api.Persistence.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_record_clinical_trials_record_revisions_revision_id");
 
+                    b.HasOne("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordClinicalTrialInformation", null)
+                        .WithMany("ClinicalTrials")
+                        .HasForeignKey("RevisionId")
+                        .HasPrincipalKey("RevisionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_record_clinical_trials_record_clinical_trial_information_re");
+
                     b.Navigation("Revision");
                 });
 
@@ -3616,6 +3631,11 @@ namespace UKPS.Api.Persistence.Migrations
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordClinicalTrial", b =>
                 {
                     b.Navigation("OtherClinicalTrialNumbers");
+                });
+
+            modelBuilder.Entity("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordClinicalTrialInformation", b =>
+                {
+                    b.Navigation("ClinicalTrials");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordProductDetail", b =>

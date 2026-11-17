@@ -29,6 +29,15 @@ internal static class MedicineFormTasks
     /// <summary>The "Development background" task's position within its section.</summary>
     public const int DevelopmentBackgroundOrder = 20;
 
+    /// <summary>The "Clinical trials" task's ID.</summary>
+    public const string ClinicalTrials = "clinical-trials";
+
+    /// <summary>The "Clinical trials" task's title.</summary>
+    public const string ClinicalTrialsTitle = "Clinical trials";
+
+    /// <summary>The "Clinical trials" task's position within its section.</summary>
+    public const int ClinicalTrialsOrder = 10;
+
     /// <summary>The "MHRA procedure and dates" task's ID.</summary>
     public const string MhraProcedureAndDates = "mhra-procedure-and-dates";
 

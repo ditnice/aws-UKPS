@@ -1385,3 +1385,225 @@ describe('FormPage', () => {
     })
   })
 })
+
+describe('FormPage clinical trials', () => {
+  const trialsQuestion = question({
+    id: 'record_clinical_trial',
+    type: 'Group',
+    label: 'Enter clinical trial details',
+    hint: 'Include all studies that support marketing authorisation and HTA submission.',
+    addAnotherLabel: 'Add another clinical trial',
+    itemLabel: 'Clinical trial',
+    removeLabel: 'Remove clinical trial',
+    rules: [{ kind: 'Required', value: null, message: 'Add at least one clinical trial' }],
+    children: [
+      question({
+        id: 'study_name',
+        type: 'Text',
+        label: 'Study name',
+        hint: 'Enter the official or commonly used study title.',
+        rules: [{ kind: 'Required', value: null, message: 'Enter the study name' }],
+      }),
+      question({
+        id: 'clinical_trials_gov_number',
+        type: 'PrefixedNumber',
+        label: 'Trial number from clinical trials.gov',
+        hint: 'Enter the 8 digit identification number.',
+        prefixes: ['NCT'],
+        prefixDigits: 8,
+        rules: [
+          { kind: 'Required', value: null, message: 'Enter the trial number' },
+          { kind: 'Distinct', value: null, message: 'Trial number must be different' },
+        ],
+      }),
+      question({
+        id: 'other_registry_numbers',
+        type: 'TextList',
+        multiple: true,
+        label: 'Trial number from other registry (optional)',
+        hint: 'Enter any additional trial numbers from other registries.',
+        addAnotherLabel: 'Add another trial number',
+        removeLabel: 'Remove',
+        rules: [{ kind: 'Distinct', value: null, message: 'Registry number must be different' }],
+      }),
+    ],
+  })
+
+  const trialsPage = (answer: unknown = []) =>
+    page({
+      page: {
+        id: 'clinical-trial-details',
+        title: 'Clinical trial details',
+        commercialInConfidence: false,
+      },
+      nextPageId: 'recruiting-in-uk',
+      questions: [trialsQuestion],
+      answers: { record_clinical_trial: answer },
+    })
+
+  const savedTrial = {
+    study_name: 'ION-UK',
+    clinical_trials_gov_number: 'NCT06123456',
+    other_registry_numbers: ['A1', 'B2'],
+  }
+
+  const sentAnswers = () =>
+    (mocks.saveRecordFormPage.mock.calls[0][0] as { body: { answers: Record<string, unknown> } })
+      .body.answers
+
+  it('starts with one empty trial headed "Clinical trial 1" and no remove button', () => {
+    render(<FormPage page={trialsPage()} />)
+
+    expect(
+      // The NDS page header puts the task caption inside the h1.
+      screen.getByRole('heading', { level: 1, name: /Enter clinical trial details$/ }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'Clinical trial 1' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Study name')).toHaveValue('')
+    expect(screen.queryByRole('button', { name: /Remove clinical trial/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add another trial number' })).toBeInTheDocument()
+  })
+
+  it('shows the trial number with a fixed NCT prefix', () => {
+    render(<FormPage page={trialsPage([savedTrial])} />)
+
+    expect(screen.getByText('NCT')).toBeInTheDocument()
+    expect(screen.getByLabelText('Trial number from clinical trials.gov')).toHaveValue('06123456')
+  })
+
+  it('loads saved trials and their registry numbers', () => {
+    render(<FormPage page={trialsPage([savedTrial])} />)
+
+    expect(screen.getByLabelText('Study name')).toHaveValue('ION-UK')
+    expect(screen.getByLabelText('Trial number from other registry (optional) 1')).toHaveValue('A1')
+    expect(screen.getByLabelText('Trial number from other registry (optional) 2')).toHaveValue('B2')
+  })
+
+  it('adds a trial, focusing its first field, and sends every trial as an item', async () => {
+    const user = userEvent.setup()
+    render(<FormPage page={trialsPage([savedTrial])} />)
+
+    await user.click(screen.getByRole('button', { name: 'Add another clinical trial' }))
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Clinical trial 2' })).toBeInTheDocument()
+    const studyNames = screen.getAllByLabelText('Study name')
+    expect(studyNames[1]).toHaveFocus()
+    await user.type(studyNames[1], 'ION-EU')
+    await user.type(
+      screen.getAllByLabelText('Trial number from clinical trials.gov')[1],
+      '06123457',
+    )
+    save()
+
+    await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+    expect(sentAnswers()).toEqual({
+      record_clinical_trial: [
+        savedTrial,
+        {
+          study_name: 'ION-EU',
+          clinical_trials_gov_number: 'NCT06123457',
+          other_registry_numbers: [],
+        },
+      ],
+    })
+  })
+
+  it('removes a trial and moves focus to the heading before it', async () => {
+    const user = userEvent.setup()
+    const second = {
+      ...savedTrial,
+      study_name: 'ION-EU',
+      clinical_trials_gov_number: 'NCT06123457',
+    }
+    render(<FormPage page={trialsPage([savedTrial, second])} />)
+
+    await user.click(screen.getByRole('button', { name: 'Remove clinical trial Clinical trial 2' }))
+
+    expect(screen.queryByRole('heading', { name: 'Clinical trial 2' })).not.toBeInTheDocument()
+    expect(screen.getByText('Clinical trial 1').closest('legend')).toHaveFocus()
+  })
+
+  it('adds and removes registry numbers, focusing the new box and then the list legend', async () => {
+    const user = userEvent.setup()
+    render(<FormPage page={trialsPage([{ ...savedTrial, other_registry_numbers: [] }])} />)
+
+    await user.click(screen.getByRole('button', { name: 'Add another trial number' }))
+
+    const second = screen.getByLabelText('Trial number from other registry (optional) 2')
+    expect(second).toHaveFocus()
+    await user.click(
+      screen.getByRole('button', { name: 'Remove Trial number from other registry (optional) 2' }),
+    )
+    expect(
+      screen.getByText('Trial number from other registry (optional)', { selector: 'legend' }),
+    ).toHaveFocus()
+  })
+
+  it('drops blank registry numbers from the answer', async () => {
+    render(
+      <FormPage page={trialsPage([{ ...savedTrial, other_registry_numbers: ['A1', '  '] }])} />,
+    )
+
+    save()
+
+    await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+    expect(sentAnswers()).toEqual({
+      record_clinical_trial: [{ ...savedTrial, other_registry_numbers: ['A1'] }],
+    })
+  })
+
+  it('shows each problem against its trial without saving', async () => {
+    const user = userEvent.setup()
+    render(
+      <FormPage
+        page={trialsPage([
+          {
+            study_name: '',
+            clinical_trials_gov_number: 'NCT1234',
+            other_registry_numbers: ['A1', 'a1'],
+          },
+          { ...savedTrial },
+          { ...savedTrial, study_name: 'Copy' },
+        ])}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Save and continue' }))
+
+    expect(await screen.findByText('Enter the study name')).toBeInTheDocument()
+    expect(screen.getByText('ID must be 8 digits')).toBeInTheDocument()
+    expect(screen.getByText('Registry number must be different')).toBeInTheDocument()
+    expect(screen.getByText('Trial number must be different')).toBeInTheDocument()
+    expect(screen.getAllByLabelText('Study name')[0]).toHaveAttribute('aria-invalid', 'true')
+    expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+  })
+
+  it('shows server errors against the trial, entry and group they name', async () => {
+    mocks.saveRecordFormPage.mockResolvedValue({
+      error: {
+        title: 'Invalid',
+        errors: {
+          record_clinical_trial: ['Add at least one clinical trial'],
+          'record_clinical_trial[0].study_name': ['Study name from the server'],
+          // The server numbers entries without the blank one shown first.
+          'record_clinical_trial[0].other_registry_numbers[0]': ['Entry from the server'],
+        },
+      },
+      response: { ok: false, status: 400 },
+    })
+    render(<FormPage page={trialsPage([{ ...savedTrial, other_registry_numbers: ['', 'B2'] }])} />)
+
+    save()
+
+    expect(await screen.findByText('Study name from the server')).toBeInTheDocument()
+    expect(screen.getByText('Add at least one clinical trial')).toBeInTheDocument()
+    expect(screen.getByText('Entry from the server')).toBeInTheDocument()
+    expect(screen.getByLabelText('Trial number from other registry (optional) 2')).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    )
+    expect(
+      screen.getByLabelText('Trial number from other registry (optional) 1'),
+    ).not.toHaveAttribute('aria-invalid', 'true')
+  })
+})

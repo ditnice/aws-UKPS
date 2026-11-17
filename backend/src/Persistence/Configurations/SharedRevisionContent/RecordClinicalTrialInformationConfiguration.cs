@@ -12,6 +12,7 @@ internal sealed class RecordClinicalTrialInformationConfiguration
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
         builder.Property(x => x.RecruitingInUk);
+        builder.Property(x => x.HasClinicalTrials);
 
         builder
             .HasIndex(x => x.RevisionId)
@@ -21,6 +22,16 @@ internal sealed class RecordClinicalTrialInformationConfiguration
         builder
             .HasOne(x => x.Revision)
             .WithMany()
+            .HasForeignKey(x => x.RevisionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // A revision's trials hang off its clinical trial information row, joined on the
+        // revision, so the form can read and write them through this row like any child
+        // collection. A trial therefore needs the information row of its revision.
+        builder
+            .HasMany(x => x.ClinicalTrials)
+            .WithOne()
+            .HasPrincipalKey(x => x.RevisionId)
             .HasForeignKey(x => x.RevisionId)
             .OnDelete(DeleteBehavior.Restrict);
     }

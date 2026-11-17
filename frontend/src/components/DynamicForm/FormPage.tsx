@@ -19,7 +19,11 @@ import { applyServerErrors } from '@/lib/dynamic-form/applyServerErrors'
 import { buildZodSchema } from '@/lib/dynamic-form/buildZodSchema'
 import { pageLayout, shownQuestionIds } from '@/lib/dynamic-form/conditions'
 import type { FormValue } from '@/lib/dynamic-form/types'
-import { getFieldErrorMessage, getFieldErrorParts } from '@/lib/form/getFieldErrorMessage'
+import {
+  getFieldErrorItems,
+  getFieldErrorMessage,
+  getFieldErrorParts,
+} from '@/lib/form/getFieldErrorMessage'
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 
 import styles from './DynamicForm.module.scss'
@@ -164,6 +168,7 @@ export function FormPage({ page }: FormPageProps) {
                       <Component
                         clearError={() => field.setMeta((meta) => ({ ...meta, errorMap: {} }))}
                         error={getFieldErrorMessage(field.state.meta.errors)}
+                        errorItems={getFieldErrorItems(field.state.meta.errors)}
                         errorParts={getFieldErrorParts(field.state.meta.errors)}
                         labelAsHeading={labelAsHeading}
                         name={field.name}

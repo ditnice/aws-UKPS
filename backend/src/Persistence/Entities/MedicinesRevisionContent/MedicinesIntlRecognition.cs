@@ -121,6 +121,7 @@ internal sealed class MedicinesIntlRecognition
         FormControl.Radio
     )]
     [FormRequired("Select whether international conditional approval is anticipated")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IntlConditionalApprovalAnticipated { get; set; }
 
     // Navigation

@@ -52,6 +52,7 @@ internal sealed class MedicinesBudgetImpact
     [FormRequired(
         "Select yes if UK patients will be able to access this product on a compassionate or early access basis outside of clinical trials"
     )]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? CompassionateAccessAvailable { get; set; }
 
     /// <summary>Conditional on CompassionateAccessAvailable = Yes.</summary>
@@ -97,6 +98,7 @@ internal sealed class MedicinesBudgetImpact
     [FormRequired(
         "Select yes if a Patient Access Scheme or alternative discount arrangement is planned for this indication"
     )]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? PatientAccessSchemePlanned { get; set; }
 
     /// <summary>Multi-select. Conditional on PatientAccessSchemePlanned = Yes.</summary>
@@ -141,6 +143,7 @@ internal sealed class MedicinesBudgetImpact
         Hint = "Select yes if the medicine will have different pricing arrangements depending on indication. Select no if pricing will be uniform."
     )]
     [FormRequired("Select yes if there are plans for indication specific pricing")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IndicationSpecificPricingPlanned { get; set; }
 
     /// <summary>Conditional on IndicationSpecificPricingPlanned = Yes.</summary>
