@@ -5,12 +5,7 @@ using UKPS.Api.Persistence.FormAnnotations;
 namespace UKPS.Api.Persistence.Entities.SharedRevisionContent;
 
 /// <summary>Health technology assessment and UK launch.</summary>
-[FormSection(
-    RecordType.Medicine,
-    MedicineFormSections.RegulatoryAccessAndLaunch,
-    MedicineFormSections.RegulatoryAccessAndLaunchTitle,
-    Order = MedicineFormSections.RegulatoryAccessAndLaunchOrder
-)]
+[FormEntity]
 [FormPageShowWhen(
     "nice-aligned-pathway",
     "record_hta.medicine_hta_bodies",
@@ -32,12 +27,7 @@ internal sealed class RecordHta
     /// <summary>
     /// Medicines only: is an HTA submission planned for this indication?
     /// </summary>
-    [FormTask(
-        MedicineFormTasks.HtaAndLaunch,
-        MedicineFormTasks.HtaAndLaunchTitle,
-        Order = MedicineFormTasks.HtaAndLaunchOrder
-    )]
-    [FormPage("hta-submission", "HTA submission", Order = 10)]
+    [FormPage(MedicineFormLayout.HtaAndLaunch, "hta-submission", "HTA submission", Order = 10)]
     [FormField(
         "record_hta.medicine_hta_submission_intended",
         "Do you intend to submit for a HTA?",
@@ -50,12 +40,7 @@ internal sealed class RecordHta
     /// <summary>
     /// Medicines only, multi-select.
     /// </summary>
-    [FormTask(
-        MedicineFormTasks.HtaAndLaunch,
-        MedicineFormTasks.HtaAndLaunchTitle,
-        Order = MedicineFormTasks.HtaAndLaunchOrder
-    )]
-    [FormPage("hta-submission", "HTA submission", Order = 10)]
+    [FormPage(MedicineFormLayout.HtaAndLaunch, "hta-submission", "HTA submission", Order = 10)]
     [FormField(
         "record_hta.medicine_hta_bodies",
         "Select the submission bodies you intend to submit to for a HTA",
@@ -67,12 +52,7 @@ internal sealed class RecordHta
     [FormRequired("Select if you will submit to NICE, the SMC, or AWMSG for a HTA")]
     public MedicineHtaAssessor? MedicineHtaBodies { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.HtaAndLaunch,
-        MedicineFormTasks.HtaAndLaunchTitle,
-        Order = MedicineFormTasks.HtaAndLaunchOrder
-    )]
-    [FormPage("hta-submission", "HTA submission", Order = 10)]
+    [FormPage(MedicineFormLayout.HtaAndLaunch, "hta-submission", "HTA submission", Order = 10)]
     [FormField(
         "record_hta.hta_additional_details",
         "Add additional details or clarifications, such as any planned differences in the indications submitted to each HTA",
@@ -84,12 +64,12 @@ internal sealed class RecordHta
     public string? HtaAdditionalDetails { get; set; }
 
     /// <summary>Medicines only. Conditional on NICE being selected.</summary>
-    [FormTask(
-        MedicineFormTasks.HtaAndLaunch,
-        MedicineFormTasks.HtaAndLaunchTitle,
-        Order = MedicineFormTasks.HtaAndLaunchOrder
+    [FormPage(
+        MedicineFormLayout.HtaAndLaunch,
+        "nice-aligned-pathway",
+        "MHRA/NICE aligned pathway",
+        Order = 20
     )]
-    [FormPage("nice-aligned-pathway", "MHRA/NICE aligned pathway", Order = 20)]
     [FormField(
         "record_hta.hta_nice_aligned_pathway",
         "Do you intend to follow the MHRA/NICE aligned pathway?",
@@ -103,12 +83,12 @@ internal sealed class RecordHta
     /// Medicines only. The unique identifier assigned by NICE to this technology appraisal.
     /// Format: GID-TAXXXX or GID-HSTXXXX. Optional.
     /// </summary>
-    [FormTask(
-        MedicineFormTasks.HtaAndLaunch,
-        MedicineFormTasks.HtaAndLaunchTitle,
-        Order = MedicineFormTasks.HtaAndLaunchOrder
+    [FormPage(
+        MedicineFormLayout.HtaAndLaunch,
+        "nice-ta-id",
+        "NICE technology appraisal ID",
+        Order = 30
     )]
-    [FormPage("nice-ta-id", "NICE technology appraisal ID", Order = 30)]
     [FormField(
         "record_hta.nice_ta_development_id",
         "Enter the NICE technology appraisal development ID for this product (optional)",
@@ -124,12 +104,8 @@ internal sealed class RecordHta
     /// Medicines only. When the medicine is first available in the UK supply chain for this
     /// indication, stored as a regulatory date.
     /// </summary>
-    [FormTask(
-        MedicineFormTasks.HtaAndLaunch,
-        MedicineFormTasks.HtaAndLaunchTitle,
-        Order = MedicineFormTasks.HtaAndLaunchOrder
-    )]
     [FormPage(
+        MedicineFormLayout.HtaAndLaunch,
         "uk-launch-date",
         "UK commercial launch date",
         Order = 40,
