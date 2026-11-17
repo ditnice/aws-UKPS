@@ -164,12 +164,21 @@ describe('FormPage', () => {
       )
 
       expect(screen.getByText('Commercial in confidence')).toBeInTheDocument()
+      expect(
+        screen.getByText('. We will treat everything you enter on this page as confidential'),
+      ).toHaveClass('visually-hidden')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveAccessibleName(
+        /Commercial in confidence\. We will treat everything you enter on this page as confidential/,
+      )
     })
 
     it('does not show the badge by default', () => {
       render(<FormPage page={page()} />)
 
       expect(screen.queryByText('Commercial in confidence')).toBeNull()
+      expect(
+        screen.queryByText('. We will treat everything you enter on this page as confidential'),
+      ).toBeNull()
     })
 
     it('goes back to the task list from the first page of a task', () => {
