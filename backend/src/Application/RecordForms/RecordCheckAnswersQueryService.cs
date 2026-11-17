@@ -35,6 +35,7 @@ internal sealed class RecordCheckAnswersQueryService(
             {
                 FormVersion = form.Model.Version,
                 RecordId = form.Record.Id,
+                OrganisationId = form.Record.OrganisationId,
                 RevisionHash = revision.Hash,
                 CanSubmit =
                     form.Record.CanSubmit(form.Revision)

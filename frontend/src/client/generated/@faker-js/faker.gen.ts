@@ -788,6 +788,7 @@ export const fakeRecordCheckAnswersDto = (options?: Options): RecordCheckAnswers
     return {
         formVersion: f.string.sample(),
         recordId: f.number.int(),
+        organisationId: f.number.int(),
         revisionHash: f.string.sample(),
         canSubmit: f.datatype.boolean(),
         sections: f.helpers.multiple(() => fakeRecordCheckAnswersSectionDto(options)),
