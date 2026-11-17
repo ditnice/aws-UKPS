@@ -14,6 +14,8 @@ public abstract record InitiateAuthenticationError
     /// </summary>
     public sealed record Unauthorised : InitiateAuthenticationError;
 
+    public sealed record InvalidPendingEmail : InitiateAuthenticationError;
+
     /// <summary>
     /// Indicates that authentication cannot be completed until the specified challenge
     /// has been satisfied.

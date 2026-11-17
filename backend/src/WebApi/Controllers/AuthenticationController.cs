@@ -259,7 +259,7 @@ public class AuthenticationController : ControllerBase
     /// <response code="401">
     /// The authentication session or verification code was invalid.
     /// </response>
-    [HttpPost("mfa")]
+    [HttpPost("mfa", Name = nameof(RespondToMultiFactorAuthenticationChallenge))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<AuthenticationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<AuthenticationProblemDetails>(StatusCodes.Status401Unauthorized)]

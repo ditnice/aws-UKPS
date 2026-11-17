@@ -1,8 +1,10 @@
+global using UpdateEmailToCompletePendingEmailChangeResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.UpdateEmailToCompletePendingEmailError>;
 global using VerifyPendingEmailAddressResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.VerifyPendingEmailAddressError>;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
+using UKPS.Api.Persistence.Entities.Identity;
 
 namespace UKPS.Api.Application.Users;
 
@@ -95,6 +97,19 @@ public interface IUserService
     );
 
     /// <summary>
+    /// Updates the user's email address to complete a pending email change.
+    /// </summary>
+    /// <param name="userId">The ID of the user whose email address is being updated.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation, containing the result of the pending email change.
+    /// </returns>
+    Task<UpdateEmailToCompletePendingEmailChangeResult> UpdateEmailToCompletePendingEmailChange(
+        int userId,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
     /// Retrieves the details of a user, along with their membership of the specified organisation.
     /// </summary>
     /// <param name="userId">The unique identifier of the user to retrieve.</param>
@@ -167,4 +182,38 @@ public interface IUserService
         int userId,
         CancellationToken cancellationToken
     );
+}
+
+/// <summary>
+/// Represents an error that can occur when completing a pending email update.
+/// </summary>
+public abstract record UpdateEmailToCompletePendingEmailError
+{
+    /// <summary>
+    /// Represents the error when the pending email update cannot be found.
+    /// </summary>
+    public sealed record NotFound : UpdateEmailToCompletePendingEmailError;
+
+    /// <summary>
+    /// Represents the error when the email address conflicts with an existing user.
+    /// </summary>
+    public sealed record ConflictingEmail : UpdateEmailToCompletePendingEmailError;
+
+    internal TResult Match<TResult>(
+        Func<NotFound, TResult> notFound,
+        Func<ConflictingEmail, TResult> conflictingEmail
+    )
+    {
+        ArgumentNullException.ThrowIfNull(notFound);
+        ArgumentNullException.ThrowIfNull(conflictingEmail);
+
+        return this switch
+        {
+            NotFound e => notFound(e),
+            ConflictingEmail e => conflictingEmail(e),
+            _ => throw new NotSupportedException(
+                $"Unsupported {nameof(UpdateEmailToCompletePendingEmailError)} subtype: {GetType().Name}."
+            ),
+        };
+    }
 }

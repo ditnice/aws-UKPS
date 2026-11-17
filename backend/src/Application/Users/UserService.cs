@@ -629,6 +629,43 @@ internal partial class UserService(
         }
     }
 
+    public async Task<UpdateEmailToCompletePendingEmailChangeResult> UpdateEmailToCompletePendingEmailChange(
+        int userId,
+        CancellationToken cancellationToken
+    )
+    {
+        await using IDbContextTransaction transaction =
+            await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
+
+            if (user is null)
+            {
+                return UpdateEmailToCompletePendingEmailChangeResult.Err(
+                    new UpdateEmailToCompletePendingEmailError.NotFound()
+                );
+            }
+
+            user.CompletePendingEmail(timeProvider.GetUtcNow());
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await HandleUserEvents(user, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return UpdateEmailToCompletePendingEmailChangeResult.Ok();
+        }
+        catch (DbUpdateException updateException)
+            when (ConstraintExceptions.IsUniqueEmailException(updateException))
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return UpdateEmailToCompletePendingEmailChangeResult.Err(
+                new UpdateEmailToCompletePendingEmailError.ConflictingEmail()
+            );
+        }
+    }
+
     public async Task<VerifyPendingEmailAddressResult> VerifyPendingEmailAddress(
         int userId,
         VerifyPendingEmailAddressCommand command,

@@ -6,6 +6,7 @@ using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Application.Authentication.SecurityNotification;
 using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Identity;
+using UKPS.Api.Application.Users;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
 using InitiateAuthenticationResult = UKPS.Api.Application.Common.Result<
@@ -18,16 +19,19 @@ namespace UKPS.Api.Application.Authentication;
 internal class LoginService : ILoginService
 {
     private readonly IIdentityService _identityService;
+    private readonly IUserService _userService;
     private readonly AppDbContext _appDbContext;
     private readonly IEmailService _emailService;
 
     public LoginService(
         IIdentityService identityService,
+        IUserService userService,
         AppDbContext appDbContext,
         IEmailService emailService
     )
     {
         _identityService = identityService;
+        _userService = userService;
         _appDbContext = appDbContext;
         _emailService = emailService;
     }
@@ -47,10 +51,36 @@ internal class LoginService : ILoginService
             request.Password,
             cancellationToken
         );
-        if (result.IsOk)
+
+        return await HandleSuccessfulAuthentication(result, user, cancellationToken);
+    }
+
+    private async Task<InitiateAuthenticationResult> HandleSuccessfulAuthentication(
+        InitiateAuthenticationResult result,
+        User user,
+        CancellationToken cancellationToken
+    )
+    {
+        if (result.IsErr)
         {
-            await ResetCurrentOrganisation(user, cancellationToken);
+            return result;
         }
+
+        var emailUpdateResult = await _userService.UpdateEmailToCompletePendingEmailChange(
+            user.Id,
+            cancellationToken
+        );
+
+        if (emailUpdateResult.IsErr)
+        {
+            emailUpdateResult.Error.Match(
+                _ => throw new InvalidOperationException(),
+                _ => new InitiateAuthenticationError.InvalidPendingEmail()
+            );
+        }
+
+        await ResetCurrentOrganisation(user, cancellationToken);
+
         return result;
     }
 
@@ -70,11 +100,8 @@ internal class LoginService : ILoginService
             command.Code,
             cancellationToken
         );
-        if (result.IsOk)
-        {
-            await ResetCurrentOrganisation(user, cancellationToken);
-        }
-        return result;
+
+        return await HandleSuccessfulAuthentication(result, user, cancellationToken);
     }
 
     public Task<InitiateAuthenticationResult> RefreshAuthenticationToken(

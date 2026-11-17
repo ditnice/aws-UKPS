@@ -266,6 +266,11 @@ internal sealed class User
         PendingEmailVerifiedAt = dateTime;
     }
 
+    internal void CompletePendingEmail(DateTime dateTime)
+    {
+        throw new NotImplementedException();
+    }
+
     internal record EmailUpdatedEvent : IUserDomainEvent
     {
         public required string PreviousWorkEmail { get; init; }
