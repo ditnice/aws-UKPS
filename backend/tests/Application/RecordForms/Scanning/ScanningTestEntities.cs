@@ -182,6 +182,17 @@ internal sealed class BrokenEntity
     [FormValuePrefixes("GID", "GID-TA")]
     public string? OverlappingPrefix { get; set; }
 
+    [FormTask("broken-task", "Broken task", Order = 10)]
+    [FormPage("broken-prefixes", "Broken prefixes", Order = 50)]
+    [FormField(
+        "broken_entity.negative_digits",
+        "Negative digits",
+        FormControl.PrefixedNumber,
+        Order = 6
+    )]
+    [FormValuePrefixes("NCT", Digits = -1)]
+    public string? NegativeDigits { get; set; }
+
     public RecordRevision? Revision { get; set; }
 }
 

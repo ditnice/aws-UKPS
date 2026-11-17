@@ -331,9 +331,11 @@ metadata, so attributes never contain expressions:
   owner foreign key and its reference foreign key. On write, it compares the submitted set with
   the stored rows and inserts or deletes only the difference.
 - **`GroupBinding`** is built from a navigation collection annotated as a `Group`. Each item is a
-  child row whose questions have their own bindings on that row. Writes match items to rows by
-  position (by `DisplayOrder` when the child has one, then ID), update the first rows in place,
-  delete extra rows after clearing their own child rows, and add missing ones. Its audit value is
+  child row whose questions have their own bindings on that row. Rows are read in order (by
+  `DisplayOrder` when the child has one, then ID). Writes match items to rows by the `ItemKey`
+  answer when there is one, then fill leftover rows without breaking the stored order (by
+  position when there is no `ItemKey`), delete rows left over after clearing their own child rows,
+  and add missing ones. Its audit value is
   one JSON object keyed by the `ItemKey` question's answer.
 - **`TextListBinding`** stores an ordered `string[]` as child rows with one string column each,
   matched by position, with `DisplayOrder` written from 1.

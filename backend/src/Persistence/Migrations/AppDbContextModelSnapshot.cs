@@ -2070,10 +2070,6 @@ namespace UKPS.Api.Persistence.Migrations
                     b.HasAlternateKey("RevisionId")
                         .HasName("ak_record_clinical_trial_information_revision_id");
 
-                    b.HasIndex("RevisionId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_record_clinical_trial_information_revision_id");
-
                     b.ToTable("record_clinical_trial_information", "ukps");
                 });
 

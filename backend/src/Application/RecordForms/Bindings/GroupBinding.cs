@@ -8,7 +8,10 @@ namespace UKPS.Api.Application.RecordForms.Bindings;
 
 /// <summary>
 /// Stores a group answer as child rows, one per item, each item's questions written through their
-/// own bindings on the child row. Items are matched to rows by position.
+/// own bindings on the child row. With an item key, an item keeps the row that holds the same key
+/// answer, ignoring case, so removing an item does not move the others onto different rows; items
+/// left unmatched (new, or with an edited key) take the remaining rows in order. Without an item
+/// key, items are matched to rows by position.
 /// </summary>
 internal sealed class GroupBinding(
     ChildCollection children,
@@ -36,10 +39,10 @@ internal sealed class GroupBinding(
 
     public void Write(AppDbContext dbContext, object row, FormAnswer answer)
     {
-        IReadOnlyList<object> items = children.Resize(
+        IReadOnlyList<object> items = children.Apply(
             dbContext,
             row,
-            answer.Items.Count,
+            MatchRows(row, answer),
             item => Clear(dbContext, item)
         );
         for (int i = 0; i < items.Count; i++)
@@ -75,6 +78,94 @@ internal sealed class GroupBinding(
         }
 
         return FieldAuditJson.Serialize(audit);
+    }
+
+    /// <summary>
+    /// The stored row each submitted item keeps, or null for a new row. First each item takes the
+    /// row with the same item key answer. Then each item still unmatched takes the first unclaimed
+    /// row between its neighbours' rows, so the stored order is kept even for a child read back in
+    /// ID order; with no such row it gets a new one.
+    /// </summary>
+    private object?[] MatchRows(object row, FormAnswer answer)
+    {
+        IReadOnlyList<object> existing = children.Items(row);
+        int[] positions = new int[answer.Items.Count];
+        Array.Fill(positions, -1);
+        bool[] claimed = new bool[existing.Count];
+
+        MatchByKey(existing, answer, positions, claimed);
+        FillInOrder(positions, claimed);
+
+        return [.. positions.Select(p => p < 0 ? null : existing[p])];
+    }
+
+    /// <summary>Gives each item with an item key answer the first unclaimed row holding it.</summary>
+    private void MatchByKey(
+        IReadOnlyList<object> existing,
+        FormAnswer answer,
+        int[] positions,
+        bool[] claimed
+    )
+    {
+        if (itemKey is null)
+        {
+            return;
+        }
+
+        IFormBinding keyBinding = questions
+            .Single(q => string.Equals(q.Id, itemKey, StringComparison.Ordinal))
+            .Binding;
+        string?[] storedKeys = [.. existing.Select(e => keyBinding.Read(e).Value)];
+        for (int i = 0; i < positions.Length; i++)
+        {
+            if (answer.Items[i][itemKey].Value is not { } key)
+            {
+                continue;
+            }
+
+            int match = Enumerable
+                .Range(0, storedKeys.Length)
+                .FirstOrDefault(
+                    e =>
+                        !claimed[e]
+                        && string.Equals(storedKeys[e], key, StringComparison.OrdinalIgnoreCase),
+                    -1
+                );
+            if (match >= 0)
+            {
+                positions[i] = match;
+                claimed[match] = true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gives each unmatched item the first unclaimed row after the previous item's row and before
+    /// the next matched item's row, when there is one.
+    /// </summary>
+    private static void FillInOrder(int[] positions, bool[] claimed)
+    {
+        int previous = -1;
+        for (int i = 0; i < positions.Length; i++)
+        {
+            if (positions[i] < 0)
+            {
+                int following = positions.Skip(i + 1).FirstOrDefault(static p => p >= 0, -1);
+                if (following < 0)
+                {
+                    following = claimed.Length;
+                }
+
+                int free = Array.FindIndex(claimed, previous + 1, static c => !c);
+                if (free >= 0 && free < following)
+                {
+                    positions[i] = free;
+                    claimed[free] = true;
+                }
+            }
+
+            previous = Math.Max(previous, positions[i]);
+        }
     }
 
     /// <summary>Removes an item's own child rows before the item is deleted.</summary>

@@ -1,5 +1,6 @@
 import { RuleKind } from '@/client/generated'
 import { AddAnotherGroup } from '@/components/AddAnother/AddAnotherGroup'
+import { FormGroup } from '@/components/FormGroup/FormGroup'
 import { emptyGroupItem } from '@/lib/dynamic-form/answers'
 import type { FormValue, GroupItemValue } from '@/lib/dynamic-form/types'
 
@@ -17,7 +18,9 @@ const childErrors = (errorItems: Record<string, string> | undefined, prefix: str
 
 /**
  * A repeating group of questions in the MoJ add another stacked layout, such as clinical trials.
- * Each item's questions are rendered by their own controls, with errors from `errorItems`.
+ * The whole group is a fieldset whose legend is the question label, with the hint and any error
+ * about the group as a whole linked to it. Each item's questions are rendered by their own
+ * controls, with errors from `errorItems`.
  */
 export function GroupQuestion({
   question,
@@ -42,18 +45,20 @@ export function GroupQuestion({
     )
 
   return (
-    <>
-      {!labelAsHeading && <h2>{question.label}</h2>}
-      {question.hint && (
-        <p className="input__hint" id={`${name}-hint`}>
-          {question.hint}
-        </p>
-      )}
+    // On a single-question page the label is the page heading, so the legend is hidden visually
+    // (see DynamicForm.module.scss) and is not a heading itself; the items are then h2s.
+    <FormGroup
+      error={error || undefined}
+      headingLevel={labelAsHeading ? undefined : 2}
+      hint={question.hint ?? undefined}
+      identifier={name}
+      legend={question.label}
+    >
       <AddAnotherGroup
         addItemLabel={question.addAnotherLabel ?? 'Add another'}
         count={items.length}
-        error={error || undefined}
         itemHeading={(index) => `${question.itemLabel ?? 'Item'} ${index + 1}`}
+        itemHeadingLevel={labelAsHeading ? 2 : 3}
         maxItems={maxItems ?? undefined}
         onAdd={() => onChange([...items, emptyGroupItem(question)])}
         onRemove={(index) => {
@@ -84,6 +89,6 @@ export function GroupQuestion({
           })
         }
       />
-    </>
+    </FormGroup>
   )
 }

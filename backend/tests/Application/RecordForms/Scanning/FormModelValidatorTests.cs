@@ -81,6 +81,9 @@ public class FormModelValidatorTests
     )]
     [InlineData("BrokenEntity.RepeatedPrefix repeats a prefix in [FormValuePrefixes].")]
     [InlineData(
+        "BrokenEntity.NegativeDigits has a negative Digits in [FormValuePrefixes]; use 0 for up to 5 digits."
+    )]
+    [InlineData(
         "BrokenEntity.OverlappingPrefix has a prefix that starts another, which makes the split ambiguous."
     )]
     public void Validate_BrokenEntity_ReportsTheProblem(string expected)

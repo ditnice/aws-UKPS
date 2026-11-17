@@ -1471,6 +1471,29 @@ describe('FormPage clinical trials', () => {
     expect(screen.getByLabelText('Trial number from clinical trials.gov')).toHaveValue('06123456')
   })
 
+  it('keeps one canonical prefix when a whole ID is pasted in any case', async () => {
+    const user = userEvent.setup()
+    render(<FormPage page={trialsPage([{ ...savedTrial, clinical_trials_gov_number: '' }])} />)
+
+    await user.click(screen.getByLabelText('Trial number from clinical trials.gov'))
+    await user.paste('nct06123456')
+
+    expect(screen.getByLabelText('Trial number from clinical trials.gov')).toHaveValue('06123456')
+    save()
+    await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+    expect(sentAnswers()).toEqual({ record_clinical_trial: [savedTrial] })
+  })
+
+  it('groups the trials in a fieldset described by the hint', () => {
+    render(<FormPage page={trialsPage()} />)
+
+    expect(
+      screen.getByRole('group', { name: 'Enter clinical trial details' }),
+    ).toHaveAccessibleDescription(
+      'Include all studies that support marketing authorisation and HTA submission.',
+    )
+  })
+
   it('loads saved trials and their registry numbers', () => {
     render(<FormPage page={trialsPage([savedTrial])} />)
 

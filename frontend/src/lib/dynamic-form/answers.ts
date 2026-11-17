@@ -192,12 +192,13 @@ const ruleOrder: Rule['kind'][] = [
 
 /**
  * The positions of values that repeat an earlier one, ignoring case and surrounding space.
- * Blank values are never repeats. Mirrors RuleEvaluator.RepeatIndexes.
+ * Blank values are never repeats. Mirrors RuleEvaluator.RepeatIndexes, which compares with
+ * `OrdinalIgnoreCase`: that upper-cases each character, so values are upper-cased here too.
  */
 export const repeatIndexes = (values: (string | null)[]): number[] => {
   const seen = new Set<string>()
   return values.flatMap((value, index) => {
-    const key = value?.trim().toLowerCase()
+    const key = value?.trim().toUpperCase()
     if (!key) {
       return []
     }

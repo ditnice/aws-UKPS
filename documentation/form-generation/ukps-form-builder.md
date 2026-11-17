@@ -15,7 +15,7 @@
 > - **Not yet designed for the attribute approach:** cross-field rules. Conditions, stale-answer
 >   clearing, precision dates and add-another groups (`Group` and `TextList`, see
 >   [Groups and text lists](creating-form-pages.md#groups-and-text-lists)) have since been built.
->   Groups differ from this brief: items are matched by position, not by `itemId`, and a group is
+>   Groups differ from this brief: items are matched by their `ItemKey` answer (or by position), not by `itemId`, and a group is
 >   audited as one row keyed by its `ItemKey` rather than one row per child field.
 >
 > Current documentation: [high-level design](high-level-design.md),

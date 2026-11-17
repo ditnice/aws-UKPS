@@ -181,7 +181,7 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task SavePage_RemovingATrial_KeepsTheFirstRowsAndDeletesTheRest()
+    public async Task SavePage_RemovingATrial_KeepsEachOtherTrialOnItsOwnRow()
     {
         await SaveOk(GatePage, Answer(HasTrials, "Yes"));
         await SaveOk(
@@ -191,16 +191,61 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
                 Trial("Second", "NCT00000002", "B1", "B2")
             )
         );
-        int firstRowId = (await StoredTrials())[0].Id;
+        int secondRowId = (await StoredTrials())[1].Id;
 
         await SaveOk(DetailsPage, TrialsAnswer(Trial("Second", "NCT00000002", "B2")));
 
         RecordClinicalTrial remaining = (await StoredTrials()).Single();
         (remaining.Id, remaining.StudyName, remaining.ClinicalTrialsGovNumber).ShouldBe(
-            (firstRowId, "Second", "NCT00000002")
+            (secondRowId, "Second", "NCT00000002")
         );
         remaining.OtherClinicalTrialNumbers.Single().OtherRegistryNumber.ShouldBe("B2");
         (await Context.OtherClinicalTrialNumbers.CountAsync(Ct)).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task SavePage_EditingATrialNumber_KeepsTheTrialOnItsRow()
+    {
+        await SaveOk(GatePage, Answer(HasTrials, "Yes"));
+        await SaveOk(
+            DetailsPage,
+            TrialsAnswer(Trial("First", "NCT00000001"), Trial("Second", "NCT00000002"))
+        );
+        int[] rowIds = [.. (await StoredTrials()).Select(static t => t.Id)];
+
+        await SaveOk(
+            DetailsPage,
+            TrialsAnswer(Trial("First", "NCT00000009"), Trial("Second", "NCT00000002"))
+        );
+
+        (await StoredTrials())
+            .Select(static t => (t.Id, t.StudyName))
+            .ShouldBe([(rowIds[0], "First"), (rowIds[1], "Second")]);
+    }
+
+    [Fact]
+    public async Task SavePage_RemovingTheFirstTrialAndAddingOne_KeepsTheOrder()
+    {
+        await SaveOk(GatePage, Answer(HasTrials, "Yes"));
+        await SaveOk(
+            DetailsPage,
+            TrialsAnswer(Trial("First", "NCT00000001"), Trial("Second", "NCT00000002"))
+        );
+        int secondRowId = (await StoredTrials())[1].Id;
+
+        await SaveOk(
+            DetailsPage,
+            TrialsAnswer(Trial("Second", "NCT00000002"), Trial("Third", "NCT00000003"))
+        );
+
+        RecordClinicalTrial[] trials = await StoredTrials();
+        trials.Select(static t => t.StudyName).ShouldBe(["Second", "Third"]);
+        trials[0].Id.ShouldBe(secondRowId);
+        (await GetPage(DetailsPage))
+            .Answers[Trials]
+            .EnumerateArray()
+            .Select(static t => t.GetProperty("study_name").GetString())
+            .ShouldBe(["Second", "Third"]);
     }
 
     [Fact]

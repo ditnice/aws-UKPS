@@ -14,11 +14,8 @@ internal sealed class RecordClinicalTrialInformationConfiguration
         builder.Property(x => x.RecruitingInUk);
         builder.Property(x => x.HasClinicalTrials);
 
-        builder
-            .HasIndex(x => x.RevisionId)
-            .IsUnique()
-            .HasDatabaseName("ix_record_clinical_trial_information_revision_id");
-
+        // One row per revision. The trials below use RevisionId as an alternate key, whose unique
+        // constraint enforces this, so there is no separate unique index.
         builder
             .HasOne(x => x.Revision)
             .WithMany()

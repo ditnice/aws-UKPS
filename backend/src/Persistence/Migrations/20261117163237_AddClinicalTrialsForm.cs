@@ -10,6 +10,11 @@ namespace UKPS.Api.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropIndex(
+                name: "ix_record_clinical_trial_information_revision_id",
+                schema: "ukps",
+                table: "record_clinical_trial_information");
+
             migrationBuilder.AddColumn<int>(
                 name: "has_clinical_trials",
                 schema: "ukps",
@@ -38,6 +43,8 @@ namespace UKPS.Api.Persistence.Migrations
                 """
             );
 
+            // The alternate key's unique constraint replaces the dropped unique index, so a
+            // revision still has at most one information row.
             migrationBuilder.AddUniqueConstraint(
                 name: "ak_record_clinical_trial_information_revision_id",
                 schema: "ukps",
@@ -58,6 +65,8 @@ namespace UKPS.Api.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            // The information rows Up() added for revisions with trials are kept: they are valid
+            // rows with no answers once has_clinical_trials is dropped.
             migrationBuilder.DropForeignKey(
                 name: "fk_record_clinical_trials_record_clinical_trial_information_re",
                 schema: "ukps",
@@ -72,6 +81,13 @@ namespace UKPS.Api.Persistence.Migrations
                 name: "has_clinical_trials",
                 schema: "ukps",
                 table: "record_clinical_trial_information");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_record_clinical_trial_information_revision_id",
+                schema: "ukps",
+                table: "record_clinical_trial_information",
+                column: "revision_id",
+                unique: true);
         }
     }
 }

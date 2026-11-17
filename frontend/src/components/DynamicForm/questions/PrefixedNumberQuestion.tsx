@@ -31,9 +31,15 @@ function FixedPrefixNumber({
 }: QuestionProps<string>) {
   const prefix = question.prefixes![0]
   const { number } = splitPrefixedNumber([prefix], value)
-  // A whole ID pasted with its prefix is kept as it is, rather than prefixed again.
+  // A whole ID pasted with its prefix, in any case, is not prefixed again: "nct01234567" is saved
+  // as "NCT01234567".
   const changeNumber = (typed: string) =>
-    onChange(typed.startsWith(prefix) ? typed : prefix + typed)
+    onChange(
+      prefix +
+        (typed.slice(0, prefix.length).toUpperCase() === prefix.toUpperCase()
+          ? typed.slice(prefix.length)
+          : typed),
+    )
 
   return (
     <>

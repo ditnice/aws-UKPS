@@ -1,5 +1,4 @@
 import { Button } from '@/components/Button/Button'
-import { ErrorState } from '@/components/Placeholder/ErrorState'
 
 import styles from './AddAnotherGroup.module.scss'
 import { useAddAnotherFocus } from './useAddAnotherFocus'
@@ -17,8 +16,8 @@ export type AddAnotherGroupProps = {
   removeItemLabel: string
   onAdd: () => void
   onRemove: (index: number) => void
-  /** An error about the group as a whole, such as having no items. */
-  error?: string
+  /** The heading level of each item's heading, below the heading the group sits under. */
+  itemHeadingLevel?: 2 | 3 | 4
   /** No more items may be added once there are this many. */
   maxItems?: number
 }
@@ -39,20 +38,20 @@ export function AddAnotherGroup({
   removeItemLabel,
   onAdd,
   onRemove,
-  error,
+  itemHeadingLevel = 2,
   maxItems = Infinity,
 }: AddAnotherGroupProps) {
   const { itemRef, focusField, focusHeading } = useAddAnotherFocus()
   const canRemove = count > 1
+  const ItemHeading = `h${itemHeadingLevel}` as const
 
   return (
     <div className={styles.root}>
-      {error && <ErrorState>{error}</ErrorState>}
       {Array.from({ length: count }, (_, index) => (
         // Items have no identity of their own; position is what the user edits.
         <fieldset className={styles.item} key={index} ref={itemRef(index)}>
           <legend className={styles.heading} data-add-another-heading tabIndex={-1}>
-            <h2 className={styles.headingText}>{itemHeading(index)}</h2>
+            <ItemHeading className={styles.headingText}>{itemHeading(index)}</ItemHeading>
           </legend>
           {renderItem(index)}
           {canRemove && (

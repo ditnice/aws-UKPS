@@ -489,6 +489,13 @@ internal static partial class FormModelValidator
             );
         }
 
+        if (question.Prefixes!.Digits < 0)
+        {
+            problems.Add(
+                $"{where} has a negative Digits in [FormValuePrefixes]; use 0 for up to 5 digits."
+            );
+        }
+
         if (prefixes.Distinct(StringComparer.Ordinal).Count() != prefixes.Count)
         {
             problems.Add($"{where} repeats a prefix in [FormValuePrefixes].");
