@@ -22,10 +22,16 @@ public abstract record UpdateUserEmailError
     /// </summary>
     public sealed record ConflictingEmail : UpdateUserEmailError;
 
+    /// <summary>
+    /// Indicates that the email address being assigned is the same as the user's current email address.
+    /// </summary>
+    public sealed record MatchesCurrentEmail : UpdateUserEmailError;
+
     internal TResult Match<TResult>(
         Func<TResult> unauthorised,
         Func<TResult> userDoesNotExist,
-        Func<TResult> conflictingEmail
+        Func<TResult> conflictingEmail,
+        Func<TResult> matchesCurrentEmail
     )
     {
         return this switch
@@ -33,6 +39,7 @@ public abstract record UpdateUserEmailError
             Unauthorised => unauthorised(),
             UserDoesNotExist => userDoesNotExist(),
             ConflictingEmail => conflictingEmail(),
+            MatchesCurrentEmail => matchesCurrentEmail(),
             _ => throw new UnreachableException($"Unrecognised {nameof(UpdateUserDetailsError)}"),
         };
     }

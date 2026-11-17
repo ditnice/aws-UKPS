@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
+import {
+  fakePendingWorkEmailChangeDto,
+  fakeUserInformationDto,
+} from '@/client/generated/@faker-js/faker.gen'
 
 import { buildUpdateUserDetailsHref, UserDetail } from '../edit-details/[detail]/navigation'
 
@@ -32,6 +35,13 @@ describe('UserDetails', () => {
     expectDefinitionValue('Full name', currentUser.fullName)
     expectDefinitionValue('Email address', currentUser.workEmail)
     expectDefinitionValue('Contact Number', currentUser.workTelephone)
+  })
+
+  it('renders update pending if there is an email update pending', () => {
+    render(
+      <UserDetails currentUser={{ ...user, pendingWorkEmail: fakePendingWorkEmailChangeDto() }} />,
+    )
+    expect(screen.findByText('Update Pending'))
   })
 
   it('renders a change link for each editable detail', () => {

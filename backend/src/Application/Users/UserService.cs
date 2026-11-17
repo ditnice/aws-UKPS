@@ -74,6 +74,9 @@ internal partial class UserService(
             UserRole = currentUser.UserRole,
             Status = membership.Status.ConvertToUserOrgStatus(),
             HasMultipleOrganisations = user.HasMultipleSelectableOrganisations(),
+            PendingWorkEmail = user.PendingWorkEmail is not null
+                ? new() { Value = user.PendingWorkEmail }
+                : null,
         };
     }
 
@@ -273,6 +276,10 @@ internal partial class UserService(
                 OrganisationName = m.Organisation!.OrganisationName,
                 UserRole = m.UserRole,
                 Status = (UserOrgStatus)m.Status,
+                PendingWorkEmail =
+                    m.User.PendingWorkEmail != null
+                        ? new() { Value = m.User.PendingWorkEmail }
+                        : null,
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -590,23 +597,13 @@ internal partial class UserService(
         {
             User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
 
-            if (user is null)
+            var error = await ValidateEmailUpdatePermitted(user, command, cancellationToken);
+            if (error is not null)
             {
-                return Result<UpdateUserEmailError>.Err(
-                    new UpdateUserEmailError.UserDoesNotExist()
-                );
+                return Result<UpdateUserEmailError>.Err(error);
             }
 
-            bool isTheCurrentUserModifyingTheirOwnDetails = currentUserInfoService.IsCurrentUser(
-                user
-            );
-
-            if (!isTheCurrentUserModifyingTheirOwnDetails)
-            {
-                return Result<UpdateUserEmailError>.Err(new UpdateUserEmailError.Unauthorised());
-            }
-
-            user.UpdateEmail(command.Value, timeProvider.GetUtcNow());
+            user!.UpdateEmail(command.Value, timeProvider.GetUtcNow());
 
             await dbContext.SaveChangesAsync(cancellationToken);
             await HandleUserEvents(user, cancellationToken);
@@ -718,6 +715,45 @@ internal partial class UserService(
                     transitionResult.ConvertToUserOrgStatusTransitionResult()
                 );
             }
+        }
+
+        return null;
+    }
+
+    private async Task<UpdateUserEmailError?> ValidateEmailUpdatePermitted(
+        User? user,
+        UpdateUserEmailCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        if (user is null)
+        {
+            return new UpdateUserEmailError.UserDoesNotExist();
+        }
+
+        bool isTheCurrentUserModifyingTheirOwnDetails = currentUserInfoService.IsCurrentUser(user);
+
+        if (!isTheCurrentUserModifyingTheirOwnDetails)
+        {
+            return new UpdateUserEmailError.Unauthorised();
+        }
+
+        bool emailHasNotChanged = command.Value.Equals(user.WorkEmail, StringComparison.Ordinal);
+        if (emailHasNotChanged)
+        {
+            return new UpdateUserEmailError.MatchesCurrentEmail();
+        }
+
+        bool emailAlreadyExistInTheDatabase = await dbContext.Users.AnyAsync(
+            x =>
+                x.NormalisedPendingWorkEmail == EmailDbFunctions.Normalise(command.Value)
+                || x.NormalisedWorkEmail == EmailDbFunctions.Normalise(command.Value),
+            cancellationToken
+        );
+
+        if (emailAlreadyExistInTheDatabase)
+        {
+            return new UpdateUserEmailError.ConflictingEmail();
         }
 
         return null;

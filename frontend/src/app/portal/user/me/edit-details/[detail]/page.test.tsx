@@ -2,11 +2,16 @@ import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getUsersMe } from '@/client/generated'
+import {
+  fakePendingWorkEmailChangeDto,
+  fakeUserInformationDto,
+} from '@/client/generated/@faker-js/faker.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { errorMessages } from '@/lib/form/errorMessages'
 
 import { findTypedPageProps } from './navigation'
 import Page from './page'
+import PendingEmailUpdateAlert from './PendingEmailUpdateAlert'
 
 // ---- Mocks -----------------------------------------------------------------
 
@@ -27,6 +32,10 @@ vi.mock('@/client/server-api', () => ({
 
 vi.mock('./navigation', () => ({
   findTypedPageProps: vi.fn(),
+}))
+
+vi.mock('./PendingEmailUpdateAlert', () => ({
+  default: vi.fn(() => null),
 }))
 
 vi.mock('@/components/BackLink/BackLink', () => ({
@@ -63,6 +72,8 @@ vi.mock('./editUserEmail/EditUserEmailForm', () => ({
     <div data-testid="edit-user-email-form">{JSON.stringify(props)}</div>
   ),
 }))
+
+const PendingEmailUpdateAlertMock = vi.mocked(PendingEmailUpdateAlert)
 
 // ---- Helpers ---------------------------------------------------------------
 
@@ -226,6 +237,22 @@ describe('Edit user detail page', () => {
       })
       expect(screen.queryByTestId('edit-user-detail-form')).not.toBeInTheDocument()
       expect(screen.queryByTestId('error-state')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('pending email update', () => {
+    it('renders pending email update alert when', async () => {
+      setDetail('email')
+
+      const pendingWorkEmail = fakePendingWorkEmailChangeDto()
+      mockGetUsersMe({
+        data: { ...fakeUserInformationDto(), pendingWorkEmail: pendingWorkEmail },
+      })
+
+      await renderPage()
+
+      expect(PendingEmailUpdateAlertMock).toHaveBeenCalledTimes(1)
+      expect(PendingEmailUpdateAlertMock.mock.calls[0][0]).toEqual(pendingWorkEmail)
     })
   })
 })

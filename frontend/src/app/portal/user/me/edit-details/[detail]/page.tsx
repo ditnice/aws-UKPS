@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { ReactNode } from 'react'
 
 import { getUsersMe } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
@@ -12,10 +13,12 @@ import { buildMyDetailsHref } from '../../navigation'
 import EditUserDetailForm from './editUserDetailValue/EditUserDetailForm'
 import EditUserEmailForm from './editUserEmail/EditUserEmailForm'
 import { findTypedPageProps, PageProps, UserDetail } from './navigation'
+import PendingEmailUpdateAlert from './PendingEmailUpdateAlert'
 
-const PageWrapper = (props: React.PropsWithChildren & { label: string }) => {
+const PageWrapper = (props: React.PropsWithChildren & { label: string; header?: ReactNode }) => {
   return (
     <>
+      {props.header}
       <PageHeader
         backLink={<BackLink href={buildMyDetailsHref()} />}
         heading={`Edit ${props.label}`}
@@ -51,6 +54,13 @@ const Page = async (props: PageProps) => {
     )
   }
 
+  const getHeader = () => {
+    if (detail == 'email' && me.pendingWorkEmail) {
+      return <PendingEmailUpdateAlert {...me.pendingWorkEmail} />
+    }
+    return undefined
+  }
+
   const getForm = () => {
     switch (detail) {
       case 'fullName':
@@ -78,7 +88,9 @@ const Page = async (props: PageProps) => {
 
   return (
     <>
-      <PageWrapper label={label}>{getForm()}</PageWrapper>
+      <PageWrapper label={label} header={getHeader()}>
+        {getForm()}
+      </PageWrapper>
     </>
   )
 }

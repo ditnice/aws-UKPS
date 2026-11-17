@@ -22,6 +22,10 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasComputedColumnSql("ukps.normalise_email(work_email)", stored: true);
 
         builder
+            .Property(u => u.NormalisedPendingWorkEmail)
+            .HasComputedColumnSql("ukps.normalise_email(pending_work_email)", stored: true);
+
+        builder
             .HasIndex(u => u.NormalisedWorkEmail)
             .IsUnique()
             .HasDatabaseName("ix_app_user_normalised_work_email");
