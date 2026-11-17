@@ -26,7 +26,11 @@ export function TextListQuestion({
         name,
         state: { value: entries, meta: { errors: error ? [error] : [] } },
         pushValue: (next) => onChange([...entries, next]),
-        removeValue: (index) => onChange(entries.filter((_, i) => i !== index)),
+        removeValue: (index) => {
+          onChange(entries.filter((_, i) => i !== index))
+          // Positions have moved, so errors shown against them no longer line up.
+          clearError()
+        },
         // Typing in an entry clears the errors shown from the last save until it is next checked.
         setMeta: () => clearError(),
       }}

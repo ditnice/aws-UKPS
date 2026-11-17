@@ -158,8 +158,9 @@ export const AddAnother = <T extends string>({
         type="button"
         variant="primary"
         onClick={() => {
+          const index = field.state.value.length
           field.pushValue('')
-          focusField(field.state.value.length)
+          focusField(index)
         }}
       >
         {addItemLabel}

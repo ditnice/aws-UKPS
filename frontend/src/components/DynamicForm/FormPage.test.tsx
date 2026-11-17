@@ -1601,6 +1601,104 @@ describe('FormPage clinical trials', () => {
     expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
   })
 
+  it.each([1, 2])(
+    'clears positional registry errors when removing entry %i after validation',
+    async (entry) => {
+      const user = userEvent.setup()
+      render(
+        <FormPage
+          page={trialsPage([{ ...savedTrial, other_registry_numbers: ['A1', 'A1', 'B2'] }])}
+        />,
+      )
+
+      await user.click(screen.getByRole('button', { name: 'Save and continue' }))
+      expect(await screen.findByText('Registry number must be different')).toBeInTheDocument()
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `Remove Trial number from other registry (optional) ${entry}`,
+        }),
+      )
+
+      expect(screen.queryByText('Registry number must be different')).not.toBeInTheDocument()
+      const first = screen.getByLabelText('Trial number from other registry (optional) 1')
+      const second = screen.getByLabelText('Trial number from other registry (optional) 2')
+      expect(first).toHaveValue('A1')
+      expect(second).toHaveValue('B2')
+      expect(first).not.toHaveAttribute('aria-invalid', 'true')
+      expect(second).not.toHaveAttribute('aria-invalid', 'true')
+    },
+  )
+
+  it.each(['remove a trial', 'fill a blank registry entry', 'remove a registry entry'])(
+    'ignores stale server errors when users %s during a save and allows retrying',
+    async (change) => {
+      const user = userEvent.setup()
+      const result = {
+        error: {
+          title: 'Invalid',
+          errors: {
+            'record_clinical_trial[0].study_name': ['Study name from the server'],
+            'record_clinical_trial[0].other_registry_numbers[0]': ['Entry from the server'],
+          },
+        },
+        response: { ok: false, status: 400 },
+      }
+      let resolveSave!: (value: typeof result) => void
+      mocks.saveRecordFormPage.mockReturnValueOnce(
+        new Promise<typeof result>((resolve) => {
+          resolveSave = resolve
+        }),
+      )
+      mocks.saveRecordFormPage.mockResolvedValueOnce({
+        data: { nextPageId: 'recruiting-in-uk' },
+        response: { ok: true, status: 200 },
+      })
+      render(
+        <FormPage
+          page={trialsPage([
+            { ...savedTrial, other_registry_numbers: ['', 'B2'] },
+            { ...savedTrial, study_name: 'ION-EU', clinical_trials_gov_number: 'NCT06123457' },
+          ])}
+        />,
+      )
+
+      const saveButton = screen.getByRole('button', { name: 'Save and continue' })
+      await user.click(saveButton)
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+      expect(saveButton).toBeDisabled()
+
+      if (change === 'remove a trial') {
+        await user.click(
+          screen.getByRole('button', { name: 'Remove clinical trial Clinical trial 1' }),
+        )
+        expect(screen.getByLabelText('Study name')).toHaveValue('ION-EU')
+      } else if (change === 'fill a blank registry entry') {
+        await user.type(
+          screen.getAllByLabelText('Trial number from other registry (optional) 1')[0],
+          'A1',
+        )
+      } else {
+        await user.click(
+          screen.getAllByRole('button', {
+            name: 'Remove Trial number from other registry (optional) 1',
+          })[0],
+        )
+      }
+
+      resolveSave(result)
+      await waitFor(() => expect(saveButton).toBeEnabled())
+
+      expect(screen.queryByText('Study name from the server')).not.toBeInTheDocument()
+      expect(screen.queryByText('Entry from the server')).not.toBeInTheDocument()
+      expect(mocks.push).not.toHaveBeenCalled()
+
+      await user.click(saveButton)
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(2))
+      expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/recruiting-in-uk')
+    },
+  )
+
   it('shows server errors against the trial, entry and group they name', async () => {
     mocks.saveRecordFormPage.mockResolvedValue({
       error: {

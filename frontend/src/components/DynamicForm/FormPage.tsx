@@ -68,6 +68,7 @@ export function FormPage({ page }: FormPageProps) {
     onSubmit: async ({ value, formApi, meta }) => {
       setSaveState({ kind: 'idle' })
       setOtherErrors([])
+      const submittedValues = JSON.stringify(value)
       const { data, error, response } = await saveRecordFormPage({
         path: { recordId: page.recordId, pageId: page.page.id },
         body: {
@@ -85,7 +86,11 @@ export function FormPage({ page }: FormPageProps) {
       }
 
       if (isValidationProblemDetails(error)) {
-        setOtherErrors(applyServerErrors(formApi, questions, error))
+        // Fields stay editable while saving. Only apply validation errors if the form
+        // still matches the submitted values.
+        if (submittedValues === JSON.stringify(formApi.state.values)) {
+          setOtherErrors(applyServerErrors(formApi, questions, error))
+        }
         return
       }
 
