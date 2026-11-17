@@ -26,7 +26,8 @@ test:
     dotnet test
 
 coverage:
-    dotnet test /p:CollectCoverage=true
+    rm -rf tests/TestResults/Coverage tests/TestResults/CoverageReport
+    dotnet test --coverlet --coverlet-output-format cobertura --coverlet-include "[UKPS.Api]*" --coverlet-exclude-by-file "**/Program.cs" --coverlet-exclude-by-file "**/obj/**/*.cs" --coverlet-threshold 80 --coverlet-threshold-type line,branch --coverlet-threshold-stat Total --results-directory tests/TestResults/Coverage
     dotnet tool run reportgenerator
 
 erd:
