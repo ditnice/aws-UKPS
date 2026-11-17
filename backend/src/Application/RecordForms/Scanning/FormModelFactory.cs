@@ -19,14 +19,18 @@ internal static class FormModelFactory
         IEnumerable<Type> types
     )
     {
-        var (entities, problems) = FormModelScanner.Scan(model, types);
-        List<string> allProblems = [.. problems, .. FormModelValidator.Validate(entities, options)];
+        var (declarations, problems) = FormModelScanner.Scan(model, types);
+        List<string> allProblems =
+        [
+            .. problems,
+            .. FormModelValidator.Validate(declarations, options),
+        ];
         if (allProblems.Count > 0)
         {
             throw new FormModelException(allProblems);
         }
 
-        return new FormModelRegistry(FormModelBuilder.Build(entities, options));
+        return new FormModelRegistry(FormModelBuilder.Build(declarations, options));
     }
 
     /// <summary>

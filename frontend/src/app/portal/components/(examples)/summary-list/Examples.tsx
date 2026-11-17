@@ -3,6 +3,7 @@ import {
   SummaryListAction,
   SummaryListRow,
 } from '@/components/SummaryList/SummaryList'
+import { Tag } from '@/components/Tag/Tag'
 
 import { Example } from '../../_components/Example'
 
@@ -59,6 +60,29 @@ export function Examples() {
               Add
             </SummaryListAction>
             <SummaryListAction href="#change-contact-details" visuallyHiddenText="contact details">
+              Change
+            </SummaryListAction>
+          </SummaryListRow>
+        </SummaryList>
+      </Example>
+
+      <Example title="With a tag">
+        <SummaryList variant="wide-value">
+          <SummaryListRow label="Company code" value="GC22">
+            <SummaryListAction href="#change-company-code" visuallyHiddenText="company code">
+              Change
+            </SummaryListAction>
+          </SummaryListRow>
+          <SummaryListRow
+            label="Record title"
+            tag={
+              <Tag colour="purple" flush>
+                Hidden
+              </Tag>
+            }
+            value="In combination with methotrexate"
+          >
+            <SummaryListAction href="#change-record-title" visuallyHiddenText="record title">
               Change
             </SummaryListAction>
           </SummaryListRow>

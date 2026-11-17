@@ -14,65 +14,104 @@ internal static class FormModelScanner
 {
     private static readonly string _annotationNamespace = typeof(FormFieldAttribute).Namespace!;
 
-    public static (IReadOnlyList<EntityDeclaration> Entities, IReadOnlyList<string> Problems) Scan(
+    public static (FormDeclarations Declarations, IReadOnlyList<string> Problems) Scan(
         IModel model,
         IEnumerable<Type> types
     )
     {
+        List<FormLayout> layouts = [];
         List<EntityDeclaration> entities = [];
         List<string> problems = [];
 
         foreach (Type type in types)
         {
-            FormSectionAttribute[] sections = type.GetCustomAttributes<FormSectionAttribute>(false)
-                .ToArray();
-            PropertyInfo[] properties = type.GetProperties(
-                BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly
-            );
-
-            FormPageShowWhenAttribute[] pageConditions =
-                type.GetCustomAttributes<FormPageShowWhenAttribute>(false).ToArray();
-
-            if (sections.Length == 0)
+            if (type.IsSubclassOf(typeof(FormLayout)) && !type.IsAbstract)
             {
-                if (pageConditions.Length > 0)
+                if (CreateLayout(type, problems) is { } layout)
                 {
-                    problems.Add($"{type.Name} has [FormPageShowWhen] but no [FormSection].");
-                }
-
-                problems.AddRange(
-                    properties
-                        .Where(HasFormAttribute)
-                        .Select(p =>
-                            $"{type.Name}.{p.Name} has form attributes but {type.Name} has no [FormSection]."
-                        )
-                );
-                continue;
-            }
-
-            IEntityType? entityType = model.FindEntityType(type);
-            if (entityType is null)
-            {
-                problems.Add($"{type.Name} has [FormSection] but is not an EF entity.");
-                continue;
-            }
-
-            List<QuestionDeclaration> questions = [];
-            foreach (PropertyInfo property in properties)
-            {
-                QuestionDeclaration? question = ScanProperty(type, entityType, property, problems);
-                if (question is not null)
-                {
-                    questions.Add(question);
+                    layouts.Add(layout);
                 }
             }
-
-            entities.Add(
-                new EntityDeclaration(type, entityType, sections, questions, pageConditions)
-            );
+            else if (ScanEntity(model, type, problems) is { } entity)
+            {
+                entities.Add(entity);
+            }
         }
 
-        return (entities, problems);
+        return (new FormDeclarations(layouts, entities), problems);
+    }
+
+    private static EntityDeclaration? ScanEntity(IModel model, Type type, List<string> problems)
+    {
+        FormEntityAttribute? formEntity = type.GetCustomAttribute<FormEntityAttribute>(false);
+        PropertyInfo[] properties = type.GetProperties(
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly
+        );
+
+        FormPageShowWhenAttribute[] pageConditions =
+            type.GetCustomAttributes<FormPageShowWhenAttribute>(false).ToArray();
+
+        if (formEntity is null)
+        {
+            if (pageConditions.Length > 0)
+            {
+                problems.Add($"{type.Name} has [FormPageShowWhen] but no [FormEntity].");
+            }
+
+            problems.AddRange(
+                properties
+                    .Where(HasFormAttribute)
+                    .Select(p =>
+                        $"{type.Name}.{p.Name} has form attributes but {type.Name} has no [FormEntity]."
+                    )
+            );
+            return null;
+        }
+
+        IEntityType? entityType = model.FindEntityType(type);
+        if (entityType is null)
+        {
+            problems.Add($"{type.Name} has [FormEntity] but is not an EF entity.");
+            return null;
+        }
+
+        QuestionDeclaration[] questions = properties
+            .Select(property => ScanProperty(type, entityType, property, problems))
+            .OfType<QuestionDeclaration>()
+            .ToArray();
+
+        return new EntityDeclaration(
+            type,
+            entityType,
+            formEntity.RowSource,
+            questions,
+            pageConditions
+        );
+    }
+
+    private static FormLayout? CreateLayout(Type type, List<string> problems)
+    {
+        ConstructorInfo? constructor = type.GetConstructor(
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+            Type.EmptyTypes
+        );
+        if (constructor is null)
+        {
+            problems.Add($"{type.Name} is a FormLayout with no parameterless constructor.");
+            return null;
+        }
+
+        try
+        {
+            return (FormLayout)constructor.Invoke(null);
+        }
+        catch (TargetInvocationException exception)
+        {
+            problems.Add(
+                $"{type.Name} threw while being created: {exception.InnerException?.Message}"
+            );
+            return null;
+        }
     }
 
     private static bool HasFormAttribute(PropertyInfo property) =>
@@ -91,7 +130,6 @@ internal static class FormModelScanner
     {
         string where = $"{type.Name}.{property.Name}";
         FormFieldAttribute? field = property.GetCustomAttribute<FormFieldAttribute>();
-        FormTaskAttribute? task = property.GetCustomAttribute<FormTaskAttribute>();
         FormPageAttribute? page = property.GetCustomAttribute<FormPageAttribute>();
         IProperty? column = entityType.FindProperty(property.Name);
         INavigation? navigation = entityType.FindNavigation(property.Name);
@@ -101,18 +139,9 @@ internal static class FormModelScanner
             return null;
         }
 
-        if (task is null || page is null)
+        if (page is null)
         {
-            if (task is null)
-            {
-                problems.Add($"{where} has [FormField] but no [FormTask].");
-            }
-
-            if (page is null)
-            {
-                problems.Add($"{where} has [FormField] but no [FormPage].");
-            }
-
+            problems.Add($"{where} has [FormField] but no [FormPage].");
             return null;
         }
 
@@ -126,7 +155,6 @@ internal static class FormModelScanner
             {
                 EntityType = type,
                 Property = property,
-                Task = task,
                 Page = page,
                 Field = field!,
                 Required = property.GetCustomAttribute<FormRequiredAttribute>(),
@@ -231,7 +259,6 @@ internal static class FormModelScanner
 
     private static bool HasQuestionDetail(PropertyInfo property) =>
         property.IsDefined(typeof(FormPageAttribute), false)
-        || property.IsDefined(typeof(FormTaskAttribute), false)
         || property.IsDefined(typeof(FormRequiredAttribute), false)
         || property.IsDefined(typeof(FormMaxLengthAttribute), false)
         || property.IsDefined(typeof(FormValuePrefixesAttribute), false)

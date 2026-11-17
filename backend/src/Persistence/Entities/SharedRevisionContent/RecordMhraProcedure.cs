@@ -1,15 +1,9 @@
 using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
-using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Persistence.Entities.SharedRevisionContent;
 
-[FormSection(
-    RecordType.Medicine,
-    MedicineFormSections.RegulatoryAccessAndLaunch,
-    MedicineFormSections.RegulatoryAccessAndLaunchTitle,
-    Order = MedicineFormSections.RegulatoryAccessAndLaunchOrder
-)]
+[FormEntity]
 internal sealed class RecordMhraProcedure
 {
     [FormIgnore("Database identity")]
@@ -18,12 +12,8 @@ internal sealed class RecordMhraProcedure
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.MhraProcedureAndDates,
-        MedicineFormTasks.MhraProcedureAndDatesTitle,
-        Order = MedicineFormTasks.MhraProcedureAndDatesOrder
-    )]
     [FormPage(
+        MedicineFormLayout.MhraProcedureAndDates,
         "uk-market-authorisation",
         "UK market authorisation",
         Order = 10,
@@ -42,12 +32,8 @@ internal sealed class RecordMhraProcedure
     /// <summary>
     /// FK to IrpReferenceRegulator. On the IRP page, which shows only when MhraProcedureType = IRP.
     /// </summary>
-    [FormTask(
-        MedicineFormTasks.MhraProcedureAndDates,
-        MedicineFormTasks.MhraProcedureAndDatesTitle,
-        Order = MedicineFormTasks.MhraProcedureAndDatesOrder
-    )]
     [FormPage(
+        MedicineFormLayout.MhraProcedureAndDates,
         "international-recognition",
         "International Recognition Procedure (IRP)",
         Order = 60,
@@ -62,12 +48,8 @@ internal sealed class RecordMhraProcedure
     [FormRequired("Select a reference regulator")]
     public int? IrpReferenceRegulatorId { get; set; }
 
-    [FormTask(
-        MedicineFormTasks.MhraProcedureAndDates,
-        MedicineFormTasks.MhraProcedureAndDatesTitle,
-        Order = MedicineFormTasks.MhraProcedureAndDatesOrder
-    )]
     [FormPage(
+        MedicineFormLayout.MhraProcedureAndDates,
         "uk-market-authorisation",
         "UK market authorisation",
         Order = 10,
