@@ -56,4 +56,10 @@ public sealed record UserInformationDto
     /// Gets whether the user can select more than one organisation. Only set for the current user.
     /// </summary>
     public bool HasMultipleOrganisations { get; init; }
+
+    /// <summary>
+    /// Gets the details of a requested change to the user's work email address that has not yet been
+    /// completed, or <see langword="null"/> if there is no pending change.
+    /// </summary>
+    public PendingWorkEmailChangeDto? PendingWorkEmail { get; init; }
 }

@@ -311,12 +311,26 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("timestamptz")
                         .HasColumnName("last_active");
 
+                    b.Property<string>("NormalisedPendingWorkEmail")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("text")
+                        .HasColumnName("normalised_pending_work_email")
+                        .HasComputedColumnSql("ukps.normalise_email(pending_work_email)", true);
+
                     b.Property<string>("NormalisedWorkEmail")
                         .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("text")
                         .HasColumnName("normalised_work_email")
                         .HasComputedColumnSql("ukps.normalise_email(work_email)", true);
+
+                    b.Property<DateTime?>("PendingEmailVerifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("pending_email_verified_at");
+
+                    b.Property<string>("PendingWorkEmail")
+                        .HasColumnType("text")
+                        .HasColumnName("pending_work_email");
 
                     b.Property<string>("Title")
                         .HasColumnType("text")
@@ -341,6 +355,11 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_app_user");
+
+                    b.HasIndex("NormalisedPendingWorkEmail")
+                        .IsUnique()
+                        .HasDatabaseName("ix_app_user_normalised_pending_work_email")
+                        .HasFilter("normalised_pending_work_email IS NOT NULL");
 
                     b.HasIndex("NormalisedWorkEmail")
                         .IsUnique()

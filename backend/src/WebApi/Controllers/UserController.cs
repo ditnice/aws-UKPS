@@ -222,6 +222,18 @@ public class UserController(IUserService userService) : ControllerBase
                             statusCode: StatusCodes.Status409Conflict,
                             title: "Conflict",
                             detail: "The specified email conflicts with an existing email."
+                        ),
+                    () =>
+                        ValidationProblem(
+                            new ValidationProblemDetails(
+                                new Dictionary<string, string[]>(StringComparer.Ordinal)
+                                {
+                                    [nameof(command.Value)] =
+                                    [
+                                        "New email cannot be the same as the current email.",
+                                    ],
+                                }
+                            )
                         )
                 )
         );
