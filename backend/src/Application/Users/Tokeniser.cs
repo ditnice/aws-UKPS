@@ -1,4 +1,3 @@
-using System.Buffers.Text;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -13,6 +12,6 @@ internal static class Tokeniser
         byte[] bytes = Encoding.UTF8.GetBytes(value);
         byte[] hash = SHA256.HashData(bytes);
 
-        return Base64Url.EncodeToString(hash);
+        return Convert.ToHexStringLower(hash).Substring(0, 32);
     }
 }

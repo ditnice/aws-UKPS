@@ -247,7 +247,7 @@ public class UserController(IUserService userService) : ControllerBase
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>An empty 200 response when the pending email address has been verified.</returns>
     /// <response code="200">The pending email address was verified successfully.</response>
-    /// <response code="400">The verification token provided is invalid or has expired.</response>
+    /// <response code="400">The verification token provided is invalid.</response>
     /// <response code="403">The caller is not authorised to verify the email address for this user.</response>
     /// <response code="404">The user does not exist.</response>
     /// <response code="409">The user has no pending email address, or the pending email address has already been verified.</response>

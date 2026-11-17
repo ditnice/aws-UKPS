@@ -4475,7 +4475,7 @@
             "description": "The pending email address was verified successfully."
           },
           "400": {
-            "description": "The verification token provided is invalid or has expired.",
+            "description": "The verification token provided is invalid.",
             "content": {
               "text/plain": {
                 "schema": {

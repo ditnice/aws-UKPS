@@ -689,7 +689,7 @@ internal partial class UserService(
         bool providedTokenMatchesPendingEmail = string.Equals(
             command.VerificationToken,
             pendingWorkEmailToken,
-            StringComparison.OrdinalIgnoreCase // sent in url so should be case insensitive
+            StringComparison.Ordinal
         );
         if (!providedTokenMatchesPendingEmail)
         {

@@ -3660,7 +3660,7 @@ export type VerifyPendingEmailAddressData = {
 
 export type VerifyPendingEmailAddressErrors = {
     /**
-     * The verification token provided is invalid or has expired.
+     * The verification token provided is invalid.
      */
     400: ProblemDetails;
     /**

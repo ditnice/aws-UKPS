@@ -1,95 +1,129 @@
 import { render, screen } from '@testing-library/react'
-import { notFound, redirect } from 'next/navigation'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
-import { getUsersMe, verifyPendingEmailAddress } from '@/client/generated'
-import { buildSignInHref } from '@/lib/auth/routing'
 
 import Page from './page'
 
-vi.mock('@/client/generated', () => ({
-  getUsersMe: vi.fn(),
-  verifyPendingEmailAddress: vi.fn(),
+// ---- Mocks -----------------------------------------------------------------
+
+const {
+  notFoundMock,
+  redirectMock,
+  getUsersMeMock,
+  verifyPendingEmailAddressMock,
+  createServerApiClientMock,
+  buildSignInHrefMock,
+} = vi.hoisted(() => ({
+  notFoundMock: vi.fn(),
+  redirectMock: vi.fn(),
+  getUsersMeMock: vi.fn(),
+  verifyPendingEmailAddressMock: vi.fn(),
+  createServerApiClientMock: vi.fn(),
+  buildSignInHrefMock: vi.fn(),
 }))
 
-vi.mock('@/lib/auth/routing', () => ({
-  buildSignInHref: vi.fn(() => '/sign-in?emailVerified=true'),
-}))
+vi.mock('server-only', () => ({}))
 
 vi.mock('next/navigation', () => ({
-  notFound: vi.fn(() => {
+  notFound: notFoundMock.mockImplementation(() => {
     throw new Error('NEXT_NOT_FOUND')
   }),
-  redirect: vi.fn((url: string) => {
+  redirect: redirectMock.mockImplementation((url: string) => {
     throw new Error(`NEXT_REDIRECT:${url}`)
   }),
 }))
 
-vi.mock('@/components/PageHeader/PageHeader', () => ({
-  PageHeader: ({ heading }: { heading: string }) => <h1>{heading}</h1>,
+vi.mock('@/client/generated', () => ({
+  getUsersMe: getUsersMeMock,
+  verifyPendingEmailAddress: verifyPendingEmailAddressMock,
 }))
 
-vi.mock('@/components/Placeholder/ErrorState', () => ({
-  ErrorState: ({ children }: { children: React.ReactNode }) => <p role="alert">{children}</p>,
+vi.mock('@/client/server-api', () => ({
+  createServerApiClient: createServerApiClientMock,
 }))
 
-const renderPage = async (searchParams: { verificationToken?: string }) =>
-  Page({ searchParams: Promise.resolve(searchParams) })
+vi.mock('@/lib/auth/routing', () => ({
+  buildSignInHref: buildSignInHrefMock,
+}))
 
-describe('verify pending email page', () => {
+// ---- Tests -----------------------------------------------------------------
+
+describe('Email verification page', () => {
+  const client = { id: 'test-client' }
+  const user = { userId: 'user-123' }
+  const verificationToken = 'verification-token'
+
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getUsersMe).mockResolvedValue({
-      data: { userId: 123 },
-    } as Awaited<ReturnType<typeof getUsersMe>>)
+
+    notFoundMock.mockImplementation(() => {
+      throw new Error('NEXT_NOT_FOUND')
+    })
+
+    redirectMock.mockImplementation((url: string) => {
+      throw new Error(`NEXT_REDIRECT:${url}`)
+    })
+
+    createServerApiClientMock.mockResolvedValue(client)
+    getUsersMeMock.mockResolvedValue({ data: user })
+    verifyPendingEmailAddressMock.mockResolvedValue({ error: undefined })
+
+    buildSignInHrefMock.mockReturnValue('/sign-in?emailVerified=true')
   })
 
-  it('calls notFound when the verification token is missing', async () => {
-    await expect(renderPage({})).rejects.toThrow('NEXT_NOT_FOUND')
+  it('should return not found when no verification token is provided', async () => {
+    await expect(Page({ searchParams: Promise.resolve({}) })).rejects.toThrow('NEXT_NOT_FOUND')
 
-    expect(notFound).toHaveBeenCalledOnce()
-    expect(getUsersMe).not.toHaveBeenCalled()
-    expect(verifyPendingEmailAddress).not.toHaveBeenCalled()
+    expect(notFoundMock).toHaveBeenCalledOnce()
+    expect(createServerApiClientMock).not.toHaveBeenCalled()
   })
 
-  it('calls notFound when there is no signed-in user', async () => {
-    vi.mocked(getUsersMe).mockResolvedValue({
-      data: undefined,
-    } as Awaited<ReturnType<typeof getUsersMe>>)
+  it('should return not found when the current user cannot be retrieved', async () => {
+    getUsersMeMock.mockResolvedValue({ data: undefined })
 
-    await expect(renderPage({ verificationToken: 'abc' })).rejects.toThrow('NEXT_NOT_FOUND')
+    await expect(Page({ searchParams: Promise.resolve({ verificationToken }) })).rejects.toThrow(
+      'NEXT_NOT_FOUND',
+    )
 
-    expect(verifyPendingEmailAddress).not.toHaveBeenCalled()
+    expect(notFoundMock).toHaveBeenCalledOnce()
+    expect(verifyPendingEmailAddressMock).not.toHaveBeenCalled()
   })
 
-  it('verifies the token for the current user and redirects to sign in', async () => {
-    vi.mocked(verifyPendingEmailAddress).mockResolvedValue({
-      error: undefined,
-    } as Awaited<ReturnType<typeof verifyPendingEmailAddress>>)
+  it('should render an error when email verification fails', async () => {
+    verifyPendingEmailAddressMock.mockResolvedValue({
+      error: {
+        title: 'Verification failed',
+        detail: 'The verification link is invalid or has expired.',
+      },
+    })
 
-    await expect(renderPage({ verificationToken: 'abc' })).rejects.toThrow(
+    const result = await Page({
+      searchParams: Promise.resolve({ verificationToken }),
+    })
+
+    render(result)
+
+    expect(screen.getByRole('heading', { name: 'Verification failed' })).toBeInTheDocument()
+
+    expect(screen.getByText('The verification link is invalid or has expired.')).toBeInTheDocument()
+
+    expect(redirectMock).not.toHaveBeenCalled()
+  })
+
+  it('should redirect to sign-in when email verification succeeds', async () => {
+    await expect(Page({ searchParams: Promise.resolve({ verificationToken }) })).rejects.toThrow(
       'NEXT_REDIRECT:/sign-in?emailVerified=true',
     )
 
-    expect(verifyPendingEmailAddress).toHaveBeenCalledWith({
-      path: { userId: 1 },
-      body: { verificationToken: 'abc' },
+    expect(verifyPendingEmailAddressMock).toHaveBeenCalledWith({
+      client,
+      path: { userId: user.userId },
+      body: { verificationToken },
     })
-    expect(buildSignInHref).toHaveBeenCalledWith(undefined, {
+
+    expect(buildSignInHrefMock).toHaveBeenCalledWith(undefined, {
       emailVerified: true,
     })
-    expect(redirect).toHaveBeenCalledWith('/sign-in?emailVerified=true')
-  })
 
-  it('renders the error heading and detail when verification fails', async () => {
-    vi.mocked(verifyPendingEmailAddress).mockResolvedValue({
-      error: { title: 'Token expired', detail: 'Request a new link.' },
-    } as Awaited<ReturnType<typeof verifyPendingEmailAddress>>)
-
-    render(await renderPage({ verificationToken: 'abc' }))
-
-    expect(screen.getByRole('heading', { name: 'Token expired' })).toBeInTheDocument()
-    expect(screen.getByRole('alert')).toHaveTextContent('Request a new link.')
-    expect(redirect).not.toHaveBeenCalled()
+    expect(redirectMock).toHaveBeenCalledWith('/sign-in?emailVerified=true')
   })
 })

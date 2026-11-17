@@ -1,4 +1,3 @@
-using System.Net;
 using Microsoft.Extensions.Options;
 using UKPS.Api.Application.InternalServices.Hosting;
 
@@ -17,7 +16,7 @@ internal class EmailVerificationLinkCreator : IEmailVerificationLinkCreator
     {
         return new Uri(
             _options.HostUri,
-            $"/portal/user/me/verify-email?verificationToken={WebUtility.UrlEncode(verificationToken)}"
+            $"/portal/user/me/verify-email?verificationToken={verificationToken}"
         );
     }
 }

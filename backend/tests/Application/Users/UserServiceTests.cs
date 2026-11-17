@@ -46,7 +46,7 @@ public class UserServiceTests : DatabaseTestBase
     private readonly UpdateUserDetailsCommandFaker _updateUserDetailsCommandFaker = new();
     private IServiceTestHarness<IUserService> _harness;
     private IUserService Service => _harness.Service;
-    private readonly IEmailVerificationLinkCreator mockEmailVerificationLinkCreator =
+    private readonly IEmailVerificationLinkCreator _mockEmailVerificationLinkCreator =
         Substitute.For<IEmailVerificationLinkCreator>();
 
     private readonly DateTime _currentDateTime = new DateTime(
@@ -80,7 +80,7 @@ public class UserServiceTests : DatabaseTestBase
             .UpdateCurrentTime(_currentDateTime)
             .ConfigureServices(services =>
             {
-                return services.AddSingleton(mockEmailVerificationLinkCreator);
+                return services.AddSingleton(_mockEmailVerificationLinkCreator);
             });
 
         var organisations = _organisationFaker.Generate(3);
@@ -1221,7 +1221,7 @@ public class UserServiceTests : DatabaseTestBase
     [Fact]
     public async Task UpdateUserEmail_WhenValidRequest_ShouldSendVerificationEmail()
     {
-        mockEmailVerificationLinkCreator
+        _mockEmailVerificationLinkCreator
             .GetVerificationLink(Arg.Any<string>())
             .Returns(callInfo => new Uri($"http://{callInfo.Arg<string>()}"));
 
@@ -1234,12 +1234,10 @@ public class UserServiceTests : DatabaseTestBase
         );
         result.ShouldBeSuccess();
         var email = _harness
-            .Emails.Sent.ShouldHaveSingleItem()
-            .ShouldBeOfType<EmailChangeVerificationRequestEmail>();
+            .Emails.Sent.OfType<EmailChangeVerificationRequestEmail>()
+            .ShouldHaveSingleItem();
 
-        email.EmailVerificationLink.AbsolutePath.ShouldBe(
-            $"http://{Tokeniser.Generate(testEmail)}"
-        );
+        email.EmailVerificationLink.Host.ShouldBe(Tokeniser.Generate(testEmail));
     }
 
     [Fact]
@@ -1340,7 +1338,7 @@ public class UserServiceTests : DatabaseTestBase
         );
         result2
             .ShouldBeError()
-            .ShouldBeOfType<VerifyPendingEmailAddressError.NoPendingEmailToVerify>();
+            .ShouldBeOfType<VerifyPendingEmailAddressError.EmailAlreadyVerified>();
     }
 
     [Fact]
@@ -1361,21 +1359,24 @@ public class UserServiceTests : DatabaseTestBase
 
     private async Task<string> RequestEmailUpdate(User currentUser)
     {
-        mockEmailVerificationLinkCreator
+        const string TestEmail = "testupdateuserdetails@email.com";
+        _mockEmailVerificationLinkCreator
             .GetVerificationLink(Arg.Any<string>())
             .Returns(callInfo => new Uri($"http://{callInfo.Arg<string>()}"));
-        string testEmail = "testupdateuserdetails@email.com";
+
         var result = await Service.UpdateUserEmail(
             currentUser.Id,
-            new UpdateUserEmailCommand() { Value = testEmail },
+            new UpdateUserEmailCommand { Value = TestEmail },
             TestContext.Current.CancellationToken
         );
+
         result.ShouldBeSuccess();
+
         var email = _harness
             .Emails.Sent.OfType<EmailChangeVerificationRequestEmail>()
             .ShouldHaveSingleItem();
 
-        return email.EmailVerificationLink.AbsoluteUri.TrimStart("http://").TrimEnd("/").ToString();
+        return email.EmailVerificationLink.Host;
     }
 
     [Fact]
