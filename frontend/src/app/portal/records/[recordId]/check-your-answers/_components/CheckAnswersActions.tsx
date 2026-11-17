@@ -1,26 +1,67 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
+import { submitRecord } from '@/client/generated'
+import { Alert } from '@/components/Alert/Alert'
 import { Button, ButtonGroup } from '@/components/Button/Button'
+import { ErrorState } from '@/components/Placeholder/ErrorState'
+import { checkAnswersHref, taskListHref } from '@/lib/dynamic-form/links'
+
+type SubmitState =
+  { kind: 'idle' } | { kind: 'conflict'; detail: string } | { kind: 'failed' } | { kind: 'invalid' }
 
 export type CheckAnswersActionsProps = {
-  /* Submits the record. Resolves when the attempt has finished. */
-  onSubmit: () => Promise<void>
+  recordId: number
+  formVersion: string
+  revisionHash: string
   /* Where "Return to my records" goes. */
   returnHref: string
 }
 
-export function CheckAnswersActions({ onSubmit, returnHref }: CheckAnswersActionsProps) {
+export function CheckAnswersActions({
+  recordId,
+  formVersion,
+  revisionHash,
+  returnHref,
+}: CheckAnswersActionsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const router = useRouter()
+  const [submitState, setSubmitState] = useState<SubmitState>({ kind: 'idle' })
 
   const submit = async () => {
+    setSubmitState({ kind: 'idle' })
     setIsSubmitting(true)
+
     try {
-      await onSubmit()
-    } finally {
-      setIsSubmitting(false)
+      const { error, response } = await submitRecord({
+        path: { recordId },
+        body: { formVersion, revisionHash },
+      })
+
+      if (response?.ok) {
+        // Placeholder until check your answers returns the organisation ID for the records list.
+        router.push(taskListHref(recordId))
+        // Stay disabled while navigating, so a second click cannot submit twice.
+        return
+      }
+
+      if (response?.status === 422) {
+        // The refreshed page shows the problems in its error summary and on the rows.
+        router.refresh()
+        setSubmitState({ kind: 'invalid' })
+      } else if (response?.status === 409) {
+        const detail = (error as { detail?: string } | undefined)?.detail ?? ''
+        setSubmitState({ kind: 'conflict', detail })
+      } else {
+        setSubmitState({ kind: 'failed' })
+      }
+    } catch {
+      setSubmitState({ kind: 'failed' })
     }
+
+    setIsSubmitting(false)
   }
 
   return (
@@ -32,6 +73,23 @@ export function CheckAnswersActions({ onSubmit, returnHref }: CheckAnswersAction
         to be updated before horizon scanning users can see it. We will email you the outcome either
         way.
       </p>
+      {submitState.kind === 'conflict' && (
+        <Alert type="caution">
+          <p>{submitState.detail}</p>
+          <p>
+            <a href={checkAnswersHref(recordId)}>Reload this page</a> to see the latest answers.
+          </p>
+        </Alert>
+      )}
+      {submitState.kind === 'invalid' && (
+        <ErrorState>
+          There are problems with your answers. Fix the errors listed at the top of this page, then
+          submit again.
+        </ErrorState>
+      )}
+      {submitState.kind === 'failed' && (
+        <ErrorState>There was a problem submitting your record. Please try again later.</ErrorState>
+      )}
       <ButtonGroup>
         <Button disabled={isSubmitting} onClick={() => void submit()} variant="cta">
           Submit record for review

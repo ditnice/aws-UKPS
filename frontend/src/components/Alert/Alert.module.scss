@@ -1,5 +1,6 @@
 @use '@nice-digital/nds-core/scss/spacing';
 @use '@nice-digital/nds-core/scss/utils';
+@use '@/styles/colours';
 
 .wrapper {
   // Alerts often sit at the very top of a page, above PageHeader - the same top
@@ -12,6 +13,18 @@
 
     p {
       font-weight: normal;
+    }
+  }
+
+  > [data-component='alert--error'] {
+    ul {
+      list-style: none;
+      margin-left: 0;
+    }
+
+    a {
+      color: colours.$error;
+      font-weight: bold;
     }
   }
 }

@@ -134,18 +134,18 @@ export const formatReferenceData = (value: ReferenceDataDto | null | undefined):
 export const formatReferenceDataList = (values: readonly ReferenceDataDto[] | null | undefined) =>
   formatList(values?.map((value) => value.label))
 
-const parseDateOnly = (value: string): Date => {
+export const parseDateOnly = (value: string): Date => {
   const [year, month, day] = value.split('-').map(Number)
   return new Date(Date.UTC(year, month - 1, day))
 }
 
-const monthYearFormat = new Intl.DateTimeFormat('en-GB', {
+export const monthYearFormat = new Intl.DateTimeFormat('en-GB', {
   month: 'long',
   year: 'numeric',
   timeZone: 'UTC',
 })
 
-const fullDateFormat = new Intl.DateTimeFormat('en-GB', {
+export const fullDateFormat = new Intl.DateTimeFormat('en-GB', {
   day: 'numeric',
   month: 'long',
   year: 'numeric',
