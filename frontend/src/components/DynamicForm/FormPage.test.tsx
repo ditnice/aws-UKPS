@@ -165,10 +165,10 @@ describe('FormPage', () => {
 
       expect(screen.getByText('Commercial in confidence')).toBeInTheDocument()
       expect(
-        screen.getByText('. We will treat everything you enter on this page as confidential'),
+        screen.getByText('. We will treat everything you enter on this page as confidential.'),
       ).toHaveClass('visually-hidden')
       expect(screen.getByRole('heading', { level: 1 })).toHaveAccessibleName(
-        /Commercial in confidence\. We will treat everything you enter on this page as confidential/,
+        /Commercial in confidence\. We will treat everything you enter on this page as confidential\./,
       )
     })
 
@@ -177,7 +177,7 @@ describe('FormPage', () => {
 
       expect(screen.queryByText('Commercial in confidence')).toBeNull()
       expect(
-        screen.queryByText('. We will treat everything you enter on this page as confidential'),
+        screen.queryByText('. We will treat everything you enter on this page as confidential.'),
       ).toBeNull()
     })
 

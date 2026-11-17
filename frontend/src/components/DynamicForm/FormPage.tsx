@@ -104,7 +104,7 @@ export function FormPage({ page }: FormPageProps) {
       <Badge className={styles.commercialBadge} colour="purple">
         Commercial in confidence
         <span className="visually-hidden">
-          . We will treat everything you enter on this page as confidential
+          . We will treat everything you enter on this page as confidential.
         </span>
       </Badge>
     </>
