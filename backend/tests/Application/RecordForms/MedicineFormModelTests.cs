@@ -17,7 +17,7 @@ public class MedicineFormModelTests
     // Bump FormVersions.Medicine whenever this changes, then update both values.
     private const string ExpectedVersion = "2026.11.17";
     private const string ExpectedFingerprint =
-        "05229e925bb8559430a3efe000c2ce196be18b3bc7f56dfd3d09e507d350d38e";
+        "f9caa0e96f6404c177c1427823cbfd59c800e2f4fa00ce2f61121c0956e3a88c";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -207,6 +207,10 @@ public class MedicineFormModelTests
                     "AnswerIn medicines_eams_pim.pim_designation_status [Granted]"
                 ),
                 (
+                    "medicines_laboratory_testing.genomic_test_pathway_point_other",
+                    "AnswerIn medicines_laboratory_testing.patient_pathway_point_id [other]"
+                ),
+                (
                     "medicines_laboratory_testing.genomic_test_notes",
                     "AnswerIn medicines_laboratory_testing.genomic_test_mandatory_status [MandatoryNoAlternatives, MandatoryAlternativesMayExist]"
                 ),
@@ -312,7 +316,6 @@ public class MedicineFormModelTests
                 $"{s.Id}: {string.Join(", ", s.Tasks.Select(static t => t.Id))}"
             )
             .ShouldBe([
-                "product-record-details: names-and-identifiers",
                 "indication-and-development: indication-details, development-background",
                 "regulatory-access-and-launch: mhra-procedure-and-dates, hta-and-launch",
                 "special-designation: orphan-and-atmp, pim-and-eams",
@@ -323,7 +326,10 @@ public class MedicineFormModelTests
     [Fact]
     public void ReferenceTriggerTypes_HoldTheReferenceDataConditionsName()
     {
-        Model.ReferenceTriggerTypes.ShouldBe([typeof(MhraProcedureType)]);
+        Model.ReferenceTriggerTypes.ShouldBe([
+            typeof(MhraProcedureType),
+            typeof(PatientPathwayPoint),
+        ]);
     }
 
     [Fact]
@@ -438,11 +444,6 @@ public class MedicineFormModelTests
             .ToArray();
 
         questions.ShouldBe([
-            ("record_product_detail.company_code", FormControl.Text, AnswerShape.Single),
-            ("record_product_detail.other_identifiers", FormControl.TextList, AnswerShape.List),
-            ("record_product_detail.branded_name", FormControl.Text, AnswerShape.Single),
-            ("record_product_detail.generic_names", FormControl.TextList, AnswerShape.List),
-            ("record_product_detail.record_title", FormControl.Textarea, AnswerShape.Single),
             ("medicines_indication_detail.indication", FormControl.Textarea, AnswerShape.Single),
             (
                 "medicines_indication_detail.bnf_chapter_id",
@@ -628,6 +629,11 @@ public class MedicineFormModelTests
             (
                 "medicines_laboratory_testing.patient_pathway_point_id",
                 FormControl.Radio,
+                AnswerShape.Single
+            ),
+            (
+                "medicines_laboratory_testing.genomic_test_pathway_point_other",
+                FormControl.Textarea,
                 AnswerShape.Single
             ),
             (
