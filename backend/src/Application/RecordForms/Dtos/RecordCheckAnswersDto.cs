@@ -12,6 +12,9 @@ public sealed record RecordCheckAnswersDto
     /// <summary>The record the answers belong to.</summary>
     public required int RecordId { get; init; }
 
+    /// <summary>The organisation that owns the record; used for links back to the records list.</summary>
+    public required int OrganisationId { get; init; }
+
     /// <summary>
     /// A hash of the whole revision. Send it back on submit; if anything in the revision has
     /// changed since, the submission is rejected.
