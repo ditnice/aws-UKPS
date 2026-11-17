@@ -1,0 +1,118 @@
+name: Backend checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-checks:
+    name: Backend checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+        working-directory: backend
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          # Keep in step with backend/Dockerfile.
+          dotnet-version: 10.0.404
+
+      - name: Restore backend dependencies and tools
+        run: |
+          dotnet tool restore --tool-manifest dotnet-tools.json
+          dotnet restore UKPS.Api.slnx
+
+      # Match pre-commit: the build checks analyzers and .editorconfig code style;
+      # CSharpier owns whitespace/layout formatting.
+      - name: Build backend, check code style and regenerate OpenAPI
+        run: dotnet build UKPS.Api.slnx --configuration Release --no-restore -p:EnforceCodeStyle=true
+
+      # Testcontainers starts its own PostgreSQL container using the runner's Docker daemon.
+      - name: Test with coverage
+        id: tests
+        run: |
+          dotnet test --solution UKPS.Api.slnx --configuration Release --no-build \
+            --minimum-expected-tests 1 \
+            --coverlet --coverlet-output-format cobertura \
+            --coverlet-include "[UKPS.Api]*" \
+            --coverlet-exclude-by-file "**/Program.cs" \
+            --coverlet-exclude-by-file "**/obj/**/*.cs" \
+            --coverlet-threshold 80 --coverlet-threshold-type line,branch \
+            --coverlet-threshold-stat Total \
+            --results-directory tests/TestResults/Coverage
+
+      - name: Verify coverage was produced
+        if: ${{ !cancelled() && steps.tests.outcome == 'success' }}
+        run: |
+          if ! compgen -G 'tests/TestResults/Coverage/coverage.cobertura.*.xml' > /dev/null; then
+            echo "::error::Tests passed but no Cobertura coverage report was produced."
+            exit 1
+          fi
+
+      - name: Generate HTML coverage report
+        if: ${{ !cancelled() && hashFiles('backend/tests/TestResults/Coverage/coverage.cobertura.*.xml') != '' }}
+        run: dotnet tool run reportgenerator
+
+      - name: Upload coverage reports
+        if: ${{ !cancelled() && hashFiles('backend/tests/TestResults/Coverage/coverage.cobertura.*.xml') != '' }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: backend-coverage
+          path: |
+            backend/tests/TestResults/Coverage/
+            backend/tests/TestResults/CoverageReport/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Check CSharpier formatting
+        run: dotnet csharpier check .
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          # Keep in step with frontend/Dockerfile.
+          version: 12.13.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate frontend API client
+        working-directory: frontend
+        run: pnpm generate:api
+
+      - name: Check generated API files are up to date
+        working-directory: .
+        run: |
+          paths=(backend/openapi/UKPS.Api.json frontend/src/client/generated)
+          status="$(git status --porcelain --untracked-files=all -- "${paths[@]}")"
+          if [[ -n "$status" ]]; then
+            echo "::error::Generated API files are out of date. Run 'just regenerate' and commit the results."
+            printf '%s\n' "$status"
+            git diff -- "${paths[@]}"
+            exit 1
+          fi
