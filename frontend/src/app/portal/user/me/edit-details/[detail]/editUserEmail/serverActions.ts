@@ -9,6 +9,8 @@ import { errorMessages } from '@/lib/form/errorMessages'
 import { getFormStateServerErrors } from '@/lib/form/formErrorHandling'
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 
+import { buildMyDetailsHref } from '../../../navigation'
+
 import { serverValidate } from './shared'
 
 export const updateUserEmailAction = async (userId: number, prev: unknown, formData: FormData) => {
@@ -21,11 +23,10 @@ export const updateUserEmailAction = async (userId: number, prev: unknown, formD
     })
 
     if (response?.ok) {
-      redirect('/portal/user/me?updated=true')
+      redirect(buildMyDetailsHref({ requestedNewEmail: true }))
     }
 
     if (response?.status == 409) {
-      // Remove this
       return {
         ...initialFormState,
         values,

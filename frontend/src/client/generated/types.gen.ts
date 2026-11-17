@@ -837,6 +837,20 @@ export const PatientAccessSchemeRegion = {
 export type PatientAccessSchemeRegion = typeof PatientAccessSchemeRegion[keyof typeof PatientAccessSchemeRegion];
 
 /**
+ * Represents a requested change to a user's work email address that is awaiting completion.
+ */
+export type PendingWorkEmailChangeDto = {
+    /**
+     * Gets the new work email address that has been requested.
+     */
+    value: string;
+    /**
+     * Gets whether the new work email address has been verified by email.
+     */
+    verifiedByEmail: boolean;
+};
+
+/**
  * Flags enum stored as integer. Only Organisation uses Both;
  * UserOrgMembership and TermsAcceptance use Medicines or Vaccines only.
  * Represents the types of pharmaceutical entities.
@@ -1894,6 +1908,7 @@ export type UserInformationDto = {
      * Gets whether the user can select more than one organisation. Only set for the current user.
      */
     hasMultipleOrganisations: boolean;
+    pendingWorkEmail?: null | PendingWorkEmailChangeDto;
 };
 
 /**
