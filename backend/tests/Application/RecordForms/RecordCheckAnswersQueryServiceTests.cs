@@ -78,7 +78,6 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
         dto.RecordId.ShouldBe(_record.Id);
         dto.OrganisationId.ShouldBe(_organisation.Id);
         dto.FormVersion.ShouldBe(FormVersions.Medicine);
-        dto.CanSubmit.ShouldBeTrue();
         dto.Errors.ShouldBeEmpty();
         (
             await Harness<IRecordSubmissionService>()
@@ -213,16 +212,18 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
     [Fact]
     public async Task GetCheckAnswers_CallerWhoCannotEdit_CannotSubmit()
     {
-        RecordCheckAnswersDto dto = await GetCheckAnswers(UserRole.Super);
-
-        dto.CanSubmit.ShouldBeFalse();
-        dto.Sections.ShouldNotBeEmpty();
+        (
+            await Harness<IRecordCheckAnswersQueryService>(role: UserRole.Super)
+                .Service.GetCheckAnswers(_record.Id, Ct)
+        )
+            .ShouldBeError()
+            .ShouldBeOfType<GetCheckAnswersError.CannotSubmit>();
     }
 
     [Theory]
     [InlineData(RecordStatus.Unpublished, WorkflowStatus.QAReview)]
     [InlineData(RecordStatus.OnHold, WorkflowStatus.Draft)]
-    public async Task GetCheckAnswers_NotASubmittableDraft_CannotSubmit(
+    public async Task GetCheckAnswers_NotASubmittableDraft_IsNotSubmittable(
         RecordStatus recordStatus,
         WorkflowStatus revisionStatus
     )
@@ -234,7 +235,9 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
             .RecordRevisions.Where(r => r.Id == _revision.Id)
             .ExecuteUpdateAsync(s => s.SetProperty(r => r.WorkflowStatus, revisionStatus), Ct);
 
-        (await GetCheckAnswers()).CanSubmit.ShouldBeFalse();
+        (await Harness<IRecordCheckAnswersQueryService>().Service.GetCheckAnswers(_record.Id, Ct))
+            .ShouldBeError()
+            .ShouldBeOfType<GetCheckAnswersError.NotSubmittable>();
     }
 
     [Fact]
@@ -315,10 +318,9 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
             .ShouldBeOfType<GetCheckAnswersError.NotAllowed>();
     }
 
-    private async Task<RecordCheckAnswersDto> GetCheckAnswers(UserRole role = UserRole.Standard) =>
+    private async Task<RecordCheckAnswersDto> GetCheckAnswers() =>
         (
-            await Harness<IRecordCheckAnswersQueryService>(role: role)
-                .Service.GetCheckAnswers(_record.Id, Ct)
+            await Harness<IRecordCheckAnswersQueryService>().Service.GetCheckAnswers(_record.Id, Ct)
         ).ShouldBeSuccess();
 
     private static IEnumerable<string> QuestionIds(RecordCheckAnswersDto dto) =>

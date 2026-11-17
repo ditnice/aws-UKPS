@@ -939,18 +939,12 @@ export type RecordCheckAnswersDto = {
      */
     revisionHash: string;
     /**
-     * Whether the caller may submit the revision in its current state: it is a draft that can be
-     * submitted, and the caller can edit the record. Show Submit only when this is true and
-     * IReadOnlyList&lt;SubmissionErrorDto&gt; RecordCheckAnswersDto.Errors is empty.
-     */
-    canSubmit: boolean;
-    /**
      * The sections with a question that applies, in form order.
      */
     sections: Array<RecordCheckAnswersSectionDto>;
     /**
      * The problems that would stop the record being submitted, in form order, each on a question
-     * in IReadOnlyList&lt;RecordCheckAnswersSectionDto&gt; RecordCheckAnswersDto.Sections.
+     * in IReadOnlyList&lt;RecordCheckAnswersSectionDto&gt; RecordCheckAnswersDto.Sections. The record can be submitted when this is empty.
      */
     errors: Array<SubmissionErrorDto>;
 };
@@ -3540,11 +3534,16 @@ export type GetRecordCheckAnswersErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
+     * The caller can read the record but not submit it.
+     */
+    403: ProblemDetails;
+    /**
      * The record was not found or is not accessible to the caller.
      */
     404: ProblemDetails;
     /**
-     * Conflict
+     * The record can't be submitted in its current state; `code` is
+     * `record_not_submittable`.
      */
     409: AuthenticationProblemDetails;
 };

@@ -817,7 +817,6 @@ export const fakeRecordCheckAnswersDto = (options?: Options): RecordCheckAnswers
         recordId: f.number.int(),
         organisationId: f.number.int(),
         revisionHash: f.string.sample(),
-        canSubmit: f.datatype.boolean(),
         sections: f.helpers.multiple(() => fakeRecordCheckAnswersSectionDto(options)),
         errors: f.helpers.multiple(() => fakeSubmissionErrorDto(options))
     };
@@ -1754,6 +1753,8 @@ export const fakeGetRecordCheckAnswersRequest = (options?: Options): Omit<GetRec
 export const fakeGetRecordCheckAnswersResponse200 = (options?: Options): GetRecordCheckAnswersResponses[200] => fakeRecordCheckAnswersDto(options);
 
 export const fakeGetRecordCheckAnswersResponse401 = (options?: Options): GetRecordCheckAnswersErrors[401] => fakeAuthenticationProblemDetails(options);
+
+export const fakeGetRecordCheckAnswersResponse403 = (options?: Options): GetRecordCheckAnswersErrors[403] => fakeProblemDetails(options);
 
 export const fakeGetRecordCheckAnswersResponse404 = (options?: Options): GetRecordCheckAnswersErrors[404] => fakeProblemDetails(options);
 

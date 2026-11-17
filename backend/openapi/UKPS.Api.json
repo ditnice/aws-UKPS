@@ -3564,6 +3564,26 @@
               }
             }
           },
+          "403": {
+            "description": "The caller can read the record but not submit it.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "The record was not found or is not accessible to the caller.",
             "content": {
@@ -3584,8 +3604,8 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized",
+          "409": {
+            "description": "The record can't be submitted in its current state; `code` is\n`record_not_submittable`.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3604,8 +3624,8 @@
               }
             }
           },
-          "409": {
-            "description": "Conflict",
+          "401": {
+            "description": "Unauthorized",
             "content": {
               "text/plain": {
                 "schema": {
@@ -6838,7 +6858,6 @@
           "recordId",
           "organisationId",
           "revisionHash",
-          "canSubmit",
           "sections",
           "errors"
         ],
@@ -6862,10 +6881,6 @@
             "type": "string",
             "description": "A hash of the whole revision. Send it back on submit; if anything in the revision has\nchanged since, the submission is rejected."
           },
-          "canSubmit": {
-            "type": "boolean",
-            "description": "Whether the caller may submit the revision in its current state: it is a draft that can be\nsubmitted, and the caller can edit the record. Show Submit only when this is true and\nIReadOnlyList&lt;SubmissionErrorDto&gt; RecordCheckAnswersDto.Errors is empty."
-          },
           "sections": {
             "type": "array",
             "items": {
@@ -6878,7 +6893,7 @@
             "items": {
               "$ref": "#/components/schemas/SubmissionErrorDto"
             },
-            "description": "The problems that would stop the record being submitted, in form order, each on a question\nin IReadOnlyList&lt;RecordCheckAnswersSectionDto&gt; RecordCheckAnswersDto.Sections."
+            "description": "The problems that would stop the record being submitted, in form order, each on a question\nin IReadOnlyList&lt;RecordCheckAnswersSectionDto&gt; RecordCheckAnswersDto.Sections. The record can be submitted when this is empty."
           }
         },
         "description": "The whole of a record's latest revision for check your answers: every question that applies,\ngrouped by section and task, and every error that would stop it being submitted."

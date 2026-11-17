@@ -27,6 +27,22 @@ internal sealed class RecordCheckAnswersQueryService(
             );
         }
 
+        // Check your answers is only for submitting, so it is refused as submit would be.
+        if (
+            !organisationAuthoriser.CanPerformOperationOnOrganisation(
+                Operation.EditRecordContent,
+                form.Record.OrganisationId
+            )
+        )
+        {
+            return GetCheckAnswersResult.Err(new GetCheckAnswersError.CannotSubmit());
+        }
+
+        if (!form.Record.CanSubmit(form.Revision))
+        {
+            return GetCheckAnswersResult.Err(new GetCheckAnswersError.NotSubmittable());
+        }
+
         LoadedRevision revision = await revisionChecker.LoadAsync(form, cancellationToken);
         RevisionCheck check = await revisionChecker.CheckAsync(form, revision, cancellationToken);
         Summary summary = new(form.Model, revision, check);
@@ -37,12 +53,6 @@ internal sealed class RecordCheckAnswersQueryService(
                 RecordId = form.Record.Id,
                 OrganisationId = form.Record.OrganisationId,
                 RevisionHash = revision.Hash,
-                CanSubmit =
-                    form.Record.CanSubmit(form.Revision)
-                    && organisationAuthoriser.CanPerformOperationOnOrganisation(
-                        Operation.EditRecordContent,
-                        form.Record.OrganisationId
-                    ),
                 Sections =
                 [
                     .. form

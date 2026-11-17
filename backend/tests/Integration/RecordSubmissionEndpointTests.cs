@@ -150,7 +150,6 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
 
         dto["formVersion"]!.GetValue<string>().ShouldBe(FormVersions.Medicine);
         dto["revisionHash"]!.GetValue<string>().ShouldNotBeNullOrEmpty();
-        dto["canSubmit"]!.GetValue<bool>().ShouldBeTrue();
         JsonObject question = dto["sections"]!
             .AsArray()
             .SelectMany(static s => s!["tasks"]!.AsArray())
@@ -181,6 +180,31 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task CheckAnswers_CallerWhoCannotEdit_ReturnsForbidden()
+    {
+        AuthenticateAs(UserRole.Super, _organisation.Id);
+
+        using HttpResponseMessage response = await GetCheckAnswersResponse();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task CheckAnswers_AlreadySubmitted_ReturnsNotSubmittableConflict()
+    {
+        using HttpResponseMessage submitted = await PostSubmit(await CurrentHash());
+        submitted.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using HttpResponseMessage response = await GetCheckAnswersResponse();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        JsonObject problem = (
+            await response.Content.ReadFromJsonAsync<JsonObject>(Ct)
+        ).ShouldNotBeNull();
+        problem["code"]!.GetValue<string>().ShouldBe("record_not_submittable");
     }
 
     [Fact]
@@ -229,4 +253,7 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
                 Ct
             )
         ).ShouldNotBeNull();
+
+    private Task<HttpResponseMessage> GetCheckAnswersResponse() =>
+        _httpClient.GetAsync(new Uri($"/records/{_record.Id}/check-answers", UriKind.Relative), Ct);
 }
