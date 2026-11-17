@@ -4,8 +4,9 @@ using UKPS.Api.Persistence.Entities.RecordWorkflow;
 namespace UKPS.Api.Application.RecordForms.Model;
 
 /// <summary>
-/// A normalised answer: a single string (or null), or a sorted list of strings. Two answers are
-/// equal when they would be stored the same way, so a reordered selection is not a change.
+/// A normalised answer: a single string (or null), a sorted set of strings, or an ordered list
+/// of strings. Two answers are equal when they would be stored the same way, so a reordered
+/// multi-value selection is not a change, but a reordered list is.
 /// </summary>
 internal sealed class FormAnswer : IEquatable<FormAnswer>
 {
@@ -16,7 +17,9 @@ internal sealed class FormAnswer : IEquatable<FormAnswer>
     /// <summary>The answer of a single-value question; null when unanswered.</summary>
     public string? Value { get; }
 
-    /// <summary>The answers of a multi-value question, sorted ordinally.</summary>
+    /// <summary>
+    /// The answers of a multi-value question, sorted ordinally, or of a list question, in order.
+    /// </summary>
     public IReadOnlyList<string> Values { get; }
 
     public bool IsEmpty => Shape == AnswerShape.Single ? Value is null : Values.Count == 0;
@@ -33,8 +36,17 @@ internal sealed class FormAnswer : IEquatable<FormAnswer>
     public static FormAnswer Multi(IEnumerable<string> values) =>
         new(AnswerShape.Multi, null, values.Order(StringComparer.Ordinal).ToArray());
 
+    public static FormAnswer List(IEnumerable<string> values) =>
+        new(AnswerShape.List, null, values.ToArray());
+
     public static FormAnswer Empty(AnswerShape shape) =>
-        shape == AnswerShape.Single ? Single(null) : Multi([]);
+        shape switch
+        {
+            AnswerShape.Single => Single(null),
+            AnswerShape.Multi => Multi([]),
+            AnswerShape.List => List([]),
+            _ => throw new InvalidOperationException($"Unsupported answer shape {shape}."),
+        };
 
     /// <summary>Every value in the answer, whatever its shape.</summary>
     public IEnumerable<string> AllValues() => Value is null ? Values : [Value];

@@ -18,6 +18,9 @@ internal sealed record FormQuestion
     public string? ChildPlaceholder { get; init; }
     public string? AddAnotherLabel { get; init; }
 
+    /// <summary>The button text that removes an entry of a text list.</summary>
+    public string? RemoveLabel { get; init; }
+
     /// <summary>The prefixes a <see cref="FormControl.PrefixedNumber"/> offers, in order.</summary>
     public IReadOnlyList<string>? Prefixes { get; init; }
 

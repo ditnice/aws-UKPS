@@ -141,9 +141,10 @@ internal class RecordCreationService : IRecordCreationService
             (CreationPageFieldPaths.CompanyCode, command.CompanyCode),
             (CreationPageFieldPaths.BrandedName, command.BrandedName),
             (CreationPageFieldPaths.RecordTitle, command.RecordTitle),
+            (CreationPageFieldPaths.GenericNames, FieldAuditJson.TextList(command.GenericNames)),
             (
-                CreationPageFieldPaths.NamesAndIdentifiers,
-                FieldAuditJson.NamesAndIdentifiers(command.GenericNames, command.OtherIdentifiers)
+                CreationPageFieldPaths.OtherIdentifiers,
+                FieldAuditJson.TextList(command.OtherIdentifiers)
             ),
         ];
         return fields

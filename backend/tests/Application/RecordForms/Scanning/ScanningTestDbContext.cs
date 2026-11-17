@@ -42,5 +42,7 @@ internal sealed class ScanningTestDbContext(DbContextOptions<ScanningTestDbConte
         modelBuilder.Entity<BrokenCodedEntity>();
         modelBuilder.Entity<SplitFormEntity>();
         modelBuilder.Entity<UnplacedConditionEntity>();
+        modelBuilder.Entity<ListedEntity>();
+        modelBuilder.Entity<BrokenListedEntity>();
     }
 }

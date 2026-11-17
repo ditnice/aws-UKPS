@@ -406,6 +406,89 @@ public class FormModelValidatorTests
         exception.Message.ShouldContain("RowsEntity has no int RevisionId");
     }
 
+    [Fact]
+    public void Scan_TextListsSharingACollection_EachReadTheirOwnKind()
+    {
+        Problems(typeof(ListedEntity)).ShouldBe(["The Vaccine form has no entry in FormVersions."]);
+
+        var (declarations, _) = FormModelScanner.Scan(
+            _model,
+            [typeof(VaccineTestLayout), typeof(ListedEntity)]
+        );
+        FormModel form = FormModelBuilder.Build(declarations, _options)[RecordType.Vaccine];
+        FormQuestion[] questions = [.. form.FindPage("listed")!.Questions];
+
+        questions
+            .Select(static q => (q.Id, q.Shape))
+            .ShouldBe([
+                ("listed_entity.first_names", AnswerShape.List),
+                ("listed_entity.second_names", AnswerShape.List),
+            ]);
+        questions[0]
+            .Rules.Select(static r => r.Kind)
+            .ShouldBe([RuleKind.Required, RuleKind.MaxItems, RuleKind.Distinct]);
+        (questions[0].AddAnotherLabel, questions[0].RemoveLabel).ShouldBe(
+            ("Add another first name", "Remove first name")
+        );
+        questions[0].Entity.Includes.ShouldBe(["Names"]);
+        questions[0]
+            .Binding.Description.ShouldBe(
+                "text-list:ListedEntity.Names:ListedEntityName by DisplayOrder where Kind = First value Name"
+            );
+
+        ListedEntity row = new()
+        {
+            Names =
+            [
+                new ListedEntityName
+                {
+                    Id = 1,
+                    Name = "b",
+                    Kind = ListedNameKind.First,
+                    DisplayOrder = 2,
+                },
+                new ListedEntityName
+                {
+                    Id = 2,
+                    Name = "x",
+                    Kind = ListedNameKind.Second,
+                    DisplayOrder = 1,
+                },
+                new ListedEntityName
+                {
+                    Id = 3,
+                    Name = "a",
+                    Kind = ListedNameKind.First,
+                    DisplayOrder = 1,
+                },
+            ],
+        };
+        questions[0].Binding.Read(row).ShouldBe(FormAnswer.List(["a", "b"]));
+        questions[1].Binding.Read(row).ShouldBe(FormAnswer.List(["x"]));
+    }
+
+    [Theory]
+    [InlineData(
+        "BrokenListedEntity.Mapped has [FormListSource] but is mapped by EF; put it on an unmapped property."
+    )]
+    [InlineData(
+        "BrokenListedEntity.Unknown has [FormListSource] naming 'NoSuchNavigation', which is not a navigation of BrokenListedEntity."
+    )]
+    [InlineData("BrokenListedEntity.NotAList has [FormListSource], which only a TextList uses.")]
+    [InlineData(
+        "BrokenListedEntity.WrongKind has [FormListSource] kind Yes, but BrokenListedEntityName does not have exactly one non-nullable YesNoUnknown enum column to hold it."
+    )]
+    [InlineData(
+        "BrokenListedEntity.ListLabelsOnText has [FormDistinct], which only a TextList uses."
+    )]
+    [InlineData(
+        "BrokenListedEntity.ListLabelsOnText sets RemoveLabel, which only a TextList uses."
+    )]
+    public void Validate_BrokenListedEntity_ReportsTheProblem(string expected)
+    {
+        Problems(typeof(BrokenListedEntity)).ShouldContain(expected);
+    }
+
     private static IReadOnlyList<string> Problems(params Type[] types)
     {
         var (declarations, problems) = FormModelScanner.Scan(

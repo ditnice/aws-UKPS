@@ -1,4 +1,4 @@
-import { RuleKind } from '@/client/generated'
+import { FormControl, RuleKind } from '@/client/generated'
 
 import {
   dateAnswerError,
@@ -32,7 +32,9 @@ const emptyEntry: HierarchicalEntry = { parent: '', child: '' }
  */
 export const fieldName = (index: number) => `q${index}`
 
-const isHierarchical = (question: Question) => question.type === 'HierarchicalSelect'
+const isHierarchical = (question: Question) => question.type === FormControl.HIERARCHICAL_SELECT
+
+export const isTextList = (question: Question) => question.type === FormControl.TEXT_LIST
 
 /** Finds which parent option holds `value`, as a parent and child pair. */
 export const findEntry = (options: Option[] | null, value: string): HierarchicalEntry => {
@@ -56,6 +58,10 @@ export const toFormValue = (question: Question, answer: unknown): FormValue => {
     const values = Array.isArray(answer)
       ? answer.filter((v): v is string => typeof v === 'string')
       : []
+    if (isTextList(question)) {
+      // A text list always shows at least one box to type in.
+      return values.length > 0 ? values : ['']
+    }
     if (!isHierarchical(question)) {
       return values
     }
@@ -83,7 +89,7 @@ export const toAnswer = (question: Question, value: FormValue | undefined): Answ
     }
     return value
       .map((item) => (typeof item === 'string' ? item : entryValue(item)))
-      .filter((item) => item !== '')
+      .filter((item) => item.trim() !== '')
   }
 
   if (value && typeof value === 'object' && 'parent' in value) {
@@ -94,11 +100,11 @@ export const toAnswer = (question: Question, value: FormValue | undefined): Answ
 
 /**
  * Normalises an answer the way the server does before running rules: text is trimmed and
- * whitespace-only becomes null; list values are trimmed.
+ * whitespace-only becomes null; list values are trimmed and blank ones dropped.
  */
 export const normaliseAnswer = (answer: Answer): Answer => {
   if (Array.isArray(answer)) {
-    return answer.map((value) => value.trim())
+    return answer.map((value) => value.trim()).filter((value) => value !== '')
   }
   const trimmed = answer?.trim()
   return trimmed ? trimmed : null
@@ -114,12 +120,45 @@ export const isSatisfied = (rule: Rule, answer: Answer): boolean => {
       return typeof answer !== 'string' || answer.length <= (rule.value ?? Infinity)
     case RuleKind.MAX_ITEMS:
       return !Array.isArray(answer) || answer.length <= (rule.value ?? Infinity)
+    case RuleKind.DISTINCT:
+      return !Array.isArray(answer) || repeatIndexes(answer).length === 0
     default:
       throw new Error(`Unsupported rule kind ${String(rule.kind)}`)
   }
 }
 
-const ruleOrder: Rule['kind'][] = [RuleKind.REQUIRED, RuleKind.MAX_LENGTH, RuleKind.MAX_ITEMS]
+const ruleOrder: Rule['kind'][] = [
+  RuleKind.REQUIRED,
+  RuleKind.MAX_LENGTH,
+  RuleKind.MAX_ITEMS,
+  RuleKind.DISTINCT,
+]
+
+/**
+ * The positions of values that repeat an earlier one, ignoring case and surrounding space.
+ * Blank values are never repeats. Mirrors RuleEvaluator.RepeatIndexes.
+ */
+export const repeatIndexes = (values: (string | null)[]): number[] => {
+  const seen = new Set<string>()
+  return values.flatMap((value, index) => {
+    const key = value?.trim().toLowerCase()
+    if (!key) {
+      return []
+    }
+    if (seen.has(key)) {
+      return [index]
+    }
+    seen.add(key)
+    return []
+  })
+}
+
+const distinctMessage = (question: Question) =>
+  question.rules.find((rule) => rule.kind === RuleKind.DISTINCT)?.message
+
+/** The rules other than Distinct, which is reported against each repeat rather than the question. */
+const ownRules = (question: Question) =>
+  question.rules.filter((rule) => rule.kind !== RuleKind.DISTINCT)
 
 /** The message of the first failing rule, in the same fixed order as the server, or undefined. */
 export const firstFailure = (rules: Rule[], answer: Answer): string | undefined =>
@@ -127,14 +166,37 @@ export const firstFailure = (rules: Rule[], answer: Answer): string | undefined 
     .sort((a, b) => ruleOrder.indexOf(a.kind) - ruleOrder.indexOf(b.kind))
     .find((rule) => !isSatisfied(rule, answer))?.message
 
-/** An error on a question, and the parts of a date it is about when only some are at fault. */
-export type QuestionError = { message: string; parts?: DatePart[] }
+/**
+ * An error on a question: its message, the parts of a date it is about when only some are at
+ * fault, and the errors of a text list's entries keyed by position, such as `1`. The message is
+ * empty when only entries are at fault.
+ */
+export type QuestionError = { message: string; parts?: DatePart[]; items?: Record<string, string> }
+
+/** The errors of a text list's entries, keyed by position, and of the list as a whole. */
+const textListError = (question: Question, value: FormValue | undefined) => {
+  const entries = Array.isArray(value)
+    ? value.filter((v): v is string => typeof v === 'string')
+    : []
+  const items: Record<string, string> = {}
+  const message = distinctMessage(question)
+  if (message) {
+    for (const index of repeatIndexes(entries)) {
+      items[String(index)] = message
+    }
+  }
+  return { message: firstFailure(ownRules(question), normaliseAnswer(entries)), items }
+}
 
 /** Validates one question's form value; returns the error to show, or undefined. */
 export const questionError = (
   question: Question,
   value: FormValue | undefined,
 ): QuestionError | undefined => {
+  if (isTextList(question)) {
+    const { message, items } = textListError(question, value)
+    return message || Object.keys(items).length > 0 ? { message: message ?? '', items } : undefined
+  }
   if (
     question.type === 'PrecisionDate' &&
     value &&

@@ -133,7 +133,8 @@ export const fakeFormControl = (options?: Options): FormControl => {
         'PrecisionDate',
         'ActualMonth',
         'PrefixedNumber',
-        'ActualDate'
+        'ActualDate',
+        'TextList'
     ]);
 };
 
@@ -643,7 +644,8 @@ export const fakeRuleKind = (options?: Options): RuleKind => {
     return f.helpers.arrayElement([
         'Required',
         'MaxLength',
-        'MaxItems'
+        'MaxItems',
+        'Distinct'
     ]);
 };
 
@@ -669,6 +671,7 @@ export const fakeRecordPageQuestionDto = (options?: Options): RecordPageQuestion
         childLabel: f.datatype.boolean() ? f.string.sample() : null,
         childPlaceholder: f.datatype.boolean() ? f.string.sample() : null,
         addAnotherLabel: f.datatype.boolean() ? f.string.sample() : null,
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { removeLabel: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { prefixes: f.datatype.boolean() ? f.helpers.multiple(() => f.string.sample()) : null },
         dateName: f.datatype.boolean() ? f.string.sample() : null,
         showWhen: f.datatype.boolean() ? fakeRecordPageConditionDto(options) : null,

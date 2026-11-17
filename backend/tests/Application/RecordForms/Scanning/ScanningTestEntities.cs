@@ -591,6 +591,15 @@ internal sealed class VaccineTestLayout()
                 90,
                 [new FormLayoutTask("broken-coded-task", "Broken coded task", 10)]
             ),
+            new FormLayoutSection(
+                "listed",
+                "Listed",
+                100,
+                [
+                    new FormLayoutTask("listed-task", "Listed task", 10),
+                    new FormLayoutTask("broken-listed-task", "Broken listed task", 20),
+                ]
+            ),
         ]
     );
 
@@ -662,4 +671,114 @@ internal sealed class UnplacedConditionEntity
     public string? Detail { get; set; }
 
     public RecordRevision? Revision { get; set; }
+}
+
+internal enum ListedNameKind
+{
+    First = 0,
+    Second = 1,
+}
+
+/// <summary>Two text lists sharing one collection of rows, told apart by their kind.</summary>
+[FormEntity]
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class ListedEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+
+    public ICollection<ListedEntityName> Names { get; set; } = [];
+
+    [FormPage("listed-task", "listed", "Listed", Order = 10)]
+    [FormField(
+        "listed_entity.first_names",
+        "First names",
+        FormControl.TextList,
+        Order = 10,
+        AddAnotherLabel = "Add another first name",
+        RemoveLabel = "Remove first name"
+    )]
+    [FormRequired("Enter a first name")]
+    [FormMaxItems(3, "Enter up to 3 first names")]
+    [FormDistinct("First name has already been entered")]
+    [FormListSource(nameof(Names), ListedNameKind.First)]
+    public IEnumerable<string> FirstNames => Names.Select(static n => n.Name);
+
+    [FormPage("listed-task", "listed", "Listed", Order = 10)]
+    [FormField("listed_entity.second_names", "Second names", FormControl.TextList, Order = 20)]
+    [FormListSource(nameof(Names), ListedNameKind.Second)]
+    public IEnumerable<string> SecondNames => Names.Select(static n => n.Name);
+}
+
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class ListedEntityName
+{
+    public int Id { get; set; }
+    public int ListedEntityId { get; set; }
+    public required string Name { get; set; }
+    public ListedNameKind Kind { get; set; }
+    public int? DisplayOrder { get; set; }
+    public ListedEntity? ListedEntity { get; set; }
+}
+
+/// <summary>Breaks each text list and list source check.</summary>
+[FormEntity]
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class BrokenListedEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+
+    public ICollection<BrokenListedEntityName> Names { get; set; } = [];
+
+    [FormPage("broken-listed-task", "broken-listed", "Broken listed", Order = 10)]
+    [FormField("broken_listed_entity.mapped", "Mapped", FormControl.TextList, Order = 10)]
+    [FormListSource(nameof(Names), ListedNameKind.First)]
+    public string? Mapped { get; set; }
+
+    [FormPage("broken-listed-task", "broken-listed", "Broken listed", Order = 10)]
+    [FormField("broken_listed_entity.unknown", "Unknown", FormControl.TextList, Order = 20)]
+    [FormListSource("NoSuchNavigation", ListedNameKind.First)]
+    public IEnumerable<string> Unknown => Names.Select(static n => n.Name);
+
+    [FormPage("broken-listed-task", "broken-listed", "Broken listed", Order = 10)]
+    [FormField("broken_listed_entity.not_a_list", "Not a list", FormControl.Text, Order = 30)]
+    [FormListSource(nameof(Names), ListedNameKind.First)]
+    public IEnumerable<string> NotAList => Names.Select(static n => n.Name);
+
+    [FormPage("broken-listed-task", "broken-listed", "Broken listed", Order = 10)]
+    [FormField("broken_listed_entity.wrong_kind", "Wrong kind", FormControl.TextList, Order = 40)]
+    [FormListSource(nameof(Names), YesNoUnknown.Yes)]
+    public IEnumerable<string> WrongKind => Names.Select(static n => n.Name);
+
+    [FormPage("broken-listed-task", "broken-listed", "Broken listed", Order = 10)]
+    [FormField(
+        "broken_listed_entity.list_labels_on_text",
+        "List labels on text",
+        FormControl.Text,
+        Order = 50,
+        RemoveLabel = "Remove"
+    )]
+    [FormDistinct("Already entered")]
+    public string? ListLabelsOnText { get; set; }
+}
+
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class BrokenListedEntityName
+{
+    public int Id { get; set; }
+    public int BrokenListedEntityId { get; set; }
+    public required string Name { get; set; }
+    public ListedNameKind Kind { get; set; }
+    public BrokenListedEntity? BrokenListedEntity { get; set; }
 }

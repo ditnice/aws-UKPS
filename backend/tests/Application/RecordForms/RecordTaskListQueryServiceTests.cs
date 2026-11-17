@@ -92,6 +92,7 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
         taskList
             .Sections.Select(static s => (s.Id, s.Title))
             .ShouldBe([
+                ("product-record-details", "Provide product record details"),
                 ("indication-and-development", "Provide indication and development information"),
                 (
                     "regulatory-access-and-launch",
@@ -104,6 +105,12 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             .Sections.SelectMany(static s => s.Tasks)
             .Select(static t => (t.Id, t.Title, t.FirstPageId, t.Status))
             .ShouldBe([
+                (
+                    "names-and-identifiers",
+                    "Names and identifiers",
+                    "names-and-identifiers",
+                    RecordTaskStatus.NotStarted
+                ),
                 (
                     "indication-details",
                     "Indication details",
@@ -244,6 +251,24 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
         (taskList.CompanyCode, taskList.RecordTitle).ShouldBe(
             (latestDetail.CompanyCode, latestDetail.RecordTitle)
         );
+    }
+
+    [Fact]
+    public async Task GetTaskList_NamesAndIdentifiersFromRecordCreation_IsCompleted()
+    {
+        await AddProductDetail(NameAndIdentifierType.GenericName);
+
+        (await GetNamesAndIdentifiersStatus()).ShouldBe(RecordTaskStatus.Completed);
+    }
+
+    [Fact]
+    public async Task GetTaskList_OnlyOtherIdentifiersWithoutAGenericName_IsInProgress()
+    {
+        // Other identifiers do not answer the required generic names question, though both are
+        // rows of the same collection.
+        await AddProductDetail(NameAndIdentifierType.OtherIdentifier);
+
+        (await GetNamesAndIdentifiersStatus()).ShouldBe(RecordTaskStatus.InProgress);
     }
 
     [Fact]
@@ -392,6 +417,31 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
 
         (await GetDevelopmentBackgroundStatus()).ShouldBe(RecordTaskStatus.NotStarted);
     }
+
+    private async Task AddProductDetail(NameAndIdentifierType nameType)
+    {
+        RecordProductDetail detail = new RecordProductDetailFaker(
+            RecordType.Medicine,
+            _revision.Id
+        ).Generate();
+        detail.NamesAndIdentifiers.Add(
+            new RecordNameAndIdentifier
+            {
+                Name = "sofosbuvir",
+                NameType = nameType,
+                DisplayOrder = 1,
+            }
+        );
+        await AddEntity(detail, Ct);
+    }
+
+    private async Task<RecordTaskStatus> GetNamesAndIdentifiersStatus() =>
+        (await GetTaskList())
+            .Sections.SelectMany(static s => s.Tasks)
+            .Single(static t =>
+                string.Equals(t.Id, "names-and-identifiers", StringComparison.Ordinal)
+            )
+            .Status;
 
     private async Task AddDevelopmentBackgroundRow(MedicinesDevelopmentBackground row)
     {

@@ -5260,7 +5260,8 @@
           "PrecisionDate",
           "ActualMonth",
           "PrefixedNumber",
-          "ActualDate"
+          "ActualDate",
+          "TextList"
         ],
         "type": "string",
         "description": "The input a record content question is rendered with. Part of the HTTP API contract: the\nmember names are sent to the frontend, so never rename or remove one."
@@ -7265,7 +7266,7 @@
           },
           "multiple": {
             "type": "boolean",
-            "description": "True when the answer is an array of strings rather than a string or null."
+            "description": "True when the answer is an array of strings rather than a string or null, as for a\ncheckbox, a multi-value hierarchical select or a text list."
           },
           "label": {
             "type": "string",
@@ -7311,7 +7312,14 @@
               "null",
               "string"
             ],
-            "description": "The button text that adds another entry to a multi-value hierarchical select."
+            "description": "The button text that adds another entry to a multi-value hierarchical select or a text\nlist."
+          },
+          "removeLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The button text that removes an entry of a text list; null for other controls. Not\n`required`, so existing clients and fixtures are unaffected."
           },
           "prefixes": {
             "type": [
@@ -7801,7 +7809,8 @@
         "enum": [
           "Required",
           "MaxLength",
-          "MaxItems"
+          "MaxItems",
+          "Distinct"
         ],
         "type": "string",
         "description": "A validation rule kind. Rules are evaluated in the order of these values, never in attribute\norder. Part of the HTTP API contract: the member names are sent to the frontend, so never\nrename or remove one."

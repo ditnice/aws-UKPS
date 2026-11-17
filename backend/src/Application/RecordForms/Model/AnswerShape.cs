@@ -6,6 +6,9 @@ internal enum AnswerShape
     /// <summary>A string, or null when unanswered.</summary>
     Single = 0,
 
-    /// <summary>An array of strings, empty when unanswered.</summary>
+    /// <summary>An array of strings, empty when unanswered. Order does not matter.</summary>
     Multi = 1,
+
+    /// <summary>An array of strings, empty when unanswered. Order matters.</summary>
+    List = 2,
 }

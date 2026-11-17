@@ -35,17 +35,11 @@ internal static class FormModelBuilder
         OptionProviderRegistry options
     )
     {
-        // Junction and regulatory date questions read their answers through a navigation.
+        // Junction, regulatory date and text list questions read their answers through a
+        // navigation, which text lists sharing a collection share.
         string[] includes = entity
-            .Questions.Select(static q =>
-                q.Binding.Kind switch
-                {
-                    BindingKind.Junction => q.Property.Name,
-                    BindingKind.RegulatoryDate => q.Binding.DateNavigation!.Name,
-                    _ => null,
-                }
-            )
-            .OfType<string>()
+            .Questions.SelectMany(static q => Includes(q))
+            .Distinct(StringComparer.Ordinal)
             .ToArray();
 
         FormEntity formEntity = new(
@@ -57,6 +51,15 @@ internal static class FormModelBuilder
 
         return entity.Questions.Select(q => BuildQuestion(q, formEntity, options)).ToArray();
     }
+
+    private static IEnumerable<string> Includes(QuestionDeclaration question) =>
+        question.Binding.Kind switch
+        {
+            BindingKind.Junction => [question.Property.Name],
+            BindingKind.TextList => [question.Binding.ChildNavigation!.Name],
+            BindingKind.RegulatoryDate => [question.Binding.DateNavigation!.Name],
+            _ => [],
+        };
 
     private static FormQuestion BuildQuestion(
         QuestionDeclaration question,
@@ -81,6 +84,11 @@ internal static class FormModelBuilder
             rules.Add(new FormRule(RuleKind.MaxItems, maxItems.Max, maxItems.Message));
         }
 
+        if (question.Distinct is { } distinct)
+        {
+            rules.Add(new FormRule(RuleKind.Distinct, null, distinct.Message));
+        }
+
         return new FormQuestion
         {
             Id = field.Id,
@@ -93,6 +101,7 @@ internal static class FormModelBuilder
             ChildLabel = field.ChildLabel,
             ChildPlaceholder = field.ChildPlaceholder,
             AddAnotherLabel = field.AddAnotherLabel,
+            RemoveLabel = field.RemoveLabel,
             Prefixes = question.Prefixes?.Prefixes,
             DateName = question.DateEvent?.Name,
             Rules = [.. rules.OrderBy(static r => r.Kind)],
@@ -165,10 +174,24 @@ internal static class FormModelBuilder
                 question.DateEvent!.DateEvent,
                 question.Control
             ),
+            BindingKind.TextList => new TextListBinding(
+                ChildCollection(question),
+                question.Binding.ChildValueProperty!
+            ),
             _ => throw new InvalidOperationException(
                 $"Unsupported binding kind {question.Binding.Kind}."
             ),
         };
+
+    private static ChildCollection ChildCollection(QuestionDeclaration question) =>
+        new(
+            question.Binding.ChildNavigation!,
+            question.Binding.ChildType!,
+            question.Binding.ChildIdProperty!,
+            question.Binding.ChildDisplayOrderProperty,
+            question.Binding.ChildKindProperty,
+            question.Binding.ChildKind
+        );
 
     private static FormModel BuildForm(FormLayout layout, BuiltQuestion[] allQuestions)
     {

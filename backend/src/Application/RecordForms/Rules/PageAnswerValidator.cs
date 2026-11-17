@@ -13,6 +13,10 @@ namespace UKPS.Api.Application.RecordForms.Rules;
 /// a date is a real date on the right side of today, every value is an offered option, the
 /// question's rules pass and a <c>PrefixedNumber</c> is well formed. One message per key.
 /// </summary>
+/// <remarks>
+/// Errors inside a text list are keyed by 0-based position, matching the frontend's array fields:
+/// <c>question[1]</c> for a text list entry.
+/// </remarks>
 internal static class PageAnswerValidator
 {
     /// <summary>
@@ -43,7 +47,7 @@ internal static class PageAnswerValidator
                 continue;
             }
 
-            var (answer, error) = AnswerParser.Parse(question.Shape, element);
+            var (answer, error) = AnswerParser.Parse(question, element);
             if (error is not null)
             {
                 errors[question.Id] = error;
@@ -59,7 +63,7 @@ internal static class PageAnswerValidator
 
     /// <summary>
     /// Checks each parsed answer of a question that applies against its options and rules,
-    /// adding one error per failing question to <paramref name="errors"/>. Questions that do not
+    /// adding one error per failing key to <paramref name="errors"/>. Questions that do not
     /// apply are not checked.
     /// </summary>
     public static void Check(
@@ -81,14 +85,54 @@ internal static class PageAnswerValidator
             string? error =
                 CheckDate(question, answer, today)
                 ?? CheckOptions(answer, options.GetValueOrDefault(question.Id))
-                ?? RuleEvaluator.FirstFailure(question.Rules, answer)
-                ?? CheckPrefixedNumber(question, answer);
+                ?? CheckAnswer(question, question.Id, answer, errors);
             if (error is not null)
             {
                 errors[question.Id] = error;
             }
         }
     }
+
+    /// <summary>
+    /// Checks the question's rules and, for a text list, its entries. Returns the error for the
+    /// question itself; errors for entries are added under their own keys.
+    /// </summary>
+    private static string? CheckAnswer(
+        FormQuestion question,
+        string key,
+        FormAnswer answer,
+        Dictionary<string, string> errors
+    )
+    {
+        switch (answer.Shape)
+        {
+            case AnswerShape.List:
+                foreach (int repeat in RepeatIndexes(question, answer.Values))
+                {
+                    errors[$"{key}[{repeat}]"] = DistinctMessage(question)!;
+                }
+
+                return FirstFailure(question, answer);
+            default:
+                return RuleEvaluator.FirstFailure(question.Rules, answer)
+                    ?? CheckPrefixedNumber(question, answer);
+        }
+    }
+
+    /// <summary>The first failing rule other than Distinct, which is reported per repeat.</summary>
+    private static string? FirstFailure(FormQuestion question, FormAnswer answer) =>
+        RuleEvaluator.FirstFailure(
+            question.Rules.Where(static r => r.Kind != RuleKind.Distinct),
+            answer
+        );
+
+    private static IEnumerable<int> RepeatIndexes(
+        FormQuestion question,
+        IEnumerable<string?> values
+    ) => DistinctMessage(question) is null ? [] : RuleEvaluator.RepeatIndexes(values);
+
+    private static string? DistinctMessage(FormQuestion question) =>
+        question.Rules.FirstOrDefault(static r => r.Kind == RuleKind.Distinct)?.Message;
 
     /// <summary>
     /// A date answer must be a real date: an actual date or month not after today, an estimate not

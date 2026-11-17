@@ -11,7 +11,10 @@ public sealed record RecordPageQuestionDto
     /// <summary>The control to render.</summary>
     public required FormControl Type { get; init; }
 
-    /// <summary>True when the answer is an array of strings rather than a string or null.</summary>
+    /// <summary>
+    /// True when the answer is an array of strings rather than a string or null, as for a
+    /// checkbox, a multi-value hierarchical select or a text list.
+    /// </summary>
     public required bool Multiple { get; init; }
 
     /// <summary>The question text. On a single-question page it is the page heading.</summary>
@@ -32,8 +35,17 @@ public sealed record RecordPageQuestionDto
     /// <summary>The empty option text of the child dropdown of a hierarchical select.</summary>
     public required string? ChildPlaceholder { get; init; }
 
-    /// <summary>The button text that adds another entry to a multi-value hierarchical select.</summary>
+    /// <summary>
+    /// The button text that adds another entry to a multi-value hierarchical select or a text
+    /// list.
+    /// </summary>
     public required string? AddAnotherLabel { get; init; }
+
+    /// <summary>
+    /// The button text that removes an entry of a text list; null for other controls. Not
+    /// <c>required</c>, so existing clients and fixtures are unaffected.
+    /// </summary>
+    public string? RemoveLabel { get; init; }
 
     /// <summary>
     /// The prefixes a <c>PrefixedNumber</c> question offers before its digits, in order, or

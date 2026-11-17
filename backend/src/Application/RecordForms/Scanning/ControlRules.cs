@@ -30,6 +30,7 @@ internal static class ControlRules
                 FormControl.ActualMonth,
                 FormControl.ActualDate,
             ],
+            BindingKind.TextList => [FormControl.TextList],
             _ => [],
         };
 

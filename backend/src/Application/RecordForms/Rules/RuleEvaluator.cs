@@ -25,7 +25,30 @@ internal static class RuleEvaluator
             RuleKind.Required => !answer.IsEmpty,
             RuleKind.MaxLength => answer.Value is null || answer.Value.Length <= rule.Value,
             RuleKind.MaxItems => answer.Values.Count <= rule.Value,
+            RuleKind.Distinct => answer
+                .Values.GroupBy(static v => v, StringComparer.OrdinalIgnoreCase)
+                .All(static g => g.Count() == 1),
             _ => throw new InvalidOperationException($"Unsupported rule kind {rule.Kind}."),
         };
+    }
+
+    /// <summary>
+    /// The positions of values that repeat an earlier one, ignoring case, so the
+    /// <see cref="RuleKind.Distinct"/> error can be shown against each repeat. Null values are
+    /// never repeats.
+    /// </summary>
+    public static IEnumerable<int> RepeatIndexes(IEnumerable<string?> values)
+    {
+        HashSet<string> seen = new(StringComparer.OrdinalIgnoreCase);
+        int index = 0;
+        foreach (string? value in values)
+        {
+            if (value is not null && !seen.Add(value))
+            {
+                yield return index;
+            }
+
+            index++;
+        }
     }
 }

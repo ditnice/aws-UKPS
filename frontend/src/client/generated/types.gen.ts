@@ -213,7 +213,8 @@ export const FormControl = {
     PRECISION_DATE: 'PrecisionDate',
     ACTUAL_MONTH: 'ActualMonth',
     PREFIXED_NUMBER: 'PrefixedNumber',
-    ACTUAL_DATE: 'ActualDate'
+    ACTUAL_DATE: 'ActualDate',
+    TEXT_LIST: 'TextList'
 } as const;
 
 /**
@@ -1249,7 +1250,8 @@ export type RecordPageQuestionDto = {
      */
     type: FormControl;
     /**
-     * True when the answer is an array of strings rather than a string or null.
+     * True when the answer is an array of strings rather than a string or null, as for a
+     * checkbox, a multi-value hierarchical select or a text list.
      */
     multiple: boolean;
     /**
@@ -1277,9 +1279,15 @@ export type RecordPageQuestionDto = {
      */
     childPlaceholder: null | string;
     /**
-     * The button text that adds another entry to a multi-value hierarchical select.
+     * The button text that adds another entry to a multi-value hierarchical select or a text
+     * list.
      */
     addAnotherLabel: null | string;
+    /**
+     * The button text that removes an entry of a text list; null for other controls. Not
+     * `required`, so existing clients and fixtures are unaffected.
+     */
+    removeLabel?: null | string;
     /**
      * The prefixes a `PrefixedNumber` question offers before its digits, in order, or
      * null for any other control. Not `required`, so existing clients and fixtures are
@@ -1660,7 +1668,8 @@ export type RespondToMultiFactorAuthenticationChallengeCommand = {
 export const RuleKind = {
     REQUIRED: 'Required',
     MAX_LENGTH: 'MaxLength',
-    MAX_ITEMS: 'MaxItems'
+    MAX_ITEMS: 'MaxItems',
+    DISTINCT: 'Distinct'
 } as const;
 
 /**

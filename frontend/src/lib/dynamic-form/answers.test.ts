@@ -171,9 +171,13 @@ describe('buildZodSchema', () => {
 describe('applyServerErrors', () => {
   it('sets field errors and returns messages for keys not on the page', () => {
     const calls: string[] = []
-    const others = applyServerErrors({ setFieldMeta: (field) => calls.push(field) }, [text], {
-      errors: { [text.id]: ['Bad'], stray: ['Not on page'] },
-    })
+    const others = applyServerErrors(
+      { setFieldMeta: (field) => calls.push(field), getFieldValue: () => undefined },
+      [text],
+      {
+        errors: { [text.id]: ['Bad'], stray: ['Not on page'] },
+      },
+    )
 
     expect(calls).toEqual(['q0'])
     expect(others).toEqual(['Not on page'])

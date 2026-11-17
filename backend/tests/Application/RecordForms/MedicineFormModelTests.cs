@@ -15,9 +15,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.16";
+    private const string ExpectedVersion = "2026.11.17";
     private const string ExpectedFingerprint =
-        "2400de0e152f2819fa0fe0be765f9c30a9c8374d73ced235d1a2963797c1a94c";
+        "05229e925bb8559430a3efe000c2ce196be18b3bc7f56dfd3d09e507d350d38e";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -312,6 +312,7 @@ public class MedicineFormModelTests
                 $"{s.Id}: {string.Join(", ", s.Tasks.Select(static t => t.Id))}"
             )
             .ShouldBe([
+                "product-record-details: names-and-identifiers",
                 "indication-and-development: indication-details, development-background",
                 "regulatory-access-and-launch: mhra-procedure-and-dates, hta-and-launch",
                 "special-designation: orphan-and-atmp, pim-and-eams",
@@ -437,6 +438,11 @@ public class MedicineFormModelTests
             .ToArray();
 
         questions.ShouldBe([
+            ("record_product_detail.company_code", FormControl.Text, AnswerShape.Single),
+            ("record_product_detail.other_identifiers", FormControl.TextList, AnswerShape.List),
+            ("record_product_detail.branded_name", FormControl.Text, AnswerShape.Single),
+            ("record_product_detail.generic_names", FormControl.TextList, AnswerShape.List),
+            ("record_product_detail.record_title", FormControl.Textarea, AnswerShape.Single),
             ("medicines_indication_detail.indication", FormControl.Textarea, AnswerShape.Single),
             (
                 "medicines_indication_detail.bnf_chapter_id",

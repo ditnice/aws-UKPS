@@ -328,6 +328,9 @@ metadata, so attributes never contain expressions:
   `MedicinesIndicationDetail.TherapeuticAreas`. It reads EF metadata to find the junction's
   owner foreign key and its reference foreign key. On write, it compares the submitted set with
   the stored rows and inserts or deletes only the difference.
+- **`TextListBinding`** stores an ordered `string[]` as child rows with one string column each,
+  matched by position, with `DisplayOrder` written from 1. With `[FormListSource]`, several text
+  lists share one collection, each reading and writing only the rows of its enum kind.
 
 #### Content rows
 
@@ -372,8 +375,10 @@ names, or reference IDs as strings.
 The server is authoritative; the client mirrors it so users see errors without a round trip.
 
 1. Text answers are trimmed, and whitespace-only becomes `null`. Multi-select answers are sorted
-   so that the same selection in a different order is not a change.
-2. Each question's rules run in a **fixed order by kind** (`Required`, `MaxLength`, `MaxItems`).
+   so that the same selection in a different order is not a change. Text list entries are
+   trimmed and blank ones dropped, but their order is kept, so reordering them is a change.
+2. Each question's rules run in a **fixed order by kind** (`Required`, `MaxLength`, `MaxItems`,
+   `Distinct`).
    .NET does not guarantee attribute order, so source order is never used. Only the first
    failing rule's message is reported for that question.
 3. On the server only:
@@ -667,7 +672,7 @@ examples below use record 5, revision 7.
 | `section`, `task`, `page` | IDs and titles; the task title is the page caption |
 | `previousPageId` | Target of Back: the previous page in the task that applies, or `null` when there is none, where Back goes to the task list |
 | `nextPageId` | The next page in the task that applies given the saved answers, or one that depends on this page's own answers and so could apply once they are saved (`PossibleNextPage`). `null` when there is none, where the button reads **Save and return to task list**. The save response, not this value, decides where saving goes |
-| `questions` | `id`, `type` (the `FormControl`), `multiple` (the answer is an array), `label`, `hint`, `display`, `placeholder`, `childLabel`, `childPlaceholder`, `addAnotherLabel`, `showWhen` (`kind`, `questionId`, `values`, or `null`), `rules` (`kind`, `value`, `message`), `options` (`value`, `label`, `children`) |
+| `questions` | `id`, `type` (the `FormControl`), `multiple` (the answer is an array), `label`, `hint`, `display`, `placeholder`, `childLabel`, `childPlaceholder`, `addAnotherLabel`, `removeLabel` (a text list's remove button), `showWhen` (`kind`, `questionId`, `values`, or `null`), `rules` (`kind`, `value`, `message`), `options` (`value`, `label`, `children`) |
 | `answers` | Every page question: a string or `null`, or an array for multi-value questions |
 
 `GET /records/5/pages/therapeutic-area` returns `200 OK`:
@@ -784,7 +789,9 @@ record's task list.
 
 #### 400 Bad Request
 
-One error per question, keyed by question ID. A key that is not a question on the page is
+One error per question, keyed by question ID. A repeated text list entry is reported against
+the entry instead, keyed by its 0-based position among the entries saved (blank ones dropped),
+such as `record_product_detail.generic_names[2]`. A key that is not a question on the page is
 reported under its own key:
 
 ```json
@@ -836,9 +843,9 @@ Values are stored as text:
 - Single values are stored raw (`Unknown`, `12`, the indication text), so they can be queried
   directly, for example to report on fields moving away from `Unknown`.
 - Multi-select values (junction and flags) are stored as JSON (`["2","3"]`).
-- A collection whose grouping or order is part of the answer is stored as a JSON object instead,
-  for example names and identifiers, saved by record creation:
-  `{"GenericName":["sofosbuvir"],"OtherIdentifier":["PSI-7977"]}`.
+- Text lists are stored as a JSON array of their entries in order, for example the generic
+  names, whether record creation or the names and identifiers page saved them:
+  `["sofosbuvir","velpatasvir"]`. An empty list is no answer.
 - No answer is stored as `null`.
 
 ## Persistence changes

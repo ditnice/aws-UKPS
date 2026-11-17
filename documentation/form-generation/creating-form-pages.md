@@ -43,19 +43,21 @@ describes. You only touch the frontend to add a new control.
 | `FormLayout` subclass                               | class    | `RecordType`, sections, tasks                                                                  | One per record type, such as `MedicineFormLayout`. Declares every section and task once: ID, title and order. Each task ID is a `const string` on the layout. See [Step 2](#step-2-choose-the-task-and-the-row-source)                                    |
 | `[FormEntity]`                                      | class    | `RowSource`                                                                                    | Marks a content entity whose properties hold questions. All of its pages must be in one form                                                                                                                                                              |
 | `[FormPage(task, id, title)]`                       | property | `Order`, `CommercialInConfidence`                                                              | `task` is a task ID from the layout, which decides the section and form. `Order` is the position within the task. `CommercialInConfidence` shows the "Commercial in confidence" badge above the heading. Every declaration of the same page ID must agree |
-| `[FormField(id, label, control)]`                   | property | `Hint`, `Display`, `Order`, `Placeholder`, `ChildLabel`, `ChildPlaceholder`, `AddAnotherLabel` | `Order` only matters on pages with several questions. `Placeholder` is for `Select` and `HierarchicalSelect`; the `Child…` properties for `HierarchicalSelect` (`ChildLabel` is required); `AddAnotherLabel` for a multi-value `HierarchicalSelect`       |
+| `[FormField(id, label, control)]`                   | property | `Hint`, `Display`, `Order`, `Placeholder`, `ChildLabel`, `ChildPlaceholder`, `AddAnotherLabel`, `RemoveLabel` | `Order` only matters on pages with several questions. `Placeholder` is for `Select` and `HierarchicalSelect`; the `Child…` properties for `HierarchicalSelect` (`ChildLabel` is required); `AddAnotherLabel` for a multi-value `HierarchicalSelect` or a `TextList`; `RemoveLabel` for a `TextList`. See [Text lists](#text-lists) |
 | `[FormRequired(message)]`                           | property |                                                                                                |                                                                                                                                                                                                                                                           |
 | `[FormMaxLength(max, message)]`                     | property |                                                                                                | `Text`, `Textarea`                                                                                                                                                                                                                                        |
-| `[FormMaxItems(max, message)]`                      | property |                                                                                                | `Checkbox`                                                                                                                                                                                                                                                |
+| `[FormMaxItems(max, message)]`                      | property |                                                                                                | `Checkbox`, multi-value `HierarchicalSelect`, `TextList`                                                                                                                                                                                                  |
+| `[FormDistinct(message)]`                           | property |                                                                                                | No repeated entries in a `TextList`, ignoring case. The error is shown against each repeat                                                                                                                                                                |
 | `[FormOptions(key)]`                                | property |                                                                                                | Chooses a provider other than the default for the property's type. Only needed when several providers offer the same type                                                                                                                                 |
 | `[FormIgnore(reason)]`                              | property |                                                                                                | Not a question. The reason is required                                                                                                                                                                                                                    |
 | `[FormValuePrefixes(prefixes...)]`                  | property |                                                                                                | Required on `PrefixedNumber`, not allowed on any other control. The fixed prefixes offered before the digits, in order. See [Prefixed numbers](#prefixed-numbers)                                                                                         |
 | `[FormDateEvent(dateEvent)]`                        | property |                                                                                                | Required on `PrecisionDate`, `ActualMonth` and `ActualDate`: the `DateEventType` the regulatory date row is stored with. A `PrecisionDate` or `ActualDate` also needs `Name`, the date in its error messages. See [Dates](#dates)                         |
 | `[FormShowWhen(questionId, values...)]`             | property |                                                                                                | The question applies only when an earlier question on the same page has one of the values. See [Conditional questions and pages](#conditional-questions-and-pages)                                                                                        |
 | `[FormPageShowWhen(pageId, questionId, values...)]` | class    |                                                                                                | The page applies only when a question on an earlier page has one of the values. One per page                                                                                                                                                              |
+| `[FormListSource(navigation, kind)]`                | property |                                                                                                | On an unmapped property: a `TextList` of the rows of a collection shared with other lists, told apart by an enum column. See [Text lists](#text-lists)                                                                                                   |
 
 `FormControl`: `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect`,
-`PrecisionDate`, `ActualMonth`, `ActualDate`, `PrefixedNumber`.
+`PrecisionDate`, `ActualMonth`, `ActualDate`, `PrefixedNumber`, `TextList`.
 `FormRowSource`: `FirstSave` (default), `RecordCreation`.
 
 The form hierarchy is **section → task → page → question**. Sections and tasks are declared
@@ -264,7 +266,8 @@ Then put `[FormEntity]` on the entity if it isn't already there:
     This is only allowed if the entity has no non-nullable columns besides `Id` and
     `RevisionId`. `MedicinesIndicationDetail` qualifies.
   - **`RecordCreation`**: record creation inserts the row, and the form only updates it. Use
-    this for entities with required columns, for example:
+    this for entities with required columns, such as `RecordProductDetail`, whose company code
+    and record title the record cannot be created without:
 
     ```csharp
     [FormEntity(RowSource = FormRowSource.RecordCreation)]
@@ -332,6 +335,7 @@ controls for the property type:
 | `[Flags]` enum                | `Checkbox`                                   | `string[]` (member names)              | NDS checkboxes                                                              |
 | junction navigation           | `Checkbox`, `HierarchicalSelect`             | `string[]` (IDs)                       | NDS checkboxes / repeated parent and child `Select`s                        |
 | `int?` FK to `RegulatoryDate` | `PrecisionDate`, `ActualMonth`, `ActualDate` | `string \| null` (see [Dates](#dates)) | Precision radios revealing the parts / month and year / day, month and year |
+| collection navigation to child rows with one string column | `TextList` | `string[]`, in order | Inline add another (`AddAnother`) |
 
 `HierarchicalSelect` is for reference data with a `ParentId`: the user picks a parent, then
 optionally a child, and the answer is the most specific choice. It needs a tree provider (see
@@ -365,6 +369,38 @@ public string? NiceTaDevelopmentId { get; set; }
 - `PrefixedNumberAnswer` (backend) and `lib/dynamic-form/prefixedNumber.ts` (frontend) hold the
   rules; `prefixed-number-cases.json` keeps them in step.
 - The prefixes reach the page as `prefixes` on the question.
+
+### Text lists
+
+A **text list** repeats one text box, in the MoJ add another inline layout, such as a product's
+generic names: an **Add another** button below, and a **Remove** button per entry once there
+are several. It binds to a collection navigation whose child entity has an `int` key, exactly one
+`string` column for the entry and, optionally, an `int? DisplayOrder`. The answer is the trimmed
+entries in order; blank entries are dropped, and reordering them is a change. A save keeps each
+stored row in its place, so rows keep their IDs, and numbers `DisplayOrder` from 1.
+
+Rules: `[FormRequired]` (at least one entry), `[FormMaxItems]` and `[FormDistinct]`, which
+reports each repeated entry under its own key, such as `record_product_detail.generic_names[2]`,
+counted among the entries saved.
+
+When several lists share one collection, told apart by an enum column, put each list on an
+unmapped property with `[FormListSource]` naming the navigation and the list's enum member. The
+list then reads, writes and counts only the rows of its kind, and gives new rows that kind. The
+names and identifiers page does this for the generic names and other identifiers, both stored in
+`RecordProductDetail.NamesAndIdentifiers`:
+
+```csharp
+[FormPage(MedicineFormLayout.NamesAndIdentifiers, "names-and-identifiers", "Provide product record details", Order = 10)]
+[FormField(CreationPageFieldPaths.GenericNames, "Active substance", FormControl.TextList,
+    AddAnotherLabel = "Add another active substance", Order = 40)]
+[FormRequired("Enter generic name")]
+[FormDistinct("Generic names must be distinct")]
+[FormListSource(nameof(NamesAndIdentifiers), NameAndIdentifierType.GenericName)]
+public IEnumerable<string> GenericNames => Names(NameAndIdentifierType.GenericName);
+```
+
+The property's own value is not used by the form, but a getter that returns the entries keeps
+it useful elsewhere. It must not be mapped by EF, which a getter-only property is not.
 
 ### Hints
 
@@ -519,16 +555,17 @@ In that case it is still shown and accepted. See [Reference data](reference-data
 
 | Attribute                     | `RuleKind`  | Applies to         | Passes when                                                                |
 | ----------------------------- | ----------- | ------------------ | -------------------------------------------------------------------------- |
-| `FormRequired(message)`       | `Required`  | All controls       | Text is not blank, an option is chosen, or at least one checkbox is ticked |
+| `FormRequired(message)`       | `Required`  | All controls       | Text is not blank, an option is chosen, at least one checkbox is ticked, or a text list has an entry |
 | `FormMaxLength(max, message)` | `MaxLength` | `Text`, `Textarea` | Text is at most `max` UTF-16 code units, after trimming                    |
-| `FormMaxItems(max, message)`  | `MaxItems`  | `Checkbox`         | At most `max` options are ticked                                           |
+| `FormMaxItems(max, message)`  | `MaxItems`  | `Checkbox`, `TextList` | At most `max` options are ticked or entries entered                  |
+| `FormDistinct(message)`       | `Distinct`  | `TextList`         | No entry repeats an earlier one, ignoring case; reported against each repeat |
 
 How rules are applied:
 
 - **Trimming.** Text is trimmed first, and whitespace-only counts as unanswered. `"   abc   "` is
   checked as `"abc"`.
 - **Fixed order.** Rules run in a fixed order by kind: `Required`, then `MaxLength`, then
-  `MaxItems`. Only the first failing rule is reported. The order of the attributes in the file
+  `MaxItems`, then `Distinct`. Only the first failing rule is reported. The order of the attributes in the file
   does not matter, because .NET does not guarantee attribute order.
 - **Optional questions.** A question without `[FormRequired]` is optional. Write "(optional)" in
   the label if the design shows it, as the therapeutic area page does.
@@ -566,20 +603,20 @@ and order on each property. The example below is illustrative and is not a page 
 design:
 
 ```csharp
-[FormEntity(RowSource = FormRowSource.RecordCreation)]
-internal sealed class RecordProductDetail
+[FormEntity]
+internal sealed class SomeMedicineEntity
 {
-    [FormPage(MedicineFormLayout.ProductNames, "names", "Product names", Order = 20)]
-    [FormField("record_product_detail.branded_name", "Branded name (optional)", FormControl.Text, Order = 10)]
-    [FormMaxLength(200, "Branded name must be 200 characters or fewer")]
-    public string? BrandedName { get; set; }
+    [FormPage(MedicineFormLayout.IndicationDetails, "names", "Product names", Order = 20)]
+    [FormField("some_medicine_entity.trade_name", "Trade name (optional)", FormControl.Text, Order = 10)]
+    [FormMaxLength(200, "Trade name must be 200 characters or fewer")]
+    public string? TradeName { get; set; }
     // ...
 }
 
 [FormEntity]
 internal sealed class SomeOtherMedicineEntity
 {
-    [FormPage(MedicineFormLayout.ProductNames, "names", "Product names", Order = 20)]
+    [FormPage(MedicineFormLayout.IndicationDetails, "names", "Product names", Order = 20)]
     [FormField("some_other_medicine_entity.development_code", "Development code", FormControl.Text, Order = 20)]
     public string? DevelopmentCode { get; set; }
     // ...
@@ -702,16 +739,16 @@ reports every problem in one exception.
 
 | Area         | Fails when                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Coverage     | A mapped scalar property has neither `[FormField]` nor `[FormIgnore]`, or has both. A `[FormIgnore]` reason is blank. A form attribute is on an unmapped property or a non-junction navigation                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Coverage     | A mapped scalar property has neither `[FormField]` nor `[FormIgnore]`, or has both. A `[FormIgnore]` reason is blank. A form attribute is on an unmapped property (other than a `[FormListSource]` one) or a navigation that is neither a junction nor a text list's collection                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | Pairing      | `[FormField]` has no `[FormPage]`, or `[FormPage]` appears without `[FormField]`. A form attribute is on a class without `[FormEntity]`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | IDs          | A section, task, page or question ID is badly formed. A section ID is repeated in a layout, a task ID across layouts, or a page or question ID within the form. A page uses the reserved ID `task-list`                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | Agreement    | Declarations of one page ID disagree on title, order or `CommercialInConfidence`. A page spans tasks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | Order        | Two sections, two tasks in a section, two pages in a task, or two questions on a page have the same `Order`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | Structure    | More than one `FormLayout` for a record type. A section or task title is blank. A `[FormPage]` names a task no layout declares. An entity has pages in more than one form, or has `[FormEntity]` but no questions                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Controls     | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]`. A `PrecisionDate`, `ActualMonth` or `ActualDate` has no `[FormDateEvent]`, or another control has one. Two date questions in one form use the same `[FormDateEvent]`. A `PrecisionDate`'s or `ActualDate`'s `[FormDateEvent]` has no `Name`                                                                                                                                                                                                                                                                |
-| Presentation | `PrefixedNumber` without `[FormValuePrefixes]`, or the attribute on another control, with a blank prefix, a prefix ending in a digit, a repeated prefix or a prefix that starts another; `Placeholder` on a control other than `Select`, `HierarchicalSelect` or `PrefixedNumber`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`; a `HierarchicalSelect` without `ChildLabel`                                                                                                                                            |
+| Controls     | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]`. A `PrecisionDate`, `ActualMonth` or `ActualDate` has no `[FormDateEvent]`, or another control has one. Two date questions in one form use the same `[FormDateEvent]`. A `PrecisionDate`'s or `ActualDate`'s `[FormDateEvent]` has no `Name`. A `TextList`'s child has no `int` key, not exactly one `string` column, or a `DisplayOrder` that is not an `int?`. `[FormListSource]` is on a mapped property or a control other than `TextList`, names an unknown navigation, or names a kind whose enum the child has no single column of                                                                                                                                                                                                                                                                |
+| Presentation | `PrefixedNumber` without `[FormValuePrefixes]`, or the attribute on another control, with a blank prefix, a prefix ending in a digit, a repeated prefix or a prefix that starts another; `Placeholder` on a control other than `Select`, `HierarchicalSelect` or `PrefixedNumber`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect` or a `TextList`; `RemoveLabel` on anything but a `TextList`; a `HierarchicalSelect` without `ChildLabel`                                                                                                                                            |
 | Options      | A choice control has no provider registered for its type, or several and no `[FormOptions]`. A text control has `[FormOptions]`. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId`                                                                                                                                                                                                                                                                    |
-| Rules        | A rule is on a control it does not apply to, or a rule kind appears twice                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Rules        | A rule is on a control it does not apply to (including `[FormDistinct]` on anything but a `TextList`), or a rule kind appears twice                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Rows         | The entity has no `int RevisionId` FK to `RecordRevision`. `RowSource = FirstSave` on an entity with other non-nullable columns                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | Conditions   | The trigger question is unknown, is not earlier on the same page (`[FormShowWhen]`) or on an earlier page (`[FormPageShowWhen]`), or is not a `Radio`, `Select` or `Checkbox` on an enum or on reference data with a `string Code`, or a `PrecisionDate`. A value is not a member of the trigger's enum (or `DatePrecision`), is not a non-blank code, is repeated, or there are none. A `[FormShowWhen]` question is on a non-nullable column. A `[FormPageShowWhen]` names a page its entity does not declare or the first page of a task, or a page has more than one. `[FormPageShowWhen]` on a class without `[FormEntity]` |
 

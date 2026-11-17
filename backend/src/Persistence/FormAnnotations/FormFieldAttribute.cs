@@ -67,9 +67,15 @@ internal sealed class FormFieldAttribute(string id, string label, FormControl co
     public string? ChildPlaceholder { get; set; }
 
     /// <summary>
-    /// The button text that adds another entry to a multi-value hierarchical select, for example
-    /// <c>Add another therapy area</c>. Only a <see cref="FormControl.HierarchicalSelect"/> on a
-    /// junction may set it; defaults to <c>Add another</c>.
+    /// The button text that adds another entry, for example <c>Add another therapy area</c>. Only
+    /// a <see cref="FormControl.HierarchicalSelect"/> on a junction or a
+    /// <see cref="FormControl.TextList"/> may set it; defaults to <c>Add another</c>.
     /// </summary>
     public string? AddAnotherLabel { get; set; }
+
+    /// <summary>
+    /// The button text that removes an entry of a <see cref="FormControl.TextList"/>, for example
+    /// <c>Remove identifier</c>. Only a text list may set it; defaults to <c>Remove</c>.
+    /// </summary>
+    public string? RemoveLabel { get; set; }
 }

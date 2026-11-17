@@ -418,12 +418,18 @@ internal static partial class FormModelValidator
 
         if (
             question.MaxItems is { } maxItems
-            && (question.Shape != AnswerShape.Multi || maxItems.Max <= 0)
+            && (question.Shape == AnswerShape.Single || maxItems.Max <= 0)
         )
         {
             problems.Add(
-                $"{where} has [FormMaxItems], which needs a multi-value question and a positive maximum."
+                $"{where} has [FormMaxItems], which needs a multi-value or text list question and a positive maximum."
             );
+        }
+
+        bool distinctApplies = control == FormControl.TextList;
+        if (question.Distinct is not null && !distinctApplies)
+        {
+            problems.Add($"{where} has [FormDistinct], which only a TextList uses.");
         }
     }
 
@@ -517,16 +523,35 @@ internal static partial class FormModelValidator
         if (
             field.AddAnotherLabel is not null
             && !(isHierarchical && question.Shape == AnswerShape.Multi)
+            && control is not FormControl.TextList
         )
         {
             problems.Add(
-                $"{where} sets AddAnotherLabel, which only a multi-value HierarchicalSelect uses."
+                $"{where} sets AddAnotherLabel, which only a multi-value HierarchicalSelect or a TextList uses."
             );
         }
+
+        ValidateItemPresentation(question, control, problems);
 
         if (isHierarchical && field.ChildLabel is null)
         {
             problems.Add($"{where} uses HierarchicalSelect, which needs a ChildLabel.");
+        }
+    }
+
+    /// <summary>Checks the remove label only a text list uses.</summary>
+    private static void ValidateItemPresentation(
+        QuestionDeclaration question,
+        FormControl control,
+        List<string> problems
+    )
+    {
+        string where = question.Where;
+        FormFieldAttribute field = question.Field;
+
+        if (field.RemoveLabel is not null && control is not FormControl.TextList)
+        {
+            problems.Add($"{where} sets RemoveLabel, which only a TextList uses.");
         }
     }
 

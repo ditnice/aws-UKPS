@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
+using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Application.RecordForms.Scanning;
 
@@ -76,13 +77,7 @@ internal static class FormModelFingerprint
             $"      binding {question.Binding.Description} | {question.Entity.RowSource}"
         );
 
-        if (question.Prefixes is not null)
-        {
-            text.AppendLine(
-                CultureInfo.InvariantCulture,
-                $"      prefixes {string.Join(" | ", question.Prefixes)}"
-            );
-        }
+        AppendPresentation(text, question);
 
         if (question.ShowWhen is not null)
         {
@@ -105,6 +100,27 @@ internal static class FormModelFingerprint
             text.AppendLine(
                 CultureInfo.InvariantCulture,
                 $"      options {question.OptionKey} | {options.Find(question.OptionKey)?.Description}"
+            );
+        }
+    }
+
+    /// <summary>The prefixes of a prefixed number, and the remove label of a text list.</summary>
+    private static void AppendPresentation(StringBuilder text, FormQuestion question)
+    {
+        if (question.Prefixes is not null)
+        {
+            text.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"      prefixes {string.Join(" | ", question.Prefixes)}"
+            );
+        }
+
+        if (question.Control is FormControl.TextList)
+        {
+            // Laid out with empty item label and key columns, as a text list has neither.
+            text.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"      items  | {question.RemoveLabel} | "
             );
         }
     }

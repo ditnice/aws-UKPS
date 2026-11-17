@@ -131,8 +131,16 @@ internal static class FormModelScanner
         string where = $"{type.Name}.{property.Name}";
         FormFieldAttribute? field = property.GetCustomAttribute<FormFieldAttribute>();
         FormPageAttribute? page = property.GetCustomAttribute<FormPageAttribute>();
+        FormListSourceAttribute? listSource =
+            property.GetCustomAttribute<FormListSourceAttribute>();
         IProperty? column = entityType.FindProperty(property.Name);
-        INavigation? navigation = entityType.FindNavigation(property.Name);
+        INavigation? navigation = listSource is null
+            ? entityType.FindNavigation(property.Name)
+            : FindListSource(where, entityType, property, listSource, problems);
+        if (listSource is not null && navigation is null)
+        {
+            return null;
+        }
 
         if (!IsCovered(where, property, column, navigation, problems))
         {
@@ -145,9 +153,14 @@ internal static class FormModelScanner
             return null;
         }
 
-        BindingInfo? binding = column is not null
-            ? DescribeColumn(where, column, problems)
-            : DescribeJunction(where, navigation!, problems);
+        BindingInfo? binding = DescribeBinding(
+            where,
+            field!.Control,
+            column,
+            navigation,
+            listSource,
+            problems
+        );
 
         return binding is null
             ? null
@@ -156,7 +169,7 @@ internal static class FormModelScanner
                 EntityType = type,
                 Property = property,
                 Page = page,
-                Field = field!,
+                Field = field,
                 Required = property.GetCustomAttribute<FormRequiredAttribute>(),
                 MaxLength = property.GetCustomAttribute<FormMaxLengthAttribute>(),
                 MaxItems = property.GetCustomAttribute<FormMaxItemsAttribute>(),
@@ -164,8 +177,72 @@ internal static class FormModelScanner
                 Options = property.GetCustomAttribute<FormOptionsAttribute>(),
                 ShowWhen = property.GetCustomAttribute<FormShowWhenAttribute>(),
                 DateEvent = property.GetCustomAttribute<FormDateEventAttribute>(),
+                Distinct = property.GetCustomAttribute<FormDistinctAttribute>(),
                 Binding = binding,
             };
+    }
+
+    /// <summary>Where a covered property's answer is stored, worked out from its EF metadata.</summary>
+    private static BindingInfo? DescribeBinding(
+        string where,
+        FormControl control,
+        IProperty? column,
+        INavigation? navigation,
+        FormListSourceAttribute? listSource,
+        List<string> problems
+    )
+    {
+        if (listSource is not null && control != FormControl.TextList)
+        {
+            problems.Add($"{where} has [FormListSource], which only a TextList uses.");
+            return null;
+        }
+
+        return (column, control) switch
+        {
+            ({ }, _) => DescribeColumn(where, column, problems),
+            (null, FormControl.TextList) => WithListSource(
+                where,
+                DescribeTextList(where, navigation!, problems),
+                navigation!,
+                listSource,
+                problems
+            ),
+            _ => DescribeJunction(where, navigation!, problems),
+        };
+    }
+
+    /// <summary>
+    /// The navigation a <c>[FormListSource]</c> names, which must be on an unmapped property.
+    /// </summary>
+    private static INavigation? FindListSource(
+        string where,
+        IEntityType entityType,
+        PropertyInfo property,
+        FormListSourceAttribute listSource,
+        List<string> problems
+    )
+    {
+        if (
+            entityType.FindProperty(property.Name) is not null
+            || entityType.FindNavigation(property.Name) is not null
+        )
+        {
+            problems.Add(
+                $"{where} has [FormListSource] but is mapped by EF; put it on an unmapped property."
+            );
+            return null;
+        }
+
+        INavigation? source = entityType.FindNavigation(listSource.Navigation);
+        if (source is null)
+        {
+            problems.Add(
+                $"{where} has [FormListSource] naming '{listSource.Navigation}', which is not a navigation of {entityType.ClrType.Name}."
+            );
+        }
+
+        return source;
     }
 
     /// <summary>
@@ -265,7 +342,9 @@ internal static class FormModelScanner
         || property.IsDefined(typeof(FormMaxItemsAttribute), false)
         || property.IsDefined(typeof(FormOptionsAttribute), false)
         || property.IsDefined(typeof(FormShowWhenAttribute), false)
-        || property.IsDefined(typeof(FormDateEventAttribute), false);
+        || property.IsDefined(typeof(FormDateEventAttribute), false)
+        || property.IsDefined(typeof(FormDistinctAttribute), false)
+        || property.IsDefined(typeof(FormListSourceAttribute), false);
 
     private static BindingInfo? DescribeColumn(
         string where,
@@ -352,5 +431,140 @@ internal static class FormModelScanner
             JunctionType = junction.ClrType,
             JunctionReferenceIdProperty = referenceKeys[0].Properties[0].PropertyInfo,
         };
+    }
+
+    private static BindingInfo? DescribeTextList(
+        string where,
+        INavigation navigation,
+        List<string> problems
+    )
+    {
+        BindingInfo? children = DescribeChildCollection(where, navigation, "TextList", problems);
+        if (children is null)
+        {
+            return null;
+        }
+
+        IProperty[] values = navigation
+            .TargetEntityType.GetProperties()
+            .Where(static p => p.ClrType == typeof(string) && !p.IsKey() && !p.IsForeignKey())
+            .ToArray();
+        if (values is not [{ PropertyInfo: { } value }])
+        {
+            problems.Add(
+                $"{where} uses TextList, but {navigation.TargetEntityType.ClrType.Name} does not have exactly one string column to hold each entry."
+            );
+            return null;
+        }
+
+        return children with
+        {
+            Kind = BindingKind.TextList,
+            ChildValueProperty = value,
+        };
+    }
+
+    /// <summary>
+    /// The child entity of a collection navigation, its int primary key and its optional
+    /// <c>int? DisplayOrder</c>.
+    /// </summary>
+    private static BindingInfo? DescribeChildCollection(
+        string where,
+        INavigation navigation,
+        string control,
+        List<string> problems
+    )
+    {
+        IEntityType child = navigation.TargetEntityType;
+        IReadOnlyList<IProperty>? key = child.FindPrimaryKey()?.Properties;
+        if (
+            !navigation.IsCollection
+            || key is not [{ PropertyInfo: { } id }]
+            || id.PropertyType != typeof(int)
+        )
+        {
+            problems.Add(
+                $"{where} uses {control}, which needs a collection navigation to an entity with an int primary key."
+            );
+            return null;
+        }
+
+        IProperty? displayOrder = child.FindProperty("DisplayOrder");
+        if (displayOrder is not null && displayOrder.ClrType != typeof(int?))
+        {
+            problems.Add(
+                $"{where} uses {control}, but {child.ClrType.Name}.DisplayOrder is not an int?."
+            );
+            return null;
+        }
+
+        return new BindingInfo(BindingKind.TextList)
+        {
+            ChildType = child.ClrType,
+            ChildIdProperty = id,
+            ChildDisplayOrderProperty = displayOrder?.PropertyInfo,
+        };
+    }
+
+    /// <summary>
+    /// A text list's collection, and for a list sharing it with others (<c>[FormListSource]</c>),
+    /// the child's column that holds the list's kind.
+    /// </summary>
+    private static BindingInfo? WithListSource(
+        string where,
+        BindingInfo? textList,
+        INavigation navigation,
+        FormListSourceAttribute? listSource,
+        List<string> problems
+    )
+    {
+        if (textList is null || listSource is null)
+        {
+            return textList is null
+                ? null
+                : textList with
+                {
+                    ChildNavigation = navigation.PropertyInfo,
+                };
+        }
+
+        PropertyInfo? kindProperty = FindKindColumn(
+            where,
+            navigation.TargetEntityType,
+            listSource,
+            problems
+        );
+        return kindProperty is null
+            ? null
+            : textList with
+            {
+                ChildNavigation = navigation.PropertyInfo,
+                ChildKindProperty = kindProperty,
+                ChildKind = listSource.Kind,
+            };
+    }
+
+    /// <summary>The child's one column of the <c>[FormListSource]</c> kind's enum type.</summary>
+    private static PropertyInfo? FindKindColumn(
+        string where,
+        IEntityType child,
+        FormListSourceAttribute listSource,
+        List<string> problems
+    )
+    {
+        Type kindType = listSource.Kind.GetType();
+        IProperty[] kindColumns = child
+            .GetProperties()
+            .Where(p => kindType.IsEnum && p.ClrType == kindType)
+            .ToArray();
+        if (kindColumns is [{ PropertyInfo: { } kindColumn }])
+        {
+            return kindColumn;
+        }
+
+        problems.Add(
+            $"{where} has [FormListSource] kind {listSource.Kind}, but {child.ClrType.Name} does not have exactly one non-nullable {kindType.Name} enum column to hold it."
+        );
+        return null;
     }
 }

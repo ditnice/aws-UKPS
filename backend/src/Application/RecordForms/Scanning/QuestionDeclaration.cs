@@ -18,14 +18,18 @@ internal sealed record QuestionDeclaration
     public FormOptionsAttribute? Options { get; init; }
     public FormShowWhenAttribute? ShowWhen { get; init; }
     public FormDateEventAttribute? DateEvent { get; init; }
+    public FormDistinctAttribute? Distinct { get; init; }
     public required BindingInfo Binding { get; init; }
 
     public string Where => $"{EntityType.Name}.{Property.Name}";
 
     public AnswerShape Shape =>
-        Binding.Kind is BindingKind.Flags or BindingKind.Junction
-            ? AnswerShape.Multi
-            : AnswerShape.Single;
+        Binding.Kind switch
+        {
+            BindingKind.Flags or BindingKind.Junction => AnswerShape.Multi,
+            BindingKind.TextList => AnswerShape.List,
+            _ => AnswerShape.Single,
+        };
 
     public FormControl Control => Field.Control;
 }

@@ -11,6 +11,7 @@ import { PrefixedNumberQuestion } from './questions/PrefixedNumberQuestion'
 import { RadioQuestion } from './questions/RadioQuestion'
 import { SelectQuestion } from './questions/SelectQuestion'
 import { TextareaQuestion } from './questions/TextareaQuestion'
+import { TextListQuestion } from './questions/TextListQuestion'
 import { TextQuestion } from './questions/TextQuestion'
 
 import type { QuestionProps } from './types'
@@ -40,4 +41,5 @@ export const questionRegistry: Record<FormControl, (props: QuestionProps) => Rea
   PrefixedNumber: control<string>(PrefixedNumberQuestion),
   ActualMonth: control<DateValue>(ActualMonthQuestion),
   ActualDate: control<DateValue>(ActualDateQuestion),
+  TextList: control<string[]>(TextListQuestion),
 }

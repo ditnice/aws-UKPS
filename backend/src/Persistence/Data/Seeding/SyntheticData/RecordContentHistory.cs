@@ -154,9 +154,10 @@ internal static class RecordContentHistory
             (CreationPageFieldPaths.CompanyCode, names.CompanyCode),
             (CreationPageFieldPaths.BrandedName, names.BrandedName),
             (CreationPageFieldPaths.RecordTitle, names.RecordTitle),
+            (CreationPageFieldPaths.GenericNames, FieldAuditJson.TextList(names.GenericNames)),
             (
-                CreationPageFieldPaths.NamesAndIdentifiers,
-                FieldAuditJson.NamesAndIdentifiers(names.GenericNames, names.OtherIdentifiers)
+                CreationPageFieldPaths.OtherIdentifiers,
+                FieldAuditJson.TextList(names.OtherIdentifiers)
             ),
         ];
 

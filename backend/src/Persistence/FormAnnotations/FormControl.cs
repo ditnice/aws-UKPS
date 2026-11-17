@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace UKPS.Api.Persistence.FormAnnotations;
 
 /// <summary>
@@ -10,6 +12,11 @@ namespace UKPS.Api.Persistence.FormAnnotations;
 /// A choice control takes its options from the one provider registered for the property's enum
 /// or referenced entity, unless <see cref="FormOptionsAttribute"/> names another.
 /// </remarks>
+[SuppressMessage(
+    "Design",
+    "CA1027:Mark enums with FlagsAttribute",
+    Justification = "Each value is one control, not a combination."
+)]
 public enum FormControl
 {
     /// <summary>
@@ -89,4 +96,13 @@ public enum FormControl
     /// <see cref="FormDateEventAttribute"/>.
     /// </summary>
     ActualDate = 9,
+
+    /// <summary>
+    /// A list of text inputs with an add another button, shown inline. For a collection
+    /// navigation to a child entity with exactly one string column (the value) and optionally an
+    /// <c>int? DisplayOrder</c>. The answer is an ordered array of trimmed strings; blank entries
+    /// are dropped. May have <see cref="FormMaxItemsAttribute"/> and
+    /// <see cref="FormDistinctAttribute"/>.
+    /// </summary>
+    TextList = 11,
 }
