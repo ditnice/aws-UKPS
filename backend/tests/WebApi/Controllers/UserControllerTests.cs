@@ -966,6 +966,17 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                         UserOrgStatus.Removed
                     )
             );
+            RuleFor(
+                x => x.PendingWorkEmail,
+                f =>
+                    f.Random.Bool()
+                        ? new PendingWorkEmailChangeDto()
+                        {
+                            Value = f.Internet.Email(),
+                            VerifiedByEmail = f.Random.Bool(),
+                        }
+                        : null
+            );
         }
     }
 
