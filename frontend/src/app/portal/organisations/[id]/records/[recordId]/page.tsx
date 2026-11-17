@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 
-import { getOrganisationRecords, getRecord, RecordType } from '@/client/generated'
+import { getRecord, RecordType } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { Alert } from '@/components/Alert/Alert'
 import { BackLink } from '@/components/BackLink/BackLink'
