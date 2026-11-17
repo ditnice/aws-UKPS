@@ -88,7 +88,7 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
     {
         using HttpResponseMessage response = await PostSubmit(await CurrentHash());
 
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
         JsonObject dto = (
             await _httpClient.GetFromJsonAsync<JsonObject>(
                 new Uri(
@@ -154,7 +154,7 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
     {
         string hash = await CurrentHash();
         using HttpResponseMessage submitted = await PostSubmit(hash);
-        submitted.StatusCode.ShouldBe(HttpStatusCode.OK);
+        submitted.StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         using HttpResponseMessage response = await PostSubmit(hash);
 

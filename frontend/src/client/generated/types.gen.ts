@@ -303,7 +303,7 @@ export type InvalidRecordProblemDetails = {
     /**
      * Identifies the problem; always `record_invalid`.
      */
-    code: null | string;
+    code: string;
     /**
      * Each problem with its page and task, in form order.
      */
@@ -3415,8 +3415,10 @@ export type SubmitRecordResponses = {
     /**
      * The record was submitted.
      */
-    200: unknown;
+    204: void;
 };
+
+export type SubmitRecordResponse = SubmitRecordResponses[keyof SubmitRecordResponses];
 
 export type GetRecordTaskListData = {
     body?: never;

@@ -16,8 +16,6 @@ namespace UKPS.Api.WebApi.Controllers;
 [Route("records/{recordId:int}")]
 public class RecordSubmissionController(IRecordSubmissionService submissionService) : ControllerBase
 {
-    private const string CodeExtension = "code";
-
     /// <summary>
     /// Submits the record's draft revision, as it was when check your answers loaded. A medicine
     /// goes to QA review.
@@ -26,7 +24,7 @@ public class RecordSubmissionController(IRecordSubmissionService submissionServi
     /// <param name="command">The form version and revision hash check your answers loaded.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>An <see cref="ActionResult"/> indicating whether the record was submitted.</returns>
-    /// <response code="200">The record was submitted.</response>
+    /// <response code="204">The record was submitted.</response>
     /// <response code="400">The request body is missing or malformed.</response>
     /// <response code="403">The caller can read the record but not submit it.</response>
     /// <response code="404">
@@ -41,7 +39,7 @@ public class RecordSubmissionController(IRecordSubmissionService submissionServi
     /// <c>fields</c> lists each problem with its page and task, in form order.
     /// </response>
     [HttpPost("submit", Name = nameof(SubmitRecord))]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -59,7 +57,7 @@ public class RecordSubmissionController(IRecordSubmissionService submissionServi
             cancellationToken
         );
 
-        return result.Match<ActionResult>(Ok, HandleError);
+        return result.Match<ActionResult>(NoContent, HandleError);
     }
 
     private ObjectResult HandleError(SubmitRecordError error)
@@ -75,17 +73,17 @@ public class RecordSubmissionController(IRecordSubmissionService submissionServi
                     detail: "You are not authorised to submit this record."
                 ),
             notSubmittable: _ =>
-                Conflict(
+                this.ConflictProblem(
                     "record_not_submittable",
                     "This record can't be submitted because it has already been submitted, or is on hold or archived."
                 ),
             formVersionChanged: _ =>
-                Conflict(
+                this.ConflictProblem(
                     "form_version_changed",
                     "This form has changed since check your answers was loaded."
                 ),
             recordChanged: _ =>
-                Conflict(
+                this.ConflictProblem(
                     "record_changed",
                     "This record has changed since check your answers was loaded."
                 ),
@@ -93,24 +91,7 @@ public class RecordSubmissionController(IRecordSubmissionService submissionServi
         );
     }
 
-    private ObjectResult RecordNotFound() =>
-        Problem(
-            statusCode: StatusCodes.Status404NotFound,
-            title: "Not Found",
-            detail: "Record not found."
-        );
-
-    private ObjectResult Conflict(string code, string detail)
-    {
-        ProblemDetails problem = ProblemDetailsFactory.CreateProblemDetails(
-            HttpContext,
-            statusCode: StatusCodes.Status409Conflict,
-            title: "Conflict",
-            detail: detail
-        );
-        problem.Extensions[CodeExtension] = code;
-        return new ObjectResult(problem) { StatusCode = StatusCodes.Status409Conflict };
-    }
+    private ObjectResult RecordNotFound() => this.NotFoundProblem("Record not found.");
 
     private ObjectResult InvalidRecord(SubmitRecordError.Invalid invalid)
     {
@@ -119,15 +100,16 @@ public class RecordSubmissionController(IRecordSubmissionService submissionServi
             ModelState.AddModelError(field.QuestionId, field.Message);
         }
 
-        InvalidRecordProblemDetails problem = new(
-            ProblemDetailsFactory.CreateValidationProblemDetails(
-                HttpContext,
-                ModelState,
-                statusCode: StatusCodes.Status422UnprocessableEntity,
-                detail: "Fix the problems with this record before submitting it."
-            ),
-            invalid.Errors
+        // Shaped as InvalidRecordProblemDetails, which documents it in the OpenAPI schema.
+        ValidationProblemDetails problem = ProblemDetailsFactory.CreateValidationProblemDetails(
+            HttpContext,
+            ModelState,
+            statusCode: StatusCodes.Status422UnprocessableEntity,
+            detail: "Fix the problems with this record before submitting it."
         );
+        problem.Extensions[ControllerProblemExtensions.CodeExtension] =
+            InvalidRecordProblemDetails.RecordInvalidCode;
+        problem.Extensions[InvalidRecordProblemDetails.FieldsExtension] = invalid.Errors;
         return new ObjectResult(problem) { StatusCode = StatusCodes.Status422UnprocessableEntity };
     }
 }

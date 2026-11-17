@@ -3565,7 +3565,7 @@
           "required": true
         },
         "responses": {
-          "200": {
+          "204": {
             "description": "The record was submitted."
           },
           "400": {
@@ -5498,8 +5498,8 @@
       },
       "InvalidRecordProblemDetails": {
         "required": [
-          "fields",
           "code",
+          "fields",
           "errors"
         ],
         "type": "object",
@@ -5536,10 +5536,7 @@
             ]
           },
           "code": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": "string",
             "description": "Identifies the problem; always `record_invalid`."
           },
           "fields": {
