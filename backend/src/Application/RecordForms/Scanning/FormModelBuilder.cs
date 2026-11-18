@@ -224,7 +224,8 @@ internal static class FormModelBuilder
             .SelectMany(static e => e.PageConditions)
             .ToDictionary(static c => c.PageId, StringComparer.Ordinal);
 
-        // Tasks and sections with no pages yet are left out of the form.
+        // Pages with no questions yet, and tasks and sections with no such pages, are left out of
+        // the form.
         FormSection[] sections = layout
             .Sections.OrderBy(static s => s.Order)
             .Select(section => new FormSection(
@@ -253,39 +254,39 @@ internal static class FormModelBuilder
             task.Id,
             task.Title,
             task.Order,
-            questions
-                .Where(q => string.Equals(q.Placed.TaskId, task.Id, StringComparison.Ordinal))
-                .GroupBy(static q => q.Placed.Question.Page.Id, StringComparer.Ordinal)
-                .Select(page => BuildPage(page, section, task, pageConditions))
-                .OrderBy(static p => p.Order)
+            task.Pages.OrderBy(static p => p.Order)
+                .Select(page => BuildPage(section, task, page, questions, pageConditions))
+                .Where(static p => p.Questions.Count > 0)
                 .ToArray()
         );
 
     private static FormPage BuildPage(
-        IGrouping<string, BuiltQuestion> page,
         FormLayoutSection section,
         FormLayoutTask task,
+        FormLayoutPage page,
+        BuiltQuestion[] questions,
         Dictionary<string, FormPageShowWhenAttribute> pageConditions
-    )
-    {
-        FormPageAttribute declared = page.First().Placed.Question.Page;
-        return new(
-            page.Key,
-            declared.Title,
-            declared.Order,
+    ) =>
+        new(
+            page.Id,
+            page.Title,
+            page.Order,
             section.Id,
             section.Title,
             task.Id,
             task.Title,
-            page.Select(static q => q.Question).OrderBy(static q => q.Order).ToArray(),
-            CommercialInConfidence: declared.CommercialInConfidence
+            questions
+                .Where(q => string.Equals(q.Placed.PageId, page.Id, StringComparison.Ordinal))
+                .Select(static q => q.Question)
+                .OrderBy(static q => q.Order)
+                .ToArray(),
+            CommercialInConfidence: page.CommercialInConfidence
         )
         {
-            ShowWhen = pageConditions.TryGetValue(page.Key, out var condition)
+            ShowWhen = pageConditions.TryGetValue(page.Id, out var condition)
                 ? Condition(condition.QuestionId, condition.Values)
                 : null,
         };
-    }
 
     /// <summary>A placed question declaration with the question built from it.</summary>
     private sealed record BuiltQuestion(PlacedQuestion Placed, FormQuestion Question);

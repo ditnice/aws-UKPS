@@ -31,8 +31,6 @@ internal sealed class ScanningTestDbContext(DbContextOptions<ScanningTestDbConte
         modelBuilder.Entity<BrokenEntity>();
         modelBuilder.Entity<RowsEntity>();
         modelBuilder.Entity<DisagreeingEntity>();
-        modelBuilder.Entity<FlagDisagreeingEntity>();
-        modelBuilder.Entity<TaskConflictEntity>();
         modelBuilder.Entity<ConditionalEntity>();
         modelBuilder.Entity<ConditionalExtraEntity>();
         modelBuilder.Entity<BrokenConditionEntity>();

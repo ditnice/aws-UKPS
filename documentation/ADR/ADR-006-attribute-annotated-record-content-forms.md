@@ -47,14 +47,14 @@ in-memory form model at startup.
   because attributes cannot hold queries or tuples. A question with no `[FormOptions]` uses the
   only provider registered for its enum or referenced entity, so the key is needed only to
   choose between several providers of one type.
-- **Sections and tasks are declared once per record type**, in a `FormLayout` subclass
-  (`MedicineFormLayout`) holding each section and task's ID, title and order. `[FormPage]` names
-  its task by ID (a constant on the layout), and the task decides the page's section and form.
-  Startup rejects a task no layout declares.
+- **Sections, tasks and pages are declared once per record type**, in a `FormLayout` subclass
+  (`MedicineFormLayout`) holding each section, task and page's ID, title and order. `[FormPage]`
+  names its page by ID (a constant on the layout), and the layout decides the page's task,
+  section and form. Startup rejects a page no layout declares.
 - **Coverage is enforced.** In a `[FormEntity]` entity, every mapped scalar property must carry
   `[FormField]` or `[FormIgnore(reason)]`.
 - **Pages may span entities.** The same `[FormPage]` ID on properties of different entities
-  produces one merged page. Metadata must agree.
+  produces one merged page, whose metadata the layout declares once.
 - **Fail fast.** A scanner builds one form model per record type from the attributes and EF
   `IModel`, and a validator reports every problem at once. An invalid model stops the API
   starting.

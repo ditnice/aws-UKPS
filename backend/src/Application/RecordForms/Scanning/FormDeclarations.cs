@@ -6,7 +6,7 @@ namespace UKPS.Api.Application.RecordForms.Scanning;
 /// <summary>Everything the scanner read: the form layouts and the annotated entities.</summary>
 internal sealed class FormDeclarations
 {
-    private readonly Dictionary<string, TaskPlacement> _tasks = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, PagePlacement> _pages = new(StringComparer.Ordinal);
 
     public FormDeclarations(
         IReadOnlyList<FormLayout> layouts,
@@ -16,14 +16,20 @@ internal sealed class FormDeclarations
         Layouts = layouts;
         Entities = entities;
 
-        // A task ID declared twice is reported by the validator; the first declaration wins here.
+        // A page ID declared twice is reported by the validator; the first declaration wins here.
         foreach (FormLayout layout in layouts)
         {
             foreach (FormLayoutSection section in layout.Sections)
             {
                 foreach (FormLayoutTask task in section.Tasks)
                 {
-                    _tasks.TryAdd(task.Id, new TaskPlacement(layout.RecordType, section, task));
+                    foreach (FormLayoutPage page in task.Pages)
+                    {
+                        _pages.TryAdd(
+                            page.Id,
+                            new PagePlacement(layout.RecordType, section, task, page)
+                        );
+                    }
                 }
             }
         }
@@ -47,14 +53,14 @@ internal sealed class FormDeclarations
     public IReadOnlyList<EntityDeclaration> Entities { get; }
 
     /// <summary>
-    /// Every question whose page's task a layout declares, in entity and declaration order.
-    /// Questions naming an undeclared task are left out; the validator reports them.
+    /// Every question whose page a layout declares, in entity and declaration order. Questions
+    /// naming an undeclared page are left out; the validator reports them.
     /// </summary>
     public IReadOnlyList<PlacedQuestion> Placed { get; }
 
-    /// <summary>Where the question's page's task puts it, or null if no layout declares the task.</summary>
-    public TaskPlacement? Place(QuestionDeclaration question) =>
-        _tasks.GetValueOrDefault(question.Page.Task);
+    /// <summary>Where the question's page puts it, or null if no layout declares the page.</summary>
+    public PagePlacement? Place(QuestionDeclaration question) =>
+        _pages.GetValueOrDefault(question.PageId);
 
     /// <summary>The forms the entity's pages are in.</summary>
     public RecordType[] RecordTypesOf(EntityDeclaration entity) =>

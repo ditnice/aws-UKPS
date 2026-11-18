@@ -22,8 +22,8 @@ That idea is replaced here, and the brief is kept only as background.
 The form is declared **on the EF content entities themselves**, using attributes. Each property that
 a user answers carries the question's ID, label, hint, task, page, rules and options. Every other
 property is explicitly ignored, with a reason. The hierarchy is section → task → page → question.
-Sections and tasks are declared once per record type in a layout (`MedicineFormLayout`), and each
-page names its task.
+Sections, tasks and pages are declared once per record type in a layout (`MedicineFormLayout`),
+and each question names its page.
 
 ```csharp
 [FormEntity]
@@ -32,7 +32,7 @@ internal sealed class MedicinesIndicationDetail
     [FormIgnore("Database identity")]
     public int Id { get; set; }
 
-    [FormPage(MedicineFormLayout.IndicationDetails, "indication", "Indication", Order = 10)]
+    [FormPage(MedicineFormLayout.Indication)]
     [FormField(
         "medicines_indication_detail.indication",
         "What is the indication this product is seeking a licence for?",
@@ -208,16 +208,16 @@ invalid model stops the API starting. It holds structure only: bindings receive 
 
 ### Sections, pages and ordering
 
-- **Sections and tasks.** A `FormLayout` subclass per record type (`MedicineFormLayout`) declares
-  the form's sections and their tasks once, each with an ID, title and order. The section title
-  is the dataset's section name, a heading in the task list; each task under it has its own
-  title, which is also the page caption. Task IDs are `const string` values on the layout, unique
-  across every form. A task with no pages yet is left out of the form, as is a section with no
-  such tasks.
-- **Pages.** `[FormPage(task, id, title, Order = n)]` on a property places its question on that
-  page, in that task. The task decides the page's section and form, so an entity's pages must all
-  be in one form. The page's `Order` places it within its task. `[FormEntity]` on the class marks
-  it as holding questions and sets its `RowSource`.
+- **Sections, tasks and pages.** A `FormLayout` subclass per record type (`MedicineFormLayout`)
+  declares the form's sections, their tasks and the tasks' pages once, each with an ID, title and
+  order; a page also has its `CommercialInConfidence` flag. The section title is the dataset's
+  section name, a heading in the task list; each task under it has its own title, which is also
+  the page caption. Task and page IDs are unique across every form, and page IDs are
+  `const string` values on the layout. A page with no questions yet is left out of the form, as
+  is a task or section with no such pages.
+- **Pages.** `[FormPage(id)]` on a property places its question on that page. The layout decides
+  the page's task, section and form, so an entity's pages must all be in one form. `[FormEntity]`
+  on the class marks it as holding questions and sets its `RowSource`.
 - **Questions.** On a page with several questions, `FormField.Order` sets their order.
 - **Form order** is section order, then task order, then page order. A user enters a task from
   the task list and steps through its pages: Back goes to the previous page in the task, and Save
@@ -228,13 +228,9 @@ invalid model stops the API starting. It holds structure only: bindings receive 
 
 ### Pages that span entities
 
-A page ID is unique within a form, not within an entity. When properties on **different
-entities** declare the same `[FormPage]` ID, their questions are merged into one page:
-
-- every declaration of that page ID must agree on title and order;
-- the declaring entities must all be in the same section.
-
-The startup check enforces both.
+A page belongs to the layout, not to an entity. When properties on **different entities**
+name the same page in `[FormPage]`, their questions are merged into one page. The page's title,
+order and task are declared once in the layout, so the declarations cannot disagree.
 
 Saving a merged page writes to several tables, and a field audit row per changed question, in
 one `SaveChangesAsync`.
@@ -411,7 +407,7 @@ Some questions and pages only apply when an earlier question has a particular an
   page while it does not apply.
 
 ```csharp
-[FormPage("co-marketing", "Co-marketing", Order = 30)]
+[FormPage(MedicineFormLayout.CoMarketing)]
 [FormField(
     "medicines_development_background.co_marketing_company_name",
     "Co-marketing company name",
