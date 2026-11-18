@@ -2292,6 +2292,16 @@ export type VerifyMultiFactorAuthenticationUpdateCommand = {
     code: string;
 };
 
+/**
+ * Command to verify a user's pending email address using a previously issued verification token.
+ */
+export type VerifyPendingEmailAddressCommand = {
+    /**
+     * The verification token that was sent to the pending email address.
+     */
+    verificationToken: string;
+};
+
 export const YesNoUnknown = {
     UNKNOWN: 'Unknown',
     NO: 'No',
@@ -3967,6 +3977,53 @@ export type UpdateUserEmailError = UpdateUserEmailErrors[keyof UpdateUserEmailEr
 export type UpdateUserEmailResponses = {
     /**
      * OK
+     */
+    200: unknown;
+};
+
+export type VerifyPendingEmailAddressData = {
+    /**
+     * A token to cancel the operation.
+     */
+    body: VerifyPendingEmailAddressCommand;
+    path: {
+        /**
+         * The ID of the user whose pending email address is being verified.
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/users/{userId}/email/verify';
+};
+
+export type VerifyPendingEmailAddressErrors = {
+    /**
+     * The verification token provided is invalid.
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller is not authorised to verify the email address for this user.
+     */
+    403: ProblemDetails;
+    /**
+     * The user does not exist.
+     */
+    404: ProblemDetails;
+    /**
+     * The user has no pending email address, or the pending email address has already been verified.
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type VerifyPendingEmailAddressError = VerifyPendingEmailAddressErrors[keyof VerifyPendingEmailAddressErrors];
+
+export type VerifyPendingEmailAddressResponses = {
+    /**
+     * The pending email address was verified successfully.
      */
     200: unknown;
 };

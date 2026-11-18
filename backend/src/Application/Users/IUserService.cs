@@ -1,3 +1,4 @@
+global using VerifyPendingEmailAddressResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.VerifyPendingEmailAddressError>;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Users.Dtos;
@@ -72,6 +73,24 @@ public interface IUserService
     Task<Result<UpdateUserEmailError>> UpdateUserEmail(
         int userId,
         UpdateUserEmailCommand command,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
+    /// Verifies a user's pending email address using the verification token supplied in the command.
+    /// </summary>
+    /// <param name="userId">The identifier of the user whose pending email address is being verified.</param>
+    /// <param name="command">The command containing the verification token that was sent to the pending email address.</param>
+    /// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+    /// <returns>
+    /// A task that resolves to a <see cref="VerifyPendingEmailAddressResult"/> indicating whether the
+    /// email address was verified, or which <see cref="VerifyPendingEmailAddressError"/> case prevented it
+    /// (for example, the user was not found, the caller was not authorised, there was no pending email
+    /// address, it was already verified, or the token was invalid).
+    /// </returns>
+    Task<VerifyPendingEmailAddressResult> VerifyPendingEmailAddress(
+        int userId,
+        VerifyPendingEmailAddressCommand command,
         CancellationToken cancellationToken
     );
 

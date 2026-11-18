@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using UKPS.Api.Application;
+using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Persistence;
@@ -40,6 +41,7 @@ internal sealed class ServiceTestHarness<TService> : IServiceTestHarness<TServic
             .AddTransient(_ => Cognito.Mock)
             .AddTransient(_ => Emails.Mock)
             .AddSingleton(_ => _timeProvider)
+            .AddSingleton(_ => Substitute.For<IEmailVerificationLinkCreator>())
             .AddLogging(x =>
             {
                 x.ClearProviders();
