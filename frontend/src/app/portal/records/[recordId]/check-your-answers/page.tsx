@@ -40,6 +40,18 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
     notFound()
   }
 
+  if (response?.status === 403 || response?.status === 409) {
+    return (
+      <section>
+        <PageHeader
+          backLink={<BackLink href={taskListHref(recordId)}>Back</BackLink>}
+          heading="This record can't be submitted"
+        />
+        <ErrorState>…</ErrorState>
+      </section>
+    )
+  }
+
   if (!data || error) {
     return (
       <section>
@@ -64,7 +76,6 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
           <ul>
             {data.errors.map((error) => (
               <li key={error.questionId}>
-                {' '}
                 <a
                   href={`${pageHref({ recordId }, error.pageId)}?returnTo=${checkAnswersReturnTo}#${error.questionId}`}
                 >
@@ -72,7 +83,7 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
                 </a>
               </li>
             ))}
-          </ul>{' '}
+          </ul>
         </Alert>
       )}
 
@@ -92,7 +103,7 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
                   value={formatAnswer(question)}
                   tag={
                     errorsByQuestionId.get(question.id) && (
-                      <Tag colour="red"> There is a problem </Tag>
+                      <Tag colour="red">There is a problem</Tag>
                     )
                   }
                 >
@@ -109,14 +120,12 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
         )),
       )}
 
-      {data.errors.length === 0 && (
-        <CheckAnswersActions
-          recordId={recordId}
-          formVersion={data.formVersion}
-          revisionHash={data.revisionHash}
-          organisationId={data.organisationId}
-        />
-      )}
+      <CheckAnswersActions
+        recordId={recordId}
+        formVersion={data.formVersion}
+        revisionHash={data.revisionHash}
+        organisationId={data.organisationId}
+      />
     </>
   )
 }

@@ -18,4 +18,26 @@ describe('RecordActionAlert', () => {
       ),
     ).toBeTruthy()
   })
+
+  it('confirms that the record was submitted for QA review', () => {
+    render(<RecordActionAlert action="submitted" />)
+
+    expect(
+      screen.getByRole('heading', { level: 3, name: 'Record submitted for QA review' }),
+    ).toBeTruthy()
+    expect(
+      screen.getByText(
+        'You have submitted the record for review by the QA team. You cannot make any edits to the record whilst it is in review.',
+      ),
+    ).toBeTruthy()
+  })
+
+  it('confirms that the draft record was saved', () => {
+    render(<RecordActionAlert action="draft-saved" />)
+
+    expect(screen.getByRole('heading', { level: 3, name: 'Draft record saved' })).toBeTruthy()
+    expect(
+      screen.getByText('Your answers have been saved as a draft. You can update them at any time.'),
+    ).toBeTruthy()
+  })
 })

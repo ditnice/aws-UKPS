@@ -77,4 +77,71 @@ describe('CheckAnswersActions', () => {
     finish({ error: {}, response: { ok: false, status: 500 } })
     await waitFor(() => expect(submitButton).toBeEnabled())
   })
+
+  it('shows the API message and a reload link when the record has changed', async () => {
+    mocks.submitRecord.mockResolvedValueOnce({
+      error: {
+        code: 'record_changed',
+        detail: 'This record has changed since check your answers was loaded.',
+      },
+      response: { ok: false, status: 409 },
+    })
+    render(<CheckAnswersActions {...props} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit record for review' }))
+
+    expect(
+      await screen.findByText('This record has changed since check your answers was loaded.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Reload this page' })).toHaveAttribute(
+      'href',
+      '/portal/records/5/check-your-answers',
+    )
+    expect(mocks.push).not.toHaveBeenCalled()
+  })
+
+  it('shows a general message when the API gives no reason for the conflict', async () => {
+    mocks.submitRecord.mockResolvedValueOnce({
+      error: undefined,
+      response: { ok: false, status: 409 },
+    })
+    render(<CheckAnswersActions {...props} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit record for review' }))
+
+    expect(
+      await screen.findByText('This record has changed. Reload the page and try again.'),
+    ).toBeInTheDocument()
+    expect(mocks.push).not.toHaveBeenCalled()
+  })
+
+  it('tells the user to fix their answers and refreshes the page when the answers are invalid', async () => {
+    mocks.submitRecord.mockResolvedValueOnce({
+      error: {},
+      response: { ok: false, status: 422 },
+    })
+    render(<CheckAnswersActions {...props} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit record for review' }))
+
+    expect(await screen.findByText(/There are problems with your answers/)).toBeInTheDocument()
+    expect(mocks.refresh).toHaveBeenCalledOnce()
+  })
+
+  it('shows a try again message and does not refresh the page when the submission fails', async () => {
+    mocks.submitRecord.mockResolvedValueOnce({
+      error: {},
+      response: { ok: false, status: 500 },
+    })
+    render(<CheckAnswersActions {...props} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit record for review' }))
+
+    expect(
+      await screen.findByText(
+        'There was a problem submitting your record. Please try again later.',
+      ),
+    ).toBeInTheDocument()
+    expect(mocks.refresh).not.toHaveBeenCalled()
+  })
 })
