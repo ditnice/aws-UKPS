@@ -1,8 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
-using UKPS.Api.Application.Common;
 
 namespace UKPS.Api.Application.InternalServices.Identity;
 
@@ -88,12 +86,4 @@ public abstract record InitiateAuthenticationError
             Challenge c => challenge(c),
             _ => throw new UnreachableException(),
         };
-
-    internal async Task<Result<MultiFactorAuthenticationSetupDto, UserSetupError>> Match(
-        Func<Task<Result<MultiFactorAuthenticationSetupDto, UserSetupError>>> unauthorised,
-        Func<object, Task<Result<MultiFactorAuthenticationSetupDto, UserSetupError>>> challenge
-    )
-    {
-        throw new NotImplementedException();
-    }
 }

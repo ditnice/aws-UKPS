@@ -12,6 +12,7 @@ using UKPS.Api.Application.Authentication.SecurityNotification;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.Users;
+using UKPS.Api.Application.Users.Errors;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
@@ -37,7 +38,7 @@ public class LoginServiceTests : DatabaseTestBase
     private LoginRequest _defaultLoginRequest = null!;
     private RespondToMultiFactorAuthenticationChallengeCommand _defaultResponseToMfaCommand = null!;
     private User _user = null!;
-    private IUserService _userServiceMock = Substitute.For<IUserService>();
+    private readonly IUserService _userServiceMock = Substitute.For<IUserService>();
 
     public LoginServiceTests(PostgresFixture fixture)
         : base(fixture)

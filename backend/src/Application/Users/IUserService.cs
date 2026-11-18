@@ -1,10 +1,9 @@
-global using UpdateEmailToCompletePendingEmailChangeResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.UpdateEmailToCompletePendingEmailError>;
+global using UpdateEmailToCompletePendingEmailChangeResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.UpdateEmailToCompletePendingEmailError>;
 global using VerifyPendingEmailAddressResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.VerifyPendingEmailAddressError>;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
-using UKPS.Api.Persistence.Entities.Identity;
 
 namespace UKPS.Api.Application.Users;
 
@@ -182,42 +181,4 @@ public interface IUserService
         int userId,
         CancellationToken cancellationToken
     );
-}
-
-/// <summary>
-/// Represents an error that can occur when completing a pending email update.
-/// </summary>
-public abstract record UpdateEmailToCompletePendingEmailError
-{
-    /// <summary>
-    /// Represents the error when the pending email update cannot be found.
-    /// </summary>
-    public sealed record NotFound : UpdateEmailToCompletePendingEmailError;
-
-    public sealed record NotVerified : UpdateEmailToCompletePendingEmailError;
-
-    /// <summary>
-    /// Represents the error when the email address conflicts with an existing user.
-    /// </summary>
-    public sealed record ConflictingEmail : UpdateEmailToCompletePendingEmailError;
-
-    internal TResult Match<TResult>(
-        Func<NotFound, TResult> notFound,
-        Func<ConflictingEmail, TResult> conflictingEmail,
-        Func<NotVerified, TResult> notVerified
-    )
-    {
-        ArgumentNullException.ThrowIfNull(notFound);
-        ArgumentNullException.ThrowIfNull(conflictingEmail);
-
-        return this switch
-        {
-            NotFound e => notFound(e),
-            ConflictingEmail e => conflictingEmail(e),
-            NotVerified e => notVerified(e),
-            _ => throw new NotSupportedException(
-                $"Unsupported {nameof(UpdateEmailToCompletePendingEmailError)} subtype: {GetType().Name}."
-            ),
-        };
-    }
 }

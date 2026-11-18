@@ -69,10 +69,12 @@ internal class LoginService : ILoginService
             command.Username,
             cancellationToken
         );
+
         if (lookupResult is null)
         {
             return InitiateAuthenticationResult.Err(new InitiateAuthenticationError.Unauthorised());
         }
+
         var result = await _identityService.RespondToMultiFactorAuthenticationChallenge(
             lookupResult.User.CognitoUsername,
             command.AuthenticationSession,
@@ -172,15 +174,15 @@ internal class LoginService : ILoginService
             if (emailUpdateResult.IsErr)
             {
                 var error = emailUpdateResult.Error.Match<InitiateAuthenticationError>(
-                    notFound: _ =>
+                    notFound: () =>
                         throw new InvalidOperationException(
                             "Failed to update pending email address. User was not found despite previously being found during this request."
                         ),
-                    conflictingEmail: _ =>
+                    conflictingEmail: () =>
                         throw new InvalidOperationException(
-                            "Failed to update pending email address. Conflicting email occured despite checks to ensure email/pending email uniqueness"
+                            "Failed to update pending email address. Conflicting email occurred despite checks to ensure email/pending email uniqueness"
                         ),
-                    notVerified: _ => new InitiateAuthenticationError.VerificationRequired()
+                    notVerified: () => new InitiateAuthenticationError.VerificationRequired()
                 );
                 return InitiateAuthenticationResult.Err(error);
             }

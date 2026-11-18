@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using UKPS.Api.Application.Authentication;
@@ -708,10 +707,14 @@ public class AuthenticationController : ControllerBase
         return error.Match<ActionResult>(
             unauthorised: () => Unauthorized(AuthenticationProblemDetails.Unauthorised()),
             verificationRequired: () =>
-                Problem(
-                    title: "Email Requires Verification",
-                    detail: "The email for the account provided requires verification",
-                    statusCode: StatusCodes.Status400BadRequest
+                BadRequest(
+                    new AuthenticationProblemDetails()
+                    {
+                        Title = "Email Requires Verification",
+                        Detail = "The email for the account provided requires verification",
+                        Status = StatusCodes.Status400BadRequest,
+                        Code = AuthenticationFailCode.PendingEmailRequiredVerification,
+                    }
                 ),
             challenge: c =>
                 Unauthorized(
