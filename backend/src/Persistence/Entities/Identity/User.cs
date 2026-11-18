@@ -173,6 +173,35 @@ internal sealed class User
         }
     }
 
+    internal void CompletePendingEmail(DateTime dateTime)
+    {
+        if (PendingEmailVerifiedAt is null)
+        {
+            throw new InvalidOperationException(
+                "Cannot complete pending email if it is not verified."
+            );
+        }
+
+        if (PendingWorkEmail is null)
+        {
+            throw new InvalidOperationException(
+                "Cannot complete pending email as there is not pending email specified."
+            );
+        }
+
+        _events.Add(
+            new EmailUpdatedEvent()
+            {
+                PreviousWorkEmail = WorkEmail,
+                NewWorkEmail = PendingWorkEmail,
+            }
+        );
+        WorkEmail = PendingWorkEmail;
+        PendingWorkEmail = null;
+        PendingEmailVerifiedAt = null;
+        UpdatedAt = dateTime;
+    }
+
     internal void Anonymise(DateTime dateTime)
     {
         Title = RemovedPersonalValue;
@@ -264,11 +293,6 @@ internal sealed class User
         }
 
         PendingEmailVerifiedAt = dateTime;
-    }
-
-    internal void CompletePendingEmail(DateTime dateTime)
-    {
-        throw new NotImplementedException();
     }
 
     internal record EmailUpdatedEvent : IUserDomainEvent

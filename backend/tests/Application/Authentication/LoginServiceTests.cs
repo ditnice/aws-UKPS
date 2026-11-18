@@ -11,6 +11,7 @@ using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Application.Authentication.SecurityNotification;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Identity;
+using UKPS.Api.Application.Users;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Enums;
@@ -36,6 +37,7 @@ public class LoginServiceTests : DatabaseTestBase
     private LoginRequest _defaultLoginRequest = null!;
     private RespondToMultiFactorAuthenticationChallengeCommand _defaultResponseToMfaCommand = null!;
     private User _user = null!;
+    private IUserService _userServiceMock = Substitute.For<IUserService>();
 
     public LoginServiceTests(PostgresFixture fixture)
         : base(fixture)
@@ -56,6 +58,7 @@ public class LoginServiceTests : DatabaseTestBase
                         }
                     )
                 );
+                services.AddSingleton(_userServiceMock);
                 return services;
             });
     }
@@ -107,6 +110,76 @@ public class LoginServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
         result.ShouldBeSuccess();
+    }
+
+    [Fact]
+    public async Task RespondToMultiFactorAuthenticationChallenge_WhenSuccessfulLoginAndPendingEmail_ShouldCallCompletePendingEmail()
+    {
+        _userServiceMock
+            .UpdateEmailToCompletePendingEmailChange(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(Result<UpdateEmailToCompletePendingEmailError>.Ok());
+
+        var newEmail = "pending@email.com";
+        var context = _harness.GetClearedContext();
+        var user = await context.Users.FindAsync([_user.Id], Ct);
+        user!.UpdateEmail(newEmail, new DateTime(2022, 2, 11, 12, 12, 0, DateTimeKind.Utc));
+        await context.SaveChangesAsync(Ct);
+
+        InitiateAuthenticationError.Challenge challenge = await AttemptLoginAndGetChallenge(
+            _defaultLoginRequest with
+            {
+                Username = newEmail,
+            }
+        );
+
+        LoginResult result = await _harness.Service.RespondToMultiFactorAuthenticationChallenge(
+            _defaultResponseToMfaCommand with
+            {
+                Username = newEmail,
+                AuthenticationSession = challenge.AuthenticationSession,
+            },
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeSuccess();
+
+        await _userServiceMock
+            .Received(1)
+            .UpdateEmailToCompletePendingEmailChange(user.Id, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RespondToMultiFactorAuthenticationChallenge_WhenSuccessfulLoginAndPendingEmailRequiresVerification_ShouldReturnRequiresVerificationError()
+    {
+        _userServiceMock
+            .UpdateEmailToCompletePendingEmailChange(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<UpdateEmailToCompletePendingEmailError>.Err(
+                    new UpdateEmailToCompletePendingEmailError.NotVerified()
+                )
+            );
+
+        var newEmail = "pending@email.com";
+        var context = _harness.GetClearedContext();
+        var user = await context.Users.FindAsync([_user.Id], Ct);
+        user!.UpdateEmail(newEmail, new DateTime(2022, 2, 11, 12, 12, 0, DateTimeKind.Utc));
+        await context.SaveChangesAsync(Ct);
+
+        InitiateAuthenticationError.Challenge challenge = await AttemptLoginAndGetChallenge(
+            _defaultLoginRequest with
+            {
+                Username = newEmail,
+            }
+        );
+
+        LoginResult result = await _harness.Service.RespondToMultiFactorAuthenticationChallenge(
+            _defaultResponseToMfaCommand with
+            {
+                Username = newEmail,
+                AuthenticationSession = challenge.AuthenticationSession,
+            },
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<InitiateAuthenticationError.VerificationRequired>();
     }
 
     [Fact]
@@ -583,10 +656,12 @@ public class LoginServiceTests : DatabaseTestBase
             .Select(x => x.OrganisationId)
             .ToArrayAsync(TestContext.Current.CancellationToken);
 
-    private async Task<InitiateAuthenticationError.Challenge> AttemptLoginAndGetChallenge()
+    private async Task<InitiateAuthenticationError.Challenge> AttemptLoginAndGetChallenge(
+        LoginRequest? overrideLogin = null
+    )
     {
         LoginResult loginResult = await _harness.Service.Login(
-            _defaultLoginRequest,
+            overrideLogin ?? _defaultLoginRequest,
             TestContext.Current.CancellationToken
         );
         InitiateAuthenticationError.Challenge challenge = loginResult

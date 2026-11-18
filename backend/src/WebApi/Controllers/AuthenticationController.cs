@@ -705,17 +705,18 @@ public class AuthenticationController : ControllerBase
 
     private ActionResult HandleLoginError(InitiateAuthenticationError error)
     {
-        return error switch
-        {
-            InitiateAuthenticationError.Unauthorised => Unauthorized(
-                AuthenticationProblemDetails.Unauthorised()
-            ),
-            InitiateAuthenticationError.Challenge c => Unauthorized(
-                AuthenticationProblemDetails.Challenge(c.ChallengeType, c.AuthenticationSession)
-            ),
-            _ => throw new UnreachableException(
-                $"Unhandled {nameof(InitiateAuthenticationError)} variant."
-            ),
-        };
+        return error.Match<ActionResult>(
+            unauthorised: () => Unauthorized(AuthenticationProblemDetails.Unauthorised()),
+            verificationRequired: () =>
+                Problem(
+                    title: "Email Requires Verification",
+                    detail: "The email for the account provided requires verification",
+                    statusCode: StatusCodes.Status400BadRequest
+                ),
+            challenge: c =>
+                Unauthorized(
+                    AuthenticationProblemDetails.Challenge(c.ChallengeType, c.AuthenticationSession)
+                )
+        );
     }
 }

@@ -41,23 +41,28 @@ internal class LoginService : ILoginService
         CancellationToken cancellationToken
     )
     {
-        var user = await GetUserWithMemberships(request.Username, cancellationToken);
-        if (user is null)
+        UserLookupResult? lookupResult = await RetrieveUserToLogin(
+            request.Username,
+            cancellationToken
+        );
+
+        if (lookupResult is null)
         {
             return InitiateAuthenticationResult.Err(new InitiateAuthenticationError.Unauthorised());
         }
+
         var result = await _identityService.InitiateAuthentication(
-            user.CognitoUsername,
+            lookupResult.User.CognitoUsername,
             request.Password,
             cancellationToken
         );
 
-        return await HandleSuccessfulAuthentication(result, user, cancellationToken);
+        return await HandlePostAuthentication(result, lookupResult, cancellationToken);
     }
 
-    private async Task<InitiateAuthenticationResult> HandleSuccessfulAuthentication(
+    private async Task<InitiateAuthenticationResult> HandlePostAuthentication(
         InitiateAuthenticationResult result,
-        User user,
+        UserLookupResult userLookupResult,
         CancellationToken cancellationToken
     )
     {
@@ -66,20 +71,31 @@ internal class LoginService : ILoginService
             return result;
         }
 
-        var emailUpdateResult = await _userService.UpdateEmailToCompletePendingEmailChange(
-            user.Id,
-            cancellationToken
-        );
-
-        if (emailUpdateResult.IsErr)
+        if (userLookupResult.FoundFromPendingEmail)
         {
-            emailUpdateResult.Error.Match(
-                _ => throw new InvalidOperationException(),
-                _ => new InitiateAuthenticationError.InvalidPendingEmail()
+            var emailUpdateResult = await _userService.UpdateEmailToCompletePendingEmailChange(
+                userLookupResult.User.Id,
+                cancellationToken
             );
+
+            if (emailUpdateResult.IsErr)
+            {
+                var error = emailUpdateResult.Error.Match<InitiateAuthenticationError>(
+                    notFound: _ =>
+                        throw new InvalidOperationException(
+                            "Failed to update pending email address."
+                        ),
+                    conflictingEmail: _ =>
+                        throw new InvalidOperationException(
+                            "Failed to update pending email address."
+                        ),
+                    notVerified: _ => new InitiateAuthenticationError.VerificationRequired()
+                );
+                return InitiateAuthenticationResult.Err(error);
+            }
         }
 
-        await ResetCurrentOrganisation(user, cancellationToken);
+        await ResetCurrentOrganisation(userLookupResult.User, cancellationToken);
 
         return result;
     }
@@ -89,19 +105,22 @@ internal class LoginService : ILoginService
         CancellationToken cancellationToken
     )
     {
-        var user = await GetUserWithMemberships(command.Username, cancellationToken);
-        if (user is null)
+        UserLookupResult? lookupResult = await RetrieveUserToLogin(
+            command.Username,
+            cancellationToken
+        );
+        if (lookupResult is null)
         {
             return InitiateAuthenticationResult.Err(new InitiateAuthenticationError.Unauthorised());
         }
         var result = await _identityService.RespondToMultiFactorAuthenticationChallenge(
-            user.CognitoUsername,
+            lookupResult.User.CognitoUsername,
             command.AuthenticationSession,
             command.Code,
             cancellationToken
         );
 
-        return await HandleSuccessfulAuthentication(result, user, cancellationToken);
+        return await HandlePostAuthentication(result, lookupResult, cancellationToken);
     }
 
     public Task<InitiateAuthenticationResult> RefreshAuthenticationToken(
@@ -172,6 +191,27 @@ internal class LoginService : ILoginService
             : _identityService.RevokeRefreshToken(refreshToken, cancellationToken);
     }
 
+    private async Task<UserLookupResult?> RetrieveUserToLogin(
+        string emailUsername,
+        CancellationToken cancellationToken
+    )
+    {
+        static IQueryable<User> ApplyRequiredInclusions(IQueryable<User> users)
+        {
+            return users.Include(x => x.UserOrgMemberships)!.ThenInclude(x => x.Organisation);
+        }
+
+        var user = await ApplyRequiredInclusions(_appDbContext.Users)
+            .GetByEmailOrDefault(emailUsername, cancellationToken);
+        if (user is not null)
+        {
+            return new(user, false);
+        }
+        var userWithPendingEmail = await ApplyRequiredInclusions(_appDbContext.Users)
+            .GetByPendingEmailOrDefault(emailUsername, cancellationToken);
+        return userWithPendingEmail is not null ? new(userWithPendingEmail, true) : null;
+    }
+
     private static CognitoUsername CreateDummyUsername(string email)
     {
         byte[] bytes = Encoding.UTF8.GetBytes(email);
@@ -180,12 +220,6 @@ internal class LoginService : ILoginService
 
         return CognitoUsername.Parse(hashString);
     }
-
-    private Task<User?> GetUserWithMemberships(string email, CancellationToken cancellationToken) =>
-        _appDbContext
-            .Users.Include(x => x.UserOrgMemberships)!
-                .ThenInclude(x => x.Organisation)
-            .GetByEmailOrDefault(email, cancellationToken);
 
     // Each sign-in clears the selected organisation, then selects it again only when there is
     // just one to choose. If the flag is left null (for users with multiple memberships), they
@@ -202,4 +236,6 @@ internal class LoginService : ILoginService
             await _appDbContext.SaveChangesAsync(cancellationToken);
         }
     }
+
+    private sealed record UserLookupResult(User User, bool FoundFromPendingEmail);
 }

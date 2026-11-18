@@ -227,6 +227,10 @@ internal class IdentityAdministrationService : IIdentityAdministrationService
                 err.Match(
                     unauthorised: () =>
                         Task.FromResult(SetupUserResult.Err(new UserSetupError.Unauthorised())),
+                    () =>
+                        throw new InvalidOperationException(
+                            "Invalid operation occurred as a verification required error occurred on a newly setup user."
+                        ),
                     challenge: c => HandleChallenge(userEmail, c, cancellationToken)
                 )
         );

@@ -647,6 +647,12 @@ internal partial class UserService(
                     new UpdateEmailToCompletePendingEmailError.NotFound()
                 );
             }
+            if (user.PendingEmailVerifiedAt is null)
+            {
+                return UpdateEmailToCompletePendingEmailChangeResult.Err(
+                    new UpdateEmailToCompletePendingEmailError.NotVerified()
+                );
+            }
 
             user.CompletePendingEmail(timeProvider.GetUtcNow());
 

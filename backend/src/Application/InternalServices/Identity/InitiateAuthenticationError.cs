@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
+using UKPS.Api.Application.Common;
 
 namespace UKPS.Api.Application.InternalServices.Identity;
 
@@ -14,7 +16,11 @@ public abstract record InitiateAuthenticationError
     /// </summary>
     public sealed record Unauthorised : InitiateAuthenticationError;
 
-    public sealed record InvalidPendingEmail : InitiateAuthenticationError;
+    /// <summary>
+    /// Indicates that authentication cannot be completed until the user's identity
+    /// has been verified.
+    /// </summary>
+    public sealed record VerificationRequired : InitiateAuthenticationError;
 
     /// <summary>
     /// Indicates that authentication cannot be completed until the specified challenge
@@ -56,14 +62,38 @@ public abstract record InitiateAuthenticationError
         public Challenge() { }
     }
 
+    /// <summary>
+    /// Matches the error against its possible types and invokes the corresponding handler.
+    /// </summary>
+    /// <typeparam name="TResult">The type of the result returned by the handlers.</typeparam>
+    /// <param name="unauthorised">
+    /// The handler invoked when authentication is unauthorised.
+    /// </param>
+    /// <param name="verificationRequired">
+    /// The handler invoked when identity verification is required.
+    /// </param>
+    /// <param name="challenge">
+    /// The handler invoked when an authentication challenge must be completed.
+    /// </param>
+    /// <returns>The result returned by the matching handler.</returns>
     internal TResult Match<TResult>(
         Func<TResult> unauthorised,
+        Func<TResult> verificationRequired,
         Func<Challenge, TResult> challenge
     ) =>
         this switch
         {
             Unauthorised => unauthorised(),
+            VerificationRequired => verificationRequired(),
             Challenge c => challenge(c),
             _ => throw new UnreachableException(),
         };
+
+    internal async Task<Result<MultiFactorAuthenticationSetupDto, UserSetupError>> Match(
+        Func<Task<Result<MultiFactorAuthenticationSetupDto, UserSetupError>>> unauthorised,
+        Func<object, Task<Result<MultiFactorAuthenticationSetupDto, UserSetupError>>> challenge
+    )
+    {
+        throw new NotImplementedException();
+    }
 }

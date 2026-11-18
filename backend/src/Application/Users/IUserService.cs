@@ -194,6 +194,8 @@ public abstract record UpdateEmailToCompletePendingEmailError
     /// </summary>
     public sealed record NotFound : UpdateEmailToCompletePendingEmailError;
 
+    public sealed record NotVerified : UpdateEmailToCompletePendingEmailError;
+
     /// <summary>
     /// Represents the error when the email address conflicts with an existing user.
     /// </summary>
@@ -201,7 +203,8 @@ public abstract record UpdateEmailToCompletePendingEmailError
 
     internal TResult Match<TResult>(
         Func<NotFound, TResult> notFound,
-        Func<ConflictingEmail, TResult> conflictingEmail
+        Func<ConflictingEmail, TResult> conflictingEmail,
+        Func<NotVerified, TResult> notVerified
     )
     {
         ArgumentNullException.ThrowIfNull(notFound);
@@ -211,6 +214,7 @@ public abstract record UpdateEmailToCompletePendingEmailError
         {
             NotFound e => notFound(e),
             ConflictingEmail e => conflictingEmail(e),
+            NotVerified e => notVerified(e),
             _ => throw new NotSupportedException(
                 $"Unsupported {nameof(UpdateEmailToCompletePendingEmailError)} subtype: {GetType().Name}."
             ),
