@@ -447,7 +447,7 @@ names and identifiers page does this for the generic names and other identifiers
 ```csharp
 [FormPage(MedicineFormLayout.NamesAndIdentifiers, "names-and-identifiers", "Provide product record details", Order = 10)]
 [FormField(CreationPageFieldPaths.GenericNames, "Active substance", FormControl.TextList,
-    AddAnotherLabel = "Add another active substance", Order = 40)]
+    AddAnotherLabel = "Add another active substance", ItemLabel = "Generic name", Order = 40)]
 [FormRequired("Enter generic name")]
 [FormDistinct("Generic names must be distinct")]
 [FormListSource(nameof(NamesAndIdentifiers), NameAndIdentifierType.GenericName)]

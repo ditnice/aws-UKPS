@@ -79,6 +79,7 @@ internal sealed class RecordProductDetail
         FormControl.TextList,
         Hint = "Enter any other development names, synonyms, or identifiers that you want to associate with this product.",
         AddAnotherLabel = "Add another identifier",
+        ItemLabel = "Identifier",
         Order = 20
     )]
     [FormListSource(nameof(NamesAndIdentifiers), NameAndIdentifierType.OtherIdentifier)]
@@ -92,6 +93,7 @@ internal sealed class RecordProductDetail
         FormControl.TextList,
         Hint = "Enter the standard, non-proprietary name for the active substances. For example, adalimumab, atorvastatin.",
         AddAnotherLabel = "Add another active substance",
+        ItemLabel = "Generic name",
         Order = 40
     )]
     [FormRequired("Enter generic name")]
