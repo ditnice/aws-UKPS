@@ -13,19 +13,37 @@ const mocks = vi.hoisted(() => ({
   }),
 }))
 
-vi.mock('@/client/generated', () => ({ getRecordFormPage: vi.fn() }))
 vi.mock('@/client/server-api', () => ({ createServerApiClient: vi.fn() }))
 vi.mock('next/navigation', () => ({ notFound: mocks.notFound }))
+vi.mock('@/client/generated', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/client/generated')>()),
+  getRecordFormPage: vi.fn(),
+}))
 vi.mock('@/components/DynamicForm/FormPage', () => ({
-  FormPage: ({ page }: { page: { page: { id: string } } }) => (
-    <div data-testid="form-page">{page.page.id}</div>
+  FormPage: ({
+    page,
+    returnToCheckAnswers,
+  }: {
+    page: { page: { id: string } }
+    returnToCheckAnswers?: boolean
+  }) => (
+    <div data-return-to-check-answers={String(returnToCheckAnswers)} data-testid="form-page">
+      {page.page.id}
+    </div>
   ),
 }))
 
 const params = (recordId = '5', pageId = 'indication') => Promise.resolve({ recordId, pageId })
 
-const renderRoute = async (routeParams = params()) =>
-  render((await RecordFormRoute({ params: routeParams })) as ReactElement)
+const searchParams = (returnTo?: string | string[]) => Promise.resolve({ returnTo })
+
+const renderRoute = async (routeParams = params(), routeSearchParams = searchParams()) =>
+  render(
+    (await RecordFormRoute({
+      params: routeParams,
+      searchParams: routeSearchParams,
+    })) as ReactElement,
+  )
 
 afterEach(() => {
   cleanup()
@@ -77,4 +95,32 @@ describe('RecordFormRoute', () => {
       expect.objectContaining({ path: { recordId: 5, pageId: 'indication' } }),
     )
   })
+
+  it('tells the form page the user came from check your answers', async () => {
+    vi.mocked(getRecordFormPage).mockResolvedValue({
+      data: { page: { id: 'indication' }, revisionVersion: 1 },
+      response: { status: 200 },
+    } as never)
+
+    await renderRoute(params(), searchParams('check-your-answers'))
+
+    expect(screen.getByTestId('form-page')).toHaveAttribute('data-return-to-check-answers', 'true')
+  })
+
+  it.each([[undefined], ['elsewhere'], [['check-your-answers', 'elsewhere']]])(
+    'does not return to check your answers for returnTo=%s',
+    async (returnTo) => {
+      vi.mocked(getRecordFormPage).mockResolvedValue({
+        data: { page: { id: 'indication' }, revisionVersion: 1 },
+        response: { status: 200 },
+      } as never)
+
+      await renderRoute(params(), searchParams(returnTo))
+
+      expect(screen.getByTestId('form-page')).toHaveAttribute(
+        'data-return-to-check-answers',
+        'false',
+      )
+    },
+  )
 })

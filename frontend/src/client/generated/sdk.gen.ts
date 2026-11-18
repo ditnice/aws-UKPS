@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ApproveData, ApproveErrors, ApproveResponses, ArchiveRecordData, ArchiveRecordErrors, ArchiveRecordResponses, ConfirmNewPasswordData, ConfirmNewPasswordErrors, ConfirmNewPasswordResponses, CreateRecordData, CreateRecordErrors, CreateRecordResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, DiscardRecordData, DiscardRecordErrors, DiscardRecordResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentOrganisationChampionsData, GetCurrentOrganisationChampionsErrors, GetCurrentOrganisationChampionsResponses, GetCurrentUserOrganisationsData, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsData, GetOrganisationsPublicOptionsResponses, GetRecordData, GetRecordErrors, GetRecordFormPageData, GetRecordFormPageErrors, GetRecordFormPageResponses, GetRecordResponses, GetRecordTaskListData, GetRecordTaskListErrors, GetRecordTaskListResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeData, GetUsersMeErrors, GetUsersMeResponses, GetUsersResponses, InitiateForgottenPasswordProcedureData, InitiateForgottenPasswordProcedureErrors, InitiateForgottenPasswordProcedureResponses, InitiateUpdateMultiFactorAuthenticationData, InitiateUpdateMultiFactorAuthenticationErrors, InitiateUpdateMultiFactorAuthenticationResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthSignOutData, PostAuthSignOutErrors, PostAuthSignOutResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, PutRecordOnHoldData, PutRecordOnHoldErrors, PutRecordOnHoldResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RejectData, RejectErrors, RejectResponses, RemoveUserData, RemoveUserErrors, RemoveUserResponses, RespondToMultiFactorAuthenticationChallengeData, RespondToMultiFactorAuthenticationChallengeErrors, RespondToMultiFactorAuthenticationChallengeResponses, ResumeRecordData, ResumeRecordErrors, ResumeRecordResponses, SaveRecordFormPageData, SaveRecordFormPageErrors, SaveRecordFormPageResponses, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserDetailsData, UpdateUserDetailsErrors, UpdateUserDetailsResponses, UpdateUserEmailData, UpdateUserEmailErrors, UpdateUserEmailResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, VerifyMultiFactorAuthenticationUpdateData, VerifyMultiFactorAuthenticationUpdateErrors, VerifyMultiFactorAuthenticationUpdateResponses, VerifyPendingEmailAddressData, VerifyPendingEmailAddressErrors, VerifyPendingEmailAddressResponses } from './types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, ArchiveRecordData, ArchiveRecordErrors, ArchiveRecordResponses, ConfirmNewPasswordData, ConfirmNewPasswordErrors, ConfirmNewPasswordResponses, CreateRecordData, CreateRecordErrors, CreateRecordResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, DiscardRecordData, DiscardRecordErrors, DiscardRecordResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentOrganisationChampionsData, GetCurrentOrganisationChampionsErrors, GetCurrentOrganisationChampionsResponses, GetCurrentUserOrganisationsData, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsData, GetOrganisationsPublicOptionsResponses, GetRecordCheckAnswersData, GetRecordCheckAnswersErrors, GetRecordCheckAnswersResponses, GetRecordData, GetRecordErrors, GetRecordFormPageData, GetRecordFormPageErrors, GetRecordFormPageResponses, GetRecordResponses, GetRecordTaskListData, GetRecordTaskListErrors, GetRecordTaskListResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeData, GetUsersMeErrors, GetUsersMeResponses, GetUsersResponses, InitiateForgottenPasswordProcedureData, InitiateForgottenPasswordProcedureErrors, InitiateForgottenPasswordProcedureResponses, InitiateUpdateMultiFactorAuthenticationData, InitiateUpdateMultiFactorAuthenticationErrors, InitiateUpdateMultiFactorAuthenticationResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupSmsMfaData, PostAuthSetupSmsMfaErrors, PostAuthSetupSmsMfaResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthSignOutData, PostAuthSignOutErrors, PostAuthSignOutResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostAuthVerifySmsMfaData, PostAuthVerifySmsMfaErrors, PostAuthVerifySmsMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, PutRecordOnHoldData, PutRecordOnHoldErrors, PutRecordOnHoldResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RejectData, RejectErrors, RejectResponses, RemoveUserData, RemoveUserErrors, RemoveUserResponses, RespondToMultiFactorAuthenticationChallengeData, RespondToMultiFactorAuthenticationChallengeErrors, RespondToMultiFactorAuthenticationChallengeResponses, ResumeRecordData, ResumeRecordErrors, ResumeRecordResponses, SaveRecordFormPageData, SaveRecordFormPageErrors, SaveRecordFormPageResponses, SubmitRecordData, SubmitRecordErrors, SubmitRecordResponses, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserDetailsData, UpdateUserDetailsErrors, UpdateUserDetailsResponses, UpdateUserEmailData, UpdateUserEmailErrors, UpdateUserEmailResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, VerifyMultiFactorAuthenticationUpdateData, VerifyMultiFactorAuthenticationUpdateErrors, VerifyMultiFactorAuthenticationUpdateResponses, VerifyPendingEmailAddressData, VerifyPendingEmailAddressErrors, VerifyPendingEmailAddressResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -49,6 +49,30 @@ export const postAuthSignOut = <ThrowOnError extends boolean = false>(options?: 
  */
 export const respondToMultiFactorAuthenticationChallenge = <ThrowOnError extends boolean = false>(options: Options<RespondToMultiFactorAuthenticationChallengeData, ThrowOnError>): RequestResult<RespondToMultiFactorAuthenticationChallengeResponses, RespondToMultiFactorAuthenticationChallengeErrors, ThrowOnError> => (options.client ?? client).post<RespondToMultiFactorAuthenticationChallengeResponses, RespondToMultiFactorAuthenticationChallengeErrors, ThrowOnError>({
     url: '/auth/mfa',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Sets up SMS multi-factor authentication for a user.
+ */
+export const postAuthSetupSmsMfa = <ThrowOnError extends boolean = false>(options: Options<PostAuthSetupSmsMfaData, ThrowOnError>): RequestResult<PostAuthSetupSmsMfaResponses, PostAuthSetupSmsMfaErrors, ThrowOnError> => (options.client ?? client).post<PostAuthSetupSmsMfaResponses, PostAuthSetupSmsMfaErrors, ThrowOnError>({
+    url: '/auth/setup-sms-mfa',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Verifies the user's SMS multi-factor authentication setup by validating the provided authentication code.
+ */
+export const postAuthVerifySmsMfa = <ThrowOnError extends boolean = false>(options: Options<PostAuthVerifySmsMfaData, ThrowOnError>): RequestResult<PostAuthVerifySmsMfaResponses, PostAuthVerifySmsMfaErrors, ThrowOnError> => (options.client ?? client).post<PostAuthVerifySmsMfaResponses, PostAuthVerifySmsMfaErrors, ThrowOnError>({
+    url: '/auth/verify-sms-mfa',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -298,6 +322,25 @@ export const getRecordFormPage = <ThrowOnError extends boolean = false>(options:
  */
 export const saveRecordFormPage = <ThrowOnError extends boolean = false>(options: Options<SaveRecordFormPageData, ThrowOnError>): RequestResult<SaveRecordFormPageResponses, SaveRecordFormPageErrors, ThrowOnError> => (options.client ?? client).put<SaveRecordFormPageResponses, SaveRecordFormPageErrors, ThrowOnError>({
     url: '/records/{recordId}/pages/{pageId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Retrieves every question that applies on the record's latest revision with its answer, the
+ * errors that would stop it being submitted, and the revision hash to submit with.
+ */
+export const getRecordCheckAnswers = <ThrowOnError extends boolean = false>(options: Options<GetRecordCheckAnswersData, ThrowOnError>): RequestResult<GetRecordCheckAnswersResponses, GetRecordCheckAnswersErrors, ThrowOnError> => (options.client ?? client).get<GetRecordCheckAnswersResponses, GetRecordCheckAnswersErrors, ThrowOnError>({ url: '/records/{recordId}/check-answers', ...options });
+
+/**
+ * Submits the record's draft revision, as it was when check your answers loaded. A medicine
+ * goes to QA review.
+ */
+export const submitRecord = <ThrowOnError extends boolean = false>(options: Options<SubmitRecordData, ThrowOnError>): RequestResult<SubmitRecordResponses, SubmitRecordErrors, ThrowOnError> => (options.client ?? client).post<SubmitRecordResponses, SubmitRecordErrors, ThrowOnError>({
+    url: '/records/{recordId}/submit',
     ...options,
     headers: {
         'Content-Type': 'application/json',

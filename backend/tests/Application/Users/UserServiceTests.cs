@@ -145,6 +145,9 @@ public class UserServiceTests : DatabaseTestBase
                     UserRole = currentUserMembership.UserRole,
                     Status = currentUserMembership.Status.ConvertToUserOrgStatus(),
                     HasMultipleOrganisations = currentUser.HasMultipleSelectableOrganisations(),
+                    MfaMethod = "Unknown",
+                    MfaPhoneNumber = string.Empty,
+                    AllowedPharmaceuticalEntity = currentUserMembership.AllowedPharmaceuticalEntity,
                 }
             );
         }
@@ -1237,7 +1240,11 @@ public class UserServiceTests : DatabaseTestBase
             .Emails.Sent.OfType<EmailChangeVerificationRequestEmail>()
             .ShouldHaveSingleItem();
 
-        email.EmailVerificationLink.Host.ShouldBe(Tokeniser.Generate(testEmail));
+        var user = await _harness
+            .GetClearedContext()
+            .Users.FindAsync([currentUser.Id], TestContext.Current.CancellationToken);
+
+        email.EmailVerificationLink.Host.ShouldBe(user!.PendingEmailVerificationToken);
     }
 
     [Fact]
@@ -1272,6 +1279,23 @@ public class UserServiceTests : DatabaseTestBase
             .Users.FindAsync([currentUser.Id], TestContext.Current.CancellationToken);
 
         updatedUser.ShouldNotBeNull().PendingEmailVerifiedAt.ShouldBe(_currentDateTime);
+    }
+
+    [Fact]
+    public async Task VerifyPendingEmailAddress_ShouldShowUserAsVerifiedInTheReturnedDto()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        var token = await RequestEmailUpdate(currentUser);
+        var result = await Service.VerifyPendingEmailAddress(
+            currentUser.Id,
+            new VerifyPendingEmailAddressCommand() { VerificationToken = token },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        var userInformation = await Service.GetCurrentUser(TestContext.Current.CancellationToken);
+        userInformation.PendingWorkEmail.ShouldNotBeNull().VerifiedByEmail.ShouldBeTrue();
     }
 
     [Fact]
@@ -1575,6 +1599,9 @@ public class UserServiceTests : DatabaseTestBase
                 OrganisationName = membership.Organisation!.OrganisationName,
                 UserRole = membership.UserRole,
                 Status = (UserOrgStatus)membership.Status,
+                MfaMethod = "Unknown",
+                MfaPhoneNumber = string.Empty,
+                AllowedPharmaceuticalEntity = membership.AllowedPharmaceuticalEntity,
             }
         );
     }

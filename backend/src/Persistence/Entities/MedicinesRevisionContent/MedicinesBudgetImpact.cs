@@ -14,13 +14,7 @@ internal sealed class MedicinesBudgetImpact
     public int RevisionId { get; set; }
 
     /// <summary>Enter the estimated uptake based on expected adoption patterns. CiC.</summary>
-    [FormPage(
-        MedicineFormLayout.PricingAndBudgetImpact,
-        "estimated-uptake",
-        "Estimated uptake",
-        Order = 10,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.EstimatedUptake)]
     [FormField(
         "medicines_budget_impact.estimated_uptake",
         "Enter the estimated uptake based on expected adoption patterns (optional)",
@@ -33,12 +27,7 @@ internal sealed class MedicinesBudgetImpact
     /// Will UK patients be able to access this product on a compassionate or early access
     /// basis, outside of clinical trials?
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.PricingAndBudgetImpact,
-        "compassionate-access",
-        "Compassionate or early access",
-        Order = 20
-    )]
+    [FormPage(MedicineFormLayout.CompassionateAccess)]
     [FormField(
         "medicines_budget_impact.compassionate_access_available",
         "Will UK patients be able to access this product on a compassionate or early access basis, outside of clinical trials?",
@@ -48,15 +37,11 @@ internal sealed class MedicinesBudgetImpact
     [FormRequired(
         "Select yes if UK patients will be able to access this product on a compassionate or early access basis outside of clinical trials"
     )]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? CompassionateAccessAvailable { get; set; }
 
     /// <summary>Conditional on CompassionateAccessAvailable = Yes.</summary>
-    [FormPage(
-        MedicineFormLayout.PricingAndBudgetImpact,
-        "compassionate-access",
-        "Compassionate or early access",
-        Order = 20
-    )]
+    [FormPage(MedicineFormLayout.CompassionateAccess)]
     [FormField(
         "medicines_budget_impact.compassionate_access_details",
         "Provide further details",
@@ -72,13 +57,7 @@ internal sealed class MedicinesBudgetImpact
     /// Is a Patient Access Scheme or alternative discount arrangement planned
     /// for this indication? Gates the PatientAccessSchemeRegions selection. CiC.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.PricingAndBudgetImpact,
-        "patient-access-scheme",
-        "Patient Access Scheme",
-        Order = 30,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.PatientAccessScheme)]
     [FormField(
         "medicines_budget_impact.patient_access_scheme_planned",
         "Is a Patient Access Scheme or alternative discount arrangement planned for this indication?",
@@ -89,16 +68,11 @@ internal sealed class MedicinesBudgetImpact
     [FormRequired(
         "Select yes if a Patient Access Scheme or alternative discount arrangement is planned for this indication"
     )]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? PatientAccessSchemePlanned { get; set; }
 
     /// <summary>Multi-select. Conditional on PatientAccessSchemePlanned = Yes.</summary>
-    [FormPage(
-        MedicineFormLayout.PricingAndBudgetImpact,
-        "patient-access-scheme",
-        "Patient Access Scheme",
-        Order = 30,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.PatientAccessScheme)]
     [FormField(
         "medicines_budget_impact.patient_access_scheme_regions",
         "Select all regions where a PAS or alternative discount arrangement is planned",
@@ -110,13 +84,7 @@ internal sealed class MedicinesBudgetImpact
     public PatientAccessSchemeRegion? PatientAccessSchemeRegions { get; set; }
 
     /// <summary>CiC — Commercially in Confidence.</summary>
-    [FormPage(
-        MedicineFormLayout.PricingAndBudgetImpact,
-        "indication-specific-pricing",
-        "Indication specific pricing",
-        Order = 40,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.IndicationSpecificPricing)]
     [FormField(
         "medicines_budget_impact.indication_specific_pricing_planned",
         "Are there plans for indication specific pricing?",
@@ -125,16 +93,11 @@ internal sealed class MedicinesBudgetImpact
         Hint = "Select yes if the medicine will have different pricing arrangements depending on indication. Select no if pricing will be uniform."
     )]
     [FormRequired("Select yes if there are plans for indication specific pricing")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IndicationSpecificPricingPlanned { get; set; }
 
     /// <summary>Conditional on IndicationSpecificPricingPlanned = Yes.</summary>
-    [FormPage(
-        MedicineFormLayout.PricingAndBudgetImpact,
-        "indication-specific-pricing",
-        "Indication specific pricing",
-        Order = 40,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.IndicationSpecificPricing)]
     [FormField(
         "medicines_budget_impact.indication_specific_pricing_details",
         "Provide further details",
@@ -149,13 +112,7 @@ internal sealed class MedicinesBudgetImpact
     /// <summary>
     /// Estimated net UK budget impact over the first 3 years of NHS use. CiC.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.PricingAndBudgetImpact,
-        "net-budget-impact",
-        "Net budget impact",
-        Order = 50,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.NetBudgetImpact)]
     [FormField(
         "medicines_budget_impact.net_uk_budget_impact_band",
         "What is the estimated net budget impact for the UK over the first 3 years of NHS use?",

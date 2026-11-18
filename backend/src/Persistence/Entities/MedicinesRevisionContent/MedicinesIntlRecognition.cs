@@ -11,22 +11,22 @@ namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 /// </summary>
 [FormEntity]
 [FormPageShowWhen(
-    "international-recognition",
+    MedicineFormLayout.InternationalRecognition,
     "record_mhra_procedure.mhra_procedure_type_id",
     MhraProcedureTypeCodes.InternationalRecognition
 )]
 [FormPageShowWhen(
-    "international-submission-date",
+    MedicineFormLayout.InternationalSubmissionDate,
     "record_mhra_procedure.mhra_procedure_type_id",
     MhraProcedureTypeCodes.InternationalRecognition
 )]
 [FormPageShowWhen(
-    "international-licence-date",
+    MedicineFormLayout.InternationalLicenceDate,
     "record_mhra_procedure.mhra_procedure_type_id",
     MhraProcedureTypeCodes.InternationalRecognition
 )]
 [FormPageShowWhen(
-    "international-conditional-approval",
+    MedicineFormLayout.InternationalConditionalApproval,
     "record_mhra_procedure.mhra_procedure_type_id",
     MhraProcedureTypeCodes.InternationalRecognition
 )]
@@ -38,13 +38,7 @@ internal sealed class MedicinesIntlRecognition
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.MhraProcedureAndDates,
-        "international-recognition",
-        "International Recognition Procedure (IRP)",
-        Order = 60,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.InternationalRecognition)]
     [FormField(
         "medicines_intl_recognition.irp_route_id",
         "Select the intended route",
@@ -54,13 +48,7 @@ internal sealed class MedicinesIntlRecognition
     [FormRequired("Select intended route")]
     public int? IrpRouteId { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.MhraProcedureAndDates,
-        "international-submission-date",
-        "International regulatory submission date",
-        Order = 70,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.InternationalSubmissionDate)]
     [FormField(
         "medicines_intl_recognition.intl_submission_date",
         "What is the International Recognition Procedure submission date?",
@@ -71,13 +59,7 @@ internal sealed class MedicinesIntlRecognition
     [FormRequired("Select an option")]
     public int? IntlSubmissionDateId { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.MhraProcedureAndDates,
-        "international-licence-date",
-        "International regulatory licence date",
-        Order = 80,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.InternationalLicenceDate)]
     [FormField(
         "medicines_intl_recognition.intl_licence_date",
         "What is the International Recognition Procedure regulatory licence date?",
@@ -88,18 +70,14 @@ internal sealed class MedicinesIntlRecognition
     [FormRequired("Select an option")]
     public int? IntlLicenceDateId { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.MhraProcedureAndDates,
-        "international-conditional-approval",
-        "International conditional approval",
-        Order = 90
-    )]
+    [FormPage(MedicineFormLayout.InternationalConditionalApproval)]
     [FormField(
         "medicines_intl_recognition.intl_conditional_approval_anticipated",
         "Is international conditional approval anticipated for this product?",
         FormControl.Radio
     )]
     [FormRequired("Select whether international conditional approval is anticipated")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IntlConditionalApprovalAnticipated { get; set; }
 
     // Navigation

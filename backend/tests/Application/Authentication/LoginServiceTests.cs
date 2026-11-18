@@ -123,7 +123,11 @@ public class LoginServiceTests : DatabaseTestBase
         var newEmail = "pending@email.com";
         var context = _harness.GetClearedContext();
         var user = await context.Users.FindAsync([_user.Id], Ct);
-        user!.UpdateEmail(newEmail, new DateTime(2022, 2, 11, 12, 12, 0, DateTimeKind.Utc));
+        user!.UpdateEmail(
+            newEmail,
+            "verification-code",
+            new DateTime(2022, 2, 11, 12, 12, 0, DateTimeKind.Utc)
+        );
         await context.SaveChangesAsync(Ct);
 
         InitiateAuthenticationError.Challenge challenge = await AttemptLoginAndGetChallenge(
@@ -162,7 +166,11 @@ public class LoginServiceTests : DatabaseTestBase
         var newEmail = "pending@email.com";
         var context = _harness.GetClearedContext();
         var user = await context.Users.FindAsync([_user.Id], Ct);
-        user!.UpdateEmail(newEmail, new DateTime(2022, 2, 11, 12, 12, 0, DateTimeKind.Utc));
+        user!.UpdateEmail(
+            newEmail,
+            "verification-code",
+            new DateTime(2022, 2, 11, 12, 12, 0, DateTimeKind.Utc)
+        );
         await context.SaveChangesAsync(Ct);
 
         InitiateAuthenticationError.Challenge challenge = await AttemptLoginAndGetChallenge(

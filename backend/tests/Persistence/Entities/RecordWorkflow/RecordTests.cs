@@ -375,6 +375,87 @@ public sealed class RecordTests
         ShouldBeUnchanged(record, revision, recordStatus, latestRevisionStatus);
     }
 
+    public static TheoryData<RecordStatus, WorkflowStatus> ValidStates
+    {
+        get
+        {
+            var data = new TheoryData<RecordStatus, WorkflowStatus>();
+            foreach (RecordLifecycleState state in RecordLifecycleState.ValidStates)
+            {
+                data.Add(state.RecordStatus, state.LatestRevisionStatus);
+            }
+
+            return data;
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(ValidStates))]
+    public void CanSubmit_OnlyForADraftOfAnUnpublishedOrPublishedRecord(
+        RecordStatus recordStatus,
+        WorkflowStatus latestRevisionStatus
+    )
+    {
+        (Record record, RecordRevision revision) = CreateRecord(recordStatus, latestRevisionStatus);
+
+        record
+            .CanSubmit(revision)
+            .ShouldBe(
+                latestRevisionStatus == WorkflowStatus.Draft
+                    && recordStatus is RecordStatus.Unpublished or RecordStatus.Published
+            );
+    }
+
+    [Theory]
+    [InlineData(RecordStatus.Unpublished)]
+    [InlineData(RecordStatus.Published)]
+    public void TrySubmit_MedicineDraft_GoesToQaReviewWithAPendingReview(RecordStatus recordStatus)
+    {
+        User user = new UserFaker().Generate();
+        (Record record, RecordRevision revision) = CreateRecord(recordStatus);
+        record.RecordType = RecordType.Medicine;
+        DateTime? reviewedAt = record.ReviewedAt;
+
+        bool isSubmitted = record.TrySubmit(revision, _now, user);
+
+        isSubmitted.ShouldBeTrue();
+        revision.WorkflowStatus.ShouldBe(WorkflowStatus.QAReview);
+        record.RecordStatus.ShouldBe(recordStatus);
+        record.ReviewedAt.ShouldBe(reviewedAt);
+        record.StatusHistory.ShouldBeEmpty();
+
+        QaReview review = revision.QaReviews.ShouldHaveSingleItem();
+        review.Outcome.ShouldBeNull();
+        review.ReviewedBy.ShouldBeNull();
+
+        RecordEvent recordEvent = record.Events.ShouldHaveSingleItem();
+        recordEvent.EventType.ShouldBe(RecordEventType.SubmittedToQa);
+        recordEvent.Revision.ShouldBe(revision);
+        recordEvent.QaReview.ShouldBe(review);
+        recordEvent.PerformedByUser.ShouldBe(user);
+        recordEvent.PerformedAt.ShouldBe(_now);
+    }
+
+    [Theory]
+    [InlineData(RecordStatus.Unpublished, WorkflowStatus.QAReview)]
+    [InlineData(RecordStatus.Published, WorkflowStatus.Published)]
+    [InlineData(RecordStatus.OnHold, WorkflowStatus.Draft)]
+    [InlineData(RecordStatus.Archived, WorkflowStatus.Draft)]
+    public void TrySubmit_WhenStateDoesNotPermitIt_ChangesNothing(
+        RecordStatus recordStatus,
+        WorkflowStatus latestRevisionStatus
+    )
+    {
+        (Record record, RecordRevision revision) = CreateRecord(recordStatus, latestRevisionStatus);
+        record.RecordType = RecordType.Medicine;
+
+        bool isSubmitted = record.TrySubmit(revision, _now, new UserFaker().Generate());
+
+        isSubmitted.ShouldBeFalse();
+        ShouldBeUnchanged(record, revision, recordStatus, latestRevisionStatus);
+        revision.QaReviews.ShouldBeEmpty();
+    }
+
     private static (Record Record, RecordRevision Revision) CreateRecord(
         RecordStatus recordStatus,
         WorkflowStatus revisionStatus = WorkflowStatus.Draft

@@ -24,6 +24,7 @@ erDiagram
             timestamptz last_active "nullable"
             text normalised_pending_work_email "nullable"
             text normalised_work_email UK
+            text pending_email_verification_token "nullable"
             timestamptz pending_email_verified_at "nullable"
             text pending_work_email "nullable"
             text title "nullable"
@@ -31,6 +32,7 @@ erDiagram
             integer user_type
             text work_email
             text work_telephone "nullable"
+            xid xmin
         }
         organisation_audits:::identity {
             integer id PK
@@ -88,9 +90,11 @@ erDiagram
             uuid correlation_id UK "nullable"
             timestamptz created_at
             integer created_by_user_id FK
+            timestamptz last_sms_setup_attempt_at "nullable"
             integer onboarding_flow
             integer resend_count
             integer resulting_user_id FK, UK
+            integer sms_setup_attempt_count
         }
         user_org_memberships:::identity {
             integer id PK
@@ -187,6 +191,7 @@ erDiagram
         }
         record_clinical_trial_information:::shared_revision_content {
             integer id PK
+            integer has_clinical_trials "nullable"
             integer recruiting_in_uk "nullable"
             integer revision_id FK, UK
         }
@@ -194,6 +199,7 @@ erDiagram
             integer id PK
             text brief_description "nullable"
             text clinical_trials_gov_number
+            integer display_order "nullable"
             integer revision_id FK
             text study_name
             integer trial_phase "nullable"
@@ -590,6 +596,7 @@ erDiagram
     organisations ||..o{ user_registration_requests : "organisation_id"
     patient_pathway_point |o..o{ medicines_laboratory_testings : "patient_pathway_point_id"
     qa_reviews |o..o{ record_events : "qa_review_id"
+    record_clinical_trial_information ||..o{ record_clinical_trials : "revision_id"
     record_clinical_trials ||..o{ other_clinical_trial_numbers : "clinical_trial_id"
     record_product_details ||..o{ record_names_and_identifiers : "record_product_detail_id"
     record_revisions ||..o| medicines_budget_impacts : "revision_id"

@@ -3,7 +3,7 @@
 import type { Faker } from '@faker-js/faker';
 import { faker } from '@faker-js/faker/locale/en_GB';
 
-import type { ApproveData, ApproveErrors, ApproveResponses, ArchiveRecordData, ArchiveRecordErrors, ArchiveRecordResponses, AuthenticationFailCode, AuthenticationProblemDetails, BiomarkerType, ChangeRecordStatusCommand, ConditionKind, ConfirmNewPasswordCommand, ConfirmNewPasswordData, ConfirmNewPasswordErrors, ConfirmNewPasswordResponses, CreateOrganisationDto, CreateRecordCommand, CreateRecordData, CreateRecordDto, CreateRecordErrors, CreateRecordResponses, DatePrecision, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, DesignationStatus, DiscardRecordData, DiscardRecordErrors, DiscardRecordResponses, EamsOpinionDecision, EditableUserDetail, FormControl, GenomicTestMandatoryStatus, GenomicTestNgtdRelationship, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentOrganisationChampionsErrors, GetCurrentOrganisationChampionsResponses, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsResponse, GetRecordData, GetRecordErrors, GetRecordFormPageData, GetRecordFormPageErrors, GetRecordFormPageResponses, GetRecordResponses, GetRecordsQuerySortValue, GetRecordTaskListData, GetRecordTaskListErrors, GetRecordTaskListResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeErrors, GetUsersMeResponses, GetUsersQuerySortValue, GetUsersResponses, IndicationPaediatricStatus, InitiateForgottenPasswordProcedureCommand, InitiateForgottenPasswordProcedureData, InitiateForgottenPasswordProcedureErrors, InitiateForgottenPasswordProcedureResponses, InitiateUpdateMultiFactorAuthenticationErrors, InitiateUpdateMultiFactorAuthenticationResponses, LoginRequest, MedicineHtaAssessor, MedicinesBudgetImpactDto, MedicinesDevelopmentBackgroundDto, MedicinesEamsPimDto, MedicinesEuStatusDto, MedicinesGlobalSubmissionDto, MedicinesIndicationDetailDto, MedicinesIntlRecognitionDto, MedicinesLaboratoryTestingDto, MedicinesPatientIdentificationDto, MedicinesServiceImpactDto, MedicinesTreatmentDetailDto, MedicineTechnologyStatus, MultiFactorAuthenticationSetupDto, NameAndIdentifierType, NetUkBudgetImpactBand, NhsServiceChangesRequired, OnboardedUserDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationListDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfRecordListItemDto, PaginatedResponseDtoOfUserListItemDto, PatientAccessSchemeRegion, PendingWorkEmailChangeDto, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthSignOutErrors, PostAuthSignOutResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ProblemDetails, PutRecordOnHoldData, PutRecordOnHoldErrors, PutRecordOnHoldResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RecordAction, RecordClinicalTrialDto, RecordClinicalTrialInformationDto, RecordDisplayStatus, RecordDto, RecordDtoMedicineRecordDto, RecordDtoVaccineRecordDto, RecordHtaDto, RecordListItemDto, RecordMhraDateDto, RecordMhraProcedureDto, RecordNameAndIdentifierDto, RecordPageConditionDto, RecordPageDto, RecordPageOptionDto, RecordPagePageDto, RecordPageQuestionDto, RecordPageRuleDto, RecordPageSectionDto, RecordPageTaskDto, RecordProductDetailDto, RecordStatus, RecordStatusChangeReason, RecordTaskListDto, RecordTaskListSectionDto, RecordTaskListTaskDto, RecordTaskStatus, RecordType, ReferenceDataDto, RegisterUserCommandDto, RegisterUserConfirmationDto, RegisterUserData, RegisterUserDetailsDto, RegisterUserErrors, RegisterUserResponses, RegulatoryDateDto, RejectData, RejectErrors, RejectResponses, RemovedUserDto, RemoveUserData, RemoveUserErrors, RemoveUserResponses, ResendSetupTokenCommand, ResendSetupTokenResponse, RespondToMultiFactorAuthenticationChallengeCommand, RespondToMultiFactorAuthenticationChallengeData, RespondToMultiFactorAuthenticationChallengeErrors, RespondToMultiFactorAuthenticationChallengeResponses, ResumeRecordData, ResumeRecordErrors, ResumeRecordResponses, RuleKind, SaveRecordFormPageData, SaveRecordFormPageErrors, SaveRecordFormPageResponses, SaveRecordPageCommand, SaveRecordPageDto, SetupUserCommand, SortDirection, TrialPhase, UkpsChallengeType, UpdateCurrentOrganisationCommand, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateStatus, UpdateUserDetailsCommand, UpdateUserDetailsData, UpdateUserDetailsErrors, UpdateUserDetailsResponses, UpdateUserEmailCommand, UpdateUserEmailData, UpdateUserEmailErrors, UpdateUserEmailResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserMembershipAction, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand, VerifyMultiFactorAuthenticationUpdateCommand, VerifyMultiFactorAuthenticationUpdateData, VerifyMultiFactorAuthenticationUpdateErrors, VerifyMultiFactorAuthenticationUpdateResponses, VerifyPendingEmailAddressCommand, VerifyPendingEmailAddressData, VerifyPendingEmailAddressErrors, VerifyPendingEmailAddressResponses, YesNoUnknown } from '../types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, ArchiveRecordData, ArchiveRecordErrors, ArchiveRecordResponses, AuthenticationFailCode, AuthenticationProblemDetails, BiomarkerType, ChangeRecordStatusCommand, ConditionKind, ConfirmNewPasswordCommand, ConfirmNewPasswordData, ConfirmNewPasswordErrors, ConfirmNewPasswordResponses, CreateOrganisationDto, CreateRecordCommand, CreateRecordData, CreateRecordDto, CreateRecordErrors, CreateRecordResponses, DatePrecision, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, DesignationStatus, DiscardRecordData, DiscardRecordErrors, DiscardRecordResponses, EamsOpinionDecision, EditableUserDetail, FormControl, GenomicTestMandatoryStatus, GenomicTestNgtdRelationship, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentOrganisationChampionsErrors, GetCurrentOrganisationChampionsResponses, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsResponse, GetRecordCheckAnswersData, GetRecordCheckAnswersErrors, GetRecordCheckAnswersResponses, GetRecordData, GetRecordErrors, GetRecordFormPageData, GetRecordFormPageErrors, GetRecordFormPageResponses, GetRecordResponses, GetRecordsQuerySortValue, GetRecordTaskListData, GetRecordTaskListErrors, GetRecordTaskListResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeErrors, GetUsersMeResponses, GetUsersQuerySortValue, GetUsersResponses, IndicationPaediatricStatus, InitiateForgottenPasswordProcedureCommand, InitiateForgottenPasswordProcedureData, InitiateForgottenPasswordProcedureErrors, InitiateForgottenPasswordProcedureResponses, InitiateUpdateMultiFactorAuthenticationErrors, InitiateUpdateMultiFactorAuthenticationResponses, InvalidRecordProblemDetails, LoginRequest, MedicineHtaAssessor, MedicinesBudgetImpactDto, MedicinesDevelopmentBackgroundDto, MedicinesEamsPimDto, MedicinesEuStatusDto, MedicinesGlobalSubmissionDto, MedicinesIndicationDetailDto, MedicinesIntlRecognitionDto, MedicinesLaboratoryTestingDto, MedicinesPatientIdentificationDto, MedicinesServiceImpactDto, MedicinesTreatmentDetailDto, MedicineTechnologyStatus, MultiFactorAuthenticationSetupDto, MultiFactorAuthenticationUpdateDto, NameAndIdentifierType, NetUkBudgetImpactBand, NhsServiceChangesRequired, OnboardedUserDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationListDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfRecordListItemDto, PaginatedResponseDtoOfUserListItemDto, PatientAccessSchemeRegion, PendingWorkEmailChangeDto, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupSmsMfaData, PostAuthSetupSmsMfaErrors, PostAuthSetupSmsMfaResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthSignOutErrors, PostAuthSignOutResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostAuthVerifySmsMfaData, PostAuthVerifySmsMfaErrors, PostAuthVerifySmsMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ProblemDetails, PutRecordOnHoldData, PutRecordOnHoldErrors, PutRecordOnHoldResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RecordAction, RecordCheckAnswersDto, RecordCheckAnswersOptionDto, RecordCheckAnswersQuestionDto, RecordCheckAnswersSectionDto, RecordCheckAnswersTaskDto, RecordClinicalTrialDto, RecordClinicalTrialInformationDto, RecordDisplayStatus, RecordDto, RecordDtoMedicineRecordDto, RecordDtoVaccineRecordDto, RecordHtaDto, RecordListItemDto, RecordMhraDateDto, RecordMhraProcedureDto, RecordNameAndIdentifierDto, RecordPageConditionDto, RecordPageDto, RecordPageOptionDto, RecordPagePageDto, RecordPageQuestionDto, RecordPageRuleDto, RecordPageSectionDto, RecordPageTaskDto, RecordProductDetailDto, RecordStatus, RecordStatusChangeReason, RecordTaskListDto, RecordTaskListSectionDto, RecordTaskListTaskDto, RecordTaskStatus, RecordType, ReferenceDataDto, RegisterUserCommandDto, RegisterUserConfirmationDto, RegisterUserData, RegisterUserDetailsDto, RegisterUserErrors, RegisterUserResponses, RegulatoryDateDto, RejectData, RejectErrors, RejectResponses, RemovedUserDto, RemoveUserData, RemoveUserErrors, RemoveUserResponses, ResendSetupTokenCommand, ResendSetupTokenResponse, RespondToMultiFactorAuthenticationChallengeCommand, RespondToMultiFactorAuthenticationChallengeData, RespondToMultiFactorAuthenticationChallengeErrors, RespondToMultiFactorAuthenticationChallengeResponses, ResumeRecordData, ResumeRecordErrors, ResumeRecordResponses, RuleKind, SaveRecordFormPageData, SaveRecordFormPageErrors, SaveRecordFormPageResponses, SaveRecordPageCommand, SaveRecordPageDto, SetupSmsMfaCommand, SetupUserCommand, SmsMultiFactorAuthenticationSetupDto, SortDirection, SubmissionConflictProblemDetails, SubmissionErrorDto, SubmitRecordCommand, SubmitRecordData, SubmitRecordErrors, TrialPhase, UkpsChallengeType, UpdateCurrentOrganisationCommand, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateStatus, UpdateUserDetailsCommand, UpdateUserDetailsData, UpdateUserDetailsErrors, UpdateUserDetailsResponses, UpdateUserEmailCommand, UpdateUserEmailData, UpdateUserEmailErrors, UpdateUserEmailResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserMembershipAction, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand, VerifyMultiFactorAuthenticationUpdateCommand, VerifyMultiFactorAuthenticationUpdateData, VerifyMultiFactorAuthenticationUpdateErrors, VerifyMultiFactorAuthenticationUpdateResponses, VerifyPendingEmailAddressCommand, VerifyPendingEmailAddressData, VerifyPendingEmailAddressErrors, VerifyPendingEmailAddressResponses, VerifySmsMultiFactorAuthenticationCommand, YesNoUnknown } from '../types.gen';
 
 export type Options = {
     faker?: Faker;
@@ -134,7 +134,9 @@ export const fakeFormControl = (options?: Options): FormControl => {
         'PrecisionDate',
         'ActualMonth',
         'PrefixedNumber',
-        'ActualDate'
+        'ActualDate',
+        'Group',
+        'TextList'
     ]);
 };
 
@@ -239,6 +241,13 @@ export const fakeMultiFactorAuthenticationSetupDto = (options?: Options): MultiF
     return {
         otpAuthUri: f.internet.url(),
         authenticationSession: f.string.sample()
+    };
+};
+
+export const fakeMultiFactorAuthenticationUpdateDto = (options?: Options): MultiFactorAuthenticationUpdateDto => {
+    const f = options?.faker ?? faker;
+    return {
+        otpAuthUri: f.internet.url()
     };
 };
 
@@ -352,6 +361,46 @@ export const fakeRecordAction = (options?: Options): RecordAction => {
     ]);
 };
 
+export const fakeRecordCheckAnswersOptionDto = (options?: Options): RecordCheckAnswersOptionDto => {
+    const f = options?.faker ?? faker;
+    return {
+        value: f.string.sample(),
+        label: f.string.sample(),
+        parentLabel: f.datatype.boolean() ? f.string.sample() : null
+    };
+};
+
+export const fakeRecordCheckAnswersQuestionDto = (options?: Options): RecordCheckAnswersQuestionDto => {
+    const f = options?.faker ?? faker;
+    return {
+        id: f.string.uuid(),
+        pageId: f.string.uuid(),
+        label: f.string.sample(),
+        type: fakeFormControl(options),
+        multiple: f.datatype.boolean(),
+        values: f.helpers.multiple(() => f.string.sample()),
+        selectedOptions: f.datatype.boolean() ? f.helpers.multiple(() => fakeRecordCheckAnswersOptionDto(options)) : null
+    };
+};
+
+export const fakeRecordCheckAnswersTaskDto = (options?: Options): RecordCheckAnswersTaskDto => {
+    const f = options?.faker ?? faker;
+    return {
+        id: f.string.uuid(),
+        title: f.lorem.words(),
+        questions: f.helpers.multiple(() => fakeRecordCheckAnswersQuestionDto(options))
+    };
+};
+
+export const fakeRecordCheckAnswersSectionDto = (options?: Options): RecordCheckAnswersSectionDto => {
+    const f = options?.faker ?? faker;
+    return {
+        id: f.string.uuid(),
+        title: f.lorem.words(),
+        tasks: f.helpers.multiple(() => fakeRecordCheckAnswersTaskDto(options))
+    };
+};
+
 export const fakeRecordDisplayStatus = (options?: Options): RecordDisplayStatus => {
     const f = options?.faker ?? faker;
     return f.helpers.arrayElement([
@@ -446,7 +495,8 @@ export const fakeRecordDtoVaccineRecordDto = (options?: Options): RecordDtoVacci
         displayStatus: fakeRecordDisplayStatus(options),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null },
         canEditContent: f.datatype.boolean(),
-        actions: f.helpers.multiple(() => fakeRecordAction(options))
+        actions: f.helpers.multiple(() => fakeRecordAction(options)),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { nextUpdateDue: f.datatype.boolean() ? f.date.recent().toISOString() : null }
     };
 };
 
@@ -652,7 +702,8 @@ export const fakeRuleKind = (options?: Options): RuleKind => {
     return f.helpers.arrayElement([
         'Required',
         'MaxLength',
-        'MaxItems'
+        'MaxItems',
+        'Distinct'
     ]);
 };
 
@@ -665,7 +716,7 @@ export const fakeRecordPageRuleDto = (options?: Options): RecordPageRuleDto => {
     };
 };
 
-export const fakeRecordPageQuestionDto = (options?: Options): RecordPageQuestionDto => {
+export const fakeRecordPageQuestionDto = (options: Options = {}, _callDepth = 0): RecordPageQuestionDto => {
     const f = options?.faker ?? faker;
     return {
         id: f.string.uuid(),
@@ -678,11 +729,15 @@ export const fakeRecordPageQuestionDto = (options?: Options): RecordPageQuestion
         childLabel: f.datatype.boolean() ? f.string.sample() : null,
         childPlaceholder: f.datatype.boolean() ? f.string.sample() : null,
         addAnotherLabel: f.datatype.boolean() ? f.string.sample() : null,
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { itemLabel: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { removeLabel: f.datatype.boolean() ? f.string.sample() : null },
+        ..._callDepth > MAX_CALL_DEPTH || !resolveCondition(options?.includeOptional ?? true, f) ? {} : { children: _callDepth > MAX_CALL_DEPTH ? null : f.datatype.boolean() ? _callDepth > MAX_CALL_DEPTH ? [] : f.helpers.multiple(() => fakeRecordPageQuestionDto(options, _callDepth + 1)) : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { prefixes: f.datatype.boolean() ? f.helpers.multiple(() => f.string.sample()) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { prefixDigits: f.datatype.boolean() ? f.number.int() : null },
         dateName: f.datatype.boolean() ? f.string.sample() : null,
         showWhen: f.datatype.boolean() ? fakeRecordPageConditionDto(options) : null,
         rules: f.helpers.multiple(() => fakeRecordPageRuleDto(options)),
-        options: f.datatype.boolean() ? f.helpers.multiple(() => fakeRecordPageOptionDto(options)) : null
+        options: _callDepth > MAX_CALL_DEPTH ? null : f.datatype.boolean() ? _callDepth > MAX_CALL_DEPTH ? [] : f.helpers.multiple(() => fakeRecordPageOptionDto(options, _callDepth + 1)) : null
     };
 };
 
@@ -718,6 +773,15 @@ export const fakeSaveRecordPageDto = (options?: Options): SaveRecordPageDto => {
     };
 };
 
+export const fakeSetupSmsMfaCommand = (options?: Options): SetupSmsMfaCommand => {
+    const f = options?.faker ?? faker;
+    return {
+        setupToken: f.string.uuid(),
+        phoneNumber: f.phone.number(),
+        password: f.helpers.fromRegExp('.*\\S.*')
+    };
+};
+
 export const fakeSetupUserCommand = (options?: Options): SetupUserCommand => {
     const f = options?.faker ?? faker;
     return {
@@ -726,9 +790,75 @@ export const fakeSetupUserCommand = (options?: Options): SetupUserCommand => {
     };
 };
 
+export const fakeSmsMultiFactorAuthenticationSetupDto = (options?: Options): SmsMultiFactorAuthenticationSetupDto => {
+    const f = options?.faker ?? faker;
+    return {
+        authenticationSession: f.string.sample()
+    };
+};
+
 export const fakeSortDirection = (options?: Options): SortDirection => {
     const f = options?.faker ?? faker;
     return f.helpers.arrayElement(['Ascending', 'Descending']);
+};
+
+export const fakeSubmissionConflictProblemDetails = (options?: Options): SubmissionConflictProblemDetails => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { type: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { title: f.datatype.boolean() ? f.lorem.words() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { status: f.datatype.boolean() ? f.number.int() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { detail: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { instance: f.datatype.boolean() ? f.string.sample() : null },
+        code: f.string.sample(),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { organisationId: f.datatype.boolean() ? f.number.int() : null }
+    };
+};
+
+export const fakeSubmissionErrorDto = (options?: Options): SubmissionErrorDto => {
+    const f = options?.faker ?? faker;
+    return {
+        questionId: f.string.uuid(),
+        pageId: f.string.uuid(),
+        taskId: f.string.uuid(),
+        message: f.string.sample()
+    };
+};
+
+export const fakeInvalidRecordProblemDetails = (options?: Options): InvalidRecordProblemDetails => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { type: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { title: f.datatype.boolean() ? f.lorem.words() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { status: f.datatype.boolean() ? f.number.int() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { detail: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { instance: f.datatype.boolean() ? f.string.sample() : null },
+        code: f.string.sample(),
+        fields: f.helpers.multiple(() => fakeSubmissionErrorDto(options)),
+        errors: !resolveCondition(options?.includeOptional ?? true, f) ? {} as {} : {
+            additionalProp: f.helpers.multiple(() => f.string.sample())
+        }
+    };
+};
+
+export const fakeRecordCheckAnswersDto = (options?: Options): RecordCheckAnswersDto => {
+    const f = options?.faker ?? faker;
+    return {
+        formVersion: f.string.sample(),
+        recordId: f.number.int(),
+        organisationId: f.number.int(),
+        revisionHash: f.string.sample(),
+        sections: f.helpers.multiple(() => fakeRecordCheckAnswersSectionDto(options)),
+        errors: f.helpers.multiple(() => fakeSubmissionErrorDto(options))
+    };
+};
+
+export const fakeSubmitRecordCommand = (options?: Options): SubmitRecordCommand => {
+    const f = options?.faker ?? faker;
+    return {
+        formVersion: f.string.sample(),
+        revisionHash: f.string.sample()
+    };
 };
 
 export const fakeTrialPhase = (options?: Options): TrialPhase => {
@@ -894,7 +1024,10 @@ export const fakeUserInformationDto = (options?: Options): UserInformationDto =>
         userRole: fakeUserRole(options),
         status: fakeUserOrgStatus(options),
         hasMultipleOrganisations: f.datatype.boolean(),
-        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { pendingWorkEmail: f.datatype.boolean() ? fakePendingWorkEmailChangeDto(options) : null }
+        allowedPharmaceuticalEntity: fakePharmaceuticalEntity(options),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { pendingWorkEmail: f.datatype.boolean() ? fakePendingWorkEmailChangeDto(options) : null },
+        mfaMethod: f.string.sample(),
+        mfaPhoneNumber: f.string.sample()
     };
 };
 
@@ -978,6 +1111,15 @@ export const fakeVerifyPendingEmailAddressCommand = (options?: Options): VerifyP
     const f = options?.faker ?? faker;
     return {
         verificationToken: f.string.sample()
+    };
+};
+
+export const fakeVerifySmsMultiFactorAuthenticationCommand = (options?: Options): VerifySmsMultiFactorAuthenticationCommand => {
+    const f = options?.faker ?? faker;
+    return {
+        setupToken: f.string.uuid(),
+        code: f.string.sample(),
+        authenticationSession: f.string.sample()
     };
 };
 
@@ -1156,7 +1298,8 @@ export const fakeRecordDtoMedicineRecordDto = (options?: Options): RecordDtoMedi
         displayStatus: fakeRecordDisplayStatus(options),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null },
         canEditContent: f.datatype.boolean(),
-        actions: f.helpers.multiple(() => fakeRecordAction(options))
+        actions: f.helpers.multiple(() => fakeRecordAction(options)),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { nextUpdateDue: f.datatype.boolean() ? f.date.recent().toISOString() : null }
     };
 };
 
@@ -1194,6 +1337,30 @@ export const fakeRespondToMultiFactorAuthenticationChallengeResponse200 = (): Re
 export const fakeRespondToMultiFactorAuthenticationChallengeResponse400 = (options?: Options): RespondToMultiFactorAuthenticationChallengeErrors[400] => fakeAuthenticationProblemDetails(options);
 
 export const fakeRespondToMultiFactorAuthenticationChallengeResponse401 = (options?: Options): RespondToMultiFactorAuthenticationChallengeErrors[401] => fakeAuthenticationProblemDetails(options);
+
+export const fakePostAuthSetupSmsMfaRequest = (options?: Options): Omit<PostAuthSetupSmsMfaData, 'url'> => ({
+    body: fakeSetupSmsMfaCommand(options)
+});
+
+export const fakePostAuthSetupSmsMfaResponse200 = (options?: Options): PostAuthSetupSmsMfaResponses[200] => fakeSmsMultiFactorAuthenticationSetupDto(options);
+
+export const fakePostAuthSetupSmsMfaResponse400 = (options?: Options): PostAuthSetupSmsMfaErrors[400] => fakeProblemDetails(options);
+
+export const fakePostAuthSetupSmsMfaResponse401 = (options?: Options): PostAuthSetupSmsMfaErrors[401] => fakeProblemDetails(options);
+
+export const fakePostAuthSetupSmsMfaResponse404 = (options?: Options): PostAuthSetupSmsMfaErrors[404] => fakeProblemDetails(options);
+
+export const fakePostAuthSetupSmsMfaResponse410 = (options?: Options): PostAuthSetupSmsMfaErrors[410] => fakeProblemDetails(options);
+
+export const fakePostAuthVerifySmsMfaRequest = (options?: Options): Omit<PostAuthVerifySmsMfaData, 'url'> => ({
+    body: fakeVerifySmsMultiFactorAuthenticationCommand(options)
+});
+
+export const fakePostAuthVerifySmsMfaResponse200 = (): PostAuthVerifySmsMfaResponses[200] => undefined;
+
+export const fakePostAuthVerifySmsMfaResponse400 = (options?: Options): PostAuthVerifySmsMfaErrors[400] => fakeProblemDetails(options);
+
+export const fakePostAuthVerifySmsMfaResponse404 = (options?: Options): PostAuthVerifySmsMfaErrors[404] => fakeProblemDetails(options);
 
 export const fakeGetAuthValidateSetupTokenRequest = (options?: Options): Omit<GetAuthValidateSetupTokenData, 'url'> => {
     const f = options?.faker ?? faker;
@@ -1300,7 +1467,7 @@ export const fakeUpdateCurrentOrganisationResponse400 = (options?: Options): Upd
 
 export const fakeUpdateCurrentOrganisationResponse401 = (options?: Options): UpdateCurrentOrganisationErrors[401] => fakeAuthenticationProblemDetails(options);
 
-export const fakeInitiateUpdateMultiFactorAuthenticationResponse200 = (options?: Options): InitiateUpdateMultiFactorAuthenticationResponses[200] => fakeMultiFactorAuthenticationSetupDto(options);
+export const fakeInitiateUpdateMultiFactorAuthenticationResponse200 = (options?: Options): InitiateUpdateMultiFactorAuthenticationResponses[200] => fakeMultiFactorAuthenticationUpdateDto(options);
 
 export const fakeInitiateUpdateMultiFactorAuthenticationResponse401 = (options?: Options): InitiateUpdateMultiFactorAuthenticationErrors[401] => fakeAuthenticationProblemDetails(options);
 
@@ -1647,6 +1814,47 @@ export const fakeSaveRecordFormPageResponse403 = (options?: Options): SaveRecord
 export const fakeSaveRecordFormPageResponse404 = (options?: Options): SaveRecordFormPageErrors[404] => fakeProblemDetails(options);
 
 export const fakeSaveRecordFormPageResponse409 = (options?: Options): SaveRecordFormPageErrors[409] => fakeAuthenticationProblemDetails(options);
+
+export const fakeGetRecordCheckAnswersRequest = (options?: Options): Omit<GetRecordCheckAnswersData, 'url'> => {
+    const f = options?.faker ?? faker;
+    return {
+        path: {
+            recordId: f.number.int()
+        }
+    };
+};
+
+export const fakeGetRecordCheckAnswersResponse200 = (options?: Options): GetRecordCheckAnswersResponses[200] => fakeRecordCheckAnswersDto(options);
+
+export const fakeGetRecordCheckAnswersResponse401 = (options?: Options): GetRecordCheckAnswersErrors[401] => fakeAuthenticationProblemDetails(options);
+
+export const fakeGetRecordCheckAnswersResponse403 = (options?: Options): GetRecordCheckAnswersErrors[403] => fakeProblemDetails(options);
+
+export const fakeGetRecordCheckAnswersResponse404 = (options?: Options): GetRecordCheckAnswersErrors[404] => fakeProblemDetails(options);
+
+export const fakeGetRecordCheckAnswersResponse409 = (options?: Options): GetRecordCheckAnswersErrors[409] => fakeSubmissionConflictProblemDetails(options);
+
+export const fakeSubmitRecordRequest = (options?: Options): Omit<SubmitRecordData, 'url'> => {
+    const f = options?.faker ?? faker;
+    return {
+        body: fakeSubmitRecordCommand(options),
+        path: {
+            recordId: f.number.int()
+        }
+    };
+};
+
+export const fakeSubmitRecordResponse400 = (options?: Options): SubmitRecordErrors[400] => fakeValidationProblemDetails(options);
+
+export const fakeSubmitRecordResponse401 = (options?: Options): SubmitRecordErrors[401] => fakeAuthenticationProblemDetails(options);
+
+export const fakeSubmitRecordResponse403 = (options?: Options): SubmitRecordErrors[403] => fakeProblemDetails(options);
+
+export const fakeSubmitRecordResponse404 = (options?: Options): SubmitRecordErrors[404] => fakeProblemDetails(options);
+
+export const fakeSubmitRecordResponse409 = (options?: Options): SubmitRecordErrors[409] => fakeSubmissionConflictProblemDetails(options);
+
+export const fakeSubmitRecordResponse422 = (options?: Options): SubmitRecordErrors[422] => fakeInvalidRecordProblemDetails(options);
 
 export const fakeGetRecordTaskListRequest = (options?: Options): Omit<GetRecordTaskListData, 'url'> => {
     const f = options?.faker ?? faker;

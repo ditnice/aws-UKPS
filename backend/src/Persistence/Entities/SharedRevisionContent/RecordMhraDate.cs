@@ -13,13 +13,7 @@ internal sealed class RecordMhraDate
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.MhraProcedureAndDates,
-        "uk-submission-date",
-        "UK regulatory submission date",
-        Order = 20,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.UkSubmissionDate)]
     [FormField(
         "record_mhra_date.uk_submission_date",
         "What is the UK regulatory submission date?",
@@ -30,13 +24,7 @@ internal sealed class RecordMhraDate
     [FormRequired("Select an option")]
     public int? UkSubmissionDateId { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.MhraProcedureAndDates,
-        "uk-licence-date",
-        "UK regulatory licence date",
-        Order = 40,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.UkLicenceDate)]
     [FormField(
         "record_mhra_date.uk_licence_date",
         "What is the UK regulatory licence date?",
@@ -47,13 +35,7 @@ internal sealed class RecordMhraDate
     [FormRequired("Select an option")]
     public int? UkLicenceDateId { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.MhraProcedureAndDates,
-        "uk-conditional-approval",
-        "UK conditional approval",
-        Order = 50,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.UkConditionalApproval)]
     [FormField(
         "record_mhra_date.uk_conditional_approval_anticipated",
         "Is conditional approval anticipated in the UK?",
@@ -61,6 +43,7 @@ internal sealed class RecordMhraDate
         Hint = "Select yes if you anticipate conditional approval based on current plans."
     )]
     [FormRequired("Select whether conditional approval is anticipated in the UK")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? UkConditionalApprovalAnticipated { get; set; }
 
     // Navigation

@@ -671,6 +671,18 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async Task VerifyPendingEmailAddress_WhenConcurrentChangeDetected_ShouldReturn409()
+    {
+        MockVerifyPendingEmailAddressResponse(
+            Result<VerifyPendingEmailAddressError>.Err(
+                new VerifyPendingEmailAddressError.ConcurrentChangeDetected()
+            )
+        );
+        HttpResponseMessage response = await SendVerifyPendingEmailAddressRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
     public async Task RemoveUser_WhenValidRequest_ShouldReturnOk()
     {
         var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
@@ -1062,6 +1074,9 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             RuleFor(x => x.OrganisationName, f => f.Company.CompanyName());
             RuleFor(x => x.UserRole, f => f.PickRandom<UserRole>());
             RuleFor(x => x.HasMultipleOrganisations, f => f.Random.Bool());
+            RuleFor(x => x.MfaMethod, f => f.PickRandom("Sms", "AuthenticatorApp", "Unknown"));
+            RuleFor(x => x.MfaPhoneNumber, f => f.Phone.PhoneNumber("07#########"));
+            RuleFor(x => x.AllowedPharmaceuticalEntity, f => f.PickRandom<PharmaceuticalEntity>());
             RuleFor(
                 x => x.Status,
                 f =>

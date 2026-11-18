@@ -324,6 +324,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnName("normalised_work_email")
                         .HasComputedColumnSql("ukps.normalise_email(work_email)", true);
 
+                    b.Property<string>("PendingEmailVerificationToken")
+                        .HasColumnType("text")
+                        .HasColumnName("pending_email_verification_token");
+
                     b.Property<DateTime?>("PendingEmailVerifiedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("pending_email_verified_at");
@@ -343,6 +347,12 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Property<int>("UserType")
                         .HasColumnType("integer")
                         .HasColumnName("user_type");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.Property<string>("WorkEmail")
                         .IsRequired()
@@ -448,6 +458,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("created_by_user_id");
 
+                    b.Property<DateTime?>("LastSmsSetupAttemptAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_sms_setup_attempt_at");
+
                     b.Property<int>("OnboardingFlow")
                         .HasColumnType("integer")
                         .HasColumnName("onboarding_flow");
@@ -459,6 +473,10 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Property<int>("ResultingUserId")
                         .HasColumnType("integer")
                         .HasColumnName("resulting_user_id");
+
+                    b.Property<int>("SmsSetupAttemptCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("sms_setup_attempt_count");
 
                     b.HasKey("SetupToken")
                         .HasName("pk_user_onboarding_records");
@@ -2049,6 +2067,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("clinical_trials_gov_number");
 
+                    b.Property<int?>("DisplayOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("display_order");
+
                     b.Property<int>("RevisionId")
                         .HasColumnType("integer")
                         .HasColumnName("revision_id");
@@ -2080,6 +2102,10 @@ namespace UKPS.Api.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("HasClinicalTrials")
+                        .HasColumnType("integer")
+                        .HasColumnName("has_clinical_trials");
+
                     b.Property<int?>("RecruitingInUk")
                         .HasColumnType("integer")
                         .HasColumnName("recruiting_in_uk");
@@ -2091,9 +2117,8 @@ namespace UKPS.Api.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_record_clinical_trial_information");
 
-                    b.HasIndex("RevisionId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_record_clinical_trial_information_revision_id");
+                    b.HasAlternateKey("RevisionId")
+                        .HasName("ak_record_clinical_trial_information_revision_id");
 
                     b.ToTable("record_clinical_trial_information", "ukps");
                 });
@@ -3297,6 +3322,14 @@ namespace UKPS.Api.Persistence.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_record_clinical_trials_record_revisions_revision_id");
 
+                    b.HasOne("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordClinicalTrialInformation", null)
+                        .WithMany("ClinicalTrials")
+                        .HasForeignKey("RevisionId")
+                        .HasPrincipalKey("RevisionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_record_clinical_trials_record_clinical_trial_information_re");
+
                     b.Navigation("Revision");
                 });
 
@@ -3644,6 +3677,11 @@ namespace UKPS.Api.Persistence.Migrations
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordClinicalTrial", b =>
                 {
                     b.Navigation("OtherClinicalTrialNumbers");
+                });
+
+            modelBuilder.Entity("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordClinicalTrialInformation", b =>
+                {
+                    b.Navigation("ClinicalTrials");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordProductDetail", b =>

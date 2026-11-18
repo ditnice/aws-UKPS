@@ -11,6 +11,7 @@ internal static class MedicineOptionProviders
     public static void Register(OptionProviderRegistry registry)
     {
         RegisterIndicationDetailsProviders(registry);
+        RegisterClinicalTrialsProviders(registry);
         RegisterHtaAndLaunchProviders(registry);
         RegisterOrphanAndAtmpProviders(registry);
         RegisterLaboratoryTestingProviders(registry);
@@ -19,6 +20,18 @@ internal static class MedicineOptionProviders
         RegisterPimAndEamsProviders(registry);
         RegisterProductProviders(registry);
         RegisterMhraProcedureAndDatesProviders(registry);
+    }
+
+    private static void RegisterClinicalTrialsProviders(OptionProviderRegistry registry)
+    {
+        registry.AddEnum(OptionKeys.YesNo, (YesNo.Yes, "Yes"), (YesNo.No, "No"));
+
+        registry.AddEnum(
+            OptionKeys.ClinicalTrialsRecruitingInUk,
+            (YesNoUnknown.Yes, "Yes, trials are open and recruiting in the UK"),
+            (YesNoUnknown.No, "No"),
+            (YesNoUnknown.Unknown, "Unknown at this stage")
+        );
     }
 
     private static void RegisterMhraProcedureAndDatesProviders(OptionProviderRegistry registry)

@@ -12,13 +12,7 @@ internal sealed class MedicinesPatientIdentification
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.PatientAndClinicalRequirements,
-        "screening-programme",
-        "Screening or surveillance",
-        Order = 10,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.ScreeningProgramme)]
     [FormField(
         "medicines_patient_identification.screening_required",
         "Is a screening or surveillance programme required to identify eligible patients?",
@@ -29,16 +23,11 @@ internal sealed class MedicinesPatientIdentification
     [FormRequired(
         "Select yes if a screening or surveillance programme is required to identify eligible patients"
     )]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? ScreeningRequired { get; set; }
 
     /// <summary>Conditional on ScreeningRequired = Yes.</summary>
-    [FormPage(
-        MedicineFormLayout.PatientAndClinicalRequirements,
-        "screening-programme",
-        "Screening or surveillance",
-        Order = 10,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.ScreeningProgramme)]
     [FormField(
         "medicines_patient_identification.screening_details",
         "Briefly describe the type of screening or surveillance needed",
@@ -50,13 +39,7 @@ internal sealed class MedicinesPatientIdentification
     [FormRequired("Enter details")]
     public string? ScreeningDetails { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.PatientAndClinicalRequirements,
-        "urgent-identification",
-        "Urgent patient identification",
-        Order = 20,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.UrgentIdentification)]
     [FormField(
         "medicines_patient_identification.urgent_identification_required",
         "Do patients need to be identified for treatment more quickly than standard practice?",
@@ -67,16 +50,11 @@ internal sealed class MedicinesPatientIdentification
     [FormRequired(
         "Select yes if urgent patient identification and treatment delivery is required for your product"
     )]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? UrgentIdentificationRequired { get; set; }
 
     /// <summary>Conditional on UrgentIdentificationRequired = Yes.</summary>
-    [FormPage(
-        MedicineFormLayout.PatientAndClinicalRequirements,
-        "urgent-identification",
-        "Urgent patient identification",
-        Order = 20,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.UrgentIdentification)]
     [FormField(
         "medicines_patient_identification.urgent_identification_details",
         "Provide further details",

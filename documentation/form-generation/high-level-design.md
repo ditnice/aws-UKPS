@@ -22,8 +22,8 @@ That idea is replaced here, and the brief is kept only as background.
 The form is declared **on the EF content entities themselves**, using attributes. Each property that
 a user answers carries the question's ID, label, hint, task, page, rules and options. Every other
 property is explicitly ignored, with a reason. The hierarchy is section → task → page → question.
-Sections and tasks are declared once per record type in a layout (`MedicineFormLayout`), and each
-page names its task.
+Sections, tasks and pages are declared once per record type in a layout (`MedicineFormLayout`),
+and each question names its page.
 
 ```csharp
 [FormEntity]
@@ -32,7 +32,7 @@ internal sealed class MedicinesIndicationDetail
     [FormIgnore("Database identity")]
     public int Id { get; set; }
 
-    [FormPage(MedicineFormLayout.IndicationDetails, "indication", "Indication", Order = 10)]
+    [FormPage(MedicineFormLayout.Indication)]
     [FormField(
         "medicines_indication_detail.indication",
         "What is the indication this product is seeking a licence for?",
@@ -76,13 +76,13 @@ model, telling it which column or junction table holds the answer.
 | Area | Scope |
 |---|---|
 | Medicine form, section and task "Indication details" | 1 task with 6 pages: indication, BNF chapter, therapeutic area, treating children, treating cancer, treating a rare disease |
-| Controls | `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect` (a parent dropdown, then an optional child dropdown; on a junction it repeats with "add another") |
-| Rules | `Required`, `MaxLength`, `MaxItems` |
-| Bindings | Column (string, enum, reference ID), flags enum, junction table |
+| Controls | `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect` (a parent dropdown, then an optional child dropdown; on a junction it repeats with "add another"), dates, `PrefixedNumber`, `Group` (repeating items of several questions) and `TextList` (repeating text boxes) |
+| Rules | `Required`, `MaxLength`, `MaxItems`, `Distinct` |
+| Bindings | Column (string, enum, reference ID), flags enum, junction table, regulatory date, group, text list |
 | Entry points | The record task list is the root of the journey. Record creation redirects to it, and **Update record** on the record details page opens it. Both show only when `canEditContent`, returned by `POST /records` and `GET /records/{id}`, is true: the record type has a form and the user can edit it |
 | Audit | One event per save, one row per changed answer |
 | Conditions | Questions revealed by an answer on the same page, and pages shown by an answer on an earlier page (see [Conditional questions and pages](#conditional-questions-and-pages)) |
-| Later | Add-another groups, vaccine forms, searchable combobox, hiding answers that do not apply on View record |
+| Later | Nested groups beyond a text list, choice questions inside groups, vaccine forms, searchable combobox, hiding answers that do not apply on View record |
 
 ## Architecture
 
@@ -208,33 +208,39 @@ invalid model stops the API starting. It holds structure only: bindings receive 
 
 ### Sections, pages and ordering
 
-- **Sections and tasks.** A `FormLayout` subclass per record type (`MedicineFormLayout`) declares
-  the form's sections and their tasks once, each with an ID, title and order. The section title
-  is the dataset's section name, a heading in the task list; each task under it has its own
-  title, which is also the page caption. Task IDs are `const string` values on the layout, unique
-  across every form. A task with no pages yet is left out of the form, as is a section with no
-  such tasks.
-- **Pages.** `[FormPage(task, id, title, Order = n)]` on a property places its question on that
-  page, in that task. The task decides the page's section and form, so an entity's pages must all
-  be in one form. The page's `Order` places it within its task. `[FormEntity]` on the class marks
-  it as holding questions and sets its `RowSource`.
+- **Sections, tasks and pages.** A `FormLayout` subclass per record type (`MedicineFormLayout`)
+  declares the form's sections, their tasks and the tasks' pages once, each with an ID, title and
+  order; a page also has its `CommercialInConfidence` flag. The section title is the dataset's
+  section name, a heading in the task list; each task under it has its own title, which is also
+  the page caption. Task and page IDs are unique across every form, and page IDs are
+  `const string` values on the layout. A page with no questions yet is left out of the form, as
+  is a task or section with no such pages.
+- **Pages.** `[FormPage(id)]` on a property places its question on that page. The layout decides
+  the page's task, section and form, so an entity's pages must all be in one form. `[FormEntity]`
+  on the class marks it as holding questions and sets its `RowSource`.
 - **Questions.** On a page with several questions, `FormField.Order` sets their order.
 - **Form order** is section order, then task order, then page order. A user enters a task from
   the task list and steps through its pages: Back goes to the previous page in the task, and Save
   and continue goes to the next. On a task's first page, Back returns to the task list. On its last
-  page the button reads **Save and return to task list**, and saving returns to the task list.
+  page the button reads **Save and return to task list**, and saving returns to the task list. A
+  page opened from check your answers (a link with `?returnTo=check-your-answers`) has one button,
+  **Save and return to check your answers**: saving returns to check your answers, and Back goes
+  there too, whether or not the task has another page.
+- **Check your answers.** The page lists every question that applies, with its answer, a **Change**
+  link (opening the page with `?returnTo=check-your-answers`) and a **There is a problem** tag on
+  questions with a submission error. The errors also appear in a summary above the heading. Return
+  to my records is always shown; Submit is shown only when there are no errors. Selecting Submit sends the form version and revision hash the page loaded, and the API
+  rechecks everything. A 422 refreshes the page with the current
+  errors, and a 409 shows the API's message with a link to reload. If the record can't be
+  submitted (403 or 409 when loading the page), the page says so instead of showing the answers.
 - **No ties.** Two sections or pages with the same `Order`, or two questions on the same page
   with the same `Order`, fail startup. Attribute order in source is never relied on.
 
 ### Pages that span entities
 
-A page ID is unique within a form, not within an entity. When properties on **different
-entities** declare the same `[FormPage]` ID, their questions are merged into one page:
-
-- every declaration of that page ID must agree on title and order;
-- the declaring entities must all be in the same section.
-
-The startup check enforces both.
+A page belongs to the layout, not to an entity. When properties on **different entities**
+name the same page in `[FormPage]`, their questions are merged into one page. The page's title,
+order and task are declared once in the layout, so the declarations cannot disagree.
 
 Saving a merged page writes to several tables, and a field audit row per changed question, in
 one `SaveChangesAsync`.
@@ -328,6 +334,17 @@ metadata, so attributes never contain expressions:
   `MedicinesIndicationDetail.TherapeuticAreas`. It reads EF metadata to find the junction's
   owner foreign key and its reference foreign key. On write, it compares the submitted set with
   the stored rows and inserts or deletes only the difference.
+- **`GroupBinding`** is built from a navigation collection annotated as a `Group`. Each item is a
+  child row whose questions have their own bindings on that row. Rows are read in order (by
+  `DisplayOrder` when the child has one, then ID). Writes match items to rows by the `ItemKey`
+  answer when there is one, then fill leftover rows without breaking the stored order (by
+  position when there is no `ItemKey`), delete rows left over after clearing their own child rows,
+  and add missing ones. Its audit value is
+  one JSON object keyed by the `ItemKey` question's answer.
+  Clinical trials persist `DisplayOrder` independently of their row identity, so changing or
+  reordering trial numbers preserves the submitted order on subsequent reads.
+- **`TextListBinding`** stores an ordered `string[]` as child rows with one string column each,
+  matched by position, with `DisplayOrder` written from 1.
 
 #### Content rows
 
@@ -400,7 +417,7 @@ Some questions and pages only apply when an earlier question has a particular an
   page while it does not apply.
 
 ```csharp
-[FormPage("co-marketing", "Co-marketing", Order = 30)]
+[FormPage(MedicineFormLayout.CoMarketing)]
 [FormField(
     "medicines_development_background.co_marketing_company_name",
     "Co-marketing company name",

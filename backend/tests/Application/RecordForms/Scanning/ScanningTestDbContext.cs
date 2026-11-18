@@ -31,8 +31,6 @@ internal sealed class ScanningTestDbContext(DbContextOptions<ScanningTestDbConte
         modelBuilder.Entity<BrokenEntity>();
         modelBuilder.Entity<RowsEntity>();
         modelBuilder.Entity<DisagreeingEntity>();
-        modelBuilder.Entity<FlagDisagreeingEntity>();
-        modelBuilder.Entity<TaskConflictEntity>();
         modelBuilder.Entity<ConditionalEntity>();
         modelBuilder.Entity<ConditionalExtraEntity>();
         modelBuilder.Entity<BrokenConditionEntity>();
@@ -40,6 +38,14 @@ internal sealed class ScanningTestDbContext(DbContextOptions<ScanningTestDbConte
         modelBuilder.Entity<BrokenDatedEntity>();
         modelBuilder.Entity<CodedEntity>();
         modelBuilder.Entity<BrokenCodedEntity>();
+        modelBuilder.Entity<AmbiguousChoiceEntity>();
+        modelBuilder.Entity<GroupEntity>();
+        modelBuilder
+            .Entity<GroupEntityItemNumber>()
+            .HasOne(x => x.Item)
+            .WithMany(x => x.Numbers)
+            .HasForeignKey(x => x.GroupEntityItemId);
+        modelBuilder.Entity<BrokenGroupEntity>();
         modelBuilder.Entity<SplitFormEntity>();
         modelBuilder.Entity<UnplacedConditionEntity>();
     }

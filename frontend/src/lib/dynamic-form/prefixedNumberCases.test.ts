@@ -9,6 +9,7 @@ import { evaluatePrefixedNumber, splitPrefixedNumber } from './prefixedNumber'
 type PrefixedNumberCase = {
   name: string
   prefixes: string[]
+  digits?: number
   answer: string | null
   value: string | null
   error: string | null
@@ -25,7 +26,7 @@ describe('shared prefixed number cases', () => {
   it.each(cases.map((c) => [c.name, c] as const))('%s', (_, prefixedCase) => {
     const answer = normaliseAnswer(prefixedCase.answer) as string | null
 
-    expect(evaluatePrefixedNumber(prefixedCase.prefixes, answer)).toEqual({
+    expect(evaluatePrefixedNumber(prefixedCase.prefixes, answer, prefixedCase.digits)).toEqual({
       value: prefixedCase.value,
       error: prefixedCase.error,
     })

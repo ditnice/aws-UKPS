@@ -47,10 +47,16 @@ type SignUpSetMfaFormValues = z.input<typeof signUpSetMfaSchema>
 export type SignUpMfaSetup = z.infer<typeof signUpMfaSetupSchema>
 type Setup2FAFormProps = {
   setup: MfaSetupParameters
+  alternativeHref?: string
   hideAlternativeOptions?: boolean
   onSuccess?: () => void
 }
-const SetupMfaForm = ({ setup, hideAlternativeOptions, onSuccess }: Setup2FAFormProps) => {
+const SetupMfaForm = ({
+  setup,
+  alternativeHref = '/',
+  hideAlternativeOptions,
+  onSuccess,
+}: Setup2FAFormProps) => {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const sendRequest = async (securityCode: string) => {
     const normalisedSecurityToken = normaliseSecurityCode(securityCode)
@@ -161,7 +167,7 @@ const SetupMfaForm = ({ setup, hideAlternativeOptions, onSuccess }: Setup2FAForm
         {hideAlternativeOptions ? (
           <></>
         ) : (
-          <Link href="/">I want to use a different way to sign in</Link>
+          <Link href={alternativeHref}>I want to use a different way to sign in</Link>
         )}
 
         {submitError ? <p>{submitError}</p> : null}

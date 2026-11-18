@@ -6,62 +6,62 @@ namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 
 [FormEntity]
 [FormPageShowWhen(
-    "biomarker-type",
+    MedicineFormLayout.BiomarkerType,
     "medicines_laboratory_testing.diagnostic_test_required",
     YesNoUnknown.Yes
 )]
 [FormPageShowWhen(
-    "test-mandatory",
+    MedicineFormLayout.TestMandatory,
     "medicines_laboratory_testing.diagnostic_test_required",
     YesNoUnknown.Yes
 )]
 [FormPageShowWhen(
-    "non-genomic-biomarker",
+    MedicineFormLayout.NonGenomicBiomarker,
     "medicines_laboratory_testing.biomarker_type",
     Enums.BiomarkerType.NonGenomicBiomarker
 )]
 [FormPageShowWhen(
-    "genomic-target",
+    MedicineFormLayout.GenomicTarget,
     "medicines_laboratory_testing.biomarker_type",
     Enums.BiomarkerType.GenomicBiomarker
 )]
 [FormPageShowWhen(
-    "ngtd-relationship",
+    MedicineFormLayout.NgtdRelationship,
     "medicines_laboratory_testing.biomarker_type",
     Enums.BiomarkerType.GenomicBiomarker
 )]
 [FormPageShowWhen(
-    "sample-type",
+    MedicineFormLayout.SampleType,
     "medicines_laboratory_testing.biomarker_type",
     Enums.BiomarkerType.GenomicBiomarker
 )]
 [FormPageShowWhen(
-    "turnaround-time",
+    MedicineFormLayout.TurnaroundTime,
     "medicines_laboratory_testing.biomarker_type",
     Enums.BiomarkerType.GenomicBiomarker
 )]
 [FormPageShowWhen(
-    "pathway-point",
+    MedicineFormLayout.PathwayPoint,
     "medicines_laboratory_testing.biomarker_type",
     Enums.BiomarkerType.GenomicBiomarker
 )]
 [FormPageShowWhen(
-    "genomic-alterations",
+    MedicineFormLayout.GenomicAlterations,
     "medicines_laboratory_testing.biomarker_type",
     Enums.BiomarkerType.GenomicBiomarker
 )]
 [FormPageShowWhen(
-    "additional-genomic-factors",
+    MedicineFormLayout.AdditionalGenomicFactors,
     "medicines_laboratory_testing.biomarker_type",
     Enums.BiomarkerType.GenomicBiomarker
 )]
 [FormPageShowWhen(
-    "test-used-in-trials",
+    MedicineFormLayout.TestUsedInTrials,
     "medicines_laboratory_testing.biomarker_type",
     Enums.BiomarkerType.GenomicBiomarker
 )]
 [FormPageShowWhen(
-    "specificity-sensitivity",
+    MedicineFormLayout.SpecificitySensitivity,
     "medicines_laboratory_testing.biomarker_type",
     Enums.BiomarkerType.GenomicBiomarker
 )]
@@ -73,13 +73,7 @@ internal sealed class MedicinesLaboratoryTesting
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.LaboratoryTesting,
-        "diagnostic-test-required",
-        "Diagnostic test",
-        Order = 10,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.DiagnosticTestRequired)]
     [FormField(
         "medicines_laboratory_testing.diagnostic_test_required",
         "Does the product require a specific biomarker or diagnostic test result before prescribing?",
@@ -89,18 +83,13 @@ internal sealed class MedicinesLaboratoryTesting
     [FormRequired(
         "Select yes if the product requires a specific biomarker or test before prescribing"
     )]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? DiagnosticTestRequired { get; set; }
 
     /// <summary>
     /// Determines the biomarker type. Conditional on DiagnosticTestRequired = Yes.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.LaboratoryTesting,
-        "biomarker-type",
-        "Biomarker type",
-        Order = 20,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.BiomarkerType)]
     [FormField(
         "medicines_laboratory_testing.biomarker_type",
         "What type of biomarker is required for this test?",
@@ -114,13 +103,7 @@ internal sealed class MedicinesLaboratoryTesting
     /// Conditional on BiomarkerType = NonGenomicBiomarker.
     /// Describes the non-genomic biomarker and how it is measured.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.LaboratoryTesting,
-        "non-genomic-biomarker",
-        "Non-genomic biomarker",
-        Order = 30,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.NonGenomicBiomarker)]
     [FormField(
         "medicines_laboratory_testing.non_genomic_biomarker_description",
         "Describe the non-genomic biomarker",
@@ -134,13 +117,7 @@ internal sealed class MedicinesLaboratoryTesting
     /// The specific gene or genomic target the test detects.
     /// Conditional on BiomarkerType = GenomicBiomarker.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.LaboratoryTesting,
-        "genomic-target",
-        "Genomic target",
-        Order = 40,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.GenomicTarget)]
     [FormField(
         "medicines_laboratory_testing.genomic_target",
         "What is the genomic target for this test?",
@@ -154,13 +131,7 @@ internal sealed class MedicinesLaboratoryTesting
     /// How the test relates to what is currently in the National Genomic Test Directory.
     /// Conditional on BiomarkerType = GenomicBiomarker.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.LaboratoryTesting,
-        "ngtd-relationship",
-        "NGTD",
-        Order = 50,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.NgtdRelationship)]
     [FormField(
         "medicines_laboratory_testing.genomic_test_ngtd_relationship",
         "How does this test relate to what's currently in the National Genomic Test Directory (NGTD)?",
@@ -173,13 +144,7 @@ internal sealed class MedicinesLaboratoryTesting
     public GenomicTestNgtdRelationship? GenomicTestNgtdRelationship { get; set; }
 
     /// <summary>Free text. Conditional on BiomarkerType = GenomicBiomarker.</summary>
-    [FormPage(
-        MedicineFormLayout.LaboratoryTesting,
-        "sample-type",
-        "Sample type",
-        Order = 60,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.SampleType)]
     [FormField(
         "medicines_laboratory_testing.genomic_sample_type",
         "What sample type is needed?",
@@ -193,13 +158,7 @@ internal sealed class MedicinesLaboratoryTesting
     /// Describes turnaround time requirements differing from the current commissioned pathway.
     /// Optional. Conditional on BiomarkerType = GenomicBiomarker.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.LaboratoryTesting,
-        "turnaround-time",
-        "Turnaround time",
-        Order = 70,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.TurnaroundTime)]
     [FormField(
         "medicines_laboratory_testing.genomic_turnaround_time_details",
         "Describe any turnaround time requirements for this test that differ from the current routinely commissioned testing pathway (optional)",
@@ -208,13 +167,7 @@ internal sealed class MedicinesLaboratoryTesting
     )]
     public string? GenomicTurnaroundTimeDetails { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.LaboratoryTesting,
-        "pathway-point",
-        "Patient pathway",
-        Order = 80,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.PathwayPoint)]
     [FormField(
         "medicines_laboratory_testing.patient_pathway_point_id",
         "At which point of the patient pathway should the test be conducted?",
@@ -229,13 +182,7 @@ internal sealed class MedicinesLaboratoryTesting
     /// Describes when in the care pathway the test takes place, if none of the listed points fit.
     /// Required. Conditional on PatientPathwayPoint = Other.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.LaboratoryTesting,
-        "pathway-point",
-        "Patient pathway",
-        Order = 80,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.PathwayPoint)]
     [FormField(
         "medicines_laboratory_testing.genomic_test_pathway_point_other",
         "Describe when in the care pathway the test is expected to take place",
@@ -250,13 +197,7 @@ internal sealed class MedicinesLaboratoryTesting
     public string? GenomicTestPathwayPointOther { get; set; }
 
     /// <summary>What genomic alterations determine patient eligibility?</summary>
-    [FormPage(
-        MedicineFormLayout.LaboratoryTesting,
-        "genomic-alterations",
-        "Genomic alterations",
-        Order = 90,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.GenomicAlterations)]
     [FormField(
         "medicines_laboratory_testing.genomic_alterations",
         "What genomic alterations determine patient eligibility?",
@@ -271,13 +212,7 @@ internal sealed class MedicinesLaboratoryTesting
     /// beyond the primary eligibility alteration.
     /// Conditional on BiomarkerType = GenomicBiomarker.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.LaboratoryTesting,
-        "additional-genomic-factors",
-        "Additional genomic factors",
-        Order = 100,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.AdditionalGenomicFactors)]
     [FormField(
         "medicines_laboratory_testing.additional_genomic_factors",
         "Are there additional genomic factors that affect treatment selection or sequencing?",
@@ -287,13 +222,7 @@ internal sealed class MedicinesLaboratoryTesting
     [FormRequired("Enter details of genomic factors that affect treatment selection or sequencing")]
     public string? AdditionalGenomicFactors { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.LaboratoryTesting,
-        "test-used-in-trials",
-        "Test used in trials",
-        Order = 110,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.TestUsedInTrials)]
     [FormField(
         "medicines_laboratory_testing.genomic_test_used_in_trials",
         "What test was used in trials?",
@@ -303,13 +232,7 @@ internal sealed class MedicinesLaboratoryTesting
     [FormRequired("Enter details of the test used in trials")]
     public string? GenomicTestUsedInTrials { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.LaboratoryTesting,
-        "specificity-sensitivity",
-        "Specificity and sensitivity",
-        Order = 120,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.SpecificitySensitivity)]
     [FormField(
         "medicines_laboratory_testing.genomic_test_specificity_sensitivity",
         "Enter the minimum specificity and sensitivity used",
@@ -320,13 +243,7 @@ internal sealed class MedicinesLaboratoryTesting
     public string? GenomicTestSpecificitySensitivity { get; set; }
 
     /// <summary>Conditional on DiagnosticTestRequired = Yes.</summary>
-    [FormPage(
-        MedicineFormLayout.LaboratoryTesting,
-        "test-mandatory",
-        "Mandatory testing",
-        Order = 130,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.TestMandatory)]
     [FormField(
         "medicines_laboratory_testing.genomic_test_mandatory_status",
         "Is this test mandatory before treatment can start?",
@@ -340,13 +257,7 @@ internal sealed class MedicinesLaboratoryTesting
     /// Conditional on GenomicTestMandatoryStatus = MandatoryNoAlternatives or
     /// MandatoryAlternativesMayExist.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.LaboratoryTesting,
-        "test-mandatory",
-        "Mandatory testing",
-        Order = 130,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.TestMandatory)]
     [FormField(
         "medicines_laboratory_testing.genomic_test_notes",
         "Enter any notes about uncertainties, assumptions, or service considerations relating to the tests",
@@ -366,13 +277,7 @@ internal sealed class MedicinesLaboratoryTesting
     /// Tests needed to monitor response to treatment beyond current NHS practice.
     /// Optional. Not conditional — shown regardless of biomarker type. CiC.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.LaboratoryTesting,
-        "monitoring-tests",
-        "Monitoring tests",
-        Order = 140,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.MonitoringTests)]
     [FormField(
         "medicines_laboratory_testing.monitoring_tests_details",
         "Describe any tests (genomic tests or otherwise) needed to monitor response to treatment beyond what is currently offered in NHS practice",
@@ -388,13 +293,7 @@ internal sealed class MedicinesLaboratoryTesting
     /// Tests needed to assess safety of treatment beyond current NHS practice.
     /// Optional. Not conditional — shown regardless of biomarker type. CiC.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.LaboratoryTesting,
-        "safety-tests",
-        "Safety tests",
-        Order = 150,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.SafetyTests)]
     [FormField(
         "medicines_laboratory_testing.safety_tests_details",
         "Describe any tests needed to assess safety of the treatment that are additional to what is currently used in routine clinical practice",

@@ -12,7 +12,7 @@ internal sealed class MedicinesIndicationDetail
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
-    [FormPage(MedicineFormLayout.IndicationDetails, "indication", "Indication", Order = 10)]
+    [FormPage(MedicineFormLayout.Indication)]
     [FormField(
         "medicines_indication_detail.indication",
         "What is the indication this product is seeking a licence for?",
@@ -27,7 +27,7 @@ internal sealed class MedicinesIndicationDetail
     /// The most specific BNF entry chosen: a subchapter when one is picked, otherwise the
     /// top-level chapter.
     /// </summary>
-    [FormPage(MedicineFormLayout.IndicationDetails, "bnf-chapter", "BNF chapter", Order = 20)]
+    [FormPage(MedicineFormLayout.BnfChapter)]
     [FormField(
         "medicines_indication_detail.bnf_chapter_id",
         "Select the BNF chapter for this product",
@@ -39,7 +39,7 @@ internal sealed class MedicinesIndicationDetail
     [FormRequired("Choose a BNF chapter")]
     public int? BnfChapterId { get; set; }
 
-    [FormPage(MedicineFormLayout.IndicationDetails, "paediatric", "Treating children", Order = 40)]
+    [FormPage(MedicineFormLayout.Paediatric)]
     [FormField(
         "medicines_indication_detail.indication_is_paediatric",
         "Is this product intended to treat children?",
@@ -48,21 +48,17 @@ internal sealed class MedicinesIndicationDetail
     [FormRequired("Select whether this product is intended to treat children")]
     public IndicationPaediatricStatus? IndicationIsPaediatric { get; set; }
 
-    [FormPage(MedicineFormLayout.IndicationDetails, "cancer", "Treating cancer", Order = 50)]
+    [FormPage(MedicineFormLayout.Cancer)]
     [FormField(
         "medicines_indication_detail.indication_is_cancer",
         "Is this a product intended to treat cancer?",
         FormControl.Radio
     )]
     [FormRequired("Select whether this product is intended to treat cancer")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IndicationIsCancer { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.IndicationDetails,
-        "rare-disease",
-        "Treating a rare disease",
-        Order = 60
-    )]
+    [FormPage(MedicineFormLayout.RareDisease)]
     [FormField(
         "medicines_indication_detail.indication_is_rare_disease",
         "Is this a product intended to treat a rare disease?",
@@ -70,9 +66,10 @@ internal sealed class MedicinesIndicationDetail
         Hint = "A disease is considered rare if fewer than 5 in 10,000 people have it. Select yes if this medicine is intended to treat a rare disease, even if you have not applied for orphan status."
     )]
     [FormRequired("Select whether this product treats a rare disease")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IndicationIsRareDisease { get; set; }
 
-    [FormPage(MedicineFormLayout.IndicationDetails, "formulation", "Formulation", Order = 70)]
+    [FormPage(MedicineFormLayout.Formulation)]
     [FormField(
         "medicines_indication_detail.formulation_type_id",
         "What is the formulation?",
@@ -83,7 +80,7 @@ internal sealed class MedicinesIndicationDetail
     [FormRequired("Choose a formulation")]
     public int? FormulationTypeId { get; set; }
 
-    [FormPage(MedicineFormLayout.IndicationDetails, "presentation", "Presentation", Order = 80)]
+    [FormPage(MedicineFormLayout.Presentation)]
     [FormField(
         "medicines_indication_detail.presentation",
         "Describe the presentation of this product (optional)",
@@ -92,7 +89,7 @@ internal sealed class MedicinesIndicationDetail
     )]
     public string? Presentation { get; set; }
 
-    [FormPage(MedicineFormLayout.IndicationDetails, "mode-of-action", "Mode of action", Order = 90)]
+    [FormPage(MedicineFormLayout.ModeOfAction)]
     [FormField(
         "medicines_indication_detail.mode_of_action",
         "What is the mode of action of this product? (optional)",
@@ -101,12 +98,7 @@ internal sealed class MedicinesIndicationDetail
     )]
     public string? ModeOfAction { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.IndicationDetails,
-        "dose-regimen",
-        "Proposed dose regimen",
-        Order = 100
-    )]
+    [FormPage(MedicineFormLayout.DoseRegimen)]
     [FormField(
         "medicines_indication_detail.proposed_dose_regimen",
         "What is the proposed dose regimen for this product? (optional)",
@@ -115,12 +107,7 @@ internal sealed class MedicinesIndicationDetail
     )]
     public string? ProposedDoseRegimen { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.IndicationDetails,
-        "personalised-medicine",
-        "Personalised medicine",
-        Order = 110
-    )]
+    [FormPage(MedicineFormLayout.PersonalisedMedicine)]
     [FormField(
         "medicines_indication_detail.is_personalised_medicine",
         "Is this product a personalised medicine?",
@@ -128,15 +115,11 @@ internal sealed class MedicinesIndicationDetail
         Hint = "Personalised medicines are treatments chosen or adjusted to suit a person's genetic, biomarker, molecular or clinical characteristics. This can improve how well the treatment works and reduce side effects."
     )]
     [FormRequired("Select yes if the product is a personalised medicine")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IsPersonalisedMedicine { get; set; }
 
     /// <summary>Multi-select technology status types for this record.</summary>
-    [FormPage(
-        MedicineFormLayout.IndicationDetails,
-        "technology-status",
-        "Technology status",
-        Order = 120
-    )]
+    [FormPage(MedicineFormLayout.TechnologyStatus)]
     [FormField(
         "medicines_indication_detail.medicine_technology_status",
         "What is the technology status for this product?",
@@ -158,12 +141,7 @@ internal sealed class MedicinesIndicationDetail
     /// or condition when one is picked, otherwise the top-level area.
     /// See MedicinesIndicationDetailTherapeuticArea junction table.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.IndicationDetails,
-        "therapeutic-area",
-        "Therapeutic area",
-        Order = 30
-    )]
+    [FormPage(MedicineFormLayout.TherapeuticArea)]
     [FormField(
         "medicines_indication_detail_therapeutic_area",
         "Select the most appropriate therapeutic area(s) for this product (optional)",

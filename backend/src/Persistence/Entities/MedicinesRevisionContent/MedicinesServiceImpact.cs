@@ -15,12 +15,7 @@ internal sealed class MedicinesServiceImpact
     /// <summary>
     /// The extent of NHS service change required to deliver this medicine.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.PatientAndClinicalRequirements,
-        "nhs-service-changes",
-        "NHS service changes",
-        Order = 50
-    )]
+    [FormPage(MedicineFormLayout.NhsServiceChanges)]
     [FormField(
         "medicines_service_impact.nhs_service_changes_required",
         "Are any changes to NHS services required for the delivery of this product?",
@@ -34,12 +29,7 @@ internal sealed class MedicinesServiceImpact
     /// Conditional on NhsServiceChangesRequired = CompleteTransformation or SomeChange.
     /// Describes changes to staffing, equipment, pathway, or commissioning.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.PatientAndClinicalRequirements,
-        "nhs-service-changes",
-        "NHS service changes",
-        Order = 50
-    )]
+    [FormPage(MedicineFormLayout.NhsServiceChanges)]
     [FormField(
         "medicines_service_impact.nhs_service_changes_details",
         "Describe any changes to staffing, equipment, pathway, or commissioning needed for delivery of this medicine.",
@@ -58,12 +48,7 @@ internal sealed class MedicinesServiceImpact
     /// Are there specific requirements for the handling or storage of this product
     /// that may cause service issues?
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.PatientAndClinicalRequirements,
-        "handling-storage",
-        "Handling and storage",
-        Order = 60
-    )]
+    [FormPage(MedicineFormLayout.HandlingStorage)]
     [FormField(
         "medicines_service_impact.handling_storage_requirements",
         "Are there specific requirements for the handling or storage of this product that may cause service issues?",
@@ -74,15 +59,11 @@ internal sealed class MedicinesServiceImpact
     [FormRequired(
         "Select yes if there are specific requirements for handling or storing the product that may cause service issues"
     )]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? HandlingStorageRequirements { get; set; }
 
     /// <summary>Conditional on HandlingStorageRequirements = Yes.</summary>
-    [FormPage(
-        MedicineFormLayout.PatientAndClinicalRequirements,
-        "handling-storage",
-        "Handling and storage",
-        Order = 60
-    )]
+    [FormPage(MedicineFormLayout.HandlingStorage)]
     [FormField(
         "medicines_service_impact.handling_storage_details",
         "Provide further details",
@@ -93,12 +74,7 @@ internal sealed class MedicinesServiceImpact
     [FormRequired("Enter details")]
     public string? HandlingStorageDetails { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.PatientAndClinicalRequirements,
-        "population-range",
-        "UK patient population",
-        Order = 70
-    )]
+    [FormPage(MedicineFormLayout.PopulationRange)]
     [FormField(
         "medicines_service_impact.uk_patient_population_range_id",
         "UK patient population range for this condition",
@@ -110,12 +86,7 @@ internal sealed class MedicinesServiceImpact
     [FormRequired("Select a population size")]
     public int? UkPatientPopulationRangeId { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.PatientAndClinicalRequirements,
-        "population-range",
-        "UK patient population",
-        Order = 70
-    )]
+    [FormPage(MedicineFormLayout.PopulationRange)]
     [FormField(
         "medicines_service_impact.uk_patient_population_notes",
         "Additional details about the UK patient population",
@@ -129,12 +100,7 @@ internal sealed class MedicinesServiceImpact
     /// <summary>
     /// Free text. Expected to contain a range along with supporting references and calculations.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.PatientAndClinicalRequirements,
-        "eligible-population",
-        "Enter the estimated UK eligible population range",
-        Order = 80
-    )]
+    [FormPage(MedicineFormLayout.EligiblePopulation)]
     [FormField(
         "medicines_service_impact.estimated_eligible_patient_population",
         "Enter the estimated UK eligible population range",

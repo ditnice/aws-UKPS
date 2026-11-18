@@ -214,7 +214,9 @@ export const FormControl = {
     PRECISION_DATE: 'PrecisionDate',
     ACTUAL_MONTH: 'ActualMonth',
     PREFIXED_NUMBER: 'PrefixedNumber',
-    ACTUAL_DATE: 'ActualDate'
+    ACTUAL_DATE: 'ActualDate',
+    GROUP: 'Group',
+    TEXT_LIST: 'TextList'
 } as const;
 
 /**
@@ -289,6 +291,29 @@ export type InitiateForgottenPasswordProcedureCommand = {
      * Gets the email address of the user who has forgotten their password.
      */
     email: string;
+};
+
+/**
+ * The problems that stop a record being submitted. `errors` is keyed by question ID;
+ * `fields` adds each problem's page and task.
+ */
+export type InvalidRecordProblemDetails = {
+    type?: null | string;
+    title?: null | string;
+    status?: null | number;
+    detail?: null | string;
+    instance?: null | string;
+    /**
+     * Identifies the problem; always `record_invalid`.
+     */
+    code: string;
+    /**
+     * Each problem with its page and task, in form order.
+     */
+    fields: Array<SubmissionErrorDto>;
+    errors: {
+        [key: string]: Array<string>;
+    };
 };
 
 /**
@@ -604,6 +629,16 @@ export type MultiFactorAuthenticationSetupDto = {
 };
 
 /**
+ * Represents the details required for a user to complete multi-factor authentication update.
+ */
+export type MultiFactorAuthenticationUpdateDto = {
+    /**
+     * Gets the OTP authentication URI used to configure an authenticator application.
+     */
+    otpAuthUri: string;
+};
+
+/**
  * The type of a product name or identifier. See RecordNameAndIdentifier.NameType.
  */
 export const NameAndIdentifierType = { GENERIC_NAME: 'GenericName', OTHER_IDENTIFIER: 'OtherIdentifier' } as const;
@@ -895,6 +930,128 @@ export const RecordAction = {
 export type RecordAction = typeof RecordAction[keyof typeof RecordAction];
 
 /**
+ * The whole of a record's latest revision for check your answers: every question that applies,
+ * grouped by section and task, and every error that would stop it being submitted.
+ */
+export type RecordCheckAnswersDto = {
+    /**
+     * The form's version. Send it back on submit.
+     */
+    formVersion: string;
+    /**
+     * The record the answers belong to.
+     */
+    recordId: number;
+    /**
+     * The organisation that owns the record; used for links back to the records list.
+     */
+    organisationId: number;
+    /**
+     * A hash of the whole revision. Send it back on submit; if anything in the revision has
+     * changed since, the submission is rejected.
+     */
+    revisionHash: string;
+    /**
+     * The sections with a question that applies, in form order.
+     */
+    sections: Array<RecordCheckAnswersSectionDto>;
+    /**
+     * The problems that would stop the record being submitted, in form order, each on a question
+     * in IReadOnlyList&lt;RecordCheckAnswersSectionDto&gt; RecordCheckAnswersDto.Sections. The record can be submitted when this is empty.
+     */
+    errors: Array<SubmissionErrorDto>;
+};
+
+/**
+ * An option chosen in an answer.
+ */
+export type RecordCheckAnswersOptionDto = {
+    /**
+     * The answer value: an enum member name or a reference ID.
+     */
+    value: string;
+    /**
+     * The text shown for the option.
+     */
+    label: string;
+    /**
+     * The label of the option's parent in a hierarchical select, or null.
+     */
+    parentLabel: null | string;
+};
+
+/**
+ * A question that applies and its answer, as a row on check your answers.
+ */
+export type RecordCheckAnswersQuestionDto = {
+    /**
+     * The question ID, which errors are keyed by.
+     */
+    id: string;
+    /**
+     * The page the question is on, for its Change link.
+     */
+    pageId: string;
+    /**
+     * The question text.
+     */
+    label: string;
+    /**
+     * The control the question uses, which says how to format the answer.
+     */
+    type: FormControl;
+    /**
+     * True when the question takes several values rather than one.
+     */
+    multiple: boolean;
+    /**
+     * The saved values: at most one for a single-value question, and none when not yet provided.
+     */
+    values: Array<string>;
+    /**
+     * For a choice question, the chosen options in the order offered, so values can be shown by
+     * label; null for any other question.
+     */
+    selectedOptions: null | Array<RecordCheckAnswersOptionDto>;
+};
+
+/**
+ * A section on check your answers.
+ */
+export type RecordCheckAnswersSectionDto = {
+    /**
+     * The section ID.
+     */
+    id: string;
+    /**
+     * The section title.
+     */
+    title: string;
+    /**
+     * The tasks with a question that applies, in order.
+     */
+    tasks: Array<RecordCheckAnswersTaskDto>;
+};
+
+/**
+ * A task on check your answers.
+ */
+export type RecordCheckAnswersTaskDto = {
+    /**
+     * The task ID.
+     */
+    id: string;
+    /**
+     * The task title.
+     */
+    title: string;
+    /**
+     * The questions that apply, in page order, including optional questions with no answer.
+     */
+    questions: Array<RecordCheckAnswersQuestionDto>;
+};
+
+/**
  * Represents a clinical trial on a record.
  */
 export type RecordClinicalTrialDto = {
@@ -1007,6 +1164,10 @@ export type RecordDtoMedicineRecordDto = {
      * of its latest revision.
      */
     actions: Array<RecordAction>;
+    /**
+     * Gets the date of when the next update is due.
+     */
+    nextUpdateDue?: null | string;
 };
 
 /**
@@ -1044,6 +1205,10 @@ export type RecordDtoVaccineRecordDto = {
      * of its latest revision.
      */
     actions: Array<RecordAction>;
+    /**
+     * Gets the date of when the next update is due.
+     */
+    nextUpdateDue?: null | string;
 };
 
 /**
@@ -1264,7 +1429,9 @@ export type RecordPageQuestionDto = {
      */
     type: FormControl;
     /**
-     * True when the answer is an array of strings rather than a string or null.
+     * True when the answer is an array of strings rather than a string or null, as for a
+     * checkbox, a multi-value hierarchical select or a text list. False for a group, whose answer
+     * is an array of objects.
      */
     multiple: boolean;
     /**
@@ -1292,15 +1459,36 @@ export type RecordPageQuestionDto = {
      */
     childPlaceholder: null | string;
     /**
-     * The button text that adds another entry to a multi-value hierarchical select.
+     * The button text that adds another entry to a multi-value hierarchical select, a group or a
+     * text list.
      */
     addAnotherLabel: null | string;
+    /**
+     * The heading of each item of a group, numbered from 1, or the label of each entry of a text
+     * list, numbered from 1 once there are several; null for other controls.
+     */
+    itemLabel?: null | string;
+    /**
+     * The button text that removes an item of a group or an entry of a text list.
+     */
+    removeLabel?: null | string;
+    /**
+     * The questions asked of each item of a group, in order, or null for other controls. Each
+     * item of the answer is an object keyed by these questions' IDs, and their errors are keyed
+     * `{group id}[{item index}].{child id}`.
+     */
+    children?: null | Array<RecordPageQuestionDto>;
     /**
      * The prefixes a `PrefixedNumber` question offers before its digits, in order, or
      * null for any other control. Not `required`, so existing clients and fixtures are
      * unaffected.
      */
     prefixes?: null | Array<string>;
+    /**
+     * The exact number of digits a `PrefixedNumber` needs after its prefix, or null when up
+     * to 5 are allowed.
+     */
+    prefixDigits?: null | number;
     /**
      * What a FormControl.PrecisionDate question's date is of, for its error
      * messages, for example `submission`; null for other questions.
@@ -1675,7 +1863,8 @@ export type RespondToMultiFactorAuthenticationChallengeCommand = {
 export const RuleKind = {
     REQUIRED: 'Required',
     MAX_LENGTH: 'MaxLength',
-    MAX_ITEMS: 'MaxItems'
+    MAX_ITEMS: 'MaxItems',
+    DISTINCT: 'Distinct'
 } as const;
 
 /**
@@ -1718,6 +1907,25 @@ export type SaveRecordPageDto = {
 
 /**
  * Represents the command used to complete user setup by validating a setup token
+ * and assigning a phone number to the user for SMS MFA.
+ */
+export type SetupSmsMfaCommand = {
+    /**
+     * Gets the unique token used to identify and validate the pending user setup request.
+     */
+    setupToken: string;
+    /**
+     * Gets the phone number to assign to the user account.
+     */
+    phoneNumber: string;
+    /**
+     * Gets the password used to authenticate with the identity provider.
+     */
+    password: string;
+};
+
+/**
+ * Represents the command used to complete user setup by validating a setup token
  * and assigning a new password to the user.
  */
 export type SetupUserCommand = {
@@ -1732,6 +1940,17 @@ export type SetupUserCommand = {
 };
 
 /**
+ * Represents the details required for a user to complete SMS multi-factor authentication setup.
+ */
+export type SmsMultiFactorAuthenticationSetupDto = {
+    /**
+     * Gets the authentication session identifier required to complete the
+     * multi-factor authentication setup flow.
+     */
+    authenticationSession: string;
+};
+
+/**
  * Specifies the direction in which query results are sorted.
  */
 export const SortDirection = { ASCENDING: 'Ascending', DESCENDING: 'Descending' } as const;
@@ -1740,6 +1959,64 @@ export const SortDirection = { ASCENDING: 'Ascending', DESCENDING: 'Descending' 
  * Specifies the direction in which query results are sorted.
  */
 export type SortDirection = typeof SortDirection[keyof typeof SortDirection];
+
+/**
+ * A record submission or check answers conflict, or a selected-organisation conflict. Schema only: runtime responses use the
+ * problem details factory and extensions to preserve tracing metadata.
+ */
+export type SubmissionConflictProblemDetails = {
+    type?: null | string;
+    title?: null | string;
+    status?: null | number;
+    detail?: null | string;
+    instance?: null | string;
+    /**
+     * The domain code (record_not_submittable, form_version_changed or record_changed),
+     * or the authentication code SelectedOrganisationMismatch.
+     */
+    code: string;
+    /**
+     * The organisation requested, when it differs from the selected organisation.
+     */
+    organisationId?: null | number;
+};
+
+/**
+ * A problem that stops a record being submitted, and the question it is on.
+ */
+export type SubmissionErrorDto = {
+    /**
+     * The question to highlight, which is also its key in `errors`.
+     */
+    questionId: string;
+    /**
+     * The page the question is on, to link to.
+     */
+    pageId: string;
+    /**
+     * The task the page belongs to.
+     */
+    taskId: string;
+    /**
+     * What is wrong and how to fix it.
+     */
+    message: string;
+};
+
+/**
+ * Submits a record's draft revision, as it was when check your answers loaded.
+ */
+export type SubmitRecordCommand = {
+    /**
+     * The form version check your answers was loaded with.
+     */
+    formVersion: string;
+    /**
+     * The hash of the whole revision check your answers was loaded with. If anything in the
+     * revision has changed since, the submission is rejected.
+     */
+    revisionHash: string;
+};
 
 export const TrialPhase = {
     PRECLINICAL: 'Preclinical',
@@ -1909,7 +2186,19 @@ export type UserInformationDto = {
      * Gets whether the user can select more than one organisation. Only set for the current user.
      */
     hasMultipleOrganisations: boolean;
+    /**
+     * Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.
+     */
+    allowedPharmaceuticalEntity: PharmaceuticalEntity;
     pendingWorkEmail?: null | PendingWorkEmailChangeDto;
+    /**
+     * Gets the MFA method in use for the current user.
+     */
+    mfaMethod: string;
+    /**
+     * Gets the obfuscated phone number used for SMS MFA, if applicable.
+     */
+    mfaPhoneNumber: string;
 };
 
 /**
@@ -2063,6 +2352,25 @@ export type VerifyPendingEmailAddressCommand = {
     verificationToken: string;
 };
 
+/**
+ * Represents the details required to verify a user's SMS multi-factor authentication setup.
+ */
+export type VerifySmsMultiFactorAuthenticationCommand = {
+    /**
+     * Gets the unique token associated with the user onboarding record.
+     */
+    setupToken: string;
+    /**
+     * Gets the verification code generated by the user's authenticator application.
+     */
+    code: string;
+    /**
+     * Gets the authentication session identifier required to complete the
+     * multi-factor authentication verification flow.
+     */
+    authenticationSession: string;
+};
+
 export const YesNoUnknown = {
     UNKNOWN: 'Unknown',
     NO: 'No',
@@ -2178,6 +2486,70 @@ export type RespondToMultiFactorAuthenticationChallengeResponses = {
     /**
      * The multi-factor authentication challenge was successfully completed and an
      * authentication cookie was created.
+     */
+    200: unknown;
+};
+
+export type PostAuthSetupSmsMfaData = {
+    body: SetupSmsMfaCommand;
+    path?: never;
+    query?: never;
+    url: '/auth/setup-sms-mfa';
+};
+
+export type PostAuthSetupSmsMfaErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: ProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+    /**
+     * Gone
+     */
+    410: ProblemDetails;
+};
+
+export type PostAuthSetupSmsMfaError = PostAuthSetupSmsMfaErrors[keyof PostAuthSetupSmsMfaErrors];
+
+export type PostAuthSetupSmsMfaResponses = {
+    /**
+     * OK
+     */
+    200: SmsMultiFactorAuthenticationSetupDto;
+};
+
+export type PostAuthSetupSmsMfaResponse = PostAuthSetupSmsMfaResponses[keyof PostAuthSetupSmsMfaResponses];
+
+export type PostAuthVerifySmsMfaData = {
+    body: VerifySmsMultiFactorAuthenticationCommand;
+    path?: never;
+    query?: never;
+    url: '/auth/verify-sms-mfa';
+};
+
+export type PostAuthVerifySmsMfaErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+};
+
+export type PostAuthVerifySmsMfaError = PostAuthVerifySmsMfaErrors[keyof PostAuthVerifySmsMfaErrors];
+
+export type PostAuthVerifySmsMfaResponses = {
+    /**
+     * OK
      */
     200: unknown;
 };
@@ -2510,7 +2882,7 @@ export type InitiateUpdateMultiFactorAuthenticationResponses = {
     /**
      * OK
      */
-    200: MultiFactorAuthenticationSetupDto;
+    200: MultiFactorAuthenticationUpdateDto;
 };
 
 export type InitiateUpdateMultiFactorAuthenticationResponse = InitiateUpdateMultiFactorAuthenticationResponses[keyof InitiateUpdateMultiFactorAuthenticationResponses];
@@ -3315,6 +3687,104 @@ export type SaveRecordFormPageResponses = {
 };
 
 export type SaveRecordFormPageResponse = SaveRecordFormPageResponses[keyof SaveRecordFormPageResponses];
+
+export type GetRecordCheckAnswersData = {
+    body?: never;
+    path: {
+        /**
+         * The record to check.
+         */
+        recordId: number;
+    };
+    query?: never;
+    url: '/records/{recordId}/check-answers';
+};
+
+export type GetRecordCheckAnswersErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but not submit it.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record can't be submitted in its current state, or the selected organisation differs.
+     * The `code` member says which.
+     */
+    409: SubmissionConflictProblemDetails;
+};
+
+export type GetRecordCheckAnswersError = GetRecordCheckAnswersErrors[keyof GetRecordCheckAnswersErrors];
+
+export type GetRecordCheckAnswersResponses = {
+    /**
+     * Returns the record's answers and errors.
+     */
+    200: RecordCheckAnswersDto;
+};
+
+export type GetRecordCheckAnswersResponse = GetRecordCheckAnswersResponses[keyof GetRecordCheckAnswersResponses];
+
+export type SubmitRecordData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: SubmitRecordCommand;
+    path: {
+        /**
+         * The record to submit.
+         */
+        recordId: number;
+    };
+    query?: never;
+    url: '/records/{recordId}/submit';
+};
+
+export type SubmitRecordErrors = {
+    /**
+     * The request body is missing or malformed.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but not submit it.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record can't be submitted in its current state, or the form or revision changed since
+     * check your answers loaded, or the selected organisation differs. The `code` member says which.
+     */
+    409: SubmissionConflictProblemDetails;
+    /**
+     * The revision has problems to fix first. `errors` is keyed by question ID, and
+     * `fields` lists each problem with its page and task, in form order.
+     */
+    422: InvalidRecordProblemDetails;
+};
+
+export type SubmitRecordError = SubmitRecordErrors[keyof SubmitRecordErrors];
+
+export type SubmitRecordResponses = {
+    /**
+     * The record was submitted.
+     */
+    204: void;
+};
+
+export type SubmitRecordResponse = SubmitRecordResponses[keyof SubmitRecordResponses];
 
 export type GetRecordTaskListData = {
     body?: never;

@@ -3,7 +3,6 @@ using Shouldly;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Application.RecordForms.Scanning;
-using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 using UKPS.Api.Persistence.Entities.ReferenceData;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Persistence.FormAnnotations;
@@ -53,9 +52,6 @@ public class FormModelValidatorTests
     [InlineData("BrokenEntity.BlankReason has [FormIgnore] with a blank reason.")]
     [InlineData("BrokenEntity.NoPage has [FormField] but no [FormPage].")]
     [InlineData("BrokenEntity.BadIds has a badly formed question ID 'Broken.Bad ID'.")]
-    [InlineData(
-        "BrokenEntity.BadIds declares page 'Bad Page' with a badly formed ID or a blank title."
-    )]
     [InlineData("BrokenEntity.WrongControl uses control Radio which does not suit a Text binding.")]
     [InlineData(
         "BrokenEntity.ChoiceWithoutProvider uses choice control Radio but no Enum provider of UnprovidedChoice is registered; register one or add [FormOptions]."
@@ -68,10 +64,7 @@ public class FormModelValidatorTests
     )]
     [InlineData("BrokenEntity.UnknownKey uses unknown option provider 'no-such-provider'.")]
     [InlineData(
-        "BrokenEntity.UnknownTask declares page 'unknown-task' in task 'no-such-task', which no FormLayout declares."
-    )]
-    [InlineData(
-        "BrokenEntity.ReservedPage declares page 'task-list', which is reserved for the task list."
+        "BrokenEntity.UnknownPage declares page 'unknown-page', which no FormLayout declares."
     )]
     [InlineData(
         "BrokenEntity.PrefixesOnText has [FormValuePrefixes], which only a PrefixedNumber uses."
@@ -84,11 +77,80 @@ public class FormModelValidatorTests
     )]
     [InlineData("BrokenEntity.RepeatedPrefix repeats a prefix in [FormValuePrefixes].")]
     [InlineData(
+        "BrokenEntity.NegativeDigits has a negative Digits in [FormValuePrefixes]; use 0 for up to 5 digits."
+    )]
+    [InlineData(
         "BrokenEntity.OverlappingPrefix has a prefix that starts another, which makes the split ambiguous."
     )]
     public void Validate_BrokenEntity_ReportsTheProblem(string expected)
     {
         Problems(typeof(BrokenEntity)).ShouldContain(expected);
+    }
+
+    [Fact]
+    public void Scan_GroupEntity_BuildsTheGroupAndItsQuestions()
+    {
+        Problems(typeof(GroupEntity)).ShouldBe(["The Vaccine form has no entry in FormVersions."]);
+
+        var (declarations, _) = FormModelScanner.Scan(
+            _model,
+            [typeof(VaccineTestLayout), typeof(GroupEntity)]
+        );
+        FormModel form = FormModelBuilder.Build(declarations, _options)[RecordType.Vaccine];
+        FormQuestion group = form.FindPage("items")!.Questions.Single();
+
+        (group.Id, group.Control, group.Shape).ShouldBe(
+            ("group_entity_item", FormControl.Group, AnswerShape.Group)
+        );
+        (group.ItemLabel, group.AddAnotherLabel, group.RemoveLabel, group.ItemKey).ShouldBe(
+            ("Item", "Add another item", "Remove item", "code")
+        );
+        group.Rules.Select(static r => r.Kind).ShouldBe([RuleKind.Required, RuleKind.MaxItems]);
+        group.Entity.Includes.ShouldBe(["Items", "Items.Numbers"]);
+        group
+            .Children.Select(static c => (c.Id, c.Control, c.Shape))
+            .ShouldBe([
+                ("name", FormControl.Text, AnswerShape.Single),
+                ("code", FormControl.PrefixedNumber, AnswerShape.Single),
+                ("numbers", FormControl.TextList, AnswerShape.List),
+            ]);
+        group.Children[1].PrefixDigits.ShouldBe(8);
+        group
+            .Children[1]
+            .Rules.Select(static r => r.Kind)
+            .ShouldBe([RuleKind.Required, RuleKind.Distinct]);
+        group.Children[2].Rules.Single().Kind.ShouldBe(RuleKind.Distinct);
+        group.Children[2].ItemLabel.ShouldBe("Number");
+        form.FindQuestion("name").ShouldBeNull("a group's questions are not form questions");
+    }
+
+    [Theory]
+    [InlineData("BrokenGroupEntity.Items uses Group, which needs an ItemLabel.")]
+    [InlineData(
+        "BrokenGroupEntity.Items has ItemKey 'free_text', which must name a single-value question of the group with [FormRequired] and [FormDistinct]."
+    )]
+    [InlineData("BrokenGroupEntity.Text sets ItemLabel, which only a Group or a TextList uses.")]
+    [InlineData("BrokenGroupItem.BlankLabels sets a blank ItemLabel.")]
+    [InlineData("BrokenGroupEntity.Text sets RemoveLabel, which only a Group or a TextList uses.")]
+    [InlineData(
+        "BrokenGroupEntity.Text has [FormDistinct], which only a TextList or a single-value question of a group uses."
+    )]
+    [InlineData(
+        "BrokenGroupItem.Dotted is a question of group BrokenGroupEntity.Items, so it takes the group's page and must not declare [FormPage]."
+    )]
+    [InlineData(
+        "BrokenGroupItem.Dotted is a question of group BrokenGroupEntity.Items, so its ID 'broken.dotted' must be lowercase words joined by underscores, with no dotted prefix."
+    )]
+    [InlineData(
+        "BrokenGroupItem.Choice uses control Radio, which a group's question cannot use; use Text, Textarea, PrefixedNumber or TextList."
+    )]
+    [InlineData(
+        "BrokenGroupItem.RequiredName is bound to a non-nullable column, so it needs [FormRequired]."
+    )]
+    [InlineData("BrokenGroupEntity.Items has more than one question with Order 10.")]
+    public void Validate_BrokenGroup_ReportsTheProblem(string expected)
+    {
+        Problems(typeof(BrokenGroupEntity)).ShouldContain(expected);
     }
 
     [Fact]
@@ -235,18 +297,9 @@ public class FormModelValidatorTests
     [Fact]
     public void Validate_SeveralProvidersOfOneType_AsksForFormOptions()
     {
-        OptionProviderRegistry options = OptionProviderRegistry.CreateDefault();
-        options.AddEnum("yes-no", (YesNoUnknown.Yes, "Yes"), (YesNoUnknown.No, "No"));
-
-        var (declarations, _) = FormModelScanner.Scan(
-            _model,
-            [typeof(VaccineTestLayout), typeof(ValidEntity)]
-        );
-
-        FormModelValidator
-            .Validate(declarations, options)
+        Problems(typeof(AmbiguousChoiceEntity))
             .ShouldContain(
-                "ValidEntity.Choice has several Enum providers of YesNoUnknown ('yes-no', 'yes-no-unknown'); choose one with [FormOptions]."
+                "AmbiguousChoiceEntity.Choice has several Enum providers of YesNoUnknown ('clinical-trials-recruiting-in-uk', 'yes-no-unknown'); choose one with [FormOptions]."
             );
     }
 
@@ -262,24 +315,13 @@ public class FormModelValidatorTests
     }
 
     [Fact]
-    public void Validate_Disagreements_AreReported()
+    public void Validate_RepeatedQuestionId_IsReported()
     {
         IReadOnlyList<string> problems = Problems(typeof(ValidEntity), typeof(DisagreeingEntity));
 
         problems.ShouldContain(
-            "The Vaccine form declares page 'text' with different titles, orders or commercial in confidence flags."
-        );
-        problems.ShouldContain(
             "The Vaccine form uses question ID 'valid_entity.text' more than once."
         );
-    }
-
-    [Fact]
-    public void Validate_PageInTwoTasks_IsReported()
-    {
-        IReadOnlyList<string> problems = Problems(typeof(ValidEntity), typeof(TaskConflictEntity));
-
-        problems.ShouldContain("The Vaccine form has page 'text' in more than one task.");
     }
 
     [Theory]
@@ -298,6 +340,15 @@ public class FormModelValidatorTests
     )]
     [InlineData("Task ID 'repeated-task' is declared more than once in the form layouts.")]
     [InlineData("BrokenTestLayout declares section 'empty' with no tasks.")]
+    [InlineData("BrokenTestLayout declares task 'no-pages-task' with no pages.")]
+    [InlineData(
+        "BrokenTestLayout declares page 'Bad Page' with a badly formed ID or a blank title."
+    )]
+    [InlineData("BrokenTestLayout declares page 'task-list', which is reserved for the task list.")]
+    [InlineData(
+        "BrokenTestLayout, task 'tied-task', has page 'tied-first' and page 'tied-second' with the same Order 10."
+    )]
+    [InlineData("Page ID 'repeated-page' is declared more than once in the form layouts.")]
     public void Validate_BrokenLayout_ReportsTheProblem(string expected)
     {
         var (declarations, problems) = FormModelScanner.Scan(_model, [typeof(BrokenTestLayout)]);
@@ -335,13 +386,13 @@ public class FormModelValidatorTests
     }
 
     [Fact]
-    public void Validate_PageConditionOnUnplacedPage_ReportsTheUnknownTask()
+    public void Validate_PageConditionOnUnplacedPage_ReportsTheUnknownPage()
     {
         IReadOnlyList<string> problems = Problems(typeof(UnplacedConditionEntity));
 
         problems.ShouldBe(
             [
-                "UnplacedConditionEntity.Detail declares page 'unplaced-follow-up' in task 'no-such-task', which no FormLayout declares.",
+                "UnplacedConditionEntity.Detail declares page 'unplaced-follow-up', which no FormLayout declares.",
                 "The Vaccine form has no entry in FormVersions.",
             ],
             ignoreOrder: true
@@ -368,7 +419,7 @@ public class FormModelValidatorTests
     {
         var (declarations, _) = FormModelScanner.Scan(
             _model,
-            [typeof(VaccineTestLayout), typeof(MedicineFormLayout), typeof(SplitFormEntity)]
+            [typeof(VaccineTestLayout), typeof(SplitMedicineTestLayout), typeof(SplitFormEntity)]
         );
 
         FormModelValidator
@@ -376,19 +427,6 @@ public class FormModelValidatorTests
             .ShouldContain(
                 "SplitFormEntity has pages in more than one form (Medicine, Vaccine); an entity belongs to one form."
             );
-    }
-
-    [Fact]
-    public void Validate_PageFlagDisagreement_IsReported()
-    {
-        IReadOnlyList<string> problems = Problems(
-            typeof(ValidEntity),
-            typeof(FlagDisagreeingEntity)
-        );
-
-        problems.ShouldContain(
-            "The Vaccine form declares page 'text' with different titles, orders or commercial in confidence flags."
-        );
     }
 
     [Fact]

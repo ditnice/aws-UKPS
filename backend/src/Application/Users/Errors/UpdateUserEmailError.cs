@@ -23,6 +23,11 @@ public abstract record UpdateUserEmailError
     public sealed record ConflictingEmail : UpdateUserEmailError;
 
     /// <summary>
+    /// Indicates that the user was modified by another operation while the update was in progress.
+    /// </summary>
+    public sealed record ConcurrentChangeDetected : UpdateUserEmailError;
+
+    /// <summary>
     /// Indicates that the email address being assigned is the same as the user's current email address.
     /// </summary>
     public sealed record MatchesCurrentEmail : UpdateUserEmailError;
@@ -31,7 +36,8 @@ public abstract record UpdateUserEmailError
         Func<TResult> unauthorised,
         Func<TResult> userDoesNotExist,
         Func<TResult> conflictingEmail,
-        Func<TResult> matchesCurrentEmail
+        Func<TResult> matchesCurrentEmail,
+        Func<TResult> concurrentChangeDetected
     )
     {
         return this switch
@@ -40,6 +46,7 @@ public abstract record UpdateUserEmailError
             UserDoesNotExist => userDoesNotExist(),
             ConflictingEmail => conflictingEmail(),
             MatchesCurrentEmail => matchesCurrentEmail(),
+            ConcurrentChangeDetected => concurrentChangeDetected(),
             _ => throw new UnreachableException($"Unrecognised {nameof(UpdateUserEmailError)}"),
         };
     }

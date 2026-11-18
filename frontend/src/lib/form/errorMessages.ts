@@ -13,6 +13,7 @@ export const errorMessages = {
   personalEmailRequired: 'Enter your email address',
   workEmailRequired: 'Enter your work email address',
   personalContactNumberRequired: 'Enter your contact number',
+  personalPhoneRequired: 'Enter your phone number',
   passwordRequired: 'Enter your password',
   securityCodeRequired: 'Enter your security code',
   organisationRequired: 'Select an organisation',

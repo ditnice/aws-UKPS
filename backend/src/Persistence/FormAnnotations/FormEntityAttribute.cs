@@ -2,8 +2,8 @@ namespace UKPS.Api.Persistence.FormAnnotations;
 
 /// <summary>
 /// Marks a content entity whose properties hold form questions. Every mapped column then needs
-/// <see cref="FormFieldAttribute"/> or <see cref="FormIgnoreAttribute"/>. The entity's pages name
-/// their task, which decides the form; an entity's pages must all be in one form.
+/// <see cref="FormFieldAttribute"/> or <see cref="FormIgnoreAttribute"/>. The layout that declares
+/// the entity's pages decides the form; an entity's pages must all be in one form.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
 internal sealed class FormEntityAttribute : Attribute

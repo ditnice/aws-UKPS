@@ -7,11 +7,15 @@ namespace UKPS.Api.Persistence.Entities.SharedRevisionContent;
 /// <summary>Health technology assessment and UK launch.</summary>
 [FormEntity]
 [FormPageShowWhen(
-    "nice-aligned-pathway",
+    MedicineFormLayout.NiceAlignedPathway,
     "record_hta.medicine_hta_bodies",
     MedicineHtaAssessor.Nice
 )]
-[FormPageShowWhen("nice-ta-id", "record_hta.medicine_hta_bodies", MedicineHtaAssessor.Nice)]
+[FormPageShowWhen(
+    MedicineFormLayout.NiceTaId,
+    "record_hta.medicine_hta_bodies",
+    MedicineHtaAssessor.Nice
+)]
 internal sealed class RecordHta
 {
     [FormIgnore("Database identity")]
@@ -27,7 +31,7 @@ internal sealed class RecordHta
     /// <summary>
     /// Medicines only: is an HTA submission planned for this indication?
     /// </summary>
-    [FormPage(MedicineFormLayout.HtaAndLaunch, "hta-submission", "HTA submission", Order = 10)]
+    [FormPage(MedicineFormLayout.HtaSubmission)]
     [FormField(
         "record_hta.medicine_hta_submission_intended",
         "Do you intend to submit for a HTA?",
@@ -35,12 +39,13 @@ internal sealed class RecordHta
         Order = 10
     )]
     [FormRequired("Select yes if you intend to submit for a HTA")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? MedicineHtaSubmissionIntended { get; set; }
 
     /// <summary>
     /// Medicines only, multi-select.
     /// </summary>
-    [FormPage(MedicineFormLayout.HtaAndLaunch, "hta-submission", "HTA submission", Order = 10)]
+    [FormPage(MedicineFormLayout.HtaSubmission)]
     [FormField(
         "record_hta.medicine_hta_bodies",
         "Select the submission bodies you intend to submit to for a HTA",
@@ -52,7 +57,7 @@ internal sealed class RecordHta
     [FormRequired("Select if you will submit to NICE, the SMC, or AWMSG for a HTA")]
     public MedicineHtaAssessor? MedicineHtaBodies { get; set; }
 
-    [FormPage(MedicineFormLayout.HtaAndLaunch, "hta-submission", "HTA submission", Order = 10)]
+    [FormPage(MedicineFormLayout.HtaSubmission)]
     [FormField(
         "record_hta.hta_additional_details",
         "Add additional details or clarifications, such as any planned differences in the indications submitted to each HTA",
@@ -64,12 +69,7 @@ internal sealed class RecordHta
     public string? HtaAdditionalDetails { get; set; }
 
     /// <summary>Medicines only. Conditional on NICE being selected.</summary>
-    [FormPage(
-        MedicineFormLayout.HtaAndLaunch,
-        "nice-aligned-pathway",
-        "MHRA/NICE aligned pathway",
-        Order = 20
-    )]
+    [FormPage(MedicineFormLayout.NiceAlignedPathway)]
     [FormField(
         "record_hta.hta_nice_aligned_pathway",
         "Do you intend to follow the MHRA/NICE aligned pathway?",
@@ -77,18 +77,14 @@ internal sealed class RecordHta
         Order = 10
     )]
     [FormRequired("Select yes if you intend to follow the MHRA/NICE aligned pathway")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? HtaNiceAlignedPathway { get; set; }
 
     /// <summary>
     /// Medicines only. The unique identifier assigned by NICE to this technology appraisal.
     /// Format: GID-TAXXXX or GID-HSTXXXX. Optional.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.HtaAndLaunch,
-        "nice-ta-id",
-        "NICE technology appraisal ID",
-        Order = 30
-    )]
+    [FormPage(MedicineFormLayout.NiceTaId)]
     [FormField(
         "record_hta.nice_ta_development_id",
         "Enter the NICE technology appraisal development ID for this product (optional)",
@@ -104,13 +100,7 @@ internal sealed class RecordHta
     /// Medicines only. When the medicine is first available in the UK supply chain for this
     /// indication, stored as a regulatory date.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.HtaAndLaunch,
-        "uk-launch-date",
-        "UK commercial launch date",
-        Order = 40,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.UkLaunchDate)]
     [FormField(
         "record_hta.uk_launch_date",
         "What is the UK commercial launch date?",

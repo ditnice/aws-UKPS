@@ -151,6 +151,26 @@ internal sealed class RecordFormPageLoader(
         return FormApplicability.Evaluate(model, answers, codes);
     }
 
+    /// <summary>
+    /// Loads the answer to every question in the form on the revision, and works out what applies.
+    /// </summary>
+    public async Task<(
+        Dictionary<string, FormAnswer> Answers,
+        Applicability Applicability
+    )> LoadAllAnswersAsync(LoadedForm form, CancellationToken cancellationToken)
+    {
+        FormModel model = form.Model;
+        var (_, answers) = await LoadRowsAsync(
+            model,
+            model.Questions.Select(static q => q.Entity).Distinct(),
+            form.Revision.Id,
+            track: false,
+            cancellationToken
+        );
+        ReferenceCodes codes = await LoadReferenceCodesAsync(model, cancellationToken);
+        return (answers, FormApplicability.Evaluate(model, answers, codes));
+    }
+
     /// <summary>Loads the codes of the reference data that the form's conditions name.</summary>
     private async Task<ReferenceCodes> LoadReferenceCodesAsync(
         FormModel model,

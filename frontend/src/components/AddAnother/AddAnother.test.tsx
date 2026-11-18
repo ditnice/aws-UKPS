@@ -1,7 +1,11 @@
+import { useForm } from '@tanstack/react-form'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { AddAnother, AddAnotherProps } from './AddAnother'
+import styles from './AddAnother.module.scss'
 
 const defaultProps: AddAnotherProps<string> = {
   addItemLabel: 'add-item-label',
@@ -89,9 +93,9 @@ describe('AddAnother', () => {
   it('should render the hint above the first input and link it to that input only', () => {
     renderComponent()
 
-    expect(screen.getByText(defaultProps.hint)).toBeInTheDocument()
-    expect(getInputByLabelText('label-prefix 1')).toHaveAccessibleDescription(defaultProps.hint)
-    expect(getInputByLabelText('label-prefix 2')).not.toHaveAccessibleDescription(defaultProps.hint)
+    expect(screen.getByText('hint')).toBeInTheDocument()
+    expect(getInputByLabelText('label-prefix 1')).toHaveAccessibleDescription('hint')
+    expect(getInputByLabelText('label-prefix 2')).not.toHaveAccessibleDescription('hint')
   })
 
   it('should not number the label when there is only one item', () => {
@@ -341,5 +345,114 @@ describe('AddAnother', () => {
 
     expect(screen.queryByLabelText('label-prefix')).toBeNull()
     expect(screen.getByTestId('add-item-button')).toBeDefined()
+  })
+
+  describe('focus', () => {
+    const TanStackField = () => {
+      const form = useForm({ defaultValues: { entries: ['a', 'b'] } })
+      return (
+        <form.Field name="entries" mode="array">
+          {(field) => (
+            <AddAnother
+              {...defaultProps}
+              field={field}
+              getSubfield={(name, renderSubfield) => (
+                <form.Field name={name}>{renderSubfield}</form.Field>
+              )}
+            />
+          )}
+        </form.Field>
+      )
+    }
+
+    it('focuses each new input when a live TanStack array field updates synchronously', async () => {
+      const user = userEvent.setup()
+      render(<TanStackField />)
+
+      await user.click(screen.getByRole('button', { name: 'add-item-label' }))
+      expect(getInputByLabelText('label-prefix 3')).toHaveFocus()
+
+      await user.click(screen.getByRole('button', { name: 'add-item-label' }))
+      expect(getInputByLabelText('label-prefix 4')).toHaveFocus()
+    })
+
+    const Stateful = ({ legend }: { legend?: string }) => {
+      const [values, setValues] = useState(['a', 'b'])
+      return (
+        <AddAnother
+          {...defaultProps}
+          legend={legend}
+          title={legend ? undefined : 'Other names'}
+          field={{
+            ...defaultProps.field,
+            state: { value: values, meta: { errors: [] } },
+            pushValue: (value) => setValues((current) => [...current, value]),
+            removeValue: (index) => setValues((current) => current.filter((_, i) => i !== index)),
+          }}
+          getSubfield={(name, subfieldRender) =>
+            subfieldRender({
+              name,
+              handleBlur: vi.fn(),
+              state: { value: '', meta: { errors: [] } },
+              handleChange: vi.fn(),
+            })
+          }
+        />
+      )
+    }
+
+    it('focuses the new input when an item is added', () => {
+      render(<Stateful />)
+
+      fireEvent.click(screen.getByTestId('add-item-button'))
+
+      expect(getInputByLabelText('label-prefix 3')).toHaveFocus()
+    })
+
+    it('focuses the title when an item is removed', () => {
+      render(<Stateful />)
+
+      fireEvent.click(screen.getByTestId('remove-button-1'))
+
+      expect(screen.getByRole('heading', { name: 'Other names' })).toHaveFocus()
+    })
+
+    it('labels the list with a legend and focuses it when an item is removed', () => {
+      render(<Stateful legend="Trial numbers" />)
+
+      expect(screen.getByRole('group', { name: 'Trial numbers' })).toBeInTheDocument()
+      fireEvent.click(screen.getByTestId('remove-button-0'))
+
+      expect(screen.getByText('Trial numbers')).toHaveFocus()
+    })
+
+    it('hides item labels behind a legend unless the items have a label of their own', () => {
+      const props = { ...defaultProps, field: singleItemField, legend: 'Trial numbers' }
+      const labelIsHidden = (text: string) =>
+        screen.getByText(text, { selector: 'label' }).closest(`.${styles.hiddenLabel}`) !== null
+      const { rerender } = render(<AddAnother {...props} />)
+
+      expect(labelIsHidden('label-prefix')).toBe(true)
+
+      rerender(<AddAnother {...props} itemLabel="Trial number" />)
+
+      expect(labelIsHidden('Trial number')).toBe(false)
+      expect(getInputByLabelText('Trial number')).toBeInTheDocument()
+    })
+
+    it('ignores a blank item label', () => {
+      render(
+        <AddAnother
+          {...defaultProps}
+          field={singleItemField}
+          itemLabel="  "
+          legend="Trial numbers"
+        />,
+      )
+
+      expect(
+        screen.getByText('label-prefix', { selector: 'label' }).closest(`.${styles.hiddenLabel}`),
+      ).not.toBeNull()
+    })
   })
 })

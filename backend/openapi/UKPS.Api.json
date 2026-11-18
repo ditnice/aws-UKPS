@@ -241,6 +241,211 @@
         }
       }
     },
+    "/auth/setup-sms-mfa": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Sets up SMS multi-factor authentication for a user.",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupSmsMfaCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupSmsMfaCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupSmsMfaCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsMultiFactorAuthenticationSetupDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsMultiFactorAuthenticationSetupDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsMultiFactorAuthenticationSetupDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify-sms-mfa": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Verifies the user's SMS multi-factor authentication setup by validating the provided authentication code.",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifySmsMultiFactorAuthenticationCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifySmsMultiFactorAuthenticationCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifySmsMultiFactorAuthenticationCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/validate-setup-token": {
       "get": {
         "tags": [
@@ -1081,17 +1286,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/MultiFactorAuthenticationSetupDto"
+                  "$ref": "#/components/schemas/MultiFactorAuthenticationUpdateDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MultiFactorAuthenticationSetupDto"
+                  "$ref": "#/components/schemas/MultiFactorAuthenticationUpdateDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MultiFactorAuthenticationSetupDto"
+                  "$ref": "#/components/schemas/MultiFactorAuthenticationUpdateDto"
                 }
               }
             }
@@ -3525,6 +3730,296 @@
         }
       }
     },
+    "/records/{recordId}/check-answers": {
+      "get": {
+        "tags": [
+          "RecordSubmission"
+        ],
+        "summary": "Retrieves every question that applies on the record's latest revision with its answer, the\nerrors that would stop it being submitted, and the revision hash to submit with.",
+        "operationId": "GetRecordCheckAnswers",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The record to check.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the record's answers and errors.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordCheckAnswersDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordCheckAnswersDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordCheckAnswersDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller can read the record but not submit it.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record was not found or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The record can't be submitted in its current state, or the selected organisation differs.\nThe `code` member says which.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/records/{recordId}/submit": {
+      "post": {
+        "tags": [
+          "RecordSubmission"
+        ],
+        "summary": "Submits the record's draft revision, as it was when check your answers loaded. A medicine\ngoes to QA review.",
+        "operationId": "SubmitRecord",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The record to submit.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitRecordCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitRecordCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitRecordCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "The record was submitted."
+          },
+          "400": {
+            "description": "The request body is missing or malformed.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller can read the record but not submit it.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record was not found or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The record can't be submitted in its current state, or the form or revision changed since\ncheck your answers loaded, or the selected organisation differs. The `code` member says which.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The revision has problems to fix first. `errors` is keyed by question ID, and\n`fields` lists each problem with its page and task, in form order.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRecordProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRecordProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRecordProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/records/{recordId}/task-list": {
       "get": {
         "tags": [
@@ -5409,7 +5904,9 @@
           "PrecisionDate",
           "ActualMonth",
           "PrefixedNumber",
-          "ActualDate"
+          "ActualDate",
+          "Group",
+          "TextList"
         ],
         "type": "string",
         "description": "The input a record content question is rendered with. Part of the HTTP API contract: the\nmember names are sent to the frontend, so never rename or remove one."
@@ -5477,6 +5974,68 @@
           }
         },
         "description": "Represents a request to start the forgotten password flow for a user."
+      },
+      "InvalidRecordProblemDetails": {
+        "required": [
+          "code",
+          "fields",
+          "errors"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identifies the problem; always `record_invalid`."
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmissionErrorDto"
+            },
+            "description": "Each problem with its page and task, in form order."
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "description": "The problems that stop a record being submitted. `errors` is keyed by question ID;\n`fields` adds each problem's page and task."
       },
       "LoginRequest": {
         "required": [
@@ -6277,6 +6836,20 @@
         },
         "description": "Represents the details required for a user to complete multi-factor authentication setup."
       },
+      "MultiFactorAuthenticationUpdateDto": {
+        "required": [
+          "otpAuthUri"
+        ],
+        "type": "object",
+        "properties": {
+          "otpAuthUri": {
+            "type": "string",
+            "description": "Gets the OTP authentication URI used to configure an authenticator application.",
+            "format": "uri"
+          }
+        },
+        "description": "Represents the details required for a user to complete multi-factor authentication update."
+      },
       "NameAndIdentifierType": {
         "enum": [
           "GenericName",
@@ -6649,6 +7222,182 @@
         "type": "string",
         "description": "Defines the actions a user can take on a record."
       },
+      "RecordCheckAnswersDto": {
+        "required": [
+          "formVersion",
+          "recordId",
+          "organisationId",
+          "revisionHash",
+          "sections",
+          "errors"
+        ],
+        "type": "object",
+        "properties": {
+          "formVersion": {
+            "type": "string",
+            "description": "The form's version. Send it back on submit."
+          },
+          "recordId": {
+            "type": "integer",
+            "description": "The record the answers belong to.",
+            "format": "int32"
+          },
+          "organisationId": {
+            "type": "integer",
+            "description": "The organisation that owns the record; used for links back to the records list.",
+            "format": "int32"
+          },
+          "revisionHash": {
+            "type": "string",
+            "description": "A hash of the whole revision. Send it back on submit; if anything in the revision has\nchanged since, the submission is rejected."
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordCheckAnswersSectionDto"
+            },
+            "description": "The sections with a question that applies, in form order."
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmissionErrorDto"
+            },
+            "description": "The problems that would stop the record being submitted, in form order, each on a question\nin IReadOnlyList&lt;RecordCheckAnswersSectionDto&gt; RecordCheckAnswersDto.Sections. The record can be submitted when this is empty."
+          }
+        },
+        "description": "The whole of a record's latest revision for check your answers: every question that applies,\ngrouped by section and task, and every error that would stop it being submitted."
+      },
+      "RecordCheckAnswersOptionDto": {
+        "required": [
+          "value",
+          "label",
+          "parentLabel"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "The answer value: an enum member name or a reference ID."
+          },
+          "label": {
+            "type": "string",
+            "description": "The text shown for the option."
+          },
+          "parentLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The label of the option's parent in a hierarchical select, or null."
+          }
+        },
+        "description": "An option chosen in an answer."
+      },
+      "RecordCheckAnswersQuestionDto": {
+        "required": [
+          "id",
+          "pageId",
+          "label",
+          "type",
+          "multiple",
+          "values",
+          "selectedOptions"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The question ID, which errors are keyed by."
+          },
+          "pageId": {
+            "type": "string",
+            "description": "The page the question is on, for its Change link."
+          },
+          "label": {
+            "type": "string",
+            "description": "The question text."
+          },
+          "type": {
+            "description": "The control the question uses, which says how to format the answer.",
+            "$ref": "#/components/schemas/FormControl"
+          },
+          "multiple": {
+            "type": "boolean",
+            "description": "True when the question takes several values rather than one."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The saved values: at most one for a single-value question, and none when not yet provided."
+          },
+          "selectedOptions": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/RecordCheckAnswersOptionDto"
+            },
+            "description": "For a choice question, the chosen options in the order offered, so values can be shown by\nlabel; null for any other question."
+          }
+        },
+        "description": "A question that applies and its answer, as a row on check your answers."
+      },
+      "RecordCheckAnswersSectionDto": {
+        "required": [
+          "id",
+          "title",
+          "tasks"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The section ID."
+          },
+          "title": {
+            "type": "string",
+            "description": "The section title."
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordCheckAnswersTaskDto"
+            },
+            "description": "The tasks with a question that applies, in order."
+          }
+        },
+        "description": "A section on check your answers."
+      },
+      "RecordCheckAnswersTaskDto": {
+        "required": [
+          "id",
+          "title",
+          "questions"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The task ID."
+          },
+          "title": {
+            "type": "string",
+            "description": "The task title."
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordCheckAnswersQuestionDto"
+            },
+            "description": "The questions that apply, in page order, including optional questions with no answer."
+          }
+        },
+        "description": "A task on check your answers."
+      },
       "RecordClinicalTrialDto": {
         "required": [
           "studyName",
@@ -6979,6 +7728,14 @@
               "$ref": "#/components/schemas/RecordAction"
             },
             "description": "Gets the actions the user can take on the record, given its status and the workflow status\nof its latest revision."
+          },
+          "nextUpdateDue": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the date of when the next update is due.",
+            "format": "date-time"
           }
         },
         "description": "Represents the data held on the latest revision of a medicine record."
@@ -7035,6 +7792,14 @@
               "$ref": "#/components/schemas/RecordAction"
             },
             "description": "Gets the actions the user can take on the record, given its status and the workflow status\nof its latest revision."
+          },
+          "nextUpdateDue": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the date of when the next update is due.",
+            "format": "date-time"
           }
         },
         "description": "Represents the data held on the latest revision of a vaccine record."
@@ -7432,7 +8197,7 @@
           },
           "multiple": {
             "type": "boolean",
-            "description": "True when the answer is an array of strings rather than a string or null."
+            "description": "True when the answer is an array of strings rather than a string or null, as for a\ncheckbox, a multi-value hierarchical select or a text list. False for a group, whose answer\nis an array of objects."
           },
           "label": {
             "type": "string",
@@ -7478,7 +8243,31 @@
               "null",
               "string"
             ],
-            "description": "The button text that adds another entry to a multi-value hierarchical select."
+            "description": "The button text that adds another entry to a multi-value hierarchical select, a group or a\ntext list."
+          },
+          "itemLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The heading of each item of a group, numbered from 1, or the label of each entry of a text\nlist, numbered from 1 once there are several; null for other controls."
+          },
+          "removeLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The button text that removes an item of a group or an entry of a text list."
+          },
+          "children": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/RecordPageQuestionDto"
+            },
+            "description": "The questions asked of each item of a group, in order, or null for other controls. Each\nitem of the answer is an object keyed by these questions' IDs, and their errors are keyed\n`{group id}[{item index}].{child id}`."
           },
           "prefixes": {
             "type": [
@@ -7489,6 +8278,14 @@
               "type": "string"
             },
             "description": "The prefixes a `PrefixedNumber` question offers before its digits, in order, or\nnull for any other control. Not `required`, so existing clients and fixtures are\nunaffected."
+          },
+          "prefixDigits": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The exact number of digits a `PrefixedNumber` needs after its prefix, or null when up\nto 5 are allowed.",
+            "format": "int32"
           },
           "dateName": {
             "type": [
@@ -7968,7 +8765,8 @@
         "enum": [
           "Required",
           "MaxLength",
-          "MaxItems"
+          "MaxItems",
+          "Distinct"
         ],
         "type": "string",
         "description": "A validation rule kind. Rules are evaluated in the order of these values, never in attribute\norder. Part of the HTTP API contract: the member names are sent to the frontend, so never\nrename or remove one."
@@ -8012,6 +8810,31 @@
         },
         "description": "Where to go after saving a page."
       },
+      "SetupSmsMfaCommand": {
+        "required": [
+          "setupToken",
+          "phoneNumber",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "setupToken": {
+            "type": "string",
+            "description": "Gets the unique token used to identify and validate the pending user setup request.",
+            "format": "uuid"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "Gets the phone number to assign to the user account."
+          },
+          "password": {
+            "pattern": ".*\\S.*",
+            "type": "string",
+            "description": "Gets the password used to authenticate with the identity provider."
+          }
+        },
+        "description": "Represents the command used to complete user setup by validating a setup token\nand assigning a phone number to the user for SMS MFA."
+      },
       "SetupUserCommand": {
         "required": [
           "setupToken",
@@ -8031,6 +8854,19 @@
         },
         "description": "Represents the command used to complete user setup by validating a setup token\nand assigning a new password to the user."
       },
+      "SmsMultiFactorAuthenticationSetupDto": {
+        "required": [
+          "authenticationSession"
+        ],
+        "type": "object",
+        "properties": {
+          "authenticationSession": {
+            "type": "string",
+            "description": "Gets the authentication session identifier required to complete the\nmulti-factor authentication setup flow."
+          }
+        },
+        "description": "Represents the details required for a user to complete SMS multi-factor authentication setup."
+      },
       "SortDirection": {
         "enum": [
           "Ascending",
@@ -8038,6 +8874,104 @@
         ],
         "type": "string",
         "description": "Specifies the direction in which query results are sorted."
+      },
+      "SubmissionConflictProblemDetails": {
+        "required": [
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "The domain code (record_not_submittable, form_version_changed or record_changed),\nor the authentication code SelectedOrganisationMismatch."
+          },
+          "organisationId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The organisation requested, when it differs from the selected organisation.",
+            "format": "int32"
+          }
+        },
+        "description": "A record submission or check answers conflict, or a selected-organisation conflict. Schema only: runtime responses use the\nproblem details factory and extensions to preserve tracing metadata."
+      },
+      "SubmissionErrorDto": {
+        "required": [
+          "questionId",
+          "pageId",
+          "taskId",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "string",
+            "description": "The question to highlight, which is also its key in `errors`."
+          },
+          "pageId": {
+            "type": "string",
+            "description": "The page the question is on, to link to."
+          },
+          "taskId": {
+            "type": "string",
+            "description": "The task the page belongs to."
+          },
+          "message": {
+            "type": "string",
+            "description": "What is wrong and how to fix it."
+          }
+        },
+        "description": "A problem that stops a record being submitted, and the question it is on."
+      },
+      "SubmitRecordCommand": {
+        "required": [
+          "formVersion",
+          "revisionHash"
+        ],
+        "type": "object",
+        "properties": {
+          "formVersion": {
+            "type": "string",
+            "description": "The form version check your answers was loaded with."
+          },
+          "revisionHash": {
+            "type": "string",
+            "description": "The hash of the whole revision check your answers was loaded with. If anything in the\nrevision has changed since, the submission is rejected."
+          }
+        },
+        "description": "Submits a record's draft revision, as it was when check your answers loaded."
       },
       "TrialPhase": {
         "enum": [
@@ -8213,6 +9147,9 @@
           "organisationName",
           "userRole",
           "status",
+          "allowedPharmaceuticalEntity",
+          "mfaMethod",
+          "mfaPhoneNumber",
           "hasMultipleOrganisations"
         ],
         "type": "object",
@@ -8260,6 +9197,10 @@
             "type": "boolean",
             "description": "Gets whether the user can select more than one organisation. Only set for the current user."
           },
+          "allowedPharmaceuticalEntity": {
+            "description": "Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.",
+            "$ref": "#/components/schemas/PharmaceuticalEntity"
+          },
           "pendingWorkEmail": {
             "oneOf": [
               {
@@ -8270,6 +9211,14 @@
                 "$ref": "#/components/schemas/PendingWorkEmailChangeDto"
               }
             ]
+          },
+          "mfaMethod": {
+            "type": "string",
+            "description": "Gets the MFA method in use for the current user."
+          },
+          "mfaPhoneNumber": {
+            "type": "string",
+            "description": "Gets the obfuscated phone number used for SMS MFA, if applicable."
           }
         },
         "description": "Represents information about a user and their membership within an organisation."
@@ -8476,6 +9425,30 @@
         },
         "description": "Command to verify a user's pending email address using a previously issued verification token."
       },
+      "VerifySmsMultiFactorAuthenticationCommand": {
+        "required": [
+          "setupToken",
+          "code",
+          "authenticationSession"
+        ],
+        "type": "object",
+        "properties": {
+          "setupToken": {
+            "type": "string",
+            "description": "Gets the unique token associated with the user onboarding record.",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "description": "Gets the verification code generated by the user's authenticator application."
+          },
+          "authenticationSession": {
+            "type": "string",
+            "description": "Gets the authentication session identifier required to complete the\nmulti-factor authentication verification flow."
+          }
+        },
+        "description": "Represents the details required to verify a user's SMS multi-factor authentication setup."
+      },
       "YesNoUnknown": {
         "enum": [
           "Unknown",
@@ -8511,6 +9484,9 @@
     },
     {
       "name": "RecordForm"
+    },
+    {
+      "name": "RecordSubmission"
     },
     {
       "name": "RecordTaskList"

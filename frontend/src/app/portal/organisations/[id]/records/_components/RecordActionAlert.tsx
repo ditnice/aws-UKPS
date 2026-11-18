@@ -17,5 +17,15 @@ export const RecordActionAlert = ({ action }: RecordActionAlertProps) => {
           </p>
         </Alert>
       )
+    case 'submitted':
+      return (
+        <Alert type="success">
+          <h3>Record submitted for QA review</h3>
+          <p>
+            You have submitted the record for review by the QA team. You cannot make any edits to
+            the record whilst it is in review.
+          </p>
+        </Alert>
+      )
   }
 }
