@@ -1275,6 +1275,23 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task VerifyPendingEmailAddress_ShouldShowUserAsVerifiedInTheReturnedDto()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        var token = await RequestEmailUpdate(currentUser);
+        var result = await Service.VerifyPendingEmailAddress(
+            currentUser.Id,
+            new VerifyPendingEmailAddressCommand() { VerificationToken = token },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        var userInformation = await Service.GetCurrentUser(TestContext.Current.CancellationToken);
+        userInformation.PendingWorkEmail.ShouldNotBeNull().VerifiedByEmail.ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task VerifyPendingEmailAddress_WhenUserDoesNotExist_ShouldReturnNotFoundError()
     {
         User currentUser = await CreateExistingCurrentUser();

@@ -79,7 +79,11 @@ internal partial class UserService(
             Status = membership.Status.ConvertToUserOrgStatus(),
             HasMultipleOrganisations = user.HasMultipleSelectableOrganisations(),
             PendingWorkEmail = user.PendingWorkEmail is not null
-                ? new() { Value = user.PendingWorkEmail }
+                ? new()
+                {
+                    Value = user.PendingWorkEmail,
+                    VerifiedByEmail = user.PendingEmailVerifiedAt is not null,
+                }
                 : null,
         };
     }
@@ -282,7 +286,11 @@ internal partial class UserService(
                 Status = (UserOrgStatus)m.Status,
                 PendingWorkEmail =
                     m.User.PendingWorkEmail != null
-                        ? new() { Value = m.User.PendingWorkEmail }
+                        ? new()
+                        {
+                            Value = m.User.PendingWorkEmail,
+                            VerifiedByEmail = m.User.MarkPendingEmailAsVerified != null,
+                        }
                         : null,
             })
             .FirstOrDefaultAsync(cancellationToken);
