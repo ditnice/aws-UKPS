@@ -77,9 +77,13 @@ internal partial class UserService(
                 mfaPhoneNumber = mfaDetails.MfaPhoneNumber;
             }
         }
+        catch (AmazonServiceException ex)
+        {
+            LogGettingUserMfaDetailsCognitoServiceFailed(ex);
+        }
         catch (AmazonClientException ex)
         {
-            LogGettingUserMfaDetailsFailed(ex);
+            LogGettingUserMfaDetailsAwsClientFailed(ex);
         }
 
         return new UserInformationDto
@@ -939,9 +943,12 @@ internal partial class UserService(
 
     [LoggerMessage(
         Level = LogLevel.Warning,
-        Message = "Failed to retrieve MFA details for the current user."
+        Message = "Cognito service error retrieving MFA details."
     )]
-    private partial void LogGettingUserMfaDetailsFailed(Exception ex);
+    private partial void LogGettingUserMfaDetailsCognitoServiceFailed(Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "AWS client error retrieving MFA details.")]
+    private partial void LogGettingUserMfaDetailsAwsClientFailed(Exception ex);
 
     public record UserInformationTrackingProjection()
     {
