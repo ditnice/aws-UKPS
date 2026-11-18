@@ -229,7 +229,8 @@ invalid model stops the API starting. It holds structure only: bindings receive 
 - **Check your answers.** The page lists every question that applies, with its answer, a **Change**
   link (opening the page with `?returnTo=check-your-answers`) and a **There is a problem** tag on
   questions with a submission error. The errors also appear in a summary above the heading. A
-  repeating group, such as clinical trials, is shown as one nested card per item, each with an
+  repeating group, such as clinical trials, is shown in form order among the task's other rows as
+  one nested card per item, each with an
   **Edit** link to that item on the group's page (`#{questionId}-item-{index}`), then an **Add
   another** button that opens the page with `?add=group-item` and a new blank item after the saved
   ones. Errors are not tagged per item. Return

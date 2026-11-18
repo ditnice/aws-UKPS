@@ -121,6 +121,7 @@ internal sealed class RecordCheckAnswersQueryService(
                 Values = [.. answer.AllValues()],
                 SelectedOptions = selectedOptions,
                 ItemLabel = question.ItemLabel,
+                AddAnotherLabel = question.AddAnotherLabel,
                 Items =
                     answer.Shape == AnswerShape.Group
                         ?

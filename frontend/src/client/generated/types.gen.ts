@@ -1004,6 +1004,10 @@ export type RecordCheckAnswersQuestionDto = {
      */
     items: null | Array<RecordCheckAnswersGroupItemDto>;
     /**
+     * For a group question, the label of its add-another button, such as "Add another clinical trial"; null otherwise.
+     */
+    addAnotherLabel: null | string;
+    /**
      * The control the question uses, which says how to format the answer.
      */
     type: FormControl;

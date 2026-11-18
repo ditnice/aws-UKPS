@@ -6949,6 +6949,7 @@
           "label",
           "itemLabel",
           "items",
+          "addAnotherLabel",
           "type",
           "multiple",
           "values",
@@ -6984,6 +6985,13 @@
               "$ref": "#/components/schemas/RecordCheckAnswersGroupItemDto"
             },
             "description": "For a group question, its items in order, each with a row per child question; null for any other question."
+          },
+          "addAnotherLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For a group question, the label of its add-another button, such as \"Add another clinical trial\"; null otherwise."
           },
           "type": {
             "description": "The control the question uses, which says how to format the answer.",

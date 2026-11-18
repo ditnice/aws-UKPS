@@ -1249,6 +1249,7 @@ export const fakeRecordCheckAnswersQuestionDto = (options: Options = {}, _callDe
         label: f.string.sample(),
         itemLabel: f.datatype.boolean() ? f.string.sample() : null,
         items: _callDepth > MAX_CALL_DEPTH ? null : f.datatype.boolean() ? _callDepth > MAX_CALL_DEPTH ? [] : f.helpers.multiple(() => fakeRecordCheckAnswersGroupItemDto(options, _callDepth + 1)) : null,
+        addAnotherLabel: f.datatype.boolean() ? f.string.sample() : null,
         type: fakeFormControl(options),
         multiple: f.datatype.boolean(),
         values: f.helpers.multiple(() => f.string.sample()),

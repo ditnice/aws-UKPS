@@ -60,6 +60,7 @@ const checkAnswers = {
                 values: ['GC22'],
                 selectedOptions: null,
                 itemLabel: null,
+                addAnotherLabel: null,
                 items: null,
               },
               {
@@ -71,6 +72,7 @@ const checkAnswers = {
                 values: [],
                 selectedOptions: null,
                 itemLabel: null,
+                addAnotherLabel: null,
                 items: null,
               },
             ],
@@ -102,6 +104,7 @@ const trialItem = (studyName: string): RecordCheckAnswersGroupItemDto => ({
       values: [studyName],
       selectedOptions: null,
       itemLabel: null,
+      addAnotherLabel: null,
       items: null,
     },
   ],
@@ -121,6 +124,18 @@ const trialsCheckAnswers = {
             title: 'Clinical trials',
             questions: [
               {
+                id: 'has_clinical_trials',
+                pageId: 'add-clinical-trial',
+                label: 'Do you wish to add a clinical trial?',
+                type: 'Radio',
+                multiple: false,
+                values: ['Yes'],
+                selectedOptions: null,
+                itemLabel: null,
+                addAnotherLabel: null,
+                items: null,
+              },
+              {
                 id: 'record_clinical_trial',
                 pageId: 'clinical-trial-details',
                 label: 'Enter clinical trial details',
@@ -129,6 +144,7 @@ const trialsCheckAnswers = {
                 values: [],
                 selectedOptions: null,
                 itemLabel: 'Clinical trial',
+                addAnotherLabel: 'Add another clinical trial',
                 items: [trialItem('SURVEYOR-1'), trialItem('SURVEYOR-2')],
               },
             ],
@@ -197,6 +213,16 @@ describe('CheckAnswersPage', () => {
       'href',
       '/portal/records/42/clinical-trial-details?returnTo=check-your-answers&add=group-item#record_clinical_trial-item-2',
     )
+  })
+
+  it('shows a question that comes before a group above its items', async () => {
+    vi.mocked(getRecordCheckAnswers).mockResolvedValue(trialsCheckAnswers)
+
+    await renderPage()
+
+    const question = screen.getByText('Do you wish to add a clinical trial?')
+    const firstTrial = screen.getByRole('heading', { level: 3, name: 'Clinical trial 1' })
+    expect(question.compareDocumentPosition(firstTrial)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 
   it('does not show a group as a Change row', async () => {
