@@ -33,4 +33,6 @@ internal sealed record RecordWithLatestRevision
     /// Gets a value indicating whether the record has only one revision.
     /// </summary>
     public bool HasSingleRevision { get; init; }
+
+    public DateTime? NextUpdateDue { get; init; }
 }

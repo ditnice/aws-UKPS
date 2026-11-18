@@ -33,6 +33,8 @@ public class RecordSubmissionControllerTests : IClassFixture<WebApplicationFacto
                 {
                     services.RemoveAll<IRecordSubmissionService>();
                     services.AddSingleton(_service);
+                    services.RemoveAll<IRecordCheckAnswersQueryService>();
+                    services.AddSingleton(Substitute.For<IRecordCheckAnswersQueryService>());
                 });
                 builder.ConfigureNoDatabase();
                 builder.UseSetting("AWS:LoadSecrets", $"{false}");

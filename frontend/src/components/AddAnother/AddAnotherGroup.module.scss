@@ -1,0 +1,39 @@
+@use '@/styles/colours';
+@use '@/styles/spacing';
+@use '@/styles/utils';
+
+.root {
+  margin-bottom: utils.rem(spacing.$large);
+}
+
+// Each item ends with a divider, as in the MoJ add another stacked layout.
+.item {
+  border: 0;
+  border-bottom: utils.rem(2) solid colours.$border;
+  margin: 0 0 utils.rem(spacing.$large);
+  max-width: 44em;
+  min-width: 0;
+  padding: 0 0 utils.rem(spacing.$large);
+}
+
+.heading {
+  margin-bottom: utils.rem(spacing.$medium);
+  padding: 0;
+
+  &:focus {
+    outline-offset: utils.rem(spacing.$x_small);
+  }
+}
+
+.headingText {
+  margin: 0;
+}
+
+// Fields within an item are spaced like questions on a page.
+.item > :not(legend) + :not(legend) {
+  margin-top: utils.rem(spacing.$large);
+}
+
+.removeButton {
+  margin-bottom: 0;
+}

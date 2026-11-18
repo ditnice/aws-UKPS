@@ -3524,6 +3524,129 @@
         }
       }
     },
+    "/records/{recordId}/check-answers": {
+      "get": {
+        "tags": [
+          "RecordSubmission"
+        ],
+        "summary": "Retrieves every question that applies on the record's latest revision with its answer, the\nerrors that would stop it being submitted, and the revision hash to submit with.",
+        "operationId": "GetRecordCheckAnswers",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The record to check.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the record's answers and errors.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordCheckAnswersDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordCheckAnswersDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordCheckAnswersDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller can read the record but not submit it.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record was not found or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The record can't be submitted in its current state, or the selected organisation differs.\nThe `code` member says which.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/records/{recordId}/submit": {
       "post": {
         "tags": [
@@ -5574,7 +5697,9 @@
           "PrecisionDate",
           "ActualMonth",
           "PrefixedNumber",
-          "ActualDate"
+          "ActualDate",
+          "Group",
+          "TextList"
         ],
         "type": "string",
         "description": "The input a record content question is rendered with. Part of the HTTP API contract: the\nmember names are sent to the frontend, so never rename or remove one."
@@ -6876,6 +7001,182 @@
         "type": "string",
         "description": "Defines the actions a user can take on a record."
       },
+      "RecordCheckAnswersDto": {
+        "required": [
+          "formVersion",
+          "recordId",
+          "organisationId",
+          "revisionHash",
+          "sections",
+          "errors"
+        ],
+        "type": "object",
+        "properties": {
+          "formVersion": {
+            "type": "string",
+            "description": "The form's version. Send it back on submit."
+          },
+          "recordId": {
+            "type": "integer",
+            "description": "The record the answers belong to.",
+            "format": "int32"
+          },
+          "organisationId": {
+            "type": "integer",
+            "description": "The organisation that owns the record; used for links back to the records list.",
+            "format": "int32"
+          },
+          "revisionHash": {
+            "type": "string",
+            "description": "A hash of the whole revision. Send it back on submit; if anything in the revision has\nchanged since, the submission is rejected."
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordCheckAnswersSectionDto"
+            },
+            "description": "The sections with a question that applies, in form order."
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmissionErrorDto"
+            },
+            "description": "The problems that would stop the record being submitted, in form order, each on a question\nin IReadOnlyList&lt;RecordCheckAnswersSectionDto&gt; RecordCheckAnswersDto.Sections. The record can be submitted when this is empty."
+          }
+        },
+        "description": "The whole of a record's latest revision for check your answers: every question that applies,\ngrouped by section and task, and every error that would stop it being submitted."
+      },
+      "RecordCheckAnswersOptionDto": {
+        "required": [
+          "value",
+          "label",
+          "parentLabel"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "The answer value: an enum member name or a reference ID."
+          },
+          "label": {
+            "type": "string",
+            "description": "The text shown for the option."
+          },
+          "parentLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The label of the option's parent in a hierarchical select, or null."
+          }
+        },
+        "description": "An option chosen in an answer."
+      },
+      "RecordCheckAnswersQuestionDto": {
+        "required": [
+          "id",
+          "pageId",
+          "label",
+          "type",
+          "multiple",
+          "values",
+          "selectedOptions"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The question ID, which errors are keyed by."
+          },
+          "pageId": {
+            "type": "string",
+            "description": "The page the question is on, for its Change link."
+          },
+          "label": {
+            "type": "string",
+            "description": "The question text."
+          },
+          "type": {
+            "description": "The control the question uses, which says how to format the answer.",
+            "$ref": "#/components/schemas/FormControl"
+          },
+          "multiple": {
+            "type": "boolean",
+            "description": "True when the question takes several values rather than one."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The saved values: at most one for a single-value question, and none when not yet provided."
+          },
+          "selectedOptions": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/RecordCheckAnswersOptionDto"
+            },
+            "description": "For a choice question, the chosen options in the order offered, so values can be shown by\nlabel; null for any other question."
+          }
+        },
+        "description": "A question that applies and its answer, as a row on check your answers."
+      },
+      "RecordCheckAnswersSectionDto": {
+        "required": [
+          "id",
+          "title",
+          "tasks"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The section ID."
+          },
+          "title": {
+            "type": "string",
+            "description": "The section title."
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordCheckAnswersTaskDto"
+            },
+            "description": "The tasks with a question that applies, in order."
+          }
+        },
+        "description": "A section on check your answers."
+      },
+      "RecordCheckAnswersTaskDto": {
+        "required": [
+          "id",
+          "title",
+          "questions"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The task ID."
+          },
+          "title": {
+            "type": "string",
+            "description": "The task title."
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordCheckAnswersQuestionDto"
+            },
+            "description": "The questions that apply, in page order, including optional questions with no answer."
+          }
+        },
+        "description": "A task on check your answers."
+      },
       "RecordClinicalTrialDto": {
         "required": [
           "studyName",
@@ -7206,6 +7507,14 @@
               "$ref": "#/components/schemas/RecordAction"
             },
             "description": "Gets the actions the user can take on the record, given its status and the workflow status\nof its latest revision."
+          },
+          "nextUpdateDue": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the date of when the next update is due.",
+            "format": "date-time"
           }
         },
         "description": "Represents the data held on the latest revision of a medicine record."
@@ -7262,6 +7571,14 @@
               "$ref": "#/components/schemas/RecordAction"
             },
             "description": "Gets the actions the user can take on the record, given its status and the workflow status\nof its latest revision."
+          },
+          "nextUpdateDue": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the date of when the next update is due.",
+            "format": "date-time"
           }
         },
         "description": "Represents the data held on the latest revision of a vaccine record."
@@ -7659,7 +7976,7 @@
           },
           "multiple": {
             "type": "boolean",
-            "description": "True when the answer is an array of strings rather than a string or null."
+            "description": "True when the answer is an array of strings rather than a string or null, as for a\ncheckbox, a multi-value hierarchical select or a text list. False for a group, whose answer\nis an array of objects."
           },
           "label": {
             "type": "string",
@@ -7705,7 +8022,31 @@
               "null",
               "string"
             ],
-            "description": "The button text that adds another entry to a multi-value hierarchical select."
+            "description": "The button text that adds another entry to a multi-value hierarchical select, a group or a\ntext list."
+          },
+          "itemLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The heading of each item of a group, numbered from 1; null for other controls."
+          },
+          "removeLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The button text that removes an item of a group or an entry of a text list."
+          },
+          "children": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/RecordPageQuestionDto"
+            },
+            "description": "The questions asked of each item of a group, in order, or null for other controls. Each\nitem of the answer is an object keyed by these questions' IDs, and their errors are keyed\n`{group id}[{item index}].{child id}`."
           },
           "prefixes": {
             "type": [
@@ -7716,6 +8057,14 @@
               "type": "string"
             },
             "description": "The prefixes a `PrefixedNumber` question offers before its digits, in order, or\nnull for any other control. Not `required`, so existing clients and fixtures are\nunaffected."
+          },
+          "prefixDigits": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The exact number of digits a `PrefixedNumber` needs after its prefix, or null when up\nto 5 are allowed.",
+            "format": "int32"
           },
           "dateName": {
             "type": [
@@ -8195,7 +8544,8 @@
         "enum": [
           "Required",
           "MaxLength",
-          "MaxItems"
+          "MaxItems",
+          "Distinct"
         ],
         "type": "string",
         "description": "A validation rule kind. Rules are evaluated in the order of these values, never in attribute\norder. Part of the HTTP API contract: the member names are sent to the frontend, so never\nrename or remove one."
@@ -8316,7 +8666,7 @@
             "format": "int32"
           }
         },
-        "description": "A submission or selected-organisation conflict. Schema only: runtime responses use the\nproblem details factory and extensions to preserve tracing metadata."
+        "description": "A record submission or check answers conflict, or a selected-organisation conflict. Schema only: runtime responses use the\nproblem details factory and extensions to preserve tracing metadata."
       },
       "SubmissionErrorDto": {
         "required": [

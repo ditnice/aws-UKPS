@@ -25,6 +25,7 @@ internal sealed class MedicinesDevelopmentBackground
         Order = 10
     )]
     [FormRequired("Select whether this product is a repurposed medicine")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IsRepurposedMedicine { get; set; }
 
     /// <summary>Differences from the current licensed indications.</summary>
@@ -58,6 +59,7 @@ internal sealed class MedicinesDevelopmentBackground
         Hint = "Select no if you are a partner, licensee, or distributor."
     )]
     [FormRequired("Select whether your company is the original developer of this product")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IsOriginatorCompany { get; set; }
 
     [FormPage(
@@ -87,6 +89,7 @@ internal sealed class MedicinesDevelopmentBackground
         Hint = "Select yes if another company will market the same product under the same or different brand name."
     )]
     [FormRequired("Select whether this product is co-marketed")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IsCoMarketed { get; set; }
 
     [FormPage(MedicineFormLayout.DevelopmentBackground, "co-marketing", "Co-marketing", Order = 30)]
