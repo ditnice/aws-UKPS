@@ -5,17 +5,20 @@ import { createServerApiClient } from '@/client/server-api'
 import { FormPage } from '@/components/DynamicForm/FormPage'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
+import { checkAnswersReturnTo } from '@/lib/dynamic-form/links'
 import { parsePositiveInteger } from '@/lib/valueParsing'
 
 const pageIdPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
 type RecordFormRouteProps = {
   params: Promise<{ recordId: string; pageId: string }>
+  searchParams: Promise<{ returnTo?: string | string[] }>
 }
 
 /** A page of a record's content form, described by the backend. */
-const RecordFormRoute = async ({ params }: RecordFormRouteProps) => {
+const RecordFormRoute = async ({ params, searchParams }: RecordFormRouteProps) => {
   const { recordId: recordIdParam, pageId } = await params
+  const { returnTo } = await searchParams
   const recordId = parsePositiveInteger(recordIdParam)
 
   if (!recordId || !pageIdPattern.test(pageId)) {
@@ -41,7 +44,13 @@ const RecordFormRoute = async ({ params }: RecordFormRouteProps) => {
   }
 
   // Keyed by page so navigating between pages starts a fresh form.
-  return <FormPage key={page.page.id} page={page} />
+  return (
+    <FormPage
+      key={page.page.id}
+      page={page}
+      returnToCheckAnswers={returnTo === checkAnswersReturnTo}
+    />
+  )
 }
 
 export default RecordFormRoute
