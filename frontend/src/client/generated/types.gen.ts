@@ -952,6 +952,16 @@ export type RecordCheckAnswersDto = {
 };
 
 /**
+ * One item of a group question: a row for each of its child questions.
+ */
+export type RecordCheckAnswersGroupItemDto = {
+    /**
+     * A row for each child question of the group, in order.
+     */
+    questions: Array<RecordCheckAnswersQuestionDto>;
+};
+
+/**
  * An option chosen in an answer.
  */
 export type RecordCheckAnswersOptionDto = {
@@ -985,6 +995,14 @@ export type RecordCheckAnswersQuestionDto = {
      * The question text.
      */
     label: string;
+    /**
+     * For a group question, the heading of each item, such as "Clinical trial"; null otherwise.
+     */
+    itemLabel: null | string;
+    /**
+     * For a group question, its items in order, each with a row per child question; null for any other question.
+     */
+    items: null | Array<RecordCheckAnswersGroupItemDto>;
     /**
      * The control the question uses, which says how to format the answer.
      */
