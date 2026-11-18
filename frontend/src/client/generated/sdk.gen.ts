@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ApproveData, ApproveErrors, ApproveResponses, ArchiveRecordData, ArchiveRecordErrors, ArchiveRecordResponses, ConfirmNewPasswordData, ConfirmNewPasswordErrors, ConfirmNewPasswordResponses, CreateRecordData, CreateRecordErrors, CreateRecordResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, DiscardRecordData, DiscardRecordErrors, DiscardRecordResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentOrganisationChampionsData, GetCurrentOrganisationChampionsErrors, GetCurrentOrganisationChampionsResponses, GetCurrentUserOrganisationsData, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsData, GetOrganisationsPublicOptionsResponses, GetRecordData, GetRecordErrors, GetRecordFormPageData, GetRecordFormPageErrors, GetRecordFormPageResponses, GetRecordResponses, GetRecordTaskListData, GetRecordTaskListErrors, GetRecordTaskListResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeData, GetUsersMeErrors, GetUsersMeResponses, GetUsersResponses, InitiateForgottenPasswordProcedureData, InitiateForgottenPasswordProcedureErrors, InitiateForgottenPasswordProcedureResponses, InitiateUpdateMultiFactorAuthenticationData, InitiateUpdateMultiFactorAuthenticationErrors, InitiateUpdateMultiFactorAuthenticationResponses, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthSignOutData, PostAuthSignOutErrors, PostAuthSignOutResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, PutRecordOnHoldData, PutRecordOnHoldErrors, PutRecordOnHoldResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RejectData, RejectErrors, RejectResponses, RemoveUserData, RemoveUserErrors, RemoveUserResponses, ResumeRecordData, ResumeRecordErrors, ResumeRecordResponses, SaveRecordFormPageData, SaveRecordFormPageErrors, SaveRecordFormPageResponses, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, VerifyMultiFactorAuthenticationUpdateData, VerifyMultiFactorAuthenticationUpdateErrors, VerifyMultiFactorAuthenticationUpdateResponses } from './types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, ArchiveRecordData, ArchiveRecordErrors, ArchiveRecordResponses, ConfirmNewPasswordData, ConfirmNewPasswordErrors, ConfirmNewPasswordResponses, CreateRecordData, CreateRecordErrors, CreateRecordResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, DiscardRecordData, DiscardRecordErrors, DiscardRecordResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentOrganisationChampionsData, GetCurrentOrganisationChampionsErrors, GetCurrentOrganisationChampionsResponses, GetCurrentUserOrganisationsData, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsData, GetOrganisationsPublicOptionsResponses, GetRecordData, GetRecordErrors, GetRecordFormPageData, GetRecordFormPageErrors, GetRecordFormPageResponses, GetRecordResponses, GetRecordTaskListData, GetRecordTaskListErrors, GetRecordTaskListResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeData, GetUsersMeErrors, GetUsersMeResponses, GetUsersResponses, InitiateForgottenPasswordProcedureData, InitiateForgottenPasswordProcedureErrors, InitiateForgottenPasswordProcedureResponses, InitiateUpdateMultiFactorAuthenticationData, InitiateUpdateMultiFactorAuthenticationErrors, InitiateUpdateMultiFactorAuthenticationResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthSignOutData, PostAuthSignOutErrors, PostAuthSignOutResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, PutRecordOnHoldData, PutRecordOnHoldErrors, PutRecordOnHoldResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RejectData, RejectErrors, RejectResponses, RemoveUserData, RemoveUserErrors, RemoveUserResponses, ResumeRecordData, ResumeRecordErrors, ResumeRecordResponses, SaveRecordFormPageData, SaveRecordFormPageErrors, SaveRecordFormPageResponses, SubmitRecordData, SubmitRecordErrors, SubmitRecordResponses, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserDetailsData, UpdateUserDetailsErrors, UpdateUserDetailsResponses, UpdateUserEmailData, UpdateUserEmailErrors, UpdateUserEmailResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, VerifyMultiFactorAuthenticationUpdateData, VerifyMultiFactorAuthenticationUpdateErrors, VerifyMultiFactorAuthenticationUpdateResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -306,6 +306,19 @@ export const saveRecordFormPage = <ThrowOnError extends boolean = false>(options
 });
 
 /**
+ * Submits the record's draft revision, as it was when check your answers loaded. A medicine
+ * goes to QA review.
+ */
+export const submitRecord = <ThrowOnError extends boolean = false>(options: Options<SubmitRecordData, ThrowOnError>): RequestResult<SubmitRecordResponses, SubmitRecordErrors, ThrowOnError> => (options.client ?? client).post<SubmitRecordResponses, SubmitRecordErrors, ThrowOnError>({
+    url: '/records/{recordId}/submit',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * Retrieves the record's sections, task titles, statuses and first-page links.
  */
 export const getRecordTaskList = <ThrowOnError extends boolean = false>(options: Options<GetRecordTaskListData, ThrowOnError>): RequestResult<GetRecordTaskListResponses, GetRecordTaskListErrors, ThrowOnError> => (options.client ?? client).get<GetRecordTaskListResponses, GetRecordTaskListErrors, ThrowOnError>({ url: '/records/{recordId}/task-list', ...options });
@@ -335,8 +348,20 @@ export const removeUser = <ThrowOnError extends boolean = false>(options: Option
 /**
  * Updates the details of the specified user.
  */
-export const patchUsersByUserId = <ThrowOnError extends boolean = false>(options: Options<PatchUsersByUserIdData, ThrowOnError>): RequestResult<PatchUsersByUserIdResponses, PatchUsersByUserIdErrors, ThrowOnError> => (options.client ?? client).patch<PatchUsersByUserIdResponses, PatchUsersByUserIdErrors, ThrowOnError>({
+export const updateUserDetails = <ThrowOnError extends boolean = false>(options: Options<UpdateUserDetailsData, ThrowOnError>): RequestResult<UpdateUserDetailsResponses, UpdateUserDetailsErrors, ThrowOnError> => (options.client ?? client).patch<UpdateUserDetailsResponses, UpdateUserDetailsErrors, ThrowOnError>({
     url: '/users/{userId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Updates the email address of the specified user.
+ */
+export const updateUserEmail = <ThrowOnError extends boolean = false>(options: Options<UpdateUserEmailData, ThrowOnError>): RequestResult<UpdateUserEmailResponses, UpdateUserEmailErrors, ThrowOnError> => (options.client ?? client).patch<UpdateUserEmailResponses, UpdateUserEmailErrors, ThrowOnError>({
+    url: '/users/{userId}/email',
     ...options,
     headers: {
         'Content-Type': 'application/json',

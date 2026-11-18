@@ -22,10 +22,14 @@ erDiagram
             text full_name
             text job_title "nullable"
             timestamptz last_active "nullable"
+            text normalised_pending_work_email "nullable"
+            text normalised_work_email UK
+            timestamptz pending_email_verified_at "nullable"
+            text pending_work_email "nullable"
             text title "nullable"
             timestamptz updated_at "nullable"
             integer user_type
-            text work_email UK
+            text work_email
             text work_telephone "nullable"
         }
         organisation_audits:::identity {
@@ -466,6 +470,7 @@ erDiagram
         }
         patient_pathway_point:::reference_data {
             integer id PK
+            text code UK
             boolean is_archived
             text label
         }

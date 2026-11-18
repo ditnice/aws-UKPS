@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Npgsql;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Identity;
@@ -76,6 +75,9 @@ internal partial class UserService(
             Status = membership.Status.ConvertToUserOrgStatus(),
             HasMultipleOrganisations = user.HasMultipleSelectableOrganisations(),
             AllowedPharmaceuticalEntity = membership.AllowedPharmaceuticalEntity,
+            PendingWorkEmail = user.PendingWorkEmail is not null
+                ? new() { Value = user.PendingWorkEmail }
+                : null,
         };
     }
 
@@ -276,6 +278,10 @@ internal partial class UserService(
                 UserRole = m.UserRole,
                 Status = (UserOrgStatus)m.Status,
                 AllowedPharmaceuticalEntity = m.AllowedPharmaceuticalEntity,
+                PendingWorkEmail =
+                    m.User.PendingWorkEmail != null
+                        ? new() { Value = m.User.PendingWorkEmail }
+                        : null,
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -543,7 +549,7 @@ internal partial class UserService(
             }
 
             bool isTheCurrentUserModifyingTheirOwnDetails = currentUserInfoService.IsCurrentUser(
-                user.WorkEmail
+                user
             );
 
             if (!isTheCurrentUserModifyingTheirOwnDetails)
@@ -551,10 +557,17 @@ internal partial class UserService(
                 return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.Unauthorised());
             }
 
+            var validationError = ValidateUserDetails(command);
+            if (validationError is not null)
+            {
+                return UpdateUserDetailsResult.Err(validationError);
+            }
+
             user.UpdateDetails(
-                command.FullName,
-                command.WorkTelephone,
-                command.WorkEmail,
+                command.Property == EditableUserDetail.FullName ? command.Value : user.FullName,
+                command.Property == EditableUserDetail.WorkPhone
+                    ? command.Value
+                    : user.WorkTelephone,
                 timeProvider.GetUtcNow()
             );
 
@@ -565,17 +578,46 @@ internal partial class UserService(
             UserDetailsDto output = MapToDto(user);
             return UpdateUserDetailsResult.Ok(output);
         }
+        catch (Exception ex)
+        {
+            LogUpdatingUserDetailsFailed(ex);
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    public async Task<Result<UpdateUserEmailError>> UpdateUserEmail(
+        int userId,
+        UpdateUserEmailCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        await using IDbContextTransaction transaction =
+            await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
+
+            var error = await ValidateEmailUpdatePermitted(user, command, cancellationToken);
+            if (error is not null)
+            {
+                return Result<UpdateUserEmailError>.Err(error);
+            }
+
+            user!.UpdateEmail(command.Value, timeProvider.GetUtcNow());
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await HandleUserEvents(user, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return Result<UpdateUserEmailError>.Ok();
+        }
         catch (DbUpdateException updateException)
-            when (updateException.InnerException is PostgresException postgresException
-                && string.Equals(
-                    postgresException.ConstraintName,
-                    ConstraintNames.UserUniqueEmail,
-                    StringComparison.Ordinal
-                )
-            )
+            when (ConstraintExceptions.IsUniquePendingEmailException(updateException))
         {
             await transaction.RollbackAsync(cancellationToken);
-            return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.ConflictingEmail());
+            return Result<UpdateUserEmailError>.Err(new UpdateUserEmailError.ConflictingEmail());
         }
         catch (Exception ex)
         {
@@ -636,6 +678,22 @@ internal partial class UserService(
         }
     }
 
+    private static UpdateUserDetailsError.ValidationError? ValidateUserDetails(
+        UpdateUserDetailsCommand command
+    )
+    {
+        if (
+            command.Property == EditableUserDetail.WorkPhone
+            && !PhoneNumberValidator.IsValid(command.Value)
+        )
+        {
+            return new UpdateUserDetailsError.ValidationError(
+                "Value must be a valid phone number."
+            );
+        }
+        return null;
+    }
+
     private async Task<RemoveUserError?> RemoveMemberships(
         int userId,
         CancellationToken cancellationToken
@@ -659,6 +717,46 @@ internal partial class UserService(
                     transitionResult.ConvertToUserOrgStatusTransitionResult()
                 );
             }
+        }
+
+        return null;
+    }
+
+    private async Task<UpdateUserEmailError?> ValidateEmailUpdatePermitted(
+        User? user,
+        UpdateUserEmailCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        if (user is null)
+        {
+            return new UpdateUserEmailError.UserDoesNotExist();
+        }
+
+        bool isTheCurrentUserModifyingTheirOwnDetails = currentUserInfoService.IsCurrentUser(user);
+
+        if (!isTheCurrentUserModifyingTheirOwnDetails)
+        {
+            return new UpdateUserEmailError.Unauthorised();
+        }
+
+        bool emailHasNotChanged = command.Value.Equals(user.WorkEmail, StringComparison.Ordinal);
+        if (emailHasNotChanged)
+        {
+            return new UpdateUserEmailError.MatchesCurrentEmail();
+        }
+
+        IQueryable<User> otherUsers = dbContext.Users.Where(x => x.Id != user.Id);
+        bool emailAlreadyExistInTheDatabase = await otherUsers.AnyAsync(
+            x =>
+                x.NormalisedPendingWorkEmail == EmailDbFunctions.Normalise(command.Value)
+                || x.NormalisedWorkEmail == EmailDbFunctions.Normalise(command.Value),
+            cancellationToken
+        );
+
+        if (emailAlreadyExistInTheDatabase)
+        {
+            return new UpdateUserEmailError.ConflictingEmail();
         }
 
         return null;

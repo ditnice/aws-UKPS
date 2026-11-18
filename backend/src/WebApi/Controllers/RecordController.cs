@@ -8,6 +8,7 @@ using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.WebApi.CustomResponses;
 
 namespace UKPS.Api.WebApi.Controllers;
 
@@ -28,8 +29,6 @@ public class RecordController(
     IRecordStatusService recordStatusService
 ) : ControllerBase
 {
-    private const string CodeExtension = "code";
-
     /// <summary>
     /// Retrieves a paginated list of records belonging to the user's organisation.
     /// </summary>
@@ -391,11 +390,11 @@ public class RecordController(
                 nameof(ChangeRecordStatusCommand.Note),
                 "Give more detail about the reason."
             ),
-            ChangeRecordStatusError.TransitionNotPermitted => Conflict(
+            ChangeRecordStatusError.TransitionNotPermitted => this.ConflictProblem(
                 "status_change_not_permitted",
                 "This record's status can't be changed in this way in its current state."
             ),
-            ChangeRecordStatusError.ConcurrencyError => Conflict(
+            ChangeRecordStatusError.ConcurrencyError => this.ConflictProblem(
                 "record_changed",
                 "This record was updated by someone else while its status was being changed."
             ),
@@ -407,17 +406,5 @@ public class RecordController(
     {
         ModelState.AddModelError(field, message);
         return ValidationProblem(ModelState);
-    }
-
-    private ObjectResult Conflict(string code, string detail)
-    {
-        ProblemDetails problem = ProblemDetailsFactory.CreateProblemDetails(
-            HttpContext,
-            statusCode: StatusCodes.Status409Conflict,
-            title: "Conflict",
-            detail: detail
-        );
-        problem.Extensions[CodeExtension] = code;
-        return new ObjectResult(problem) { StatusCode = StatusCodes.Status409Conflict };
     }
 }

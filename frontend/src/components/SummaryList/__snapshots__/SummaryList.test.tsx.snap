@@ -39,6 +39,41 @@ exports[`SummaryList > adds hidden context to a row action child 1`] = `
 </DocumentFragment>
 `;
 
+exports[`SummaryList > renders a row tag in the value cell 1`] = `
+<DocumentFragment>
+  <dl
+    class="_summary-list_1509a2"
+    data-component="summary-list"
+  >
+    <div
+      class="_summary-list__row_1509a2"
+    >
+      <dt
+        class="_summary-list__key_1509a2"
+      >
+        Record title
+      </dt>
+      <dd
+        class="_summary-list__value_1509a2"
+      >
+        <div
+          class="_summary-list__value-with-tag_1509a2"
+        >
+          <div
+            class="_summary-list__value-content_1509a2"
+          >
+            Early RA
+          </div>
+          <span>
+            Hidden
+          </span>
+        </div>
+      </dd>
+    </div>
+  </dl>
+</DocumentFragment>
+`;
+
 exports[`SummaryList > renders a title as a heading above the list 1`] = `
 <DocumentFragment>
   <h4
@@ -138,6 +173,59 @@ exports[`SummaryList > supports a two-column variant for lists without actions 1
         class="_summary-list__value_1509a2"
       >
         Active
+      </dd>
+    </div>
+  </dl>
+</DocumentFragment>
+`;
+
+exports[`SummaryList > supports a wide-value variant 1`] = `
+<DocumentFragment>
+  <dl
+    class="_summary-list_1509a2 _summary-list--wide-value_1509a2"
+    data-component="summary-list"
+  >
+    <div
+      class="_summary-list__row_1509a2 _summary-list__row--no-actions_1509a2"
+    >
+      <dt
+        class="_summary-list__key_1509a2"
+      >
+        Email
+      </dt>
+      <dd
+        class="_summary-list__value_1509a2"
+      >
+        sarah@example.com
+      </dd>
+    </div>
+    <div
+      class="_summary-list__row_1509a2"
+    >
+      <dt
+        class="_summary-list__key_1509a2"
+      >
+        Name
+      </dt>
+      <dd
+        class="_summary-list__value_1509a2"
+      >
+        Sarah Philips
+      </dd>
+      <dd
+        class="_summary-list__actions_1509a2"
+      >
+        <a
+          aria-label="Change name"
+          href="/change-name"
+        >
+          Change
+          <span
+            class="visually-hidden"
+          >
+            name
+          </span>
+        </a>
       </dd>
     </div>
   </dl>

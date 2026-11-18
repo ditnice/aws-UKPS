@@ -1047,26 +1047,33 @@ public class UserServiceTests : DatabaseTestBase
     [Fact]
     public async Task UpdateUserDetails_ShouldUpdateUserDetails()
     {
-        var currentUser = await CreateExistingCurrentUser();
-        var command = _updateUserDetailsCommandFaker.Generate();
-        _ = await Service.UpdateUserDetails(
-            currentUser.Id,
-            command,
-            TestContext.Current.CancellationToken
-        );
+        Bogus.Randomizer.Seed = new Random(0);
 
-        var databaseUser = await Context.Users.FindAsync(
-            [currentUser.Id],
-            TestContext.Current.CancellationToken
-        );
-        databaseUser.ShouldNotBeNull();
-        var databaseValues = new UpdateUserDetailsCommand()
+        foreach (var _ in Enumerable.Range(0, 10))
         {
-            FullName = databaseUser.FullName,
-            WorkEmail = databaseUser.WorkEmail,
-            WorkTelephone = databaseUser.WorkTelephone ?? string.Empty,
-        };
-        databaseValues.ShouldBe(command);
+            var currentUser = await CreateExistingCurrentUser();
+            var command = _updateUserDetailsCommandFaker.Generate();
+            await Service.UpdateUserDetails(
+                currentUser.Id,
+                command,
+                TestContext.Current.CancellationToken
+            );
+
+            var databaseUser = await Context.Users.FindAsync(
+                [currentUser.Id],
+                TestContext.Current.CancellationToken
+            );
+            databaseUser.ShouldNotBeNull();
+            switch (command.Property)
+            {
+                case EditableUserDetail.FullName:
+                    databaseUser.FullName.ShouldBe(command.Value);
+                    break;
+                case EditableUserDetail.WorkPhone:
+                    databaseUser.WorkTelephone.ShouldBe(command.Value);
+                    break;
+            }
+        }
     }
 
     [Fact]
@@ -1091,26 +1098,105 @@ public class UserServiceTests : DatabaseTestBase
     [Fact]
     public async Task UpdateUserDetails_ShouldReturnUpdatedUserDetails()
     {
+        Randomizer.Seed = new Random(0);
+
+        foreach (var _ in Enumerable.Range(0, 10))
+        {
+            User currentUser = await CreateExistingCurrentUser();
+            UpdateUserDetailsCommand command = _updateUserDetailsCommandFaker.Generate();
+            Result<UserDetailsDto, UpdateUserDetailsError> result = await Service.UpdateUserDetails(
+                currentUser.Id,
+                command,
+                TestContext.Current.CancellationToken
+            );
+
+            UserDetailsDto value = result.ShouldBeSuccess();
+            switch (command.Property)
+            {
+                case EditableUserDetail.FullName:
+                    value.FullName.ShouldBe(command.Value);
+                    break;
+                case EditableUserDetail.WorkPhone:
+                    value.WorkPhone.ShouldBe(command.Value);
+                    break;
+            }
+        }
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_WithInvalidPhoneNumber_ShouldReturnValidationError()
+    {
         User currentUser = await CreateExistingCurrentUser();
-        UpdateUserDetailsCommand command = _updateUserDetailsCommandFaker.Generate();
+        UpdateUserDetailsCommand command = _updateUserDetailsCommandFaker.Generate() with
+        {
+            Property = EditableUserDetail.WorkPhone,
+            Value = "invalid-telephone-number",
+        };
         Result<UserDetailsDto, UpdateUserDetailsError> result = await Service.UpdateUserDetails(
             currentUser.Id,
             command,
             TestContext.Current.CancellationToken
         );
 
-        UserDetailsDto value = result.ShouldBeSuccess();
-        var responseValues = new UpdateUserDetailsCommand()
-        {
-            FullName = value.FullName,
-            WorkEmail = value.WorkEmail,
-            WorkTelephone = value.WorkPhone ?? string.Empty,
-        };
-        responseValues.ShouldBe(command);
+        result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.ValidationError>();
     }
 
     [Fact]
-    public async Task UpdateUserDetails_WhenEmailConflictsWithExistingUser_ShouldReturnAnError()
+    public async Task UpdateUserEmail_ShouldUpdateUserDtoSoTheyAreMarkedAsHavingAPendingEmail()
+    {
+        var newEmail = "my-new-email@email.com";
+        User currentUser = await CreateExistingCurrentUser();
+        Result<UpdateUserEmailError> result = await Service.UpdateUserEmail(
+            currentUser.Id,
+            new UpdateUserEmailCommand() { Value = newEmail },
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeSuccess();
+
+        var userDto = await Service.GetCurrentUser(TestContext.Current.CancellationToken);
+
+        userDto.WorkEmail.ShouldBe(currentUser.WorkEmail);
+        userDto.PendingWorkEmail.ShouldNotBeNull();
+        userDto.PendingWorkEmail.Value.ShouldBe(newEmail);
+        userDto.PendingWorkEmail.VerifiedByEmail.ShouldBe(false);
+    }
+
+    [Fact]
+    public async Task UpdateUserEmail_WhenRequestedEmailTheSameAsCurrentEmail_ShouldReturnError()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        Result<UpdateUserEmailError> result = await Service.UpdateUserEmail(
+            currentUser.Id,
+            new UpdateUserEmailCommand() { Value = currentUser.WorkEmail },
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<UpdateUserEmailError.MatchesCurrentEmail>();
+    }
+
+    [Fact]
+    public async Task UpdateUserEmail_WhenThereIsAnotherPendingEmailWithTheSameValue_ShouldReturnError()
+    {
+        var newEmail = "my-new-email@email.com";
+
+        User userA = await CreateExistingCurrentUser();
+        Result<UpdateUserEmailError> resultA = await Service.UpdateUserEmail(
+            userA.Id,
+            new UpdateUserEmailCommand() { Value = newEmail },
+            TestContext.Current.CancellationToken
+        );
+        resultA.ShouldBeSuccess();
+
+        User userB = await CreateExistingCurrentUser();
+        Result<UpdateUserEmailError> resultB = await Service.UpdateUserEmail(
+            userB.Id,
+            new UpdateUserEmailCommand() { Value = newEmail },
+            TestContext.Current.CancellationToken
+        );
+        resultB.ShouldBeError().ShouldBeOfType<UpdateUserEmailError.ConflictingEmail>();
+    }
+
+    [Fact]
+    public async Task UpdateUserEmail_WhenEmailConflictsWithExistingUser_ShouldReturnAnError()
     {
         var existingOtherUser = await AddEntity(
             _userFaker.Generate(),
@@ -1118,34 +1204,26 @@ public class UserServiceTests : DatabaseTestBase
         );
 
         User currentUser = await CreateExistingCurrentUser();
-        UpdateUserDetailsCommand command = _updateUserDetailsCommandFaker.Generate() with
-        {
-            WorkEmail = existingOtherUser.WorkEmail,
-        };
-        Result<UserDetailsDto, UpdateUserDetailsError> result = await Service.UpdateUserDetails(
+        Result<UpdateUserEmailError> result = await Service.UpdateUserEmail(
             currentUser.Id,
-            command,
+            new UpdateUserEmailCommand() { Value = existingOtherUser.WorkEmail },
             TestContext.Current.CancellationToken
         );
-        result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.ConflictingEmail>();
+        result.ShouldBeError().ShouldBeOfType<UpdateUserEmailError.ConflictingEmail>();
     }
 
     [Fact]
-    public async Task UpdateUserDetails_WhenEmailChanges_ShouldUpdateEmailAttributeInCognito()
+    public async Task UpdateUserEmail_ShouldNotUpdateEmailAttributeInCognito()
     {
         User currentUser = await CreateExistingCurrentUser();
         string testEmail = "testupdateuserdetails@email.com";
-        UpdateUserDetailsCommand command = _updateUserDetailsCommandFaker.Generate() with
-        {
-            WorkEmail = testEmail,
-        };
-        _ = await Service.UpdateUserDetails(
+        _ = await Service.UpdateUserEmail(
             currentUser.Id,
-            command,
+            new UpdateUserEmailCommand() { Value = testEmail },
             TestContext.Current.CancellationToken
         );
         MockUser? user = _harness.Cognito.GetUserByEmail(testEmail);
-        user.ShouldNotBeNull();
+        user.ShouldBeNull();
     }
 
     [Fact]
@@ -1224,7 +1302,7 @@ public class UserServiceTests : DatabaseTestBase
                 var user =
                     Context.Users.Find(x)
                     ?? throw new InvalidOperationException("Could not find created user.");
-                _harness = _harness.UpdateCurrentUser(x => x with { Email = user.WorkEmail });
+                _harness = _harness.UpdateCurrentUser(user);
 
                 return user;
             },

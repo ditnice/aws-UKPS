@@ -1,13 +1,14 @@
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Persistence.Entities.Identity;
 
 namespace UKPS.Api.Application.InternalServices.Identity;
 
 internal static class CurrentUserInfoServiceExtensions
 {
-    public static bool IsCurrentUser(this ICurrentUserInfoService userInfoService, string email)
+    public static bool IsCurrentUser(this ICurrentUserInfoService userInfoService, User user)
     {
         CurrentUser currentUser = userInfoService.GetCurrentUserInfo();
-        return string.Equals(currentUser.Email, email, StringComparison.OrdinalIgnoreCase);
+        return currentUser.CognitoUsername.Equals(user.CognitoUsername);
     }
 
     /// <summary>

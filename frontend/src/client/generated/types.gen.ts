@@ -190,6 +190,16 @@ export const EamsOpinionDecision = { NEGATIVE: 'Negative', POSITIVE: 'Positive' 
 export type EamsOpinionDecision = typeof EamsOpinionDecision[keyof typeof EamsOpinionDecision];
 
 /**
+ * Specifies the user details that can be edited.
+ */
+export const EditableUserDetail = { FULL_NAME: 'FullName', WORK_PHONE: 'WorkPhone' } as const;
+
+/**
+ * Specifies the user details that can be edited.
+ */
+export type EditableUserDetail = typeof EditableUserDetail[keyof typeof EditableUserDetail];
+
+/**
  * The input a record content question is rendered with. Part of the HTTP API contract: the
  * member names are sent to the frontend, so never rename or remove one.
  */
@@ -202,7 +212,8 @@ export const FormControl = {
     HIERARCHICAL_SELECT: 'HierarchicalSelect',
     PRECISION_DATE: 'PrecisionDate',
     ACTUAL_MONTH: 'ActualMonth',
-    PREFIXED_NUMBER: 'PrefixedNumber'
+    PREFIXED_NUMBER: 'PrefixedNumber',
+    ACTUAL_DATE: 'ActualDate'
 } as const;
 
 /**
@@ -277,6 +288,29 @@ export type InitiateForgottenPasswordProcedureCommand = {
      * Gets the email address of the user who has forgotten their password.
      */
     email: string;
+};
+
+/**
+ * The problems that stop a record being submitted. `errors` is keyed by question ID;
+ * `fields` adds each problem's page and task.
+ */
+export type InvalidRecordProblemDetails = {
+    type?: null | string;
+    title?: null | string;
+    status?: null | number;
+    detail?: null | string;
+    instance?: null | string;
+    /**
+     * Identifies the problem; always `record_invalid`.
+     */
+    code: string;
+    /**
+     * Each problem with its page and task, in form order.
+     */
+    fields: Array<SubmissionErrorDto>;
+    errors: {
+        [key: string]: Array<string>;
+    };
 };
 
 /**
@@ -826,6 +860,20 @@ export const PatientAccessSchemeRegion = {
 export type PatientAccessSchemeRegion = typeof PatientAccessSchemeRegion[keyof typeof PatientAccessSchemeRegion];
 
 /**
+ * Represents a requested change to a user's work email address that is awaiting completion.
+ */
+export type PendingWorkEmailChangeDto = {
+    /**
+     * Gets the new work email address that has been requested.
+     */
+    value: string;
+    /**
+     * Gets whether the new work email address has been verified by email.
+     */
+    verifiedByEmail: boolean;
+};
+
+/**
  * Flags enum stored as integer. Only Organisation uses Both;
  * UserOrgMembership and TermsAcceptance use Medicines or Vaccines only.
  * Represents the types of pharmaceutical entities.
@@ -1163,7 +1211,8 @@ export type RecordPageDto = {
     previousPageId: null | string;
     /**
      * The page after this one in its task, or null on the task's last page, where saving returns
-     * to the task list.
+     * to the task list. When a later page depends on this page's own answers it is offered even
+     * if those answers do not yet lead to it, and saving then decides where to go.
      */
     nextPageId: null | string;
     /**
@@ -1274,6 +1323,11 @@ export type RecordPageQuestionDto = {
      * unaffected.
      */
     prefixes?: null | Array<string>;
+    /**
+     * What a FormControl.PrecisionDate question's date is of, for its error
+     * messages, for example `submission`; null for other questions.
+     */
+    dateName: null | string;
     showWhen: null | RecordPageConditionDto;
     /**
      * The rules, in evaluation order.
@@ -1709,6 +1763,64 @@ export const SortDirection = { ASCENDING: 'Ascending', DESCENDING: 'Descending' 
  */
 export type SortDirection = typeof SortDirection[keyof typeof SortDirection];
 
+/**
+ * A submission or selected-organisation conflict. Schema only: runtime responses use the
+ * problem details factory and extensions to preserve tracing metadata.
+ */
+export type SubmissionConflictProblemDetails = {
+    type?: null | string;
+    title?: null | string;
+    status?: null | number;
+    detail?: null | string;
+    instance?: null | string;
+    /**
+     * The domain code (record_not_submittable, form_version_changed or record_changed),
+     * or the authentication code SelectedOrganisationMismatch.
+     */
+    code: string;
+    /**
+     * The organisation requested, when it differs from the selected organisation.
+     */
+    organisationId?: null | number;
+};
+
+/**
+ * A problem that stops a record being submitted, and the question it is on.
+ */
+export type SubmissionErrorDto = {
+    /**
+     * The question to highlight, which is also its key in `errors`.
+     */
+    questionId: string;
+    /**
+     * The page the question is on, to link to.
+     */
+    pageId: string;
+    /**
+     * The task the page belongs to.
+     */
+    taskId: string;
+    /**
+     * What is wrong and how to fix it.
+     */
+    message: string;
+};
+
+/**
+ * Submits a record's draft revision, as it was when check your answers loaded.
+ */
+export type SubmitRecordCommand = {
+    /**
+     * The form version check your answers was loaded with.
+     */
+    formVersion: string;
+    /**
+     * The hash of the whole revision check your answers was loaded with. If anything in the
+     * revision has changed since, the submission is rejected.
+     */
+    revisionHash: string;
+};
+
 export const TrialPhase = {
     PRECLINICAL: 'Preclinical',
     PHASE_I: 'PhaseI',
@@ -1784,17 +1896,23 @@ export type UpdateStatus = typeof UpdateStatus[keyof typeof UpdateStatus];
  */
 export type UpdateUserDetailsCommand = {
     /**
-     * Gets the user's full name.
+     * Gets the user detail that should be updated.
      */
-    fullName: string;
+    property: EditableUserDetail;
     /**
-     * Gets the user's work email address.
+     * Gets the new value to assign to the specified EditableUserDetail UpdateUserDetailsCommand.Property.
      */
-    workEmail: string;
+    value: string;
+};
+
+/**
+ * Represents the command to update the email address of an existing user.
+ */
+export type UpdateUserEmailCommand = {
     /**
-     * Gets the user's work telephone number.
+     * Gets the new email address for the user.
      */
-    workTelephone: string;
+    value: string;
 };
 
 /**
@@ -1875,6 +1993,7 @@ export type UserInformationDto = {
      * Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.
      */
     allowedPharmaceuticalEntity: PharmaceuticalEntity;
+    pendingWorkEmail?: null | PendingWorkEmailChangeDto;
 };
 
 /**
@@ -3271,6 +3390,61 @@ export type SaveRecordFormPageResponses = {
 
 export type SaveRecordFormPageResponse = SaveRecordFormPageResponses[keyof SaveRecordFormPageResponses];
 
+export type SubmitRecordData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: SubmitRecordCommand;
+    path: {
+        /**
+         * The record to submit.
+         */
+        recordId: number;
+    };
+    query?: never;
+    url: '/records/{recordId}/submit';
+};
+
+export type SubmitRecordErrors = {
+    /**
+     * The request body is missing or malformed.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but not submit it.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record can't be submitted in its current state, or the form or revision changed since
+     * check your answers loaded, or the selected organisation differs. The `code` member says which.
+     */
+    409: SubmissionConflictProblemDetails;
+    /**
+     * The revision has problems to fix first. `errors` is keyed by question ID, and
+     * `fields` lists each problem with its page and task, in form order.
+     */
+    422: InvalidRecordProblemDetails;
+};
+
+export type SubmitRecordError = SubmitRecordErrors[keyof SubmitRecordErrors];
+
+export type SubmitRecordResponses = {
+    /**
+     * The record was submitted.
+     */
+    204: void;
+};
+
+export type SubmitRecordResponse = SubmitRecordResponses[keyof SubmitRecordResponses];
+
 export type GetRecordTaskListData = {
     body?: never;
     path: {
@@ -3511,7 +3685,7 @@ export type RemoveUserResponses = {
 
 export type RemoveUserResponse = RemoveUserResponses[keyof RemoveUserResponses];
 
-export type PatchUsersByUserIdData = {
+export type UpdateUserDetailsData = {
     /**
      * A token to monitor for cancellation requests.
      */
@@ -3526,7 +3700,7 @@ export type PatchUsersByUserIdData = {
     url: '/users/{userId}';
 };
 
-export type PatchUsersByUserIdErrors = {
+export type UpdateUserDetailsErrors = {
     /**
      * The supplied user details are invalid.
      */
@@ -3545,16 +3719,59 @@ export type PatchUsersByUserIdErrors = {
     409: AuthenticationProblemDetails;
 };
 
-export type PatchUsersByUserIdError = PatchUsersByUserIdErrors[keyof PatchUsersByUserIdErrors];
+export type UpdateUserDetailsError = UpdateUserDetailsErrors[keyof UpdateUserDetailsErrors];
 
-export type PatchUsersByUserIdResponses = {
+export type UpdateUserDetailsResponses = {
     /**
      * The user's details were successfully updated.
      */
     200: UserDetailsDto;
 };
 
-export type PatchUsersByUserIdResponse = PatchUsersByUserIdResponses[keyof PatchUsersByUserIdResponses];
+export type UpdateUserDetailsResponse = UpdateUserDetailsResponses[keyof UpdateUserDetailsResponses];
+
+export type UpdateUserEmailData = {
+    /**
+     * A token that can be used to cancel the request.
+     */
+    body: UpdateUserEmailCommand;
+    path: {
+        /**
+         * The unique identifier of the user whose email address is to be updated.
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/users/{userId}/email';
+};
+
+export type UpdateUserEmailErrors = {
+    /**
+     * Bad Request
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type UpdateUserEmailError = UpdateUserEmailErrors[keyof UpdateUserEmailErrors];
+
+export type UpdateUserEmailResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type PostUsersOnboardData = {
     /**

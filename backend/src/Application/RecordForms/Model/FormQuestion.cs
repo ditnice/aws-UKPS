@@ -21,6 +21,9 @@ internal sealed record FormQuestion
     /// <summary>The prefixes a <see cref="FormControl.PrefixedNumber"/> offers, in order.</summary>
     public IReadOnlyList<string>? Prefixes { get; init; }
 
+    /// <summary>What a date question's date is of, as its error messages name it.</summary>
+    public string? DateName { get; init; }
+
     /// <summary>The rules, in evaluation order.</summary>
     public required IReadOnlyList<FormRule> Rules { get; init; }
 

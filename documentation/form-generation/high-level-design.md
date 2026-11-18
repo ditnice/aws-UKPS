@@ -2,7 +2,8 @@
 
 > **Status: first delivery implemented** (Medicine form, Indication details section), with
 > conditional questions and pages (Development background, Laboratory testing and Patient and
-> clinical requirements sections), and date questions. The
+> clinical requirements sections), date questions and reference data triggers (MHRA procedure
+> and dates section). The
 > decision is recorded in
 > [ADR-006](../ADR/ADR-006-attribute-annotated-record-content-forms.md).
 
@@ -20,22 +21,18 @@ That idea is replaced here, and the brief is kept only as background.
 
 The form is declared **on the EF content entities themselves**, using attributes. Each property that
 a user answers carries the question's ID, label, hint, task, page, rules and options. Every other
-property is explicitly ignored, with a reason. The hierarchy is section → task → page → question;
-all questions in a task repeat that task's ID, title and order.
+property is explicitly ignored, with a reason. The hierarchy is section → task → page → question.
+Sections and tasks are declared once per record type in a layout (`MedicineFormLayout`), and each
+page names its task.
 
 ```csharp
-[FormSection(
-    RecordType.Medicine,
-    "indication-and-development",
-    "Provide indication and development information",
-    Order = 10
-)]
+[FormEntity]
 internal sealed class MedicinesIndicationDetail
 {
     [FormIgnore("Database identity")]
     public int Id { get; set; }
 
-    [FormPage("indication", "Indication", Order = 10)]
+    [FormPage(MedicineFormLayout.IndicationDetails, "indication", "Indication", Order = 10)]
     [FormField(
         "medicines_indication_detail.indication",
         "What is the indication this product is seeking a licence for?",
@@ -110,7 +107,7 @@ flowchart LR
         RE[RuleEvaluator]
         REG["FormModelRegistry<br/>(singleton, built and validated at startup)"]
         SC["FormModelScanner<br/>+ FormModelValidator"]
-        ENT["Annotated entities<br/>[FormSection] [FormPage] [FormField] ..."]
+        ENT["Annotated entities and layouts<br/>FormLayout [FormEntity] [FormPage] [FormField] ..."]
         B["Bindings<br/>Column, Flags, Junction"]
         O["OptionProviderRegistry<br/>enum and reference providers"]
         A[OrganisationAuthoriser]
@@ -178,9 +175,10 @@ interprets the attributes lives in Application.
 
 ```mermaid
 flowchart TD
-    A["Assembly types with [FormSection(recordType, ...)]"] --> B["Collect annotated properties<br/>(FormPage, FormField, rules, FormOptions)"]
+    L["FormLayout subclasses<br/>(sections and tasks per RecordType)"] --> C
+    A["Assembly types with [FormEntity]"] --> B["Collect annotated properties<br/>(FormPage, FormField, rules, FormOptions)"]
     M["EF IModel<br/>(columns, nullability, FKs, navigations)"] --> D
-    B --> C["Group by page ID across entities;<br/>pages into sections"]
+    B --> C["Group by page ID across entities;<br/>pages into their layout tasks"]
     C --> D["Build bindings<br/>from EF metadata"]
     D --> E["Order: sections → pages → questions"]
     E --> F["FormModelValidator<br/>(all errors reported together)"]
@@ -192,8 +190,8 @@ The form model is `FormModel → FormSection → FormTask → FormPage → FormQ
 immutable object graph, so the rest of the system never touches attributes or reflection:
 
 - **`FormModel`**: one per `RecordType`. Holds the version, the ordered sections, a flat
-  ordered list of pages, `FindPage`, `FindQuestion`, `NextPage` and `PreviousPage` (which stay
-  within the task and skip pages that do not apply), and, for each page, the rows a request needs (`EntitiesToRead`,
+  ordered list of pages, `FindPage`, `FindQuestion`, `NextPage`, `PossibleNextPage` and `PreviousPage` (which stay
+  within the task and skip pages that do not apply; `PossibleNextPage` also offers a later page that depends on the current page's own answers), and, for each page, the rows a request needs (`EntitiesToRead`,
   `EntitiesToSave`) and the questions a save may clear (`AffectedBy`).
 - **`FormSection`**: ID, title and ordered tasks.
 - **`FormTask`**: ID, title and ordered pages; its first page is the task list's link.
@@ -210,15 +208,16 @@ invalid model stops the API starting. It holds structure only: bindings receive 
 
 ### Sections, pages and ordering
 
-- **Sections.** `[FormSection(recordType, id, title, Order = n)]` on an entity puts the entity's
-  questions into that section of that record type's form. Several entities can declare the same
-  section ID, as long as they agree on its title and order. The section title is the dataset's
-  section name, a heading in the task list; each task under it has its own title, which is also
-  the page caption. An entity can carry one
-  `[FormSection]` per record type. A shared entity such as `RecordProductDetail` can therefore
-  take part in both the Medicine and Vaccine forms.
-- **Pages.** `[FormPage(id, title, Order = n)]` on a property places its question on that page.
-  The page's `Order` places it within its section.
+- **Sections and tasks.** A `FormLayout` subclass per record type (`MedicineFormLayout`) declares
+  the form's sections and their tasks once, each with an ID, title and order. The section title
+  is the dataset's section name, a heading in the task list; each task under it has its own
+  title, which is also the page caption. Task IDs are `const string` values on the layout, unique
+  across every form. A task with no pages yet is left out of the form, as is a section with no
+  such tasks.
+- **Pages.** `[FormPage(task, id, title, Order = n)]` on a property places its question on that
+  page, in that task. The task decides the page's section and form, so an entity's pages must all
+  be in one form. The page's `Order` places it within its task. `[FormEntity]` on the class marks
+  it as holding questions and sets its `RowSource`.
 - **Questions.** On a page with several questions, `FormField.Order` sets their order.
 - **Form order** is section order, then task order, then page order. A user enters a task from
   the task list and steps through its pages: Back goes to the previous page in the task, and Save
@@ -242,7 +241,7 @@ one `SaveChangesAsync`.
 
 ### Coverage: every column is accounted for
 
-In an entity with `[FormSection]`, every **mapped scalar property** (according to the EF model)
+In an entity with `[FormEntity]`, every **mapped scalar property** (according to the EF model)
 must carry exactly one of the following, or the API does not start:
 
 - `[FormField]`: it is a question. It also needs `[FormPage]`.
@@ -265,7 +264,7 @@ in the entity and a missing one is a compile error. The scanner checks it suits 
 | `int` / `int?` foreign key to reference data | `Radio`, `Select`, `HierarchicalSelect` |
 | `[Flags]` enum | `Checkbox` |
 | navigation collection to a junction entity | `Checkbox`, `HierarchicalSelect` |
-| `int?` foreign key to `RegulatoryDate` | `PrecisionDate`, `ActualMonth` (with `[FormDateEvent]`) |
+| `int?` foreign key to `RegulatoryDate` | `PrecisionDate`, `ActualMonth`, `ActualDate` (with `[FormDateEvent]`) |
 
 Choice controls (`Radio`, `Select`, `Checkbox`, `HierarchicalSelect`) need an option provider,
 found by the property's type or named with `[FormOptions]`; `Text` and `Textarea` must not have
@@ -332,8 +331,8 @@ metadata, so attributes never contain expressions:
 
 #### Content rows
 
-The content row is found by the convention that every `[FormSection]` entity has an `int
-RevisionId` foreign key to `RecordRevision`. The validator checks this. `FormSection.RowSource`
+The content row is found by the convention that every `[FormEntity]` entity has an `int
+RevisionId` foreign key to `RecordRevision`. The validator checks this. `FormEntity.RowSource`
 says how the row comes to exist:
 
 - **`FirstSave` (default).** Until the first save, the revision has no row, so its questions
@@ -667,7 +666,7 @@ examples below use record 5, revision 7.
 | `recordId` | Used to build page URLs |
 | `section`, `task`, `page` | IDs and titles; the task title is the page caption |
 | `previousPageId` | Target of Back: the previous page in the task that applies, or `null` when there is none, where Back goes to the task list |
-| `nextPageId` | The next page in the task that applies given the saved answers, or `null` when there is none, where the button reads **Save and return to task list** |
+| `nextPageId` | The next page in the task that applies given the saved answers, or one that depends on this page's own answers and so could apply once they are saved (`PossibleNextPage`). `null` when there is none, where the button reads **Save and return to task list**. The save response, not this value, decides where saving goes |
 | `questions` | `id`, `type` (the `FormControl`), `multiple` (the answer is an array), `label`, `hint`, `display`, `placeholder`, `childLabel`, `childPlaceholder`, `addAnotherLabel`, `showWhen` (`kind`, `questionId`, `values`, or `null`), `rules` (`kind`, `value`, `message`), `options` (`value`, `label`, `children`) |
 | `answers` | Every page question: a string or `null`, or an array for multi-value questions |
 
@@ -795,7 +794,7 @@ reported under its own key:
   "status": 400,
   "errors": {
     "medicines_indication_detail_therapeutic_area": ["Select up to 3 therapeutic areas"],
-    "medicines_indication_detail.indication": ["This is not a question on this page."]
+    "medicines_indication_detail.indication": ["This is not a question on this page"]
   },
   "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
 }
@@ -805,11 +804,11 @@ The server has its own messages for problems that the attributes do not describe
 
 | Problem | Message |
 |---|---|
-| A page question is missing from `answers` | `Provide an answer for this question, or null if it is unanswered.` |
-| A key is not a question on this page | `This is not a question on this page.` |
-| Wrong JSON shape (for example a number, or a string for a checkbox) | `The answer is not in the expected format.` |
-| A value that is not an offered option | `Select a valid option.` |
-| A multi-value answer repeats a value | `You have selected the same option more than once.` |
+| A page question is missing from `answers` | `Provide an answer for this question, or null if it is unanswered` |
+| A key is not a question on this page | `This is not a question on this page` |
+| Wrong JSON shape (for example a number, or a string for a checkbox) | `The answer is not in the expected format` |
+| A value that is not an offered option | `Select a valid option` |
+| A multi-value answer repeats a value | `You have selected the same option more than once` |
 
 #### 403, 404 and 409
 

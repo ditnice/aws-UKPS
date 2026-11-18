@@ -45,15 +45,30 @@ public class RecordFormServiceTests : DatabaseTestBase
         "medicines_indication_detail.medicine_technology_status";
 
     private const string LabPrefix = "medicines_laboratory_testing.";
+    private const string PathwayPoint = "medicines_laboratory_testing.patient_pathway_point_id";
+    private const string PathwayPointOther =
+        "medicines_laboratory_testing.genomic_test_pathway_point_other";
+    private const string BudgetPrefix = "medicines_budget_impact.";
+    private const string PasRegions = "medicines_budget_impact.patient_access_scheme_regions";
     private const string HtaPrefix = "record_hta.";
     private const string NiceTaId = "record_hta.nice_ta_development_id";
     private const string UkLaunchDate = "record_hta.uk_launch_date";
+    private const string EamsPrefix = "medicines_eams_pim.";
+    private const string EamsSubmissionDate = "medicines_eams_pim.eams_submission_date";
+    private const string EamsOpinionDate = "medicines_eams_pim.eams_opinion_date";
+    private const string OrphanStatus = "medicines_eu_status.eu_orphan_status";
+    private const string OrphanGrantedDate = "medicines_eu_status.eu_orphan_granted_date";
+    private const string OrphanStatusNumber = "medicines_eu_status.eu_orphan_status_number";
+    private const string AtmpStatus = "medicines_eu_status.eu_atmp_classification_status";
+    private const string AtmpRecommendationDate = "medicines_eu_status.atmp_recommendation_date";
+    private const string AtmpClassificationQuestion = "medicines_eu_status.atmp_classification_id";
 
     private static readonly DateTime _now = new(2026, 10, 15, 9, 30, 0, DateTimeKind.Utc);
 
     private static readonly string[] _biosimilarAndNewIndication = ["Biosimilar", "NewIndication"];
     private static readonly string[] _niceAndSmc = ["Nice", "Smc"];
     private static readonly string[] _smcOnly = ["Smc"];
+    private static readonly string[] _englandAndScotland = ["England", "Scotland"];
 
     private Organisation _organisation = null!;
     private User _user = null!;
@@ -66,6 +81,7 @@ public class RecordFormServiceTests : DatabaseTestBase
     private TherapeuticArea _otherCondition = null!;
     private FormulationType _formulation = null!;
     private PatientPathwayPoint _pathwayPoint = null!;
+    private AtmpClassification _atmpClassification = null!;
     private ServiceTestHarness<IRecordFormQueryService> _queryHarness = null!;
     private ServiceTestHarness<IRecordFormSaveService> _saveHarness = null!;
 
@@ -142,7 +158,15 @@ public class RecordFormServiceTests : DatabaseTestBase
         );
         _formulation = await AddEntity(new FormulationType { Label = "Tablet" }, Ct);
         _pathwayPoint = await AddEntity(
-            new PatientPathwayPoint { Label = "Initial presentation" },
+            new PatientPathwayPoint
+            {
+                Code = PatientPathwayPointCodes.InitialPresentation,
+                Label = "Initial presentation",
+            },
+            Ct
+        );
+        _atmpClassification = await AddEntity(
+            new AtmpClassification { Label = "Somatic-cell therapy medicine" },
             Ct
         );
 
@@ -857,7 +881,15 @@ public class RecordFormServiceTests : DatabaseTestBase
 
         RecordPageDto page = await GetPage("pathway-point");
 
-        RecordPageOptionDto option = page.Questions.Single().Options!.ShouldHaveSingleItem();
+        RecordPageOptionDto option = page
+            .Questions.Single(static q =>
+                string.Equals(
+                    q.Id,
+                    $"{LabPrefix}patient_pathway_point_id",
+                    StringComparison.Ordinal
+                )
+            )
+            .Options!.ShouldHaveSingleItem();
         (option.Value, option.Label).ShouldBe(($"{_pathwayPoint.Id}", "Initial presentation"));
     }
 
@@ -977,6 +1009,91 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task SavePage_OrphanStatusGrantedWithDateAndNumber_GoesToTheAtmpPage()
+    {
+        SaveRecordPageDto saved = await SaveOk("orphan-status", OrphanGrantedAnswers());
+
+        saved.NextPageId.ShouldBe("atmp-classification");
+    }
+
+    [Fact]
+    public async Task SavePage_OrphanStatusGranted_StoresAnActualDateForTheEuOrphanEvent()
+    {
+        await SaveOk("orphan-status", OrphanGrantedAnswers());
+
+        MedicinesEuStatus row = await EuStatusRow();
+        row.EuOrphanStatus.ShouldBe(DesignationStatus.Granted);
+        row.EuOrphanStatusNumber.ShouldBe("EU/3/20/2345");
+        RegulatoryDate date = await Context
+            .RegulatoryDates.AsNoTracking()
+            .SingleAsync(d => d.Id == row.EuOrphanGrantedDateId!.Value, Ct);
+        date.DateEvent.ShouldBe(DateEventType.EuOrphanGranted);
+        date.DatePrecision.ShouldBe(DatePrecision.ActualDate);
+        date.DateValue.ShouldBe(new DateOnly(2025, 3, 14));
+    }
+
+    [Fact]
+    public async Task SavePage_OrphanStatusGrantedWithNoDateOrNumber_ReportsBothRequiredMessages()
+    {
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "orphan-status",
+            OrphanAnswersWithoutDetails("Granted")
+        );
+
+        errors.Keys.ShouldBe([OrphanGrantedDate, OrphanStatusNumber], ignoreOrder: true);
+        errors[OrphanGrantedDate]
+            .ShouldBe("Enter the date that EU orphan medicine status was granted");
+        errors[OrphanStatusNumber].ShouldBe("Enter the EU orphan status number");
+    }
+
+    [Fact]
+    public async Task SavePage_OrphanStatusNotGranted_DoesNotRequireTheGrantedDetails()
+    {
+        SaveRecordPageDto saved = await SaveOk(
+            "orphan-status",
+            OrphanAnswersWithoutDetails("NotGranted")
+        );
+
+        saved.NextPageId.ShouldBe("atmp-classification");
+    }
+
+    [Fact]
+    public async Task SavePage_AtmpGrantedWithNoDateOrClassification_ReportsBothRequiredMessages()
+    {
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "atmp-classification",
+            AtmpAnswersWithoutDetails("Granted")
+        );
+
+        errors.Keys.ShouldBe(
+            [AtmpRecommendationDate, AtmpClassificationQuestion],
+            ignoreOrder: true
+        );
+        errors[AtmpRecommendationDate]
+            .ShouldBe("Enter the date the ATMP classification recommendation was provided");
+        errors[AtmpClassificationQuestion]
+            .ShouldBe("Select the ATMP classification of your product");
+    }
+
+    [Fact]
+    public async Task SavePage_AtmpGrantedWithDateAndClassification_GoesToTheTaskList()
+    {
+        SaveRecordPageDto saved = await SaveOk("atmp-classification", AtmpGrantedAnswers());
+
+        saved.NextPageId.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SavePage_AtmpGrantedWithDateAndClassification_StoresTheClassification()
+    {
+        await SaveOk("atmp-classification", AtmpGrantedAnswers());
+
+        MedicinesEuStatus row = await EuStatusRow();
+        row.EuAtmpClassificationStatus.ShouldBe(DesignationStatus.Granted);
+        row.AtmpClassificationId.ShouldBe(_atmpClassification.Id);
+    }
+
+    [Fact]
     public async Task SavePage_FirstLaboratoryTestingSave_CreatesTheRow()
     {
         (
@@ -1027,6 +1144,7 @@ public class RecordFormServiceTests : DatabaseTestBase
         ];
 
         string notesQuestion = $"{LabPrefix}genomic_test_notes";
+        string otherQuestion = $"{LabPrefix}genomic_test_pathway_point_other";
 
         for (int i = 0; i < answers.Length; i++)
         {
@@ -1035,6 +1153,11 @@ public class RecordFormServiceTests : DatabaseTestBase
             {
                 // Mandatory testing shows the notes box, which is then required.
                 page[notesQuestion] = Json("Repeat testing at relapse");
+            }
+            else if (string.Equals(answers[i].PageId, "pathway-point", StringComparison.Ordinal))
+            {
+                // Every question on the page is submitted; the "Other" details are not shown.
+                page[otherQuestion] = Json<string?>(null);
             }
 
             SaveRecordPageDto saved = await SaveOk(answers[i].PageId, page);
@@ -1080,6 +1203,151 @@ public class RecordFormServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task SavePage_FirstPricingAndBudgetImpactSave_CreatesTheRow()
+    {
+        (
+            await Context.MedicinesBudgetImpacts.AnyAsync(x => x.RevisionId == _revision.Id, Ct)
+        ).ShouldBeFalse();
+
+        await SaveOk(
+            "estimated-uptake",
+            Answer($"{BudgetPrefix}estimated_uptake", "Around 500 patients in year one")
+        );
+
+        MedicinesBudgetImpact row = await BudgetImpactRow();
+        row.EstimatedUptake.ShouldBe("Around 500 patients in year one");
+        row.CompassionateAccessAvailable.ShouldBeNull();
+        row.PatientAccessSchemeRegions.ShouldBeNull();
+        row.NetUkBudgetImpactBand.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SavePage_StepsThroughEveryPricingAndBudgetImpactPage_StoringAndAuditingEachAnswer()
+    {
+        (string PageId, (string QuestionId, object Value, string AuditedValue)[] Answers)[] pages =
+        [
+            (
+                "estimated-uptake",
+                [($"{BudgetPrefix}estimated_uptake", "500 patients", "500 patients")]
+            ),
+            (
+                "compassionate-access",
+                [
+                    ($"{BudgetPrefix}compassionate_access_available", "Yes", "Yes"),
+                    (
+                        $"{BudgetPrefix}compassionate_access_details",
+                        "Named patient",
+                        "Named patient"
+                    ),
+                ]
+            ),
+            (
+                "patient-access-scheme",
+                [
+                    ($"{BudgetPrefix}patient_access_scheme_planned", "Yes", "Yes"),
+                    (
+                        PasRegions,
+                        _englandAndScotland,
+                        JsonSerializer.Serialize(_englandAndScotland.Order(StringComparer.Ordinal))
+                    ),
+                ]
+            ),
+            (
+                "indication-specific-pricing",
+                [
+                    ($"{BudgetPrefix}indication_specific_pricing_planned", "Yes", "Yes"),
+                    (
+                        $"{BudgetPrefix}indication_specific_pricing_details",
+                        "Lower price for second line",
+                        "Lower price for second line"
+                    ),
+                ]
+            ),
+            (
+                "net-budget-impact",
+                [($"{BudgetPrefix}net_uk_budget_impact_band", "Between5MAnd40M", "Between5MAnd40M")]
+            ),
+        ];
+
+        for (int i = 0; i < pages.Length; i++)
+        {
+            Dictionary<string, JsonElement> page = new(StringComparer.Ordinal);
+            foreach ((string questionId, object value, _) in pages[i].Answers)
+            {
+                page[questionId] = JsonSerializer.SerializeToElement(value);
+            }
+
+            SaveRecordPageDto saved = await SaveOk(pages[i].PageId, page);
+            saved.NextPageId.ShouldBe(i + 1 < pages.Length ? pages[i + 1].PageId : null);
+        }
+
+        MedicinesBudgetImpact row = await BudgetImpactRow();
+        row.EstimatedUptake.ShouldBe("500 patients");
+        row.CompassionateAccessAvailable.ShouldBe(YesNoUnknown.Yes);
+        row.CompassionateAccessDetails.ShouldBe("Named patient");
+        row.PatientAccessSchemePlanned.ShouldBe(YesNoUnknown.Yes);
+        row.PatientAccessSchemeRegions.ShouldBe(
+            PatientAccessSchemeRegion.England | PatientAccessSchemeRegion.Scotland
+        );
+        row.IndicationSpecificPricingPlanned.ShouldBe(YesNoUnknown.Yes);
+        row.IndicationSpecificPricingDetails.ShouldBe("Lower price for second line");
+        row.NetUkBudgetImpactBand.ShouldBe(NetUkBudgetImpactBand.Between5MAnd40M);
+
+        List<RecordFieldAudit> changes = await FieldAudits()
+            .OrderBy(static a => a.Id)
+            .ToListAsync(Ct);
+        changes
+            .Select(static c => (c.FieldPath, c.NewValue))
+            .ShouldBe(
+                pages.SelectMany(static p =>
+                    p.Answers.Select(static a => (a.QuestionId, (string?)a.AuditedValue))
+                )
+            );
+    }
+
+    [Fact]
+    public async Task SavePage_EstimatedUptakeBlank_IsAllowed()
+    {
+        SaveRecordPageDto saved = await SaveOk(
+            "estimated-uptake",
+            Answer<string?>($"{BudgetPrefix}estimated_uptake", null)
+        );
+
+        saved.NextPageId.ShouldBe("compassionate-access");
+    }
+
+    [Fact]
+    public async Task SavePage_PatientAccessSchemeYesWithNoRegions_ReportsTheRequiredMessage()
+    {
+        (await SaveInvalid("patient-access-scheme", PatientAccessScheme("Yes", []))).ShouldBe(
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                [PasRegions] = "Select all planned locations of discount arrangements",
+            }
+        );
+    }
+
+    [Fact]
+    public async Task SavePage_PatientAccessSchemeNoLongerPlanned_ClearsAndAuditsTheRegions()
+    {
+        await SaveOk("patient-access-scheme", PatientAccessScheme("Yes", _englandAndScotland));
+
+        await SaveOk("patient-access-scheme", PatientAccessScheme("No", _englandAndScotland));
+
+        MedicinesBudgetImpact row = await BudgetImpactRow();
+        row.PatientAccessSchemePlanned.ShouldBe(YesNoUnknown.No);
+        row.PatientAccessSchemeRegions.ShouldBeNull();
+        RecordFieldAudit cleared = await FieldAudits()
+            .Where(static a => a.FieldPath == PasRegions)
+            .OrderBy(static a => a.Id)
+            .LastAsync(Ct);
+        cleared.OldValue.ShouldBe(
+            JsonSerializer.Serialize(_englandAndScotland.Order(StringComparer.Ordinal))
+        );
+        cleared.NewValue.ShouldBeNull();
+    }
+
+    [Fact]
     public async Task SavePage_PathwayPointThatIsNotOffered_IsRejected()
     {
         await AddGenomicRoute();
@@ -1092,6 +1360,237 @@ public class RecordFormServiceTests : DatabaseTestBase
 
         errors.ShouldContainKey(question);
         (await LaboratoryTestingRow()).PatientPathwayPointId.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task GetPage_PathwayPointOther_IsRevealedByTheIdOfTheOtherRow()
+    {
+        await AddGenomicRoute();
+        PatientPathwayPoint other = await AddOtherPathwayPoint();
+
+        RecordPageDto page = await GetPage("pathway-point");
+
+        page.Questions.Select(static q => q.Id).ShouldBe([PathwayPoint, PathwayPointOther]);
+        RecordPageConditionDto showWhen = page.Questions[1].ShowWhen.ShouldNotBeNull();
+        showWhen.Kind.ShouldBe(ConditionKind.AnswerIn);
+        showWhen.QuestionId.ShouldBe(PathwayPoint);
+        showWhen.Values.ShouldBe([$"{other.Id}"]);
+    }
+
+    [Fact]
+    public async Task SavePage_PathwayPointOtherWithNoDetails_ReportsTheRequiredMessage()
+    {
+        await AddGenomicRoute();
+        PatientPathwayPoint other = await AddOtherPathwayPoint();
+
+        (await SaveInvalid("pathway-point", PathwayPointAnswers(other.Id, "  "))).ShouldBe(
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                [PathwayPointOther] = "Enter details",
+            }
+        );
+    }
+
+    [Fact]
+    public async Task SavePage_PathwayPointOtherWithDetails_StoresTheDetails()
+    {
+        await AddGenomicRoute();
+        PatientPathwayPoint other = await AddOtherPathwayPoint();
+
+        SaveRecordPageDto saved = await SaveOk(
+            "pathway-point",
+            PathwayPointAnswers(other.Id, "After second relapse")
+        );
+
+        saved.NextPageId.ShouldBe("genomic-alterations");
+        MedicinesLaboratoryTesting row = await LaboratoryTestingRow();
+        row.PatientPathwayPointId.ShouldBe(other.Id);
+        row.GenomicTestPathwayPointOther.ShouldBe("After second relapse");
+    }
+
+    [Fact]
+    public async Task SavePage_PathwayPointNoLongerOther_ClearsAndAuditsTheDetails()
+    {
+        await AddGenomicRoute();
+        PatientPathwayPoint other = await AddOtherPathwayPoint();
+        await SaveOk("pathway-point", PathwayPointAnswers(other.Id, "After second relapse"));
+
+        await SaveOk(
+            "pathway-point",
+            PathwayPointAnswers(_pathwayPoint.Id, "After second relapse")
+        );
+
+        MedicinesLaboratoryTesting row = await LaboratoryTestingRow();
+        row.PatientPathwayPointId.ShouldBe(_pathwayPoint.Id);
+        row.GenomicTestPathwayPointOther.ShouldBeNull();
+        RecordFieldAudit cleared = await FieldAudits()
+            .Where(static a => a.FieldPath == PathwayPointOther)
+            .OrderBy(static a => a.Id)
+            .LastAsync(Ct);
+        cleared.OldValue.ShouldBe("After second relapse");
+        cleared.NewValue.ShouldBeNull();
+    }
+
+    private async Task<PatientPathwayPoint> AddOtherPathwayPoint() =>
+        await AddEntity(
+            new PatientPathwayPoint { Code = PatientPathwayPointCodes.Other, Label = "Other" },
+            Ct
+        );
+
+    private static Dictionary<string, JsonElement> PathwayPointAnswers(
+        int pathwayPointId,
+        string? otherDetails
+    ) =>
+        new(StringComparer.Ordinal)
+        {
+            [PathwayPoint] = Json($"{pathwayPointId}"),
+            [PathwayPointOther] = Json(otherDetails),
+        };
+
+    [Fact]
+    public async Task GetPage_PimPageWithNothingSaved_OffersTheSubmissionDatePageAsNext()
+    {
+        RecordPageDto page = await GetPage("pim-designation");
+
+        page.NextPageId.ShouldBe("eams-submission-date");
+    }
+
+    [Fact]
+    public async Task GetPage_PimPageSavedAsNotGranted_StillOffersTheSubmissionDatePageAsNext()
+    {
+        await SaveOk("pim-designation", PimAnswers("NotGranted", null));
+
+        RecordPageDto page = await GetPage("pim-designation");
+
+        page.NextPageId.ShouldBe("eams-submission-date");
+    }
+
+    [Fact]
+    public async Task GetPage_OpinionDatePageWithNothingSaved_OffersTheDecisionPageAsNext()
+    {
+        await SaveOk("pim-designation", PimAnswers("Granted", "Yes"));
+
+        RecordPageDto page = await GetPage("eams-opinion-date");
+
+        page.NextPageId.ShouldBe("eams-opinion-decision");
+    }
+
+    [Fact]
+    public async Task SavePage_PimGrantedAndWillSubmitToEams_StepsThroughEveryEamsPage()
+    {
+        SaveRecordPageDto pim = await SaveOk("pim-designation", PimAnswers("Granted", "Yes"));
+        SaveRecordPageDto submission = await SaveOk(
+            "eams-submission-date",
+            Answer(EamsSubmissionDate, "2026-03-01")
+        );
+        SaveRecordPageDto opinion = await SaveOk(
+            "eams-opinion-date",
+            Answer(EamsOpinionDate, "2026-09-30")
+        );
+        SaveRecordPageDto decision = await SaveOk(
+            "eams-opinion-decision",
+            Answer($"{EamsPrefix}eams_opinion_decision", "Positive")
+        );
+
+        pim.NextPageId.ShouldBe("eams-submission-date");
+        submission.NextPageId.ShouldBe("eams-opinion-date");
+        opinion.NextPageId.ShouldBe("eams-opinion-decision");
+        decision.NextPageId.ShouldBeNull();
+        MedicinesEamsPim row = await EamsPimRow();
+        row.PimDesignationStatus.ShouldBe(DesignationStatus.Granted);
+        row.WillSubmitToEams.ShouldBe(YesNoUnknown.Yes);
+        row.EamsOpinionDecision.ShouldBe(EamsOpinionDecision.Positive);
+        RegulatoryDate submissionDate = await Context
+            .RegulatoryDates.AsNoTracking()
+            .SingleAsync(d => d.Id == row.EamsSubmissionDateId!.Value, Ct);
+        submissionDate.DateEvent.ShouldBe(DateEventType.EamsSubmission);
+        submissionDate.DatePrecision.ShouldBe(DatePrecision.ActualDate);
+        submissionDate.DateValue.ShouldBe(new DateOnly(2026, 3, 1));
+        RegulatoryDate opinionDate = await Context
+            .RegulatoryDates.AsNoTracking()
+            .SingleAsync(d => d.Id == row.EamsOpinionDateId!.Value, Ct);
+        opinionDate.DateEvent.ShouldBe(DateEventType.EamsOpinion);
+        opinionDate.DatePrecision.ShouldBe(DatePrecision.ActualDate);
+        opinionDate.DateValue.ShouldBe(new DateOnly(2026, 9, 30));
+    }
+
+    [Fact]
+    public async Task SavePage_EstimatedOpinionDate_EndsTheTaskWithoutTheDecisionPage()
+    {
+        await SaveOk("pim-designation", PimAnswers("Granted", "Yes"));
+
+        SaveRecordPageDto opinion = await SaveOk(
+            "eams-opinion-date",
+            Answer(EamsOpinionDate, "2099-Q1")
+        );
+
+        opinion.NextPageId.ShouldBeNull();
+        MedicinesEamsPim row = await EamsPimRow();
+        RegulatoryDate opinionDate = await Context
+            .RegulatoryDates.AsNoTracking()
+            .SingleAsync(d => d.Id == row.EamsOpinionDateId!.Value, Ct);
+        opinionDate.DatePrecision.ShouldBe(DatePrecision.EstimatedQuarter);
+    }
+
+    [Fact]
+    public async Task SavePage_SubmissionDateBlank_ReportsTheRequiredMessage()
+    {
+        await SaveOk("pim-designation", PimAnswers("Granted", "Yes"));
+
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "eams-submission-date",
+            Answer<string?>(EamsSubmissionDate, null)
+        );
+
+        errors[EamsSubmissionDate].ShouldBe("Select an option");
+    }
+
+    [Fact]
+    public async Task SavePage_PimNotGranted_ClearsTheEamsAnswerAndSkipsTheDecisionPage()
+    {
+        await AddEntity(
+            new MedicinesEamsPim
+            {
+                RevisionId = _revision.Id,
+                PimDesignationStatus = DesignationStatus.Granted,
+                WillSubmitToEams = YesNoUnknown.Yes,
+            },
+            Ct
+        );
+
+        SaveRecordPageDto pim = await SaveOk("pim-designation", PimAnswers("NotGranted", null));
+
+        pim.NextPageId.ShouldBeNull();
+        MedicinesEamsPim row = await EamsPimRow();
+        row.PimDesignationStatus.ShouldBe(DesignationStatus.NotGranted);
+        row.WillSubmitToEams.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SavePage_PimGrantedWithoutAnEamsAnswer_IsRejected()
+    {
+        string question = $"{EamsPrefix}will_submit_to_eams";
+
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "pim-designation",
+            PimAnswers("Granted", null)
+        );
+
+        errors[question].ShouldBe("Select yes if you intend to submit or have submitted to EAMS");
+    }
+
+    [Fact]
+    public async Task SavePage_PimWithNoAnswer_IsRejected()
+    {
+        string question = $"{EamsPrefix}pim_designation_status";
+
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            "pim-designation",
+            PimAnswers(null, null)
+        );
+
+        errors[question]
+            .ShouldBe("Select granted if your product has been awarded MHRA PIM designation");
     }
 
     // The route to the genomic pages: they apply only once these two answers are saved.
@@ -1285,12 +1784,78 @@ public class RecordFormServiceTests : DatabaseTestBase
             [$"{HtaPrefix}hta_additional_details"] = Json("Planned submissions differ by body"),
         };
 
+    private static Dictionary<string, JsonElement> OrphanGrantedAnswers() =>
+        new(StringComparer.Ordinal)
+        {
+            [OrphanStatus] = Json("Granted"),
+            [OrphanGrantedDate] = Json("2025-03-14"),
+            [OrphanStatusNumber] = Json("EU/3/20/2345"),
+        };
+
+    // A page needs every one of its questions in the payload, with null for an empty one.
+    private static Dictionary<string, JsonElement> OrphanAnswersWithoutDetails(string status) =>
+        new(StringComparer.Ordinal)
+        {
+            [OrphanStatus] = Json(status),
+            [OrphanGrantedDate] = Json<string?>(null),
+            [OrphanStatusNumber] = Json<string?>(null),
+        };
+
+    private static Dictionary<string, JsonElement> AtmpAnswersWithoutDetails(string status) =>
+        new(StringComparer.Ordinal)
+        {
+            [AtmpStatus] = Json(status),
+            [AtmpRecommendationDate] = Json<string?>(null),
+            [AtmpClassificationQuestion] = Json<string?>(null),
+        };
+
+    private Dictionary<string, JsonElement> AtmpGrantedAnswers() =>
+        new(StringComparer.Ordinal)
+        {
+            [AtmpStatus] = Json("Granted"),
+            [AtmpRecommendationDate] = Json("2025-06-02"),
+            [AtmpClassificationQuestion] = Json($"{_atmpClassification.Id}"),
+        };
+
+    private async Task<MedicinesEuStatus> EuStatusRow() =>
+        await Context
+            .MedicinesEuStatuses.AsNoTracking()
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+
     private async Task<RecordHta> HtaRow() =>
         await Context.RecordHtas.AsNoTracking().SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+
+    private static Dictionary<string, JsonElement> PatientAccessScheme(
+        string planned,
+        string[] regions
+    ) =>
+        new(StringComparer.Ordinal)
+        {
+            [$"{BudgetPrefix}patient_access_scheme_planned"] = Json(planned),
+            [PasRegions] = Json(regions),
+        };
+
+    private async Task<MedicinesBudgetImpact> BudgetImpactRow() =>
+        await Context
+            .MedicinesBudgetImpacts.AsNoTracking()
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
 
     private async Task<MedicinesLaboratoryTesting> LaboratoryTestingRow() =>
         await Context
             .MedicinesLaboratoryTestings.AsNoTracking()
+            .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
+
+    // A page save must carry every question on the page; null means unanswered.
+    private static Dictionary<string, JsonElement> PimAnswers(string? status, string? willSubmit) =>
+        new(StringComparer.Ordinal)
+        {
+            [$"{EamsPrefix}pim_designation_status"] = Json(status),
+            [$"{EamsPrefix}will_submit_to_eams"] = Json(willSubmit),
+        };
+
+    private async Task<MedicinesEamsPim> EamsPimRow() =>
+        await Context
+            .MedicinesEamsPims.AsNoTracking()
             .SingleAsync(x => x.RevisionId == _revision.Id, Ct);
 
     private IQueryable<RecordFieldAudit> FieldAudits() =>
