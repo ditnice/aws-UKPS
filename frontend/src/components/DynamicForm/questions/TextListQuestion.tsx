@@ -4,7 +4,10 @@ import type { QuestionProps } from '../types'
 
 /**
  * Text inputs in the MoJ add another inline layout: one per entry, each with a remove button once
- * there are several, and an add another button. The question label is the list's legend.
+ * there are several, and an add another button. The question label is the list's legend. When the
+ * question has an item label, each entry shows it as its own label ("Trial number" while there is
+ * one entry, "Trial number 1", "Trial number 2" once there are several); otherwise entries are
+ * labelled with the question label for screen readers only.
  */
 export function TextListQuestion({
   question,
@@ -45,6 +48,7 @@ export function TextListQuestion({
         })
       }}
       hint={question.hint ?? undefined}
+      itemLabel={question.itemLabel ?? undefined}
       labelPrefix={question.label}
       legend={question.label}
       removeItemLabel={question.removeLabel ?? 'Remove'}

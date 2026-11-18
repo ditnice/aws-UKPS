@@ -39,6 +39,11 @@ export type AddAnotherProps<T extends string> = {
    * label is visually hidden. Use it where the list answers one question, instead of `title`.
    */
   legend?: string
+  /**
+   * A label of each item's own, for example "Trial number", which is shown even when `legend` is
+   * set and is used in place of `labelPrefix`. Blank values are ignored.
+   */
+  itemLabel?: string
   firstItemClassName?: string
   labelPrefix: string
   hint?: string
@@ -64,6 +69,7 @@ export type AddAnotherProps<T extends string> = {
  * @param props.removeItemLabel - Label shown on the button used to remove a list item.
  * @param props.title - Optional h2 shown once above the list.
  * @param props.legend - Optional legend that labels the list as one question.
+ * @param props.itemLabel - Optional visible label of each item, used instead of `labelPrefix`.
  * @param props.firstItemClassName - Optional class applied to the first item's row only.
  * @param props.labelPrefix - Prefix used for each item's visible label.
  * @param props.hint - Optional helper text shown above the first item.
@@ -76,6 +82,7 @@ export const AddAnother = <T extends string>({
   removeItemLabel,
   title,
   legend,
+  itemLabel,
   firstItemClassName,
   labelPrefix,
   hint,
@@ -86,9 +93,10 @@ export const AddAnother = <T extends string>({
   const canRemoveItem = field.state.value.length > 1
   const hintId = hint ? `${field.name}-hint` : undefined
   const { headingRef, itemRef, focusField, focusHeading } = useAddAnotherFocus()
+  const visibleItemLabel = itemLabel?.trim() || undefined
+  const prefix = visibleItemLabel ?? labelPrefix
   // Singular item keeps plain label; several are numbered from 1.
-  const getItemLabel = (index: number) =>
-    canRemoveItem ? `${labelPrefix} ${index + 1}` : labelPrefix
+  const getItemLabel = (index: number) => (canRemoveItem ? `${prefix} ${index + 1}` : prefix)
   const Root = legend ? 'fieldset' : 'div'
   return (
     <Root className={clsx(styles.root, legend && styles.fieldset)}>
@@ -116,7 +124,7 @@ export const AddAnother = <T extends string>({
           key={i}
           ref={itemRef(i)}
         >
-          <div className={clsx(styles.input, legend && styles.hiddenLabel)}>
+          <div className={clsx(styles.input, legend && !visibleItemLabel && styles.hiddenLabel)}>
             {getSubfield(`${field.name}[${i}]`, (subfield) => {
               const errorMessage = getFieldErrorMessage(subfield.state.meta.errors)
               return (

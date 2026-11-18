@@ -7882,7 +7882,7 @@
               "null",
               "string"
             ],
-            "description": "The heading of each item of a group, numbered from 1; null for other controls."
+            "description": "The heading of each item of a group, numbered from 1, or the label of each entry of a text\nlist, numbered from 1 once there are several; null for other controls."
           },
           "removeLabel": {
             "type": [
