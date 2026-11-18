@@ -7,8 +7,8 @@ describe('parseRecordAction', () => {
     expect(parseRecordAction({ action: 'discarded' })).toBe('discarded')
   })
 
-  it('recognises the record submitted confirmation', () => {
-    expect(parseRecordAction({ action: 'submitted' })).toBe('submitted')
+  it.each(['submitted', 'draft-saved'] as const)('recognises the %s confirmation', (action) => {
+    expect(parseRecordAction({ action })).toBe(action)
   })
 
   it.each([undefined, '', 'unknown', 'Discarded', ' discarded '])(

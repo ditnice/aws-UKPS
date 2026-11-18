@@ -31,4 +31,15 @@ describe('RecordActionAlert', () => {
       ),
     ).toBeTruthy()
   })
+
+  it('confirms that the draft record was saved', () => {
+    render(<RecordActionAlert action="draft-saved" />)
+
+    expect(screen.getByRole('heading', { level: 3, name: 'Draft record saved' })).toBeTruthy()
+    expect(
+      screen.getByText(
+        'This record has been saved in my records. This record has not been published and is not visible to horizon scanners.',
+      ),
+    ).toBeTruthy()
+  })
 })
