@@ -49,39 +49,70 @@ internal sealed partial class UserOnboardingService
             return await AddMembershipToExistingUser(existingUser, command, cancellationToken);
         }
 
-        static Task<
-            Result<UserOnboardingOutcome, OnboardUserError>
-        > HandleIdentityUserCreationFailed(CreateNewUserError error)
+        var strategy = _dbContext.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            return error switch
-            {
-                CreateNewUserError.UsernameAlreadyExists => Task.FromResult(
-                    Result<UserOnboardingOutcome, OnboardUserError>.Err(
-                        new OnboardUserError.UsernameAlreadyExists()
-                    )
-                ),
-                _ => throw new InvalidOperationException(
-                    $"An unexpected error occurred when creating a new user [{error}]"
-                ),
-            };
-        }
+            await using var tx = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        CognitoUsername cognitoUsername = CognitoUsername.GenerateNew();
-        var result = await _administerIdentityService.CreateNewUser(
-            cognitoUsername,
-            command.NewUserEmail,
-            cancellationToken
-        );
-        return await result.Match(
-            onOk: () =>
-                CreateANewUserInDatabase(
-                    cognitoUsername,
-                    onboardingFlow,
-                    command,
-                    cancellationToken
-                ),
-            onErr: HandleIdentityUserCreationFailed
-        );
+            // Serialise all onboarding/email changes for this email across every instance.
+            // Released automatically on commit or rollback.
+            await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT pg_advisory_xact_lock(hashtextextended(ukps.normalise_email({command.NewUserEmail}), 0))",
+                cancellationToken
+            );
+
+            bool emailInUse = await _dbContext.Users.AnyAsync(
+                x =>
+                    x.NormalisedWorkEmail == EmailDbFunctions.Normalise(command.NewUserEmail)
+                    || x.NormalisedPendingWorkEmail
+                        == EmailDbFunctions.Normalise(command.NewUserEmail),
+                cancellationToken
+            );
+            if (emailInUse)
+            {
+                return Result<UserOnboardingOutcome, OnboardUserError>.Err(
+                    new OnboardUserError.UserAlreadyInOrganisation()
+                );
+            }
+
+            CognitoUsername cognitoUsername = CognitoUsername.GenerateNew();
+            var result = await _administerIdentityService.CreateNewUser(
+                cognitoUsername,
+                command.NewUserEmail,
+                cancellationToken
+            );
+            return await result.Match(
+                onOk: async () =>
+                {
+                    var result = await CreateANewUserInDatabase(
+                        cognitoUsername,
+                        onboardingFlow,
+                        command,
+                        cancellationToken
+                    );
+                    await tx.CommitAsync(cancellationToken);
+                    return result;
+                },
+                onErr: HandleIdentityUserCreationFailed
+            );
+        });
+    }
+
+    private static Task<
+        Result<UserOnboardingOutcome, OnboardUserError>
+    > HandleIdentityUserCreationFailed(CreateNewUserError error)
+    {
+        return error switch
+        {
+            CreateNewUserError.UsernameAlreadyExists => Task.FromResult(
+                Result<UserOnboardingOutcome, OnboardUserError>.Err(
+                    new OnboardUserError.UsernameAlreadyExists()
+                )
+            ),
+            _ => throw new InvalidOperationException(
+                $"An unexpected error occurred when creating a new user [{error}]"
+            ),
+        };
     }
 
     private async Task<Result<UserOnboardingOutcome, OnboardUserError>> CreateANewUserInDatabase(

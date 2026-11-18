@@ -3,6 +3,7 @@ using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using Renci.SshNet.Security.Cryptography.Ciphers.Modes;
 using Shouldly;
 using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.Users;
@@ -40,6 +41,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     private readonly ISetupLinkCreator _setupLinkCreator = Substitute.For<ISetupLinkCreator>();
     private readonly Faker<MockUser> _mockUserFaker =
         new MockAmazonCognitoIdentityProvider.MockUserFaker();
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     public UserAdministrationServiceTests(PostgresFixture fixture)
         : base(fixture)
@@ -138,6 +140,25 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             .ShouldBeOfType<UserSignUpRequestEmail>();
 
         email.Link.ShouldBe(testLink);
+    }
+
+    [Fact]
+    public async Task OnboardUser_WhenAUserHasAPendingEmailThatMatchesTheOnboardedValue_ErrorReturned()
+    {
+        var emailAddress = "test@email.com";
+        var existingUser = new UserFaker()
+            .RuleFor(x => x.PendingWorkEmail, _ => emailAddress)
+            .Generate();
+        await AddEntity(existingUser, Ct);
+        OnboardUserCommandDto command = await GenerateValidOnboardingCommand() with
+        {
+            NewUserEmail = emailAddress,
+        };
+        OnboardUserResult result = await _harness.Service.OnboardUser(
+            command,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<OnboardUserError.UserAlreadyInOrganisation>();
     }
 
     [Fact]
