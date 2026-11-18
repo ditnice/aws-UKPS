@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Linq.Expressions;
+using Amazon.Runtime;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using UKPS.Api.Application.Common;
@@ -64,7 +65,6 @@ internal partial class UserService(
 
         string mfaMethod = "Unknown";
         string mfaPhoneNumber = string.Empty;
-#pragma warning disable CA1031
         try
         {
             UserMfaDetails? mfaDetails = await identityService.GetUserMfaDetails(
@@ -77,11 +77,10 @@ internal partial class UserService(
                 mfaPhoneNumber = mfaDetails.MfaPhoneNumber;
             }
         }
-        catch (Exception ex)
+        catch (AmazonClientException ex)
         {
             LogGettingUserMfaDetailsFailed(ex);
         }
-#pragma warning restore CA1031
 
         return new UserInformationDto
         {
