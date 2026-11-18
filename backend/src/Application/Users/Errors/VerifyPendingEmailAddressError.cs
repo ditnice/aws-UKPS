@@ -36,17 +36,24 @@ public abstract record VerifyPendingEmailAddressError
     internal sealed record InvalidTokenProvided : VerifyPendingEmailAddressError;
 
     /// <summary>
-    /// Pending email was changed.
+    /// Maps this error to a <typeparamref name="TResult"/> by invoking the delegate that corresponds to its case.
     /// </summary>
-    internal sealed record ConcurrentChangeDetected : VerifyPendingEmailAddressError;
-
+    /// <typeparam name="TResult">The type returned by each of the delegates.</typeparam>
+    /// <param name="userNotFound">Invoked when the user could not be found.</param>
+    /// <param name="unauthorised">Invoked when the caller is not authorised.</param>
+    /// <param name="noPendingEmailToVerified">Invoked when there is no pending email address to verify.</param>
+    /// <param name="emailAlreadyVerified">Invoked when the email address has already been verified.</param>
+    /// <param name="invalidTokenProvided">Invoked when the verification token is invalid.</param>
+    /// <returns>The result of the delegate matching this error case.</returns>
+    /// <exception cref="UnreachableException">
+    /// Thrown if this instance is not one of the recognised error cases.
+    /// </exception>
     internal TResult Match<TResult>(
         Func<TResult> userNotFound,
         Func<TResult> unauthorised,
         Func<TResult> noPendingEmailToVerified,
         Func<TResult> emailAlreadyVerified,
-        Func<TResult> invalidTokenProvided,
-        Func<TResult> concurrentChangeDetected
+        Func<TResult> invalidTokenProvided
     )
     {
         return this switch
@@ -56,7 +63,6 @@ public abstract record VerifyPendingEmailAddressError
             NoPendingEmailToVerify => noPendingEmailToVerified(),
             EmailAlreadyVerified => emailAlreadyVerified(),
             InvalidTokenProvided => invalidTokenProvided(),
-            ConcurrentChangeDetected => concurrentChangeDetected(),
             _ => throw new UnreachableException(
                 $"Unrecognised {nameof(VerifyPendingEmailAddressError)}"
             ),
