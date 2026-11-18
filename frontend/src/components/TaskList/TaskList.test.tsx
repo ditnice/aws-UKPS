@@ -56,7 +56,7 @@ describe('TaskList', () => {
       </TaskList>,
     )
 
-    expect(screen.getByText('You have completed 1 of 1 mandatory task')).toBeInTheDocument()
+    expect(screen.getByText('You have completed 1 of 1 mandatory tasks')).toBeInTheDocument()
     expect(
       screen.queryByRole('link', { name: 'Skip to first incomplete task' }),
     ).not.toBeInTheDocument()

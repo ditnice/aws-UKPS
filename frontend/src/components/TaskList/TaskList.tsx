@@ -102,7 +102,7 @@ export function TaskListSummary({ completed, total, firstIncompleteHref }: TaskL
   return (
     <div className={styles['task-list__summary']}>
       <p className="lead">
-        You have completed {completed} of {total} mandatory {total === 1 ? 'task' : 'tasks'}
+        You have completed {completed} of {total} mandatory tasks
       </p>
       {firstIncompleteHref && <a href={firstIncompleteHref}>Skip to first incomplete task</a>}
     </div>
