@@ -38,24 +38,25 @@ describes. You only touch the frontend to add a new control.
 
 ## Attribute reference
 
-| Attribute                                           | On       | Arguments                                                                                      | Notes                                                                                                                                                                                                                                                     |
-| --------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `FormLayout` subclass                               | class    | `RecordType`, sections, tasks                                                                  | One per record type, such as `MedicineFormLayout`. Declares every section and task once: ID, title and order. Each task ID is a `const string` on the layout. See [Step 2](#step-2-choose-the-task-and-the-row-source)                                    |
-| `[FormEntity]`                                      | class    | `RowSource`                                                                                    | Marks a content entity whose properties hold questions. All of its pages must be in one form                                                                                                                                                              |
-| `[FormPage(task, id, title)]`                       | property | `Order`, `CommercialInConfidence`                                                              | `task` is a task ID from the layout, which decides the section and form. `Order` is the position within the task. `CommercialInConfidence` shows the "Commercial in confidence" badge above the heading. Every declaration of the same page ID must agree |
-| `[FormField(id, label, control)]`                   | property | `Hint`, `Display`, `Order`, `Placeholder`, `ChildLabel`, `ChildPlaceholder`, `AddAnotherLabel` | `Order` only matters on pages with several questions. `Placeholder` is for `Select` and `HierarchicalSelect`; the `Child…` properties for `HierarchicalSelect` (`ChildLabel` is required); `AddAnotherLabel` for a multi-value `HierarchicalSelect`       |
-| `[FormRequired(message)]`                           | property |                                                                                                |                                                                                                                                                                                                                                                           |
-| `[FormMaxLength(max, message)]`                     | property |                                                                                                | `Text`, `Textarea`                                                                                                                                                                                                                                        |
-| `[FormMaxItems(max, message)]`                      | property |                                                                                                | `Checkbox`                                                                                                                                                                                                                                                |
-| `[FormOptions(key)]`                                | property |                                                                                                | Chooses a provider other than the default for the property's type. Only needed when several providers offer the same type                                                                                                                                 |
-| `[FormIgnore(reason)]`                              | property |                                                                                                | Not a question. The reason is required                                                                                                                                                                                                                    |
-| `[FormValuePrefixes(prefixes...)]`                  | property |                                                                                                | Required on `PrefixedNumber`, not allowed on any other control. The fixed prefixes offered before the digits, in order. See [Prefixed numbers](#prefixed-numbers)                                                                                         |
-| `[FormDateEvent(dateEvent)]`                        | property |                                                                                                | Required on `PrecisionDate`, `ActualMonth` and `ActualDate`: the `DateEventType` the regulatory date row is stored with. A `PrecisionDate` or `ActualDate` also needs `Name`, the date in its error messages. See [Dates](#dates)                         |
-| `[FormShowWhen(questionId, values...)]`             | property |                                                                                                | The question applies only when an earlier question on the same page has one of the values. See [Conditional questions and pages](#conditional-questions-and-pages)                                                                                        |
-| `[FormPageShowWhen(pageId, questionId, values...)]` | class    |                                                                                                | The page applies only when a question on an earlier page has one of the values. One per page                                                                                                                                                              |
+| Attribute                                           | On       | Arguments                                                                                                                             | Notes                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FormLayout` subclass                               | class    | `RecordType`, sections, tasks                                                                                                         | One per record type, such as `MedicineFormLayout`. Declares every section and task once: ID, title and order. Each task ID is a `const string` on the layout. See [Step 2](#step-2-choose-the-task-and-the-row-source)                                                                                                                                                                                                             |
+| `[FormEntity]`                                      | class    | `RowSource`                                                                                                                           | Marks a content entity whose properties hold questions. All of its pages must be in one form                                                                                                                                                                                                                                                                                                                                       |
+| `[FormPage(task, id, title)]`                       | property | `Order`, `CommercialInConfidence`                                                                                                     | `task` is a task ID from the layout, which decides the section and form. `Order` is the position within the task. `CommercialInConfidence` shows the "Commercial in confidence" badge above the heading. Every declaration of the same page ID must agree                                                                                                                                                                          |
+| `[FormField(id, label, control)]`                   | property | `Hint`, `Display`, `Order`, `Placeholder`, `ChildLabel`, `ChildPlaceholder`, `AddAnotherLabel`, `ItemLabel`, `RemoveLabel`, `ItemKey` | `Order` only matters on pages with several questions. `Placeholder` is for `Select` and `HierarchicalSelect`; the `Child…` properties for `HierarchicalSelect` (`ChildLabel` is required); `AddAnotherLabel` for a multi-value `HierarchicalSelect`, a `Group` or a `TextList`; `ItemLabel` (required) and `ItemKey` for a `Group`; `RemoveLabel` for a `Group` or `TextList`. See [Groups and text lists](#groups-and-text-lists) |
+| `[FormRequired(message)]`                           | property |                                                                                                                                       |                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `[FormMaxLength(max, message)]`                     | property |                                                                                                                                       | `Text`, `Textarea`                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `[FormMaxItems(max, message)]`                      | property |                                                                                                                                       | `Checkbox`, multi-value `HierarchicalSelect`, `TextList`, `Group`                                                                                                                                                                                                                                                                                                                                                                  |
+| `[FormDistinct(message)]`                           | property |                                                                                                                                       | No repeated values, ignoring case: the entries of a `TextList`, or a group question's answer across the group's items. The error is shown against each repeat                                                                                                                                                                                                                                                                      |
+| `[FormOptions(key)]`                                | property |                                                                                                                                       | Chooses a provider other than the default for the property's type. Only needed when several providers offer the same type                                                                                                                                                                                                                                                                                                          |
+| `[FormIgnore(reason)]`                              | property |                                                                                                                                       | Not a question. The reason is required                                                                                                                                                                                                                                                                                                                                                                                             |
+| `[FormValuePrefixes(prefixes...)]`                  | property | `Digits`                                                                                                                              | Required on `PrefixedNumber`, not allowed on any other control. The fixed prefixes offered before the digits, in order. `Digits` sets an exact number of digits. See [Prefixed numbers](#prefixed-numbers)                                                                                                                                                                                                                         |
+| `[FormDateEvent(dateEvent)]`                        | property |                                                                                                                                       | Required on `PrecisionDate`, `ActualMonth` and `ActualDate`: the `DateEventType` the regulatory date row is stored with. A `PrecisionDate` or `ActualDate` also needs `Name`, the date in its error messages. See [Dates](#dates)                                                                                                                                                                                                  |
+| `[FormShowWhen(questionId, values...)]`             | property |                                                                                                                                       | The question applies only when an earlier question on the same page has one of the values. See [Conditional questions and pages](#conditional-questions-and-pages)                                                                                                                                                                                                                                                                 |
+| `[FormPageShowWhen(pageId, questionId, values...)]` | class    |                                                                                                                                       | The page applies only when a question on an earlier page has one of the values. One per page                                                                                                                                                                                                                                                                                                                                       |
 
 `FormControl`: `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect`,
-`PrecisionDate`, `ActualMonth`, `ActualDate`, `PrefixedNumber`.
+`PrecisionDate`, `ActualMonth`, `ActualDate`, `PrefixedNumber`, `Group`, `TextList`.
 `FormRowSource`: `FirstSave` (default), `RecordCreation`.
 
 The form hierarchy is **section → task → page → question**. Sections and tasks are declared
@@ -324,14 +325,16 @@ once it has been released.**
 Every `[FormField]` names its control as the third argument. It must be one of the allowed
 controls for the property type:
 
-| Property type                 | Allowed                                      | Answer on the wire                     | Frontend component                                                          |
-| ----------------------------- | -------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------- |
-| `string`                      | `Text`, `Textarea`, `PrefixedNumber`         | `string \| null`                       | `Input` / `Textarea` / `Select` plus `Input`                                |
-| non-flags enum                | `Radio`, `Select`                            | `string \| null` (member name)         | NDS radios / `Select`                                                       |
-| `int?` reference FK           | `Radio`, `Select`, `HierarchicalSelect`      | `string \| null` (ID)                  | NDS radios / `Select` / parent and child `Select`s                          |
-| `[Flags]` enum                | `Checkbox`                                   | `string[]` (member names)              | NDS checkboxes                                                              |
-| junction navigation           | `Checkbox`, `HierarchicalSelect`             | `string[]` (IDs)                       | NDS checkboxes / repeated parent and child `Select`s                        |
-| `int?` FK to `RegulatoryDate` | `PrecisionDate`, `ActualMonth`, `ActualDate` | `string \| null` (see [Dates](#dates)) | Precision radios revealing the parts / month and year / day, month and year |
+| Property type                                                | Allowed                                      | Answer on the wire                     | Frontend component                                                          |
+| ------------------------------------------------------------ | -------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------- |
+| `string`                                                     | `Text`, `Textarea`, `PrefixedNumber`         | `string \| null`                       | `Input` / `Textarea` / `Select` plus `Input`                                |
+| non-flags enum                                               | `Radio`, `Select`                            | `string \| null` (member name)         | NDS radios / `Select`                                                       |
+| `int?` reference FK                                          | `Radio`, `Select`, `HierarchicalSelect`      | `string \| null` (ID)                  | NDS radios / `Select` / parent and child `Select`s                          |
+| `[Flags]` enum                                               | `Checkbox`                                   | `string[]` (member names)              | NDS checkboxes                                                              |
+| junction navigation                                          | `Checkbox`, `HierarchicalSelect`             | `string[]` (IDs)                       | NDS checkboxes / repeated parent and child `Select`s                        |
+| `int?` FK to `RegulatoryDate`                                | `PrecisionDate`, `ActualMonth`, `ActualDate` | `string \| null` (see [Dates](#dates)) | Precision radios revealing the parts / month and year / day, month and year |
+| collection navigation to child rows with their own questions | `Group`                                      | array of objects keyed by child ID     | Stacked add another (`AddAnotherGroup`)                                     |
+| collection navigation to child rows with one string column   | `TextList`                                   | `string[]`, in order                   | Inline add another (`AddAnother`)                                           |
 
 `HierarchicalSelect` is for reference data with a `ParentId`: the user picks a parent, then
 optionally a child, and the answer is the most specific choice. It needs a tree provider (see
@@ -359,12 +362,79 @@ public string? NiceTaDevelopmentId { get; set; }
 
 - **Stored and sent** as one string, the prefix followed by the digits, for example
   `GID-TA10234`. No migration is needed for an existing text column.
+- **One prefix:** with a single prefix there is nothing to choose, so it is shown as a fixed
+  prefix box on the input instead of a dropdown, as for the ClinicalTrials.gov `NCT` number.
+- **Exact digits:** `[FormValuePrefixes("NCT", Digits = 8)]` needs exactly 8 digits ("ID must be
+  8 digits"); without `Digits`, up to 5 are allowed.
 - **Rules:** blank is fine. A prefix with no digits is saved as blank. Digits with no known
   prefix give "Select ID type". Anything other than `0` to `9` after the prefix gives "ID must
   only contain numbers". A prefix may not end in a digit or start another prefix.
 - `PrefixedNumberAnswer` (backend) and `lib/dynamic-form/prefixedNumber.ts` (frontend) hold the
   rules; `prefixed-number-cases.json` keeps them in step.
 - The prefixes reach the page as `prefixes` on the question.
+
+### Groups and text lists
+
+A **group** repeats several questions per item, in the MoJ add another stacked layout: each item is
+headed "Clinical trial 1", "Clinical trial 2" and so on, with a remove button once there are
+several, and an add another button below. A **text list** repeats one text box, in the inline
+layout. A group's question may itself be a text list (one level of nesting); a group inside a group
+is not supported. The worked example is the Clinical trials task:
+
+```csharp
+// On RecordClinicalTrialInformation, the content row the group hangs off.
+[FormPage(MedicineFormLayout.ClinicalTrials, "clinical-trial-details", "Clinical trial details", Order = 20)]
+[FormField(
+    "record_clinical_trial",
+    "Enter clinical trial details",
+    FormControl.Group,
+    ItemLabel = "Clinical trial",
+    AddAnotherLabel = "Add another clinical trial",
+    RemoveLabel = "Remove clinical trial",
+    ItemKey = "clinical_trials_gov_number")]
+[FormRequired("Add at least one clinical trial")]
+public ICollection<RecordClinicalTrial> ClinicalTrials { get; set; } = [];
+
+// On RecordClinicalTrial, the child entity: no [FormEntity] or [FormPage].
+[FormField("clinical_trials_gov_number", "Trial number from clinical trials.gov",
+    FormControl.PrefixedNumber, Order = 20)]
+[FormValuePrefixes("NCT", Digits = 8)]
+[FormRequired("Enter the trial number from ClinicalTrials.gov")]
+[FormDistinct("Trial number from ClinicalTrials.gov must be different for each clinical trial")]
+public required string ClinicalTrialsGovNumber { get; set; }
+
+[FormField("other_registry_numbers", "Trial number from other registry (optional)",
+    FormControl.TextList, AddAnotherLabel = "Add another trial number", Order = 30)]
+[FormDistinct("Trial number from other registry must be different for each entry")]
+public ICollection<OtherClinicalTrialNumber> OtherClinicalTrialNumbers { get; set; } = [];
+```
+
+- **Where it hangs.** The group is a collection navigation on a `[FormEntity]` entity's row. The
+  child entity is scanned through it: every mapped column needs `[FormField]` or `[FormIgnore]`,
+  and its questions take the group's page. Clinical trials share their revision's
+  `RecordClinicalTrialInformation` row through an alternate key on `RevisionId`.
+- **Child questions** may be `Text`, `Textarea`, `PrefixedNumber` or `TextList`, with
+  `[FormRequired]`, `[FormMaxLength]` and `[FormDistinct]`. Their IDs are local to the group
+  (`study_name`, no dotted prefix). They cannot be conditions or have conditions.
+- **A text list's child entity** has exactly one string column (the entry) and optionally an
+  `int? DisplayOrder`, which is written from 1 in order.
+- **On the wire** a group is `[{"study_name": "...", "clinical_trials_gov_number": "...",
+"other_registry_numbers": ["..."]}]`; a text list is an ordered `string[]`. Blank text list
+  entries are dropped.
+- **Errors** are keyed by 0-based position: `record_clinical_trial[0].study_name`, and for a text
+  list entry `record_clinical_trial[0].other_registry_numbers[1]`. The page maps them back onto the
+  item, numbering text list entries as shown (the server numbers them without blanks).
+- **Saving** matches items to stored rows. With `ItemKey`, an item keeps the row holding the same
+  key answer (ignoring case), so removing one trial leaves the others on their own rows; items
+  still unmatched (new, or with an edited key) reuse a leftover row between their neighbours, so
+  the stored order holds. Without `ItemKey`, items are matched by position. Rows left over (and
+  their own child rows) are deleted, and missing ones are added.
+- **Audit:** one row for the whole group. With `ItemKey`, it is a JSON object keyed by that
+  question's answer, so items can be matched however they move, for example
+  `{"NCT06123456":{"other_registry_numbers":["ISRCTN12345678"],"study_name":"ION-UK"}}`. The item
+  key must be a required, distinct question of the group. Without it, the items are listed in order.
+- **Focus** follows the MoJ pattern: adding an item focuses its first field; removing one focuses
+  a heading (the list's legend, or the previous item's heading).
 
 ### Hints
 
@@ -456,12 +526,14 @@ and no `[FormOptions]`.
 
 ### Using an existing provider
 
-| Key (`OptionKeys`)                       | Kind                              | Offers                                                                                                   |
-| ---------------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `yes-no-unknown` (`YesNoUnknown`)        | Enum `YesNoUnknown`               | Yes, No, Unknown at this stage                                                                           |
-| `paediatric-status` (`PaediatricStatus`) | Enum `IndicationPaediatricStatus` | Exclusively for children, Both children and adults, Exclusively for adults, Unknown at this stage        |
-| `bnf-chapters` (`BnfChapters`)           | Reference tree `BnfChapter`       | Chapters with their sections, labelled `"1: Gastro-Intestinal System"` and `"1.3: Antisecretory drugs…"` |
-| `therapeutic-areas` (`TherapeuticAreas`) | Reference tree `TherapeuticArea`  | Areas with their diseases or conditions, labelled `"1: Addiction"` and `"1.3: Smoking cessation"`        |
+| Key (`OptionKeys`)                       | Kind                              | Offers                                                                                                    |
+| ---------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `yes-no-unknown` (`YesNoUnknown`)        | Enum `YesNoUnknown`               | Yes, No, Unknown at this stage. Two providers offer `YesNoUnknown`, so name this one with `[FormOptions]` |
+| `yes-no` (`YesNo`)                       | Enum `YesNo`                      | Yes, No                                                                                                   |
+| `clinical-trials-recruiting-in-uk`       | Enum `YesNoUnknown`               | Yes, trials are open and recruiting in the UK; No; Unknown at this stage                                  |
+| `paediatric-status` (`PaediatricStatus`) | Enum `IndicationPaediatricStatus` | Exclusively for children, Both children and adults, Exclusively for adults, Unknown at this stage         |
+| `bnf-chapters` (`BnfChapters`)           | Reference tree `BnfChapter`       | Chapters with their sections, labelled `"1: Gastro-Intestinal System"` and `"1.3: Antisecretory drugs…"`  |
+| `therapeutic-areas` (`TherapeuticAreas`) | Reference tree `TherapeuticArea`  | Areas with their diseases or conditions, labelled `"1: Addiction"` and `"1.3: Smoking cessation"`         |
 
 ### Adding a provider
 
@@ -709,7 +781,8 @@ reports every problem in one exception.
 | Order        | Two sections, two tasks in a section, two pages in a task, or two questions on a page have the same `Order`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | Structure    | More than one `FormLayout` for a record type. A section or task title is blank. A `[FormPage]` names a task no layout declares. An entity has pages in more than one form, or has `[FormEntity]` but no questions                                                                                                                                                                                                                                                                                                                                                                                                                |
 | Controls     | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]`. A `PrecisionDate`, `ActualMonth` or `ActualDate` has no `[FormDateEvent]`, or another control has one. Two date questions in one form use the same `[FormDateEvent]`. A `PrecisionDate`'s or `ActualDate`'s `[FormDateEvent]` has no `Name`                                                                                                                                                                                                                                                                |
-| Presentation | `PrefixedNumber` without `[FormValuePrefixes]`, or the attribute on another control, with a blank prefix, a prefix ending in a digit, a repeated prefix or a prefix that starts another; `Placeholder` on a control other than `Select`, `HierarchicalSelect` or `PrefixedNumber`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`; a `HierarchicalSelect` without `ChildLabel`                                                                                                                                            |
+| Groups       | A group's question has a dotted ID, a control other than `Text`, `Textarea`, `PrefixedNumber` or `TextList`, `[FormPage]` or `[FormShowWhen]`; two of its questions share an ID or `Order`; `ItemKey` names no required, distinct, single-value question; a `TextList`'s entity has other than one string column; `ItemLabel` missing on a `Group` or set elsewhere; `RemoveLabel` or `ItemKey` on another control; `[FormDistinct]` on anything but a `TextList` or a group's single-value question                                                                                                                             |
+| Presentation | `PrefixedNumber` without `[FormValuePrefixes]`, or the attribute on another control, with a blank prefix, a prefix ending in a digit, a repeated prefix, a prefix that starts another or a negative `Digits`; `Placeholder` on a control other than `Select`, `HierarchicalSelect` or `PrefixedNumber`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`, a `Group` or a `TextList`; a `HierarchicalSelect` without `ChildLabel`                                                                                            |
 | Options      | A choice control has no provider registered for its type, or several and no `[FormOptions]`. A text control has `[FormOptions]`. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId`                                                                                                                                                                                                                                                                    |
 | Rules        | A rule is on a control it does not apply to, or a rule kind appears twice                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Rows         | The entity has no `int RevisionId` FK to `RecordRevision`. `RowSource = FirstSave` on an entity with other non-nullable columns                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |

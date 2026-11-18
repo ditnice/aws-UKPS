@@ -57,6 +57,10 @@ internal static class AnswerHash
                     writer.Write(answer.Value);
                 }
             }
+            else if (answer.Shape is AnswerShape.List or AnswerShape.Group)
+            {
+                writer.Write(answer.ToJson().GetRawText());
+            }
             else
             {
                 writer.Write(answer.Values.Count);

@@ -124,12 +124,13 @@ internal sealed class RecordFormSaveService(
             applicability
         );
 
-        // Answers that failed to parse or validate are left out, so a page with errors never
-        // matches the stored answers and its errors are reported.
+        // Answers that failed to parse or validate, including those with an error on an entry or
+        // item, are left out, so a page with errors never matches the stored answers and its
+        // errors are reported.
         PageAnswers pageAfter = PageAnswers.For(
             page,
             after
-                .Where(a => parsed.ContainsKey(a.Key) && !errors.ContainsKey(a.Key))
+                .Where(a => parsed.ContainsKey(a.Key) && !HasError(errors, a.Key))
                 .ToDictionary(StringComparer.Ordinal)
         );
         if (pageBefore.PageHashIsEqual(pageAfter))
@@ -199,6 +200,13 @@ internal sealed class RecordFormSaveService(
             {
                 NextPageId = currentPage.Model.NextPage(currentPage.Page, applicability)?.Id,
             }
+        );
+
+    /// <summary>Whether the question, or one of its text list entries or group items, has an error.</summary>
+    private static bool HasError(Dictionary<string, string> errors, string questionId) =>
+        errors.Keys.Any(key =>
+            key.StartsWith(questionId, StringComparison.Ordinal)
+            && (key.Length == questionId.Length || key[questionId.Length] == '[')
         );
 
     private static Dictionary<string, FormAnswer> Overlay(

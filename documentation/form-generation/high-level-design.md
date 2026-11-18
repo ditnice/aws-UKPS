@@ -76,13 +76,13 @@ model, telling it which column or junction table holds the answer.
 | Area | Scope |
 |---|---|
 | Medicine form, section and task "Indication details" | 1 task with 6 pages: indication, BNF chapter, therapeutic area, treating children, treating cancer, treating a rare disease |
-| Controls | `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect` (a parent dropdown, then an optional child dropdown; on a junction it repeats with "add another") |
-| Rules | `Required`, `MaxLength`, `MaxItems` |
-| Bindings | Column (string, enum, reference ID), flags enum, junction table |
+| Controls | `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect` (a parent dropdown, then an optional child dropdown; on a junction it repeats with "add another"), dates, `PrefixedNumber`, `Group` (repeating items of several questions) and `TextList` (repeating text boxes) |
+| Rules | `Required`, `MaxLength`, `MaxItems`, `Distinct` |
+| Bindings | Column (string, enum, reference ID), flags enum, junction table, regulatory date, group, text list |
 | Entry points | The record task list is the root of the journey. Record creation redirects to it, and **Update record** on the record details page opens it. Both show only when `canEditContent`, returned by `POST /records` and `GET /records/{id}`, is true: the record type has a form and the user can edit it |
 | Audit | One event per save, one row per changed answer |
 | Conditions | Questions revealed by an answer on the same page, and pages shown by an answer on an earlier page (see [Conditional questions and pages](#conditional-questions-and-pages)) |
-| Later | Add-another groups, vaccine forms, searchable combobox, hiding answers that do not apply on View record |
+| Later | Nested groups beyond a text list, choice questions inside groups, vaccine forms, searchable combobox, hiding answers that do not apply on View record |
 
 ## Architecture
 
@@ -328,6 +328,17 @@ metadata, so attributes never contain expressions:
   `MedicinesIndicationDetail.TherapeuticAreas`. It reads EF metadata to find the junction's
   owner foreign key and its reference foreign key. On write, it compares the submitted set with
   the stored rows and inserts or deletes only the difference.
+- **`GroupBinding`** is built from a navigation collection annotated as a `Group`. Each item is a
+  child row whose questions have their own bindings on that row. Rows are read in order (by
+  `DisplayOrder` when the child has one, then ID). Writes match items to rows by the `ItemKey`
+  answer when there is one, then fill leftover rows without breaking the stored order (by
+  position when there is no `ItemKey`), delete rows left over after clearing their own child rows,
+  and add missing ones. Its audit value is
+  one JSON object keyed by the `ItemKey` question's answer.
+  Clinical trials persist `DisplayOrder` independently of their row identity, so changing or
+  reordering trial numbers preserves the submitted order on subsequent reads.
+- **`TextListBinding`** stores an ordered `string[]` as child rows with one string column each,
+  matched by position, with `DisplayOrder` written from 1.
 
 #### Content rows
 

@@ -10,6 +10,7 @@ import type { Answer, Rule } from './types'
 type RuleCase = {
   name: string
   multiple: boolean
+  list?: boolean
   rules: Rule[]
   answer: Answer
   error: string | null

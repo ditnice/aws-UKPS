@@ -1,7 +1,13 @@
-/** Server messages for a prefixed number; mirror RecordFormMessages.SelectIdType, IdDigitsOnly and IdOutOfRange. */
+/**
+ * Server messages for a prefixed number; mirror RecordFormMessages.SelectIdType, IdDigitsOnly,
+ * IdOutOfRange and IdDigits.
+ */
 export const selectIdTypeMessage = 'Select ID type'
 export const idDigitsOnlyMessage = 'ID must be a whole positive number'
 export const idOutOfRangeMessage = 'ID must not be longer than 5 digits'
+export const idDigitsMessage = (digits: number) => `ID must be ${digits} digits`
+
+const maxDigits = 5
 
 /** Splits a value into the prefix it starts with, or '' when it starts with none, and the rest. */
 export const splitPrefixedNumber = (prefixes: string[], value: string) => {
@@ -11,11 +17,13 @@ export const splitPrefixedNumber = (prefixes: string[], value: string) => {
 
 /**
  * The value the server would save and the message it would reject it with. A prefix with no
- * digits is saved as blank, so it is never an error. Mirrors PrefixedNumberAnswer.Evaluate.
+ * digits is saved as blank, so it is never an error. `digits` is the exact number of digits
+ * needed, or up to 5 when not given. Mirrors PrefixedNumberAnswer.Evaluate.
  */
 export const evaluatePrefixedNumber = (
   prefixes: string[],
   value: string | null,
+  digits?: number | null,
 ): { value: string | null; error: string | null } => {
   if (value === null) {
     return { value: null, error: null }
@@ -30,7 +38,10 @@ export const evaluatePrefixedNumber = (
   if (!/^[0-9]+$/.test(number) || /^0+$/.test(number)) {
     return { value, error: idDigitsOnlyMessage }
   }
-  return { value, error: number.length > 5 ? idOutOfRangeMessage : null }
+  if (digits) {
+    return { value, error: number.length !== digits ? idDigitsMessage(digits) : null }
+  }
+  return { value, error: number.length > maxDigits ? idOutOfRangeMessage : null }
 }
 
 /** Which boxes an error is about: the type for "Select ID type", the number for digit and length errors, both for anything else. */
@@ -38,7 +49,11 @@ export const prefixedNumberErrorParts = (error?: string) => {
   if (error === selectIdTypeMessage) {
     return { prefix: true, number: false }
   }
-  if (error === idDigitsOnlyMessage || error === idOutOfRangeMessage) {
+  if (
+    error === idDigitsOnlyMessage ||
+    error === idOutOfRangeMessage ||
+    (error && /^ID must be \d+ digits$/.test(error))
+  ) {
     return { prefix: false, number: true }
   }
   return { prefix: Boolean(error), number: Boolean(error) }

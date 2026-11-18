@@ -61,6 +61,7 @@ internal sealed class RecordMhraDate
         Hint = "Select yes if you anticipate conditional approval based on current plans."
     )]
     [FormRequired("Select whether conditional approval is anticipated in the UK")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? UkConditionalApprovalAnticipated { get; set; }
 
     // Navigation
