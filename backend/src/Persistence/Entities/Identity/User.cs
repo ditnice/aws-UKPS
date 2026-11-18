@@ -35,6 +35,8 @@ internal sealed class User
     // Navigation
     public ICollection<UserOrgMembership>? UserOrgMemberships { get; set; }
     public ICollection<UserAudit> UserAudits { get; set; } = [];
+    public byte[]? Version { get; set; }
+
     private readonly List<IUserDomainEvent> _events = new List<IUserDomainEvent>();
 
     internal int? FindCurrentOrganisationId()

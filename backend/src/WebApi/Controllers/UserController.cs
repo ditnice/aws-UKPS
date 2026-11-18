@@ -235,6 +235,12 @@ public class UserController(IUserService userService) : ControllerBase
                                     ],
                                 }
                             )
+                        ),
+                    concurrentChangeDetected: () =>
+                        Problem(
+                            statusCode: StatusCodes.Status409Conflict,
+                            title: "Conflict",
+                            detail: "The user was modified by another request. Please retry."
                         )
                 )
         );

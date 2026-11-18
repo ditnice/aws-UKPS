@@ -627,6 +627,12 @@ internal partial class UserService(
 
             return Result<UpdateUserEmailError>.Ok();
         }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result<UpdateUserEmailError>.Err(
+                new UpdateUserEmailError.ConcurrentChangeDetected()
+            );
+        }
         catch (DbUpdateException updateException)
             when (ConstraintExceptions.IsUniquePendingEmailException(updateException))
         {
@@ -667,32 +673,16 @@ internal partial class UserService(
                     MapPendingEmailAsVerifiedError(domainError.Value)
                 );
             }
-            int rowsAffected = await dbContext
-                .Users.Where(x =>
-                    x.Id == user.Id
-                    && x.PendingEmailVerificationToken == user.PendingEmailVerificationToken
-                )
-                .ExecuteUpdateAsync(
-                    u =>
-                    {
-                        u.SetProperty(x => x.PendingEmailVerifiedAt, user.PendingEmailVerifiedAt);
-                        u.SetProperty(
-                            x => x.PendingEmailVerificationToken,
-                            user.PendingEmailVerificationToken
-                        );
-                    },
-                    cancellationToken
-                );
-
-            if (rowsAffected == 0)
-            {
-                return VerifyPendingEmailAddressResult.Err(
-                    new VerifyPendingEmailAddressError.ConcurrentChangeDetected()
-                );
-            }
+            await dbContext.SaveChangesAsync(cancellationToken);
             await HandleUserEvents(user, cancellationToken);
 
             return VerifyPendingEmailAddressResult.Ok();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return VerifyPendingEmailAddressResult.Err(
+                new VerifyPendingEmailAddressError.ConcurrentChangeDetected()
+            );
         }
         catch (Exception ex)
         {

@@ -348,6 +348,12 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("user_type");
 
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea")
+                        .HasColumnName("version");
+
                     b.Property<string>("WorkEmail")
                         .IsRequired()
                         .HasColumnType("text")
