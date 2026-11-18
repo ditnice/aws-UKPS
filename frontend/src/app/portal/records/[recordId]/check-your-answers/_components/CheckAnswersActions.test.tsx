@@ -29,7 +29,7 @@ const props = {
 describe('CheckAnswersActions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.submitRecord.mockResolvedValue({ response: { ok: true, status: 200 } })
+    mocks.submitRecord.mockResolvedValue({ response: { ok: true, status: 204 } })
   })
 
   it('renders the submit button and a link back to the records', () => {

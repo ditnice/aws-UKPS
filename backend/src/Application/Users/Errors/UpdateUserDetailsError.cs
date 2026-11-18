@@ -18,21 +18,24 @@ public abstract record UpdateUserDetailsError
     public sealed record UserDoesNotExist : UpdateUserDetailsError;
 
     /// <summary>
-    /// Indicates that the email address conflicts with an existing user's email address.
+    /// Represents a failure to update user details because the supplied data did not pass validation.
     /// </summary>
-    internal sealed record ConflictingEmail : UpdateUserDetailsError;
+    /// <param name="ErrorMessage">
+    /// A human-readable description of the validation failure, suitable for display or logging.
+    /// </param>
+    public sealed record ValidationError(string ErrorMessage) : UpdateUserDetailsError;
 
     internal TResult Match<TResult>(
         Func<TResult> unauthorised,
         Func<TResult> userDoesNotExist,
-        Func<TResult> conflictingEmail
+        Func<ValidationError, TResult> validationError
     )
     {
         return this switch
         {
             Unauthorised => unauthorised(),
             UserDoesNotExist => userDoesNotExist(),
-            ConflictingEmail => conflictingEmail(),
+            ValidationError ve => validationError(ve),
             _ => throw new UnreachableException($"Unrecognised {nameof(UpdateUserDetailsError)}"),
         };
     }

@@ -629,7 +629,10 @@ public class RecordViewServiceTests : DatabaseTestBase
         var ct = TestContext.Current.CancellationToken;
         Record record = await AddRecord(RecordStatus.Published);
         RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
-        var pathwayPoint = await AddEntity(new PatientPathwayPoint { Label = "Diagnosis" }, ct);
+        var pathwayPoint = await AddEntity(
+            new PatientPathwayPoint { Code = PatientPathwayPointCodes.Other, Label = "Other" },
+            ct
+        );
         var populationRange = await AddEntity(
             new UkPatientPopulationRange { Label = "1,000 to 10,000" },
             ct
@@ -805,7 +808,7 @@ public class RecordViewServiceTests : DatabaseTestBase
                 PatientPathwayPoint = new ReferenceDataDto
                 {
                     Id = pathwayPoint.Id,
-                    Label = "Diagnosis",
+                    Label = "Other",
                 },
                 GenomicTestPathwayPointOther = "Other point",
                 GenomicAlterations = "Alterations",

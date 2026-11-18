@@ -109,7 +109,7 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
         )),
       )}
 
-      {data.canSubmit && data.errors.length === 0 && (
+      {data.errors.length === 0 && (
         <CheckAnswersActions
           recordId={recordId}
           formVersion={data.formVersion}

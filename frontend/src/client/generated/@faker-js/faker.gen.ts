@@ -3,7 +3,7 @@
 import type { Faker } from '@faker-js/faker';
 import { faker } from '@faker-js/faker/locale/en_GB';
 
-import type { ApproveData, ApproveErrors, ApproveResponses, ArchiveRecordData, ArchiveRecordErrors, ArchiveRecordResponses, AuthenticationFailCode, AuthenticationProblemDetails, BiomarkerType, ChangeRecordStatusCommand, ConditionKind, ConfirmNewPasswordCommand, ConfirmNewPasswordData, ConfirmNewPasswordErrors, ConfirmNewPasswordResponses, CreateOrganisationDto, CreateRecordCommand, CreateRecordData, CreateRecordDto, CreateRecordErrors, CreateRecordResponses, DatePrecision, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, DesignationStatus, DiscardRecordData, DiscardRecordErrors, DiscardRecordResponses, EamsOpinionDecision, FormControl, GenomicTestMandatoryStatus, GenomicTestNgtdRelationship, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentOrganisationChampionsErrors, GetCurrentOrganisationChampionsResponses, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsResponse, GetRecordCheckAnswersData, GetRecordCheckAnswersErrors, GetRecordCheckAnswersResponses, GetRecordData, GetRecordErrors, GetRecordFormPageData, GetRecordFormPageErrors, GetRecordFormPageResponses, GetRecordResponses, GetRecordsQuerySortValue, GetRecordTaskListData, GetRecordTaskListErrors, GetRecordTaskListResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeErrors, GetUsersMeResponses, GetUsersQuerySortValue, GetUsersResponses, IndicationPaediatricStatus, InitiateForgottenPasswordProcedureCommand, InitiateForgottenPasswordProcedureData, InitiateForgottenPasswordProcedureErrors, InitiateForgottenPasswordProcedureResponses, InitiateUpdateMultiFactorAuthenticationErrors, InitiateUpdateMultiFactorAuthenticationResponses, InvalidRecordProblemDetails, LoginRequest, MedicineHtaAssessor, MedicinesBudgetImpactDto, MedicinesDevelopmentBackgroundDto, MedicinesEamsPimDto, MedicinesEuStatusDto, MedicinesGlobalSubmissionDto, MedicinesIndicationDetailDto, MedicinesIntlRecognitionDto, MedicinesLaboratoryTestingDto, MedicinesPatientIdentificationDto, MedicinesServiceImpactDto, MedicinesTreatmentDetailDto, MedicineTechnologyStatus, MultiFactorAuthenticationSetupDto, NameAndIdentifierType, NetUkBudgetImpactBand, NhsServiceChangesRequired, OnboardedUserDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationListDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfRecordListItemDto, PaginatedResponseDtoOfUserListItemDto, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PatientAccessSchemeRegion, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthSignOutErrors, PostAuthSignOutResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ProblemDetails, PutRecordOnHoldData, PutRecordOnHoldErrors, PutRecordOnHoldResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RecordAction, RecordCheckAnswersDto, RecordCheckAnswersOptionDto, RecordCheckAnswersQuestionDto, RecordCheckAnswersSectionDto, RecordCheckAnswersTaskDto, RecordClinicalTrialDto, RecordClinicalTrialInformationDto, RecordDisplayStatus, RecordDto, RecordDtoMedicineRecordDto, RecordDtoVaccineRecordDto, RecordHtaDto, RecordListItemDto, RecordMhraDateDto, RecordMhraProcedureDto, RecordNameAndIdentifierDto, RecordPageConditionDto, RecordPageDto, RecordPageOptionDto, RecordPagePageDto, RecordPageQuestionDto, RecordPageRuleDto, RecordPageSectionDto, RecordPageTaskDto, RecordProductDetailDto, RecordStatus, RecordStatusChangeReason, RecordTaskListDto, RecordTaskListSectionDto, RecordTaskListTaskDto, RecordTaskStatus, RecordType, ReferenceDataDto, RegisterUserCommandDto, RegisterUserConfirmationDto, RegisterUserData, RegisterUserDetailsDto, RegisterUserErrors, RegisterUserResponses, RegulatoryDateDto, RejectData, RejectErrors, RejectResponses, RemovedUserDto, RemoveUserData, RemoveUserErrors, RemoveUserResponses, ResendSetupTokenCommand, ResendSetupTokenResponse, RespondToMultiFactorAuthenticationChallengeCommand, ResumeRecordData, ResumeRecordErrors, ResumeRecordResponses, RuleKind, SaveRecordFormPageData, SaveRecordFormPageErrors, SaveRecordFormPageResponses, SaveRecordPageCommand, SaveRecordPageDto, SetupUserCommand, SortDirection, SubmissionErrorDto, SubmitRecordCommand, SubmitRecordData, SubmitRecordErrors, SubmitRecordResponses, TrialPhase, UkpsChallengeType, UpdateCurrentOrganisationCommand, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateStatus, UpdateUserDetailsCommand, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserMembershipAction, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand, VerifyMultiFactorAuthenticationUpdateCommand, VerifyMultiFactorAuthenticationUpdateData, VerifyMultiFactorAuthenticationUpdateErrors, VerifyMultiFactorAuthenticationUpdateResponses, YesNoUnknown } from '../types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, ArchiveRecordData, ArchiveRecordErrors, ArchiveRecordResponses, AuthenticationFailCode, AuthenticationProblemDetails, BiomarkerType, ChangeRecordStatusCommand, ConditionKind, ConfirmNewPasswordCommand, ConfirmNewPasswordData, ConfirmNewPasswordErrors, ConfirmNewPasswordResponses, CreateOrganisationDto, CreateRecordCommand, CreateRecordData, CreateRecordDto, CreateRecordErrors, CreateRecordResponses, DatePrecision, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, DesignationStatus, DiscardRecordData, DiscardRecordErrors, DiscardRecordResponses, EamsOpinionDecision, EditableUserDetail, FormControl, GenomicTestMandatoryStatus, GenomicTestNgtdRelationship, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentOrganisationChampionsErrors, GetCurrentOrganisationChampionsResponses, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsResponse, GetRecordCheckAnswersData, GetRecordCheckAnswersErrors, GetRecordCheckAnswersResponses, GetRecordData, GetRecordErrors, GetRecordFormPageData, GetRecordFormPageErrors, GetRecordFormPageResponses, GetRecordResponses, GetRecordsQuerySortValue, GetRecordTaskListData, GetRecordTaskListErrors, GetRecordTaskListResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeErrors, GetUsersMeResponses, GetUsersQuerySortValue, GetUsersResponses, IndicationPaediatricStatus, InitiateForgottenPasswordProcedureCommand, InitiateForgottenPasswordProcedureData, InitiateForgottenPasswordProcedureErrors, InitiateForgottenPasswordProcedureResponses, InitiateUpdateMultiFactorAuthenticationErrors, InitiateUpdateMultiFactorAuthenticationResponses, InvalidRecordProblemDetails, LoginRequest, MedicineHtaAssessor, MedicinesBudgetImpactDto, MedicinesDevelopmentBackgroundDto, MedicinesEamsPimDto, MedicinesEuStatusDto, MedicinesGlobalSubmissionDto, MedicinesIndicationDetailDto, MedicinesIntlRecognitionDto, MedicinesLaboratoryTestingDto, MedicinesPatientIdentificationDto, MedicinesServiceImpactDto, MedicinesTreatmentDetailDto, MedicineTechnologyStatus, MultiFactorAuthenticationSetupDto, NameAndIdentifierType, NetUkBudgetImpactBand, NhsServiceChangesRequired, OnboardedUserDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationListDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfRecordListItemDto, PaginatedResponseDtoOfUserListItemDto, PatientAccessSchemeRegion, PendingWorkEmailChangeDto, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthSignOutErrors, PostAuthSignOutResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ProblemDetails, PutRecordOnHoldData, PutRecordOnHoldErrors, PutRecordOnHoldResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RecordAction, RecordCheckAnswersDto, RecordCheckAnswersOptionDto, RecordCheckAnswersQuestionDto, RecordCheckAnswersSectionDto, RecordCheckAnswersTaskDto, RecordClinicalTrialDto, RecordClinicalTrialInformationDto, RecordDisplayStatus, RecordDto, RecordDtoMedicineRecordDto, RecordDtoVaccineRecordDto, RecordHtaDto, RecordListItemDto, RecordMhraDateDto, RecordMhraProcedureDto, RecordNameAndIdentifierDto, RecordPageConditionDto, RecordPageDto, RecordPageOptionDto, RecordPagePageDto, RecordPageQuestionDto, RecordPageRuleDto, RecordPageSectionDto, RecordPageTaskDto, RecordProductDetailDto, RecordStatus, RecordStatusChangeReason, RecordTaskListDto, RecordTaskListSectionDto, RecordTaskListTaskDto, RecordTaskStatus, RecordType, ReferenceDataDto, RegisterUserCommandDto, RegisterUserConfirmationDto, RegisterUserData, RegisterUserDetailsDto, RegisterUserErrors, RegisterUserResponses, RegulatoryDateDto, RejectData, RejectErrors, RejectResponses, RemovedUserDto, RemoveUserData, RemoveUserErrors, RemoveUserResponses, ResendSetupTokenCommand, ResendSetupTokenResponse, RespondToMultiFactorAuthenticationChallengeCommand, ResumeRecordData, ResumeRecordErrors, ResumeRecordResponses, RuleKind, SaveRecordFormPageData, SaveRecordFormPageErrors, SaveRecordFormPageResponses, SaveRecordPageCommand, SaveRecordPageDto, SetupUserCommand, SortDirection, SubmissionConflictProblemDetails, SubmissionErrorDto, SubmitRecordCommand, SubmitRecordData, SubmitRecordErrors, TrialPhase, UkpsChallengeType, UpdateCurrentOrganisationCommand, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateStatus, UpdateUserDetailsCommand, UpdateUserDetailsData, UpdateUserDetailsErrors, UpdateUserDetailsResponses, UpdateUserEmailCommand, UpdateUserEmailData, UpdateUserEmailErrors, UpdateUserEmailResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserMembershipAction, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand, VerifyMultiFactorAuthenticationUpdateCommand, VerifyMultiFactorAuthenticationUpdateData, VerifyMultiFactorAuthenticationUpdateErrors, VerifyMultiFactorAuthenticationUpdateResponses, YesNoUnknown } from '../types.gen';
 
 export type Options = {
     faker?: Faker;
@@ -114,6 +114,11 @@ export const fakeDesignationStatus = (options?: Options): DesignationStatus => {
 export const fakeEamsOpinionDecision = (options?: Options): EamsOpinionDecision => {
     const f = options?.faker ?? faker;
     return f.helpers.arrayElement(['Negative', 'Positive']);
+};
+
+export const fakeEditableUserDetail = (options?: Options): EditableUserDetail => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement(['FullName', 'WorkPhone']);
 };
 
 export const fakeFormControl = (options?: Options): FormControl => {
@@ -304,6 +309,14 @@ export const fakePatientAccessSchemeRegion = (options?: Options): PatientAccessS
         'Scotland',
         'NorthernIreland'
     ]);
+};
+
+export const fakePendingWorkEmailChangeDto = (options?: Options): PendingWorkEmailChangeDto => {
+    const f = options?.faker ?? faker;
+    return {
+        value: f.string.sample(),
+        verifiedByEmail: f.datatype.boolean()
+    };
 };
 
 export const fakePharmaceuticalEntity = (options?: Options): PharmaceuticalEntity => {
@@ -757,6 +770,19 @@ export const fakeSortDirection = (options?: Options): SortDirection => {
     return f.helpers.arrayElement(['Ascending', 'Descending']);
 };
 
+export const fakeSubmissionConflictProblemDetails = (options?: Options): SubmissionConflictProblemDetails => {
+    const f = options?.faker ?? faker;
+    return {
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { type: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { title: f.datatype.boolean() ? f.lorem.words() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { status: f.datatype.boolean() ? f.number.int() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { detail: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { instance: f.datatype.boolean() ? f.string.sample() : null },
+        code: f.string.sample(),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { organisationId: f.datatype.boolean() ? f.number.int() : null }
+    };
+};
+
 export const fakeSubmissionErrorDto = (options?: Options): SubmissionErrorDto => {
     const f = options?.faker ?? faker;
     return {
@@ -775,7 +801,7 @@ export const fakeInvalidRecordProblemDetails = (options?: Options): InvalidRecor
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { status: f.datatype.boolean() ? f.number.int() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { detail: f.datatype.boolean() ? f.string.sample() : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { instance: f.datatype.boolean() ? f.string.sample() : null },
-        code: f.datatype.boolean() ? f.string.sample() : null,
+        code: f.string.sample(),
         fields: f.helpers.multiple(() => fakeSubmissionErrorDto(options)),
         errors: !resolveCondition(options?.includeOptional ?? true, f) ? {} as {} : {
             additionalProp: f.helpers.multiple(() => f.string.sample())
@@ -790,7 +816,6 @@ export const fakeRecordCheckAnswersDto = (options?: Options): RecordCheckAnswers
         recordId: f.number.int(),
         organisationId: f.number.int(),
         revisionHash: f.string.sample(),
-        canSubmit: f.datatype.boolean(),
         sections: f.helpers.multiple(() => fakeRecordCheckAnswersSectionDto(options)),
         errors: f.helpers.multiple(() => fakeSubmissionErrorDto(options))
     };
@@ -873,9 +898,15 @@ export const fakeUpdateStatus = (options?: Options): UpdateStatus => {
 export const fakeUpdateUserDetailsCommand = (options?: Options): UpdateUserDetailsCommand => {
     const f = options?.faker ?? faker;
     return {
-        fullName: f.person.fullName(),
-        workEmail: f.internet.email(),
-        workTelephone: f.string.sample()
+        property: fakeEditableUserDetail(options),
+        value: f.string.sample()
+    };
+};
+
+export const fakeUpdateUserEmailCommand = (options?: Options): UpdateUserEmailCommand => {
+    const f = options?.faker ?? faker;
+    return {
+        value: f.string.alpha({ length: { min: 0, max: 255 } })
     };
 };
 
@@ -960,7 +991,8 @@ export const fakeUserInformationDto = (options?: Options): UserInformationDto =>
         organisationName: f.string.sample(),
         userRole: fakeUserRole(options),
         status: fakeUserOrgStatus(options),
-        hasMultipleOrganisations: f.datatype.boolean()
+        hasMultipleOrganisations: f.datatype.boolean(),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { pendingWorkEmail: f.datatype.boolean() ? fakePendingWorkEmailChangeDto(options) : null }
     };
 };
 
@@ -1720,9 +1752,11 @@ export const fakeGetRecordCheckAnswersResponse200 = (options?: Options): GetReco
 
 export const fakeGetRecordCheckAnswersResponse401 = (options?: Options): GetRecordCheckAnswersErrors[401] => fakeAuthenticationProblemDetails(options);
 
+export const fakeGetRecordCheckAnswersResponse403 = (options?: Options): GetRecordCheckAnswersErrors[403] => fakeProblemDetails(options);
+
 export const fakeGetRecordCheckAnswersResponse404 = (options?: Options): GetRecordCheckAnswersErrors[404] => fakeProblemDetails(options);
 
-export const fakeGetRecordCheckAnswersResponse409 = (options?: Options): GetRecordCheckAnswersErrors[409] => fakeAuthenticationProblemDetails(options);
+export const fakeGetRecordCheckAnswersResponse409 = (options?: Options): GetRecordCheckAnswersErrors[409] => fakeSubmissionConflictProblemDetails(options);
 
 export const fakeSubmitRecordRequest = (options?: Options): Omit<SubmitRecordData, 'url'> => {
     const f = options?.faker ?? faker;
@@ -1734,8 +1768,6 @@ export const fakeSubmitRecordRequest = (options?: Options): Omit<SubmitRecordDat
     };
 };
 
-export const fakeSubmitRecordResponse200 = (): SubmitRecordResponses[200] => undefined;
-
 export const fakeSubmitRecordResponse400 = (options?: Options): SubmitRecordErrors[400] => fakeValidationProblemDetails(options);
 
 export const fakeSubmitRecordResponse401 = (options?: Options): SubmitRecordErrors[401] => fakeAuthenticationProblemDetails(options);
@@ -1744,7 +1776,7 @@ export const fakeSubmitRecordResponse403 = (options?: Options): SubmitRecordErro
 
 export const fakeSubmitRecordResponse404 = (options?: Options): SubmitRecordErrors[404] => fakeProblemDetails(options);
 
-export const fakeSubmitRecordResponse409 = (options?: Options): SubmitRecordErrors[409] => fakeAuthenticationProblemDetails(options);
+export const fakeSubmitRecordResponse409 = (options?: Options): SubmitRecordErrors[409] => fakeSubmissionConflictProblemDetails(options);
 
 export const fakeSubmitRecordResponse422 = (options?: Options): SubmitRecordErrors[422] => fakeInvalidRecordProblemDetails(options);
 
@@ -1838,7 +1870,7 @@ export const fakeRemoveUserResponse404 = (options?: Options): RemoveUserErrors[4
 
 export const fakeRemoveUserResponse409 = (options?: Options): RemoveUserErrors[409] => fakeAuthenticationProblemDetails(options);
 
-export const fakePatchUsersByUserIdRequest = (options?: Options): Omit<PatchUsersByUserIdData, 'url'> => {
+export const fakeUpdateUserDetailsRequest = (options?: Options): Omit<UpdateUserDetailsData, 'url'> => {
     const f = options?.faker ?? faker;
     return {
         body: fakeUpdateUserDetailsCommand(options),
@@ -1848,15 +1880,35 @@ export const fakePatchUsersByUserIdRequest = (options?: Options): Omit<PatchUser
     };
 };
 
-export const fakePatchUsersByUserIdResponse200 = (options?: Options): PatchUsersByUserIdResponses[200] => fakeUserDetailsDto(options);
+export const fakeUpdateUserDetailsResponse200 = (options?: Options): UpdateUserDetailsResponses[200] => fakeUserDetailsDto(options);
 
-export const fakePatchUsersByUserIdResponse400 = (options?: Options): PatchUsersByUserIdErrors[400] => fakeValidationProblemDetails(options);
+export const fakeUpdateUserDetailsResponse400 = (options?: Options): UpdateUserDetailsErrors[400] => fakeValidationProblemDetails(options);
 
-export const fakePatchUsersByUserIdResponse401 = (options?: Options): PatchUsersByUserIdErrors[401] => fakeAuthenticationProblemDetails(options);
+export const fakeUpdateUserDetailsResponse401 = (options?: Options): UpdateUserDetailsErrors[401] => fakeAuthenticationProblemDetails(options);
 
-export const fakePatchUsersByUserIdResponse404 = (options?: Options): PatchUsersByUserIdErrors[404] => fakeProblemDetails(options);
+export const fakeUpdateUserDetailsResponse404 = (options?: Options): UpdateUserDetailsErrors[404] => fakeProblemDetails(options);
 
-export const fakePatchUsersByUserIdResponse409 = (options?: Options): PatchUsersByUserIdErrors[409] => fakeAuthenticationProblemDetails(options);
+export const fakeUpdateUserDetailsResponse409 = (options?: Options): UpdateUserDetailsErrors[409] => fakeAuthenticationProblemDetails(options);
+
+export const fakeUpdateUserEmailRequest = (options?: Options): Omit<UpdateUserEmailData, 'url'> => {
+    const f = options?.faker ?? faker;
+    return {
+        body: fakeUpdateUserEmailCommand(options),
+        path: {
+            userId: f.number.int()
+        }
+    };
+};
+
+export const fakeUpdateUserEmailResponse200 = (): UpdateUserEmailResponses[200] => undefined;
+
+export const fakeUpdateUserEmailResponse400 = (options?: Options): UpdateUserEmailErrors[400] => fakeValidationProblemDetails(options);
+
+export const fakeUpdateUserEmailResponse401 = (options?: Options): UpdateUserEmailErrors[401] => fakeAuthenticationProblemDetails(options);
+
+export const fakeUpdateUserEmailResponse404 = (options?: Options): UpdateUserEmailErrors[404] => fakeProblemDetails(options);
+
+export const fakeUpdateUserEmailResponse409 = (options?: Options): UpdateUserEmailErrors[409] => fakeAuthenticationProblemDetails(options);
 
 export const fakePostUsersOnboardRequest = (options?: Options): Omit<PostUsersOnboardData, 'url'> => ({
     body: fakeOnboardUserCommandDto(options)

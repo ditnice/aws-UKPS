@@ -13,6 +13,7 @@ using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
+using UKPS.Api.Tests.Utilities.Harnesses;
 using UKPS.Api.WebApi.InternalServices.Identity;
 using Record = UKPS.Api.Persistence.Entities.RecordWorkflow.Record;
 
@@ -87,7 +88,7 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
     {
         using HttpResponseMessage response = await PostSubmit(await CurrentHash());
 
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
         JsonObject dto = (
             await _httpClient.GetFromJsonAsync<JsonObject>(
                 new Uri(
@@ -149,8 +150,7 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
         JsonObject dto = await GetCheckAnswers();
 
         dto["formVersion"]!.GetValue<string>().ShouldBe(FormVersions.Medicine);
-        dto["revisionHash"]!.GetValue<string>().ShouldNotBeNullOrEmpty();
-        dto["canSubmit"]!.GetValue<bool>().ShouldBeTrue();
+        dto["revisionHash"]!.GetValue<string>().ShouldBe(await CurrentHash());
         JsonObject question = dto["sections"]!
             .AsArray()
             .SelectMany(static s => s!["tasks"]!.AsArray())
@@ -184,6 +184,42 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task CheckAnswers_UnknownRecord_ReturnsNotFound()
+    {
+        using HttpResponseMessage response = await _httpClient.GetAsync(
+            new Uri($"/records/{_record.Id + 1000}/check-answers", UriKind.Relative),
+            Ct
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task CheckAnswers_CallerWhoCannotEdit_ReturnsForbidden()
+    {
+        AuthenticateAs(UserRole.Super, _organisation.Id);
+
+        using HttpResponseMessage response = await GetCheckAnswersResponse();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task CheckAnswers_AlreadySubmitted_ReturnsNotSubmittableConflict()
+    {
+        using HttpResponseMessage submitted = await PostSubmit(await CurrentHash());
+        submitted.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        using HttpResponseMessage response = await GetCheckAnswersResponse();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        JsonObject problem = (
+            await response.Content.ReadFromJsonAsync<JsonObject>(Ct)
+        ).ShouldNotBeNull();
+        problem["code"]!.GetValue<string>().ShouldBe("record_not_submittable");
+    }
+
+    [Fact]
     public async Task Submit_StaleHash_ReturnsRecordChangedConflict()
     {
         using HttpResponseMessage response = await PostSubmit("stale");
@@ -200,7 +236,7 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
     {
         string hash = await CurrentHash();
         using HttpResponseMessage submitted = await PostSubmit(hash);
-        submitted.StatusCode.ShouldBe(HttpStatusCode.OK);
+        submitted.StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         using HttpResponseMessage response = await PostSubmit(hash);
 
@@ -218,9 +254,33 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
             Ct
         );
 
-    /// <summary>The revision hash check your answers gives for the revision as it is now.</summary>
-    private async Task<string> CurrentHash() =>
-        (await GetCheckAnswers())["revisionHash"]!.GetValue<string>();
+    /// <summary>
+    /// The revision hash check your answers gives for the revision as it is now, worked out with
+    /// the services directly so submit tests don't depend on the check your answers endpoint.
+    /// </summary>
+    private async Task<string> CurrentHash()
+    {
+        var (form, _) = await Harness<RecordFormPageLoader>()
+            .Service.LoadFormAsync(_record.Id, track: false, Ct);
+        LoadedRevision revision = await Harness<RevisionChecker>()
+            .Service.LoadAsync(form.ShouldNotBeNull(), Ct);
+        return revision.Hash;
+    }
+
+    private ServiceTestHarness<TService> Harness<TService>()
+        where TService : notnull
+    {
+        ServiceTestHarness<TService> harness = new(Context);
+        harness.UpdateCurrentUser(x =>
+            x with
+            {
+                CognitoUsername = _user.CognitoUsername,
+                OrganisationId = _organisation.Id,
+                UserRole = UserRole.Standard,
+            }
+        );
+        return harness;
+    }
 
     private async Task<JsonObject> GetCheckAnswers() =>
         (
@@ -229,4 +289,7 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
                 Ct
             )
         ).ShouldNotBeNull();
+
+    private Task<HttpResponseMessage> GetCheckAnswersResponse() =>
+        _httpClient.GetAsync(new Uri($"/records/{_record.Id}/check-answers", UriKind.Relative), Ct);
 }

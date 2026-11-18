@@ -1,0 +1,128 @@
+name: Backend checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-checks:
+    name: Backend checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+        working-directory: backend
+
+    steps:
+      # actions/checkout v7.0.1 (Node 24).
+      # Pinned to a commit SHA so a moved tag can't change what runs.
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # actions/setup-dotnet v6.1.0 (Node 24).
+      # Pinned to a commit SHA so a moved tag can't change what runs.
+      - name: Set up .NET
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          # Keep in step with backend/Dockerfile.
+          dotnet-version: 10.0.404
+
+      - name: Restore backend dependencies and tools
+        run: |
+          dotnet tool restore --tool-manifest dotnet-tools.json
+          dotnet restore UKPS.Api.slnx
+
+      # Match pre-commit: the build checks analyzers and .editorconfig code style;
+      # CSharpier owns whitespace/layout formatting.
+      - name: Build backend, check code style and regenerate OpenAPI
+        run: dotnet build UKPS.Api.slnx --configuration Release --no-restore -p:EnforceCodeStyle=true
+
+      # Testcontainers starts its own PostgreSQL container using the runner's Docker daemon.
+      - name: Test with coverage
+        id: tests
+        run: |
+          dotnet test --solution UKPS.Api.slnx --configuration Release --no-build \
+            --minimum-expected-tests 1 \
+            --coverlet --coverlet-output-format cobertura \
+            --coverlet-include "[UKPS.Api]*" \
+            --coverlet-exclude-by-file "**/Program.cs" \
+            --coverlet-exclude-by-file "**/obj/**/*.cs" \
+            --coverlet-threshold 80 --coverlet-threshold-type line,branch \
+            --coverlet-threshold-stat Total \
+            --results-directory tests/TestResults/Coverage
+
+      - name: Verify coverage was produced
+        if: ${{ !cancelled() && steps.tests.outcome == 'success' }}
+        run: |
+          if ! compgen -G 'tests/TestResults/Coverage/coverage.cobertura.*.xml' > /dev/null; then
+            echo "::error::Tests passed but no Cobertura coverage report was produced."
+            exit 1
+          fi
+
+      - name: Generate HTML coverage report
+        if: ${{ !cancelled() && hashFiles('backend/tests/TestResults/Coverage/coverage.cobertura.*.xml') != '' }}
+        run: dotnet tool run reportgenerator
+
+      # actions/upload-artifact v7.0.2 (Node 24).
+      # Pinned to a commit SHA so a moved tag can't change what runs.
+      - name: Upload coverage reports
+        if: ${{ !cancelled() && hashFiles('backend/tests/TestResults/Coverage/coverage.cobertura.*.xml') != '' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: backend-coverage
+          path: |
+            backend/tests/TestResults/Coverage/
+            backend/tests/TestResults/CoverageReport/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Check CSharpier formatting
+        run: dotnet csharpier check .
+
+      # pnpm/action-setup v6.1.1 (Node 24).
+      # Pinned to a commit SHA so a moved tag can't change what runs.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          # Keep in step with frontend/Dockerfile.
+          version: 12.13.0
+
+      # actions/setup-node v7.1.0 (Node 24).
+      # Pinned to a commit SHA so a moved tag can't change what runs.
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate frontend API client
+        working-directory: frontend
+        run: pnpm generate:api
+
+      - name: Check generated API files are up to date
+        working-directory: .
+        run: |
+          paths=(backend/openapi/UKPS.Api.json frontend/src/client/generated)
+          status="$(git status --porcelain --untracked-files=all -- "${paths[@]}")"
+          if [[ -n "$status" ]]; then
+            echo "::error::Generated API files are out of date. Run 'just regenerate' and commit the results."
+            printf '%s\n' "$status"
+            git diff -- "${paths[@]}"
+            exit 1
+          fi

@@ -1,5 +1,5 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
-using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.RecordForms.Dtos;
@@ -13,7 +13,6 @@ internal sealed class RecordSubmissionService(
     AppDbContext dbContext,
     RecordFormPageLoader loader,
     RevisionChecker revisionChecker,
-    IOrganisationAuthoriser organisationAuthoriser,
     CurrentDbUserEntityService currentDbUserEntityService,
     IDateTimeProvider dateTimeProvider
 ) : IRecordSubmissionService
@@ -79,19 +78,16 @@ internal sealed class RecordSubmissionService(
 
     private SubmitRecordError? CheckCanSubmit(LoadedForm form, SubmitRecordCommand command)
     {
-        if (
-            !organisationAuthoriser.CanPerformOperationOnOrganisation(
-                Operation.EditRecordContent,
-                form.Record.OrganisationId
-            )
-        )
+        SubmitRecordError? blocked = revisionChecker.FindSubmitBlocker(form) switch
         {
-            return new SubmitRecordError.CannotSubmit();
-        }
-
-        if (!form.Record.CanSubmit(form.Revision))
+            null => null,
+            SubmitBlocker.CannotSubmit => new SubmitRecordError.CannotSubmit(),
+            SubmitBlocker.NotSubmittable => new SubmitRecordError.NotSubmittable(),
+            { } blocker => throw new UnreachableException($"Unhandled submit blocker {blocker}."),
+        };
+        if (blocked is not null)
         {
-            return new SubmitRecordError.NotSubmittable();
+            return blocked;
         }
 
         if (!string.Equals(command.FormVersion, form.Model.Version, StringComparison.Ordinal))
