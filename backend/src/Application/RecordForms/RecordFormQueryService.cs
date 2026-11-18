@@ -92,7 +92,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
         {
             Id = question.Id,
             Type = question.Control,
-            Multiple = question.Shape == AnswerShape.Multi,
+            Multiple = question.Shape is AnswerShape.Multi or AnswerShape.List,
             Label = question.Label,
             Hint = question.Hint,
             Display = question.Display,
@@ -100,7 +100,14 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             ChildLabel = question.ChildLabel,
             ChildPlaceholder = question.ChildPlaceholder,
             AddAnotherLabel = question.AddAnotherLabel,
+            ItemLabel = question.ItemLabel,
+            RemoveLabel = question.RemoveLabel,
+            Children =
+                question.Children.Count == 0
+                    ? null
+                    : question.Children.Select(c => ToDto(c, null, model, codes)).ToArray(),
             Prefixes = question.Prefixes,
+            PrefixDigits = question.PrefixDigits,
             DateName = question.DateName,
             ShowWhen = question.ShowWhen is null ? null : ToDto(question.ShowWhen, model, codes),
             Rules = question

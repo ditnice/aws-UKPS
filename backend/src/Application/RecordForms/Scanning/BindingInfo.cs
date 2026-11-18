@@ -19,4 +19,16 @@ internal sealed record BindingInfo(BindingKind Kind)
 
     public Type? JunctionType { get; init; }
     public PropertyInfo? JunctionReferenceIdProperty { get; init; }
+
+    /// <summary>The child entity of a group or text list binding.</summary>
+    public Type? ChildType { get; init; }
+
+    /// <summary>The child entity's integer primary key, which orders rows after display order.</summary>
+    public PropertyInfo? ChildIdProperty { get; init; }
+
+    /// <summary>The child entity's <c>int? DisplayOrder</c>, when it has one.</summary>
+    public PropertyInfo? ChildDisplayOrderProperty { get; init; }
+
+    /// <summary>The string column holding each entry of a text list binding.</summary>
+    public PropertyInfo? ChildValueProperty { get; init; }
 }

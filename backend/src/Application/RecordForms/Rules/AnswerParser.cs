@@ -5,15 +5,39 @@ namespace UKPS.Api.Application.RecordForms.Rules;
 
 /// <summary>
 /// Checks the JSON shape of a submitted answer and normalises it: text is trimmed and
-/// whitespace-only becomes null; lists are sorted.
+/// whitespace-only becomes null; multi-value answers are sorted; blank text list entries are
+/// dropped; group items are parsed child by child.
 /// </summary>
 internal static class AnswerParser
 {
     /// <summary>Parses the answer, or returns the message describing why it is malformed.</summary>
-    public static (FormAnswer? Answer, string? Error) Parse(AnswerShape shape, JsonElement element)
-    {
-        return shape == AnswerShape.Single ? ParseSingle(element) : ParseMulti(element);
-    }
+    public static (FormAnswer? Answer, string? Error) Parse(
+        FormQuestion question,
+        JsonElement element
+    ) =>
+        question.Shape switch
+        {
+            AnswerShape.Single => ParseSingle(element),
+            AnswerShape.Multi => ParseMulti(element),
+            AnswerShape.List => ParseList(element),
+            AnswerShape.Group => ParseGroup(question, element),
+            _ => (null, RecordFormMessages.WrongShape),
+        };
+
+    /// <summary>
+    /// Parses an answer of a single, multi-value or list shape; a group answer needs its question.
+    /// </summary>
+    public static (FormAnswer? Answer, string? Error) Parse(
+        AnswerShape shape,
+        JsonElement element
+    ) =>
+        shape switch
+        {
+            AnswerShape.Single => ParseSingle(element),
+            AnswerShape.Multi => ParseMulti(element),
+            AnswerShape.List => ParseList(element),
+            _ => throw new ArgumentOutOfRangeException(nameof(shape), shape, null),
+        };
 
     private static (FormAnswer? Answer, string? Error) ParseSingle(JsonElement element)
     {
@@ -51,6 +75,86 @@ internal static class AnswerParser
         }
 
         return (FormAnswer.Multi(values), null);
+    }
+
+    /// <summary>An ordered list of strings; null and blank entries are dropped.</summary>
+    private static (FormAnswer? Answer, string? Error) ParseList(JsonElement element)
+    {
+        if (element.ValueKind != JsonValueKind.Array)
+        {
+            return (null, RecordFormMessages.WrongShape);
+        }
+
+        List<string> values = [];
+        foreach (JsonElement item in element.EnumerateArray())
+        {
+            switch (item.ValueKind)
+            {
+                case JsonValueKind.Null:
+                    continue;
+                case JsonValueKind.String:
+                    if (Normalise(item.GetString()) is { } value)
+                    {
+                        values.Add(value);
+                    }
+
+                    continue;
+                default:
+                    return (null, RecordFormMessages.WrongShape);
+            }
+        }
+
+        return (FormAnswer.List(values), null);
+    }
+
+    /// <summary>An array of objects, each with exactly the group's child question IDs as keys.</summary>
+    private static (FormAnswer? Answer, string? Error) ParseGroup(
+        FormQuestion group,
+        JsonElement element
+    )
+    {
+        if (element.ValueKind != JsonValueKind.Array)
+        {
+            return (null, RecordFormMessages.WrongShape);
+        }
+
+        List<FormGroupItem> items = [];
+        foreach (JsonElement item in element.EnumerateArray())
+        {
+            if (
+                item.ValueKind != JsonValueKind.Object
+                || item.EnumerateObject()
+                    .Any(p =>
+                        !group.Children.Any(c =>
+                            string.Equals(c.Id, p.Name, StringComparison.Ordinal)
+                        )
+                    )
+            )
+            {
+                return (null, RecordFormMessages.WrongShape);
+            }
+
+            Dictionary<string, FormAnswer> answers = new(StringComparer.Ordinal);
+            foreach (FormQuestion child in group.Children)
+            {
+                if (!item.TryGetProperty(child.Id, out JsonElement value))
+                {
+                    return (null, RecordFormMessages.WrongShape);
+                }
+
+                var (answer, error) = Parse(child, value);
+                if (error is not null)
+                {
+                    return (null, RecordFormMessages.WrongShape);
+                }
+
+                answers[child.Id] = answer!;
+            }
+
+            items.Add(new FormGroupItem(answers));
+        }
+
+        return (FormAnswer.Group(items), null);
     }
 
     private static string? Normalise(string? text)

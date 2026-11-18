@@ -13,4 +13,10 @@ internal sealed class FormValuePrefixesAttribute(params string[] prefixes) : Att
 {
     /// <summary>The prefixes, in the order shown.</summary>
     public IReadOnlyList<string> Prefixes { get; } = prefixes;
+
+    /// <summary>
+    /// The exact number of digits after the prefix, for example 8 for a ClinicalTrials.gov
+    /// number. When 0 (the default), up to 5 digits are allowed.
+    /// </summary>
+    public int Digits { get; set; }
 }

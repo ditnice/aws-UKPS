@@ -133,7 +133,9 @@ export const fakeFormControl = (options?: Options): FormControl => {
         'PrecisionDate',
         'ActualMonth',
         'PrefixedNumber',
-        'ActualDate'
+        'ActualDate',
+        'Group',
+        'TextList'
     ]);
 };
 
@@ -692,7 +694,8 @@ export const fakeRuleKind = (options?: Options): RuleKind => {
     return f.helpers.arrayElement([
         'Required',
         'MaxLength',
-        'MaxItems'
+        'MaxItems',
+        'Distinct'
     ]);
 };
 
@@ -705,7 +708,7 @@ export const fakeRecordPageRuleDto = (options?: Options): RecordPageRuleDto => {
     };
 };
 
-export const fakeRecordPageQuestionDto = (options?: Options): RecordPageQuestionDto => {
+export const fakeRecordPageQuestionDto = (options: Options = {}, _callDepth = 0): RecordPageQuestionDto => {
     const f = options?.faker ?? faker;
     return {
         id: f.string.uuid(),
@@ -718,11 +721,15 @@ export const fakeRecordPageQuestionDto = (options?: Options): RecordPageQuestion
         childLabel: f.datatype.boolean() ? f.string.sample() : null,
         childPlaceholder: f.datatype.boolean() ? f.string.sample() : null,
         addAnotherLabel: f.datatype.boolean() ? f.string.sample() : null,
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { itemLabel: f.datatype.boolean() ? f.string.sample() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { removeLabel: f.datatype.boolean() ? f.string.sample() : null },
+        ..._callDepth > MAX_CALL_DEPTH || !resolveCondition(options?.includeOptional ?? true, f) ? {} : { children: _callDepth > MAX_CALL_DEPTH ? null : f.datatype.boolean() ? _callDepth > MAX_CALL_DEPTH ? [] : f.helpers.multiple(() => fakeRecordPageQuestionDto(options, _callDepth + 1)) : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { prefixes: f.datatype.boolean() ? f.helpers.multiple(() => f.string.sample()) : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { prefixDigits: f.datatype.boolean() ? f.number.int() : null },
         dateName: f.datatype.boolean() ? f.string.sample() : null,
         showWhen: f.datatype.boolean() ? fakeRecordPageConditionDto(options) : null,
         rules: f.helpers.multiple(() => fakeRecordPageRuleDto(options)),
-        options: f.datatype.boolean() ? f.helpers.multiple(() => fakeRecordPageOptionDto(options)) : null
+        options: _callDepth > MAX_CALL_DEPTH ? null : f.datatype.boolean() ? _callDepth > MAX_CALL_DEPTH ? [] : f.helpers.multiple(() => fakeRecordPageOptionDto(options, _callDepth + 1)) : null
     };
 };
 

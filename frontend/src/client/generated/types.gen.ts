@@ -213,7 +213,9 @@ export const FormControl = {
     PRECISION_DATE: 'PrecisionDate',
     ACTUAL_MONTH: 'ActualMonth',
     PREFIXED_NUMBER: 'PrefixedNumber',
-    ACTUAL_DATE: 'ActualDate'
+    ACTUAL_DATE: 'ActualDate',
+    GROUP: 'Group',
+    TEXT_LIST: 'TextList'
 } as const;
 
 /**
@@ -1416,7 +1418,9 @@ export type RecordPageQuestionDto = {
      */
     type: FormControl;
     /**
-     * True when the answer is an array of strings rather than a string or null.
+     * True when the answer is an array of strings rather than a string or null, as for a
+     * checkbox, a multi-value hierarchical select or a text list. False for a group, whose answer
+     * is an array of objects.
      */
     multiple: boolean;
     /**
@@ -1444,15 +1448,35 @@ export type RecordPageQuestionDto = {
      */
     childPlaceholder: null | string;
     /**
-     * The button text that adds another entry to a multi-value hierarchical select.
+     * The button text that adds another entry to a multi-value hierarchical select, a group or a
+     * text list.
      */
     addAnotherLabel: null | string;
+    /**
+     * The heading of each item of a group, numbered from 1; null for other controls.
+     */
+    itemLabel?: null | string;
+    /**
+     * The button text that removes an item of a group or an entry of a text list.
+     */
+    removeLabel?: null | string;
+    /**
+     * The questions asked of each item of a group, in order, or null for other controls. Each
+     * item of the answer is an object keyed by these questions' IDs, and their errors are keyed
+     * `{group id}[{item index}].{child id}`.
+     */
+    children?: null | Array<RecordPageQuestionDto>;
     /**
      * The prefixes a `PrefixedNumber` question offers before its digits, in order, or
      * null for any other control. Not `required`, so existing clients and fixtures are
      * unaffected.
      */
     prefixes?: null | Array<string>;
+    /**
+     * The exact number of digits a `PrefixedNumber` needs after its prefix, or null when up
+     * to 5 are allowed.
+     */
+    prefixDigits?: null | number;
     /**
      * What a FormControl.PrecisionDate question's date is of, for its error
      * messages, for example `submission`; null for other questions.
@@ -1827,7 +1851,8 @@ export type RespondToMultiFactorAuthenticationChallengeCommand = {
 export const RuleKind = {
     REQUIRED: 'Required',
     MAX_LENGTH: 'MaxLength',
-    MAX_ITEMS: 'MaxItems'
+    MAX_ITEMS: 'MaxItems',
+    DISTINCT: 'Distinct'
 } as const;
 
 /**

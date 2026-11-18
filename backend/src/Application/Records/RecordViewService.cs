@@ -465,7 +465,8 @@ internal sealed class RecordViewService(
         await dbContext
             .RecordClinicalTrials.AsNoTracking()
             .Where(x => x.RevisionId == revisionId)
-            .OrderBy(x => x.Id)
+            .OrderBy(x => x.DisplayOrder ?? int.MaxValue)
+            .ThenBy(x => x.Id)
             .Select(x => new RecordClinicalTrialDto
             {
                 StudyName = x.StudyName,

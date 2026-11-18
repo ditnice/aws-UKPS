@@ -894,8 +894,10 @@ public class RecordViewServiceTests : DatabaseTestBase
         );
     }
 
-    [Fact]
-    public async Task GetRecord_SharedSections_MapsAllFields()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task GetRecord_SharedSections_MapsAllFields(bool reverseTrials)
     {
         var ct = TestContext.Current.CancellationToken;
         Record record = await AddRecord(RecordStatus.Published);
@@ -918,6 +920,7 @@ public class RecordViewServiceTests : DatabaseTestBase
             {
                 RevisionId = revision.Id,
                 StudyName = "Study A",
+                DisplayOrder = reverseTrials ? 2 : 1,
                 ClinicalTrialsGovNumber = "NCT00000001",
                 BriefDescription = "Description A",
                 TrialPhase = TrialPhase.PhaseIII,
@@ -939,6 +942,7 @@ public class RecordViewServiceTests : DatabaseTestBase
             {
                 RevisionId = revision.Id,
                 StudyName = "Study B",
+                DisplayOrder = reverseTrials ? 1 : 2,
                 ClinicalTrialsGovNumber = "NCT00000002",
             },
             new RecordClinicalTrialInformation
@@ -984,13 +988,15 @@ public class RecordViewServiceTests : DatabaseTestBase
         dto.RecordClinicalTrialInformation.ShouldNotBeNull()
             .RecruitingInUk.ShouldBe(YesNoUnknown.Yes);
         dto.RecordClinicalTrials.Count.ShouldBe(2);
-        var trialA = dto.RecordClinicalTrials.First();
+        dto.RecordClinicalTrials.Select(static t => t.StudyName)
+            .ShouldBe(reverseTrials ? ["Study B", "Study A"] : ["Study A", "Study B"]);
+        var trialA = dto.RecordClinicalTrials.ElementAt(reverseTrials ? 1 : 0);
         trialA.StudyName.ShouldBe("Study A");
         trialA.ClinicalTrialsGovNumber.ShouldBe("NCT00000001");
         trialA.BriefDescription.ShouldBe("Description A");
         trialA.TrialPhase.ShouldBe(TrialPhase.PhaseIII);
         trialA.OtherClinicalTrialNumbers.ShouldBe(["ISRCTN 1", "EudraCT 2"]);
-        var trialB = dto.RecordClinicalTrials.Last();
+        var trialB = dto.RecordClinicalTrials.ElementAt(reverseTrials ? 0 : 1);
         trialB.StudyName.ShouldBe("Study B");
         trialB.OtherClinicalTrialNumbers.ShouldBeEmpty();
 

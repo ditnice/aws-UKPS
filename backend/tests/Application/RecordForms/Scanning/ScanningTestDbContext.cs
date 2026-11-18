@@ -40,6 +40,14 @@ internal sealed class ScanningTestDbContext(DbContextOptions<ScanningTestDbConte
         modelBuilder.Entity<BrokenDatedEntity>();
         modelBuilder.Entity<CodedEntity>();
         modelBuilder.Entity<BrokenCodedEntity>();
+        modelBuilder.Entity<AmbiguousChoiceEntity>();
+        modelBuilder.Entity<GroupEntity>();
+        modelBuilder
+            .Entity<GroupEntityItemNumber>()
+            .HasOne(x => x.Item)
+            .WithMany(x => x.Numbers)
+            .HasForeignKey(x => x.GroupEntityItemId);
+        modelBuilder.Entity<BrokenGroupEntity>();
         modelBuilder.Entity<SplitFormEntity>();
         modelBuilder.Entity<UnplacedConditionEntity>();
     }
