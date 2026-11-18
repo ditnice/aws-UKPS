@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 
-import { getRecordCheckAnswers } from '@/client/generated'
+import { getRecordCheckAnswers, ProblemDetails } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { Alert } from '@/components/Alert/Alert'
 import { BackLink } from '@/components/BackLink/BackLink'
@@ -41,13 +41,16 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
   }
 
   if (response?.status === 403 || response?.status === 409) {
+    const { detail } = (error ?? {}) as ProblemDetails
     return (
       <section>
         <PageHeader
           backLink={<BackLink href={taskListHref(recordId)}>Back</BackLink>}
           heading="This record can't be submitted"
         />
-        <ErrorState>…</ErrorState>
+        <ErrorState>
+          {detail ?? 'Return to the task list to see the status of this record.'}
+        </ErrorState>
       </section>
     )
   }
