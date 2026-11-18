@@ -1886,7 +1886,7 @@ export const SortDirection = { ASCENDING: 'Ascending', DESCENDING: 'Descending' 
 export type SortDirection = typeof SortDirection[keyof typeof SortDirection];
 
 /**
- * A submission or selected-organisation conflict. Schema only: runtime responses use the
+ * A record submission or check answers conflict, or a selected-organisation conflict. Schema only: runtime responses use the
  * problem details factory and extensions to preserve tracing metadata.
  */
 export type SubmissionConflictProblemDetails = {

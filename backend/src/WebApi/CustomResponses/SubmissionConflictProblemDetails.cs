@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace UKPS.Api.WebApi.CustomResponses;
 
 /// <summary>
-/// A submission or selected-organisation conflict. Schema only: runtime responses use the
+/// A record submission or check answers conflict, or a selected-organisation conflict. Schema only: runtime responses use the
 /// problem details factory and extensions to preserve tracing metadata.
 /// </summary>
 public sealed class SubmissionConflictProblemDetails : ProblemDetails

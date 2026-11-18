@@ -8468,7 +8468,7 @@
             "format": "int32"
           }
         },
-        "description": "A submission or selected-organisation conflict. Schema only: runtime responses use the\nproblem details factory and extensions to preserve tracing metadata."
+        "description": "A record submission or check answers conflict, or a selected-organisation conflict. Schema only: runtime responses use the\nproblem details factory and extensions to preserve tracing metadata."
       },
       "SubmissionErrorDto": {
         "required": [
