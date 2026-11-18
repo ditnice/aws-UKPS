@@ -58,6 +58,11 @@ public sealed record UserInformationDto
     public bool HasMultipleOrganisations { get; init; }
 
     /// <summary>
+    /// Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.
+    /// </summary>
+    public required PharmaceuticalEntity AllowedPharmaceuticalEntity { get; init; }
+
+    /// <summary>
     /// Gets the details of a requested change to the user's work email address that has not yet been
     /// completed, or <see langword="null"/> if there is no pending change.
     /// </summary>
