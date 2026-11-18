@@ -235,6 +235,86 @@ public class UserController(IUserService userService) : ControllerBase
                                     ],
                                 }
                             )
+                        ),
+                    concurrentChangeDetected: () =>
+                        Problem(
+                            statusCode: StatusCodes.Status409Conflict,
+                            title: "Conflict",
+                            detail: "The user was modified by another request. Please retry."
+                        )
+                )
+        );
+    }
+
+    /// <summary>
+    /// Verifies a user's pending email address using a verification token.
+    /// </summary>
+    /// <param name="userId">The ID of the user whose pending email address is being verified.</param>
+    /// <param name="command">The command containing the verification token.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>An empty 200 response when the pending email address has been verified.</returns>
+    /// <response code="200">The pending email address was verified successfully.</response>
+    /// <response code="400">The verification token provided is invalid.</response>
+    /// <response code="403">The caller is not authorised to verify the email address for this user.</response>
+    /// <response code="404">The user does not exist.</response>
+    /// <response code="409">The user has no pending email address, or the pending email address has already been verified.</response>
+    [HttpPost("{userId:int}/email/verify", Name = nameof(VerifyPendingEmailAddress))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult> VerifyPendingEmailAddress(
+        [FromRoute] int userId,
+        [FromBody] VerifyPendingEmailAddressCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        VerifyPendingEmailAddressResult result = await userService.VerifyPendingEmailAddress(
+            userId,
+            command,
+            cancellationToken
+        );
+
+        return result.Match(
+            Ok,
+            err =>
+                err.Match<ActionResult>(
+                    userNotFound: () =>
+                        Problem(
+                            title: "User not found",
+                            detail: $"No user with ID {userId} exists.",
+                            statusCode: StatusCodes.Status404NotFound
+                        ),
+                    unauthorised: () =>
+                        Problem(
+                            title: "Unauthorised",
+                            detail: "You are not authorised to verify the email address for this user.",
+                            statusCode: StatusCodes.Status403Forbidden
+                        ),
+                    noPendingEmailToVerified: () =>
+                        Problem(
+                            title: "No pending email",
+                            detail: "This user has no pending email address awaiting verification.",
+                            statusCode: StatusCodes.Status409Conflict
+                        ),
+                    emailAlreadyVerified: () =>
+                        Problem(
+                            title: "Email already verified",
+                            detail: "The pending email address has already been verified.",
+                            statusCode: StatusCodes.Status409Conflict
+                        ),
+                    invalidTokenProvided: () =>
+                        Problem(
+                            title: "Invalid verification token",
+                            detail: "The verification token provided is invalid or has expired.",
+                            statusCode: StatusCodes.Status400BadRequest
+                        ),
+                    concurrentChangeDetected: () =>
+                        Problem(
+                            title: "Email address change could not be completed",
+                            detail: "A concurrent change was detected. Please try changing your email address again through the portal.",
+                            statusCode: StatusCodes.Status409Conflict
                         )
                 )
         );

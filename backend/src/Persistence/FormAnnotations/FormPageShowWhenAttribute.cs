@@ -6,8 +6,9 @@ namespace UKPS.Api.Persistence.FormAnnotations;
 /// every answer on it is cleared.
 /// </summary>
 /// <param name="pageId">
-/// The page's ID. The entity must declare it with <see cref="FormPageAttribute"/>; a page that
-/// spans entities takes its condition from one of them only.
+/// The page's ID; use the layout's constant, such as <c>MedicineFormLayout.CoMarketing</c>. The
+/// entity must have a question on the page; a page that spans entities takes its condition from
+/// one of them only.
 /// </param>
 /// <param name="questionId">
 /// The ID of the trigger question. It must be on an earlier page of the same form, and be a

@@ -40,9 +40,9 @@ describes. You only touch the frontend to add a new control.
 
 | Attribute                                           | On       | Arguments                                                                                                                             | Notes                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | --------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `FormLayout` subclass                               | class    | `RecordType`, sections, tasks                                                                                                         | One per record type, such as `MedicineFormLayout`. Declares every section and task once: ID, title and order. Each task ID is a `const string` on the layout. See [Step 2](#step-2-choose-the-task-and-the-row-source)                                                                                                                                                                                                             |
+| `FormLayout` subclass                               | class    | `RecordType`, sections, tasks, pages                                                                                                  | One per record type, such as `MedicineFormLayout`. Declares every section, task and page once: ID, title and order, and a page's `CommercialInConfidence` flag. Each page ID is a `const string` on the layout. See [Step 2](#step-2-add-the-page-to-the-layout-and-choose-the-row-source)                                                                                                                                         |
 | `[FormEntity]`                                      | class    | `RowSource`                                                                                                                           | Marks a content entity whose properties hold questions. All of its pages must be in one form                                                                                                                                                                                                                                                                                                                                       |
-| `[FormPage(task, id, title)]`                       | property | `Order`, `CommercialInConfidence`                                                                                                     | `task` is a task ID from the layout, which decides the section and form. `Order` is the position within the task. `CommercialInConfidence` shows the "Commercial in confidence" badge above the heading. Every declaration of the same page ID must agree                                                                                                                                                                          |
+| `[FormPage(id)]`                                    | property |                                                                                                                                       | `id` is a page ID from the layout (the layout's constant). The page decides the question's task, section and form, and holds its title, order and `CommercialInConfidence` flag                                                                                                                                                                                                                                                    |
 | `[FormField(id, label, control)]`                   | property | `Hint`, `Display`, `Order`, `Placeholder`, `ChildLabel`, `ChildPlaceholder`, `AddAnotherLabel`, `ItemLabel`, `RemoveLabel`, `ItemKey` | `Order` only matters on pages with several questions. `Placeholder` is for `Select` and `HierarchicalSelect`; the `Child…` properties for `HierarchicalSelect` (`ChildLabel` is required); `AddAnotherLabel` for a multi-value `HierarchicalSelect`, a `Group` or a `TextList`; `ItemLabel` (required) and `ItemKey` for a `Group`; `RemoveLabel` for a `Group` or `TextList`. See [Groups and text lists](#groups-and-text-lists) |
 | `[FormRequired(message)]`                           | property |                                                                                                                                       |                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `[FormMaxLength(max, message)]`                     | property |                                                                                                                                       | `Text`, `Textarea`                                                                                                                                                                                                                                                                                                                                                                                                                 |
@@ -59,12 +59,11 @@ describes. You only touch the frontend to add a new control.
 `PrecisionDate`, `ActualMonth`, `ActualDate`, `PrefixedNumber`, `Group`, `TextList`.
 `FormRowSource`: `FirstSave` (default), `RecordCreation`.
 
-The form hierarchy is **section → task → page → question**. Sections and tasks are declared
-once per record type, in the form's layout (`MedicineFormLayout`). Put `[FormPage]` on each
-question property, naming its task with the layout's constant; the task decides the page's
-section. Page order is local to its task, and question order is local to its page. A task may
-contain many pages, and a page may contain questions from multiple entities as long as they name
-the same task.
+The form hierarchy is **section → task → page → question**. Sections, tasks and pages are
+declared once per record type, in the form's layout (`MedicineFormLayout`). Put `[FormPage]` on
+each question property, naming its page with the layout's constant; the layout decides the page's
+task and section. Page order is local to its task, and question order is local to its page. A
+task may contain many pages, and a page may contain questions from multiple entities.
 
 ```csharp
 internal sealed class MedicineFormLayout()
@@ -76,16 +75,29 @@ internal sealed class MedicineFormLayout()
                 "Provide indication and development information",
                 10,
                 [
-                    new FormLayoutTask(IndicationDetails, "Indication details", 10),
-                    new FormLayoutTask(DevelopmentBackground, "Development background", 20),
+                    new FormLayoutTask(
+                        "indication-details",
+                        "Indication details",
+                        10,
+                        [
+                            new FormLayoutPage(Indication, "Indication", 10),
+                            new FormLayoutPage(BnfChapter, "BNF chapter", 20),
+                            // ...
+                        ]
+                    ),
+                    // ...
                 ]
             ),
             // ...
         ]
     )
 {
-    public const string IndicationDetails = "indication-details";
-    public const string DevelopmentBackground = "development-background";
+    /// <summary>The "Indication" page's ID.</summary>
+    public const string Indication = "indication";
+
+    /// <summary>The "BNF chapter" page's ID.</summary>
+    public const string BnfChapter = "bnf-chapter";
+
     // ...
 }
 ```
@@ -94,8 +106,9 @@ internal sealed class MedicineFormLayout()
 
 This is the whole of `MedicinesIndicationDetail` as it would be annotated for the first
 delivery. Every mapped scalar property has either `[FormField]` or `[FormIgnore]`; that is the
-[coverage rule](#step-1-account-for-every-property). Each page names its task with a
-`MedicineFormLayout` constant; the task's title and order, and its section, come from the layout.
+[coverage rule](#step-1-account-for-every-property). Each question names its page with a
+`MedicineFormLayout` constant; the page's title and order, and its task and section, come from the
+layout.
 
 ```csharp
 using UKPS.Api.Persistence.Enums;
@@ -112,7 +125,7 @@ internal sealed class MedicinesIndicationDetail
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
-    [FormPage(MedicineFormLayout.IndicationDetails, "indication", "Indication", Order = 10)]
+    [FormPage(MedicineFormLayout.Indication)]
     [FormField(
         "medicines_indication_detail.indication",
         "What is the indication this product is seeking a licence for?",
@@ -123,7 +136,7 @@ internal sealed class MedicinesIndicationDetail
     public string? Indication { get; set; }
 
     // The most specific BNF entry chosen: a subchapter, or the chapter if none is picked.
-    [FormPage(MedicineFormLayout.IndicationDetails, "bnf-chapter", "BNF chapter", Order = 20)]
+    [FormPage(MedicineFormLayout.BnfChapter)]
     [FormField(
         "medicines_indication_detail.bnf_chapter_id",
         "Select the BNF chapter for this product",
@@ -134,7 +147,7 @@ internal sealed class MedicinesIndicationDetail
     [FormRequired("Choose a BNF chapter")]
     public int? BnfChapterId { get; set; }
 
-    [FormPage(MedicineFormLayout.IndicationDetails, "paediatric", "Treating children", Order = 40)]
+    [FormPage(MedicineFormLayout.Paediatric)]
     [FormField(
         "medicines_indication_detail.indication_is_paediatric",
         "Is this product intended to treat children?",
@@ -142,7 +155,7 @@ internal sealed class MedicinesIndicationDetail
     [FormRequired("Select whether this product is intended to treat children")]
     public IndicationPaediatricStatus? IndicationIsPaediatric { get; set; }
 
-    [FormPage(MedicineFormLayout.IndicationDetails, "cancer", "Treating cancer", Order = 50)]
+    [FormPage(MedicineFormLayout.Cancer)]
     [FormField(
         "medicines_indication_detail.indication_is_cancer",
         "Is this a product intended to treat cancer?",
@@ -150,7 +163,7 @@ internal sealed class MedicinesIndicationDetail
     [FormRequired("Select whether this product is intended to treat cancer")]
     public YesNoUnknown? IndicationIsCancer { get; set; }
 
-    [FormPage(MedicineFormLayout.IndicationDetails, "rare-disease", "Treating a rare disease", Order = 60)]
+    [FormPage(MedicineFormLayout.RareDisease)]
     [FormField(
         "medicines_indication_detail.indication_is_rare_disease",
         "Is this a product intended to treat a rare disease?",
@@ -183,7 +196,7 @@ internal sealed class MedicinesIndicationDetail
     public ReferenceData.FormulationType? FormulationType { get; set; }
 
     // Junction navigation backing a multi-select question.
-    [FormPage(MedicineFormLayout.IndicationDetails, "therapeutic-area", "Therapeutic area", Order = 30)]
+    [FormPage(MedicineFormLayout.TherapeuticArea)]
     [FormField(
         "medicines_indication_detail_therapeutic_area",
         "Select the most appropriate therapeutic area(s) for this product (optional)",
@@ -210,8 +223,8 @@ The scanner turns this into one task, containing the following pages in order:
 | 50    | `cancer`           | `medicines_indication_detail.indication_is_cancer`       | `Radio`                         | Column, enum         |
 | 60    | `rare-disease`     | `medicines_indication_detail.indication_is_rare_disease` | `Radio`                         | Column, enum         |
 
-Declaration order in the file does not matter; only `Order` does. For example, the therapeutic
-area page is declared last but sorts third.
+Declaration order in the file does not matter; only the page's `Order` in the layout does. For
+example, the therapeutic area question is declared last but its page sorts third.
 
 ## Step 1: Account for every property
 
@@ -229,28 +242,42 @@ choice. Use `[FormIgnore]` with a reason that a reviewer can understand:
 
 Navigation properties are exempt, unless they back a junction question.
 
-## Step 2: Choose the task and the row source
+## Step 2: Add the page to the layout, and choose the row source
 
 Find the task in the form's layout (`MedicineFormLayout`). If it is not there, add it to its
-section, or add the section, with a `const string` for the task ID:
+section, or add the section. Add the page to the task, with a `const string` for the page ID:
 
 ```csharp
 new FormLayoutSection(
     "indication-and-development",
     "Provide indication and development information",
     10,
-    [new FormLayoutTask(IndicationDetails, "Indication details", 10)]
+    [
+        new FormLayoutTask(
+            "indication-details",
+            "Indication details",
+            10,
+            [
+                new FormLayoutPage(Indication, "Indication", 10),
+                new FormLayoutPage(BnfChapter, "BNF chapter", 20),
+            ]
+        ),
+    ]
 ),
 ```
 
-- **Section and task IDs**: lowercase slugs. A section ID is unique in its form; a task ID is
-  unique across every form. Sections are ordered by their order within the form, and tasks by
-  theirs within the section.
+- **Section, task and page IDs**: lowercase slugs. A section ID is unique in its form; task and
+  page IDs are unique across every form. Sections are ordered by their order within the form,
+  tasks by theirs within the section, and pages by theirs within the task.
 - **Section title**: the dataset's section name, such as "Provide indication and development
   information". It is the heading above the section's tasks in the task list. Each task's title
   is the dataset's sub-section name, and is also the caption above every page in the task.
-- **Tasks without pages**: a task with no pages yet, and a section with no such tasks, are left
-  out of the form, so you can add a task before its pages.
+- **Page title** and **`CommercialInConfidence`**: see [step 4](#step-4-add-the-page-and-the-field).
+  Pass `CommercialInConfidence: true` to show the "Commercial in confidence" badge above the
+  heading.
+- **Pages without questions**: a page with no questions yet, and a task or section with no such
+  pages, are left out of the form, so you can add a page before its questions. A task must
+  declare at least one page.
 
 Then put `[FormEntity]` on the entity if it isn't already there:
 
@@ -278,8 +305,8 @@ finds the revision's row.
 ## Step 3: Choose the IDs
 
 **Page ID**: a lowercase slug used in the URL, for example `bnf-chapter`. It must match
-`^[a-z0-9]+(-[a-z0-9]+)*$` and be unique in the form, across all entities. If you reuse an
-existing page ID, your question joins that page (see [Pages that span
+`^[a-z0-9]+(-[a-z0-9]+)*$` and be unique across every form. It is declared in the layout (step 2).
+If you name an existing page, your question joins that page (see [Pages that span
 entities](#pages-that-span-entities)).
 
 **Question ID**: snake_case `entity.property`, for example
@@ -303,14 +330,14 @@ once it has been released.**
 ## Step 4: Add the page and the field
 
 ```csharp
-[FormPage(MedicineFormLayout.IndicationDetails, "bnf-chapter", "BNF chapter", Order = 20)]
+[FormPage(MedicineFormLayout.BnfChapter)]
 [FormField(
     "medicines_indication_detail.bnf_chapter_id",
     "Select the BNF chapter for this product",
     FormControl.Select)]
 ```
 
-- **Page title**: a short name for the page.
+- **Page title** (in the layout): a short name for the page.
 - **Single-question page**: the question's label becomes the `<h1>`, and the task title is shown
   as the caption above it. A page whose other questions are all revealed beneath options of one
   question (see [Conditional questions and pages](#conditional-questions-and-pages)) counts as a
@@ -383,7 +410,7 @@ is not supported. The worked example is the Clinical trials task:
 
 ```csharp
 // On RecordClinicalTrialInformation, the content row the group hangs off.
-[FormPage(MedicineFormLayout.ClinicalTrials, "clinical-trial-details", "Clinical trial details", Order = 20)]
+[FormPage(MedicineFormLayout.ClinicalTrialDetails)]
 [FormField(
     "record_clinical_trial",
     "Enter clinical trial details",
@@ -633,15 +660,14 @@ Only needed if the existing rules can't express what a page needs. Agree it with
 
 ## Pages that span entities
 
-A page can hold questions from several entities. Declare the same `[FormPage]` task, ID, title
-and order on each property. The example below is illustrative and is not a page in the current
+A page can hold questions from several entities. Put the same `[FormPage]` on each property. The example below is illustrative and is not a page in the current
 design:
 
 ```csharp
 [FormEntity(RowSource = FormRowSource.RecordCreation)]
 internal sealed class RecordProductDetail
 {
-    [FormPage(MedicineFormLayout.ProductNames, "names", "Product names", Order = 20)]
+    [FormPage(MedicineFormLayout.ProductNames)]
     [FormField("record_product_detail.branded_name", "Branded name (optional)", FormControl.Text, Order = 10)]
     [FormMaxLength(200, "Branded name must be 200 characters or fewer")]
     public string? BrandedName { get; set; }
@@ -651,7 +677,7 @@ internal sealed class RecordProductDetail
 [FormEntity]
 internal sealed class SomeOtherMedicineEntity
 {
-    [FormPage(MedicineFormLayout.ProductNames, "names", "Product names", Order = 20)]
+    [FormPage(MedicineFormLayout.ProductNames)]
     [FormField("some_other_medicine_entity.development_code", "Development code", FormControl.Text, Order = 20)]
     public string? DevelopmentCode { get; set; }
     // ...
@@ -660,8 +686,6 @@ internal sealed class SomeOtherMedicineEntity
 
 The `names` page shows both questions, ordered by `FormField.Order`. One save writes both
 tables, with a field audit row for each changed question.
-
-Keep the page's metadata the same on every declaration; startup reports a mismatch.
 
 ## Conditional questions and pages
 
@@ -674,7 +698,7 @@ Put both questions on the same page, with the trigger first, and add `[FormShowW
 follow-up:
 
 ```csharp
-[FormPage("co-marketing", "Co-marketing", Order = 30)]
+[FormPage(MedicineFormLayout.CoMarketing)]
 [FormField(
     "medicines_development_background.is_co_marketed",
     "Is this product co-marketed?",
@@ -684,7 +708,7 @@ follow-up:
 [FormRequired("Select whether this product is co-marketed")]
 public YesNoUnknown? IsCoMarketed { get; set; }
 
-[FormPage("co-marketing", "Co-marketing", Order = 30)]
+[FormPage(MedicineFormLayout.CoMarketing)]
 [FormField(
     "medicines_development_background.co_marketing_company_name",
     "Co-marketing company name",
@@ -709,13 +733,13 @@ public string? CoMarketingCompanyName { get; set; }
 
 ### A page shown by an earlier page
 
-Put `[FormPageShowWhen]` on the entity that declares the page. It covers the page and every
-question on it:
+Put `[FormPageShowWhen]` on the entity whose questions are on the page, naming the page with the
+layout's constant. It covers the page and every question on it:
 
 ```csharp
 [FormEntity]
 [FormPageShowWhen(
-    "originator-details",
+    MedicineFormLayout.OriginatorDetails,
     "medicines_development_background.is_originator_company",
     YesNoUnknown.No
 )]
@@ -776,10 +800,10 @@ reports every problem in one exception.
 | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Coverage     | A mapped scalar property has neither `[FormField]` nor `[FormIgnore]`, or has both. A `[FormIgnore]` reason is blank. A form attribute is on an unmapped property or a non-junction navigation                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | Pairing      | `[FormField]` has no `[FormPage]`, or `[FormPage]` appears without `[FormField]`. A form attribute is on a class without `[FormEntity]`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| IDs          | A section, task, page or question ID is badly formed. A section ID is repeated in a layout, a task ID across layouts, or a page or question ID within the form. A page uses the reserved ID `task-list`                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| Agreement    | Declarations of one page ID disagree on title, order or `CommercialInConfidence`. A page spans tasks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| IDs          | A section, task, page or question ID is badly formed. A section ID is repeated in a layout, a task or page ID across layouts, or a question ID within the form. A page uses the reserved ID `task-list`                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Layout       | A section declares no tasks, or a task no pages                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | Order        | Two sections, two tasks in a section, two pages in a task, or two questions on a page have the same `Order`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Structure    | More than one `FormLayout` for a record type. A section or task title is blank. A `[FormPage]` names a task no layout declares. An entity has pages in more than one form, or has `[FormEntity]` but no questions                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Structure    | More than one `FormLayout` for a record type. A section, task or page title is blank. A `[FormPage]` names a page no layout declares. An entity has pages in more than one form, or has `[FormEntity]` but no questions                                                                                                                                                                                                                                                                                                                                                                                                          |
 | Controls     | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]`. A `PrecisionDate`, `ActualMonth` or `ActualDate` has no `[FormDateEvent]`, or another control has one. Two date questions in one form use the same `[FormDateEvent]`. A `PrecisionDate`'s or `ActualDate`'s `[FormDateEvent]` has no `Name`                                                                                                                                                                                                                                                                |
 | Groups       | A group's question has a dotted ID, a control other than `Text`, `Textarea`, `PrefixedNumber` or `TextList`, `[FormPage]` or `[FormShowWhen]`; two of its questions share an ID or `Order`; `ItemKey` names no required, distinct, single-value question; a `TextList`'s entity has other than one string column; `ItemLabel` missing on a `Group` or set elsewhere; `RemoveLabel` or `ItemKey` on another control; `[FormDistinct]` on anything but a `TextList` or a group's single-value question                                                                                                                             |
 | Presentation | `PrefixedNumber` without `[FormValuePrefixes]`, or the attribute on another control, with a blank prefix, a prefix ending in a digit, a repeated prefix, a prefix that starts another or a negative `Digits`; `Placeholder` on a control other than `Select`, `HierarchicalSelect` or `PrefixedNumber`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`, a `Group` or a `TextList`; a `HierarchicalSelect` without `ChildLabel`                                                                                            |
@@ -855,7 +879,7 @@ latest example. This touches both backend and frontend.
 ## Checklist
 
 - [ ] Every mapped scalar property has `[FormField]` or `[FormIgnore("reason")]`
-- [ ] The task is in the form's layout; `[FormPage]` names it with the layout's constant
+- [ ] The page is in its task in the form's layout; `[FormPage]` names it with the layout's constant
 - [ ] `[FormEntity]` present, with the right `RowSource`
 - [ ] Page ID is a unique slug; question IDs follow `entity.property` and are new
 - [ ] `Order` values leave gaps and don't clash

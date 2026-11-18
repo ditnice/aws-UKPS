@@ -24,6 +24,7 @@ erDiagram
             timestamptz last_active "nullable"
             text normalised_pending_work_email "nullable"
             text normalised_work_email UK
+            text pending_email_verification_token "nullable"
             timestamptz pending_email_verified_at "nullable"
             text pending_work_email "nullable"
             text title "nullable"
@@ -31,6 +32,7 @@ erDiagram
             integer user_type
             text work_email
             text work_telephone "nullable"
+            xid xmin
         }
         organisation_audits:::identity {
             integer id PK

@@ -27,6 +27,10 @@ namespace UKPS.Api.Application.InternalServices.Communication;
     "UserMembershipRequestRejectedNotification"
 )]
 [JsonDerivedType(typeof(SecurityNotificationEmail), "SecurityNotificationEmail")]
+[JsonDerivedType(
+    typeof(EmailChangeVerificationRequestEmail),
+    "EmailChangeVerificationRequestEmail"
+)]
 public interface IEmail
 {
     /// <summary>

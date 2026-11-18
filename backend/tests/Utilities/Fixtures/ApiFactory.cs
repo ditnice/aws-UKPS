@@ -28,6 +28,8 @@ public sealed class ApiFactory(string connectionString) : WebApplicationFactory<
                 config.AddInMemoryCollection(
                     new Dictionary<string, string?>(StringComparer.Ordinal)
                     {
+                        [$"{EmailOptions.SectionName}:{nameof(EmailOptions.ListenerEnabled)}"] =
+                            $"{false}",
                         [
                             $"{CognitoOptions.SectionName}:{nameof(CognitoOptions.ServiceUrlOverride)}"
                         ] = "https://validurl.com",
