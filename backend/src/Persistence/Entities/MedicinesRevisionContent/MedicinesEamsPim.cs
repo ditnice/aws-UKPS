@@ -62,6 +62,7 @@ internal sealed class MedicinesEamsPim
     )]
     [FormShowWhen("medicines_eams_pim.pim_designation_status", DesignationStatus.Granted)]
     [FormRequired("Select yes if you intend to submit or have submitted to EAMS")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? WillSubmitToEams { get; set; }
 
     [FormPage(

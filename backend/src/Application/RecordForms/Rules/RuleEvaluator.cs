@@ -24,13 +24,16 @@ internal static class RuleEvaluator
         {
             RuleKind.Required => !answer.IsEmpty,
             RuleKind.MaxLength => answer.Value is null || answer.Value.Length <= rule.Value,
-            RuleKind.MaxItems => answer.Values.Count <= rule.Value,
+            RuleKind.MaxItems => ItemCount(answer) <= rule.Value,
             RuleKind.Distinct => answer
                 .Values.GroupBy(static v => v, StringComparer.OrdinalIgnoreCase)
                 .All(static g => g.Count() == 1),
             _ => throw new InvalidOperationException($"Unsupported rule kind {rule.Kind}."),
         };
     }
+
+    private static int ItemCount(FormAnswer answer) =>
+        answer.Shape == AnswerShape.Group ? answer.Items.Count : answer.Values.Count;
 
     /// <summary>
     /// The positions of values that repeat an earlier one, ignoring case, so the

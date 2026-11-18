@@ -1,4 +1,6 @@
+import { useForm } from '@tanstack/react-form'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -345,6 +347,34 @@ describe('AddAnother', () => {
   })
 
   describe('focus', () => {
+    const TanStackField = () => {
+      const form = useForm({ defaultValues: { entries: ['a', 'b'] } })
+      return (
+        <form.Field name="entries" mode="array">
+          {(field) => (
+            <AddAnother
+              {...defaultProps}
+              field={field}
+              getSubfield={(name, renderSubfield) => (
+                <form.Field name={name}>{renderSubfield}</form.Field>
+              )}
+            />
+          )}
+        </form.Field>
+      )
+    }
+
+    it('focuses each new input when a live TanStack array field updates synchronously', async () => {
+      const user = userEvent.setup()
+      render(<TanStackField />)
+
+      await user.click(screen.getByRole('button', { name: 'add-item-label' }))
+      expect(getInputByLabelText('label-prefix 3')).toHaveFocus()
+
+      await user.click(screen.getByRole('button', { name: 'add-item-label' }))
+      expect(getInputByLabelText('label-prefix 4')).toHaveFocus()
+    })
+
     const Stateful = ({ legend }: { legend?: string }) => {
       const [values, setValues] = useState(['a', 'b'])
       return (

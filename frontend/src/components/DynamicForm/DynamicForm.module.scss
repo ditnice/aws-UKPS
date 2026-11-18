@@ -19,10 +19,10 @@
 
 // On a single-question page the label is the page heading, so the field's own label and
 // legend are hidden visually but still announced. Questions revealed beneath an option keep
-// their labels.
+// their labels, as do the questions inside a group's items (legends inside a nested fieldset).
 .labelAsHeading {
   :global(.textarea__label):not([data-component='radios-conditional'] *),
-  :global(.form-group__legend):not([data-component='radios-conditional'] *) {
+  :global(.form-group__legend):not([data-component='radios-conditional'] *, fieldset fieldset *) {
     @include visibility.invisible;
   }
 }

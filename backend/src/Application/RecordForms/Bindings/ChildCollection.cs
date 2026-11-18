@@ -6,9 +6,10 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Application.RecordForms.Bindings;
 
 /// <summary>
-/// The ordered child rows behind a collection navigation, for the text list binding. Rows are
-/// ordered by <c>DisplayOrder</c> when the child has one, then by ID, and writes match submitted
-/// entries to stored rows by position, so a row keeps its ID while it keeps its place.
+/// The ordered child rows behind a collection navigation, for the group and text list bindings.
+/// Rows are ordered by <c>DisplayOrder</c> when the child has one, then by ID. The caller decides
+/// which stored row each submitted item keeps (<see cref="Apply"/>); <see cref="Resize"/> matches
+/// them by position.
 /// </summary>
 /// <remarks>
 /// When the collection is shared between several lists, a kind filter limits it to the rows whose
@@ -67,10 +68,8 @@ internal sealed class ChildCollection
                 .ToArray();
 
     /// <summary>
-    /// Brings the row's children in line with <paramref name="count"/> submitted items: the first
-    /// stored rows are kept, extra ones are removed (after <paramref name="clear"/> has emptied
-    /// their own children) and missing ones are added. Returns the rows in submitted order, with
-    /// their display order (and kind) set.
+    /// Brings the row's children in line with <paramref name="count"/> submitted items, matched by
+    /// position: the first stored rows are kept, extra ones are removed and missing ones are added.
     /// </summary>
     public IReadOnlyList<object> Resize(
         AppDbContext dbContext,
@@ -80,18 +79,51 @@ internal sealed class ChildCollection
     )
     {
         IReadOnlyList<object> existing = Items(row);
-        object collection = _navigation.GetValue(row) ?? CreateCollection(row);
+        return Apply(
+            dbContext,
+            row,
+            [.. Enumerable.Range(0, count).Select(i => i < existing.Count ? existing[i] : null)],
+            clear
+        );
+    }
 
-        foreach (object extra in existing.Skip(count))
+    /// <summary>
+    /// Brings the row's children in line with the submitted items. <paramref name="kept"/> holds,
+    /// for each submitted item in order, the stored child row it keeps, or null for a new row.
+    /// Stored rows that are not kept are removed, after <paramref name="clear"/> has emptied their
+    /// own children. Returns the rows in submitted order, with their display order (and kind) set.
+    /// </summary>
+    /// <remarks>
+    /// A child with no <c>DisplayOrder</c> is read back in ID order, so keeping rows out of their
+    /// stored order would reorder the items.
+    /// </remarks>
+    public IReadOnlyList<object> Apply(
+        AppDbContext dbContext,
+        object row,
+        IReadOnlyList<object?> kept,
+        Action<object> clear
+    )
+    {
+        IReadOnlyList<object> existing = Items(row);
+        object collection = _navigation.GetValue(row) ?? CreateCollection(row);
+        HashSet<object> keptRows = new(kept.OfType<object>(), ReferenceEqualityComparer.Instance);
+
+        foreach (object extra in existing.Where(e => !keptRows.Contains(e)))
         {
             clear(extra);
             _remove.Invoke(collection, [extra]);
             dbContext.Remove(extra);
         }
 
-        List<object> result = [.. existing.Take(count)];
-        while (result.Count < count)
+        List<object> result = new(kept.Count);
+        foreach (object? keptRow in kept)
         {
+            if (keptRow is not null)
+            {
+                result.Add(keptRow);
+                continue;
+            }
+
             object item = Activator.CreateInstance(ChildType)!;
             _kindProperty?.SetValue(item, _kind);
             _add.Invoke(collection, [item]);

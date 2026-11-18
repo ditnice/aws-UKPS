@@ -14,8 +14,10 @@ namespace UKPS.Api.Application.RecordForms.Rules;
 /// question's rules pass and a <c>PrefixedNumber</c> is well formed. One message per key.
 /// </summary>
 /// <remarks>
-/// Errors inside a text list are keyed by 0-based position, matching the frontend's array fields:
-/// <c>question[1]</c> for a text list entry.
+/// Errors inside a text list or group are keyed by 0-based position, matching the frontend's
+/// array fields: <c>question[1]</c> for a text list entry,
+/// <c>group[0].child</c> for a group item's question and
+/// <c>group[0].child[1]</c> for an entry of a text list in a group item.
 /// </remarks>
 internal static class PageAnswerValidator
 {
@@ -94,8 +96,8 @@ internal static class PageAnswerValidator
     }
 
     /// <summary>
-    /// Checks the question's rules and, for a text list, its entries. Returns the error for the
-    /// question itself; errors for entries are added under their own keys.
+    /// Checks the question's rules and, for a text list or group, its entries or items. Returns the
+    /// error for the question itself; errors for entries and items are added under their own keys.
     /// </summary>
     private static string? CheckAnswer(
         FormQuestion question,
@@ -113,9 +115,43 @@ internal static class PageAnswerValidator
                 }
 
                 return FirstFailure(question, answer);
+            case AnswerShape.Group:
+                CheckItems(question, key, answer, errors);
+                return FirstFailure(question, answer);
             default:
                 return RuleEvaluator.FirstFailure(question.Rules, answer)
                     ?? CheckPrefixedNumber(question, answer);
+        }
+    }
+
+    /// <summary>
+    /// Checks each item of a group: every child's own rules, then that it does not repeat an
+    /// earlier item's answer where it must be distinct.
+    /// </summary>
+    private static void CheckItems(
+        FormQuestion group,
+        string key,
+        FormAnswer answer,
+        Dictionary<string, string> errors
+    )
+    {
+        foreach (FormQuestion child in group.Children)
+        {
+            HashSet<int> repeats =
+            [
+                .. RepeatIndexes(child, answer.Items.Select(i => i[child.Id].Value)),
+            ];
+            for (int i = 0; i < answer.Items.Count; i++)
+            {
+                string childKey = $"{key}[{i}].{child.Id}";
+                string? error =
+                    CheckAnswer(child, childKey, answer.Items[i][child.Id], errors)
+                    ?? (repeats.Contains(i) ? DistinctMessage(child) : null);
+                if (error is not null)
+                {
+                    errors[childKey] = error;
+                }
+            }
         }
     }
 
@@ -159,16 +195,33 @@ internal static class PageAnswerValidator
 
     /// <summary>
     /// Saves a <c>PrefixedNumber</c> prefix with no digits as blank, so the rules see what will be
-    /// stored. Its format error is left to <see cref="Check"/>, which reports it only when the
-    /// question applies.
+    /// stored, including inside group items. Its format error is left to <see cref="Check"/>,
+    /// which reports it only when the question applies.
     /// </summary>
-    private static FormAnswer Normalise(FormQuestion question, FormAnswer answer) =>
-        question.Prefixes is { } prefixes
-            ? FormAnswer.Single(PrefixedNumberAnswer.Evaluate(prefixes, answer.Value).Value)
+    private static FormAnswer Normalise(FormQuestion question, FormAnswer answer)
+    {
+        if (answer.Shape == AnswerShape.Group)
+        {
+            return FormAnswer.Group(
+                answer.Items.Select(item => new FormGroupItem(
+                    question.Children.ToDictionary(
+                        static c => c.Id,
+                        c => Normalise(c, item[c.Id]),
+                        StringComparer.Ordinal
+                    )
+                ))
+            );
+        }
+
+        return question.Prefixes is { } prefixes
+            ? FormAnswer.Single(
+                PrefixedNumberAnswer.Evaluate(prefixes, question.PrefixDigits, answer.Value).Value
+            )
             : answer;
+    }
 
     private static string? CheckPrefixedNumber(FormQuestion question, FormAnswer answer) =>
         question.Prefixes is { } prefixes
-            ? PrefixedNumberAnswer.Evaluate(prefixes, answer.Value).Error
+            ? PrefixedNumberAnswer.Evaluate(prefixes, question.PrefixDigits, answer.Value).Error
             : null;
 }

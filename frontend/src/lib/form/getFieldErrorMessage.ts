@@ -32,8 +32,8 @@ export function getFieldErrorParts(errors: unknown[]): string[] | undefined {
 }
 
 /**
- * The errors of a text list's entries, when the first error names them in its `params`, keyed as
- * in `QuestionError.items` (lib/dynamic-form/answers.ts).
+ * The errors of a text list's entries or a group's items, when the first error names them in its
+ * `params`, keyed as in `QuestionError.items` (lib/dynamic-form/answers.ts).
  */
 export function getFieldErrorItems(errors: unknown[]): Record<string, string> | undefined {
   const firstError = errors[0]

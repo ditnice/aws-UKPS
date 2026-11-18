@@ -17,7 +17,7 @@ public class MedicineFormModelTests
     // Bump FormVersions.Medicine whenever this changes, then update both values.
     private const string ExpectedVersion = "2026.11.18";
     private const string ExpectedFingerprint =
-        "92e0ca29be14202437a272cd3f172e2f3a90267a0dbf75ecd66d1ea95703fdd0";
+        "6188312f04d946f772a25ec62e257410b9469fd4705887b64fdd8aa9a9f44734";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -247,6 +247,8 @@ public class MedicineFormModelTests
             .Pages.Where(static p => p.ShowWhen is not null)
             .Select(static p => p.Id)
             .ShouldBe([
+                "clinical-trial-details",
+                "recruiting-in-uk",
                 "global-first-submission",
                 "international-recognition",
                 "international-submission-date",
@@ -309,6 +311,64 @@ public class MedicineFormModelTests
     }
 
     [Fact]
+    public void Model_HasTheClinicalTrialsPagesInOrder()
+    {
+        FormTask task = Model
+            .Sections.SelectMany(static s => s.Tasks)
+            .Single(static t =>
+                string.Equals(t.Id, MedicineFormLayout.ClinicalTrials, StringComparison.Ordinal)
+            );
+
+        task.Pages.Select(static p => (p.Id, p.CommercialInConfidence))
+            .ShouldBe([
+                ("add-clinical-trial", false),
+                ("clinical-trial-details", false),
+                ("recruiting-in-uk", true),
+            ]);
+        task.Pages.Skip(1)
+            .Select(static p => p.ShowWhen!.Description)
+            .ShouldBe([
+                "AnswerIn record_clinical_trial_information.has_clinical_trials [Yes]",
+                "AnswerIn record_clinical_trial_information.has_clinical_trials [Yes]",
+            ]);
+        task.Pages[0].Questions.Single().OptionKey.ShouldBe(OptionKeys.YesNo);
+        task.Pages[2]
+            .Questions.Single()
+            .OptionKey.ShouldBe(OptionKeys.ClinicalTrialsRecruitingInUk);
+    }
+
+    [Fact]
+    public void Model_ClinicalTrialsAreAGroupWithANestedTextList()
+    {
+        FormQuestion trials = Model.FindQuestion("record_clinical_trial")!;
+
+        (trials.ItemLabel, trials.AddAnotherLabel, trials.RemoveLabel, trials.ItemKey).ShouldBe(
+            (
+                "Clinical trial",
+                "Add another clinical trial",
+                "Remove clinical trial",
+                "clinical_trials_gov_number"
+            )
+        );
+        trials
+            .Children.Select(static c => (c.Id, c.Control))
+            .ShouldBe([
+                ("study_name", FormControl.Text),
+                ("clinical_trials_gov_number", FormControl.PrefixedNumber),
+                ("other_registry_numbers", FormControl.TextList),
+            ]);
+        trials.Children[1].Prefixes.ShouldBe(["NCT"]);
+        trials.Children[1].PrefixDigits.ShouldBe(8);
+        trials
+            .Children.Select(static c => string.Join(",", c.Rules.Select(static r => r.Kind)))
+            .ShouldBe(["Required", "Required,Distinct", "Distinct"]);
+        trials.Entity.Includes.ShouldBe([
+            "ClinicalTrials",
+            "ClinicalTrials.OtherClinicalTrialNumbers",
+        ]);
+    }
+
+    [Fact]
     public void Model_SectionsGroupTasksPerDataset()
     {
         Model
@@ -318,6 +378,7 @@ public class MedicineFormModelTests
             .ShouldBe([
                 "product-record-details: names-and-identifiers",
                 "indication-and-development: indication-details, development-background",
+                "clinical-trial-information: clinical-trials",
                 "regulatory-access-and-launch: mhra-procedure-and-dates, hta-and-launch",
                 "special-designation: orphan-and-atmp, pim-and-eams",
                 "service-readiness: laboratory-testing, patient-and-clinical-requirements, pricing-and-budget-impact",
@@ -424,6 +485,7 @@ public class MedicineFormModelTests
             .TriggerEntities.Select(static e => e.ClrType)
             .ShouldBe([
                 typeof(MedicinesDevelopmentBackground),
+                typeof(RecordClinicalTrialInformation),
                 typeof(RecordMhraDate),
                 typeof(RecordMhraProcedure),
                 typeof(RecordHta),
@@ -530,6 +592,17 @@ public class MedicineFormModelTests
             (
                 "medicines_development_background.co_marketing_company_name",
                 FormControl.Text,
+                AnswerShape.Single
+            ),
+            (
+                "record_clinical_trial_information.has_clinical_trials",
+                FormControl.Radio,
+                AnswerShape.Single
+            ),
+            ("record_clinical_trial", FormControl.Group, AnswerShape.Group),
+            (
+                "record_clinical_trial_information.recruiting_in_uk",
+                FormControl.Radio,
                 AnswerShape.Single
             ),
             ("record_mhra_procedure.mhra_procedure_type_id", FormControl.Radio, AnswerShape.Single),

@@ -30,6 +30,7 @@ internal static class ControlRules
                 FormControl.ActualMonth,
                 FormControl.ActualDate,
             ],
+            BindingKind.Group => [FormControl.Group],
             BindingKind.TextList => [FormControl.TextList],
             _ => [],
         };
@@ -40,6 +41,14 @@ internal static class ControlRules
     /// </summary>
     public static bool IsDate(FormControl control) =>
         Allowed(BindingKind.RegulatoryDate).Contains(control);
+
+    /// <summary>The controls a group's child question may use.</summary>
+    public static bool IsAllowedInGroup(FormControl control) =>
+        control
+            is FormControl.Text
+                or FormControl.Textarea
+                or FormControl.PrefixedNumber
+                or FormControl.TextList;
 
     public static bool IsChoice(FormControl control) =>
         control

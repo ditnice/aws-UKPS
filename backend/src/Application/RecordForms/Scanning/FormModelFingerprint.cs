@@ -102,25 +102,33 @@ internal static class FormModelFingerprint
                 $"      options {question.OptionKey} | {options.Find(question.OptionKey)?.Description}"
             );
         }
+
+        foreach (FormQuestion child in question.Children)
+        {
+            text.AppendLine(CultureInfo.InvariantCulture, $"      child of {question.Id}:");
+            AppendQuestion(text, child, options);
+        }
     }
 
-    /// <summary>The prefixes of a prefixed number, and the remove label of a text list.</summary>
+    /// <summary>The prefixes of a prefixed number, and the item labels of a group or text list.</summary>
     private static void AppendPresentation(StringBuilder text, FormQuestion question)
     {
         if (question.Prefixes is not null)
         {
+            string digits = question.PrefixDigits is { } exact
+                ? $" | digits {exact.ToString(CultureInfo.InvariantCulture)}"
+                : string.Empty;
             text.AppendLine(
                 CultureInfo.InvariantCulture,
-                $"      prefixes {string.Join(" | ", question.Prefixes)}"
+                $"      prefixes {string.Join(" | ", question.Prefixes)}{digits}"
             );
         }
 
-        if (question.Control is FormControl.TextList)
+        if (question.Control is FormControl.Group or FormControl.TextList)
         {
-            // Laid out with empty item label and key columns, as a text list has neither.
             text.AppendLine(
                 CultureInfo.InvariantCulture,
-                $"      items  | {question.RemoveLabel} | "
+                $"      items {question.ItemLabel} | {question.RemoveLabel} | {question.ItemKey}"
             );
         }
     }

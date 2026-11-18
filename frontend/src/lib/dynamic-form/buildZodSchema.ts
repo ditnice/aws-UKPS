@@ -23,7 +23,7 @@ export const buildZodSchema = (questions: Question[]) =>
         const error = questionError(question, values[fieldName(index)])
         if (error) {
           // The parts let a date question highlight only the inputs at fault, and the items let a
-          // text list show each entry's error beside it.
+          // text list or group show each entry's error beside it.
           ctx.addIssue({
             code: 'custom',
             message: error.message,

@@ -84,11 +84,78 @@ public class FormModelValidatorTests
     )]
     [InlineData("BrokenEntity.RepeatedPrefix repeats a prefix in [FormValuePrefixes].")]
     [InlineData(
+        "BrokenEntity.NegativeDigits has a negative Digits in [FormValuePrefixes]; use 0 for up to 5 digits."
+    )]
+    [InlineData(
         "BrokenEntity.OverlappingPrefix has a prefix that starts another, which makes the split ambiguous."
     )]
     public void Validate_BrokenEntity_ReportsTheProblem(string expected)
     {
         Problems(typeof(BrokenEntity)).ShouldContain(expected);
+    }
+
+    [Fact]
+    public void Scan_GroupEntity_BuildsTheGroupAndItsQuestions()
+    {
+        Problems(typeof(GroupEntity)).ShouldBe(["The Vaccine form has no entry in FormVersions."]);
+
+        var (declarations, _) = FormModelScanner.Scan(
+            _model,
+            [typeof(VaccineTestLayout), typeof(GroupEntity)]
+        );
+        FormModel form = FormModelBuilder.Build(declarations, _options)[RecordType.Vaccine];
+        FormQuestion group = form.FindPage("items")!.Questions.Single();
+
+        (group.Id, group.Control, group.Shape).ShouldBe(
+            ("group_entity_item", FormControl.Group, AnswerShape.Group)
+        );
+        (group.ItemLabel, group.AddAnotherLabel, group.RemoveLabel, group.ItemKey).ShouldBe(
+            ("Item", "Add another item", "Remove item", "code")
+        );
+        group.Rules.Select(static r => r.Kind).ShouldBe([RuleKind.Required, RuleKind.MaxItems]);
+        group.Entity.Includes.ShouldBe(["Items", "Items.Numbers"]);
+        group
+            .Children.Select(static c => (c.Id, c.Control, c.Shape))
+            .ShouldBe([
+                ("name", FormControl.Text, AnswerShape.Single),
+                ("code", FormControl.PrefixedNumber, AnswerShape.Single),
+                ("numbers", FormControl.TextList, AnswerShape.List),
+            ]);
+        group.Children[1].PrefixDigits.ShouldBe(8);
+        group
+            .Children[1]
+            .Rules.Select(static r => r.Kind)
+            .ShouldBe([RuleKind.Required, RuleKind.Distinct]);
+        group.Children[2].Rules.Single().Kind.ShouldBe(RuleKind.Distinct);
+        form.FindQuestion("name").ShouldBeNull("a group's questions are not form questions");
+    }
+
+    [Theory]
+    [InlineData("BrokenGroupEntity.Items uses Group, which needs an ItemLabel.")]
+    [InlineData(
+        "BrokenGroupEntity.Items has ItemKey 'free_text', which must name a single-value question of the group with [FormRequired] and [FormDistinct]."
+    )]
+    [InlineData("BrokenGroupEntity.Text sets ItemLabel, which only a Group uses.")]
+    [InlineData("BrokenGroupEntity.Text sets RemoveLabel, which only a Group or a TextList uses.")]
+    [InlineData(
+        "BrokenGroupEntity.Text has [FormDistinct], which only a TextList or a single-value question of a group uses."
+    )]
+    [InlineData(
+        "BrokenGroupItem.Dotted is a question of group BrokenGroupEntity.Items, so it takes the group's page and must not declare [FormPage]."
+    )]
+    [InlineData(
+        "BrokenGroupItem.Dotted is a question of group BrokenGroupEntity.Items, so its ID 'broken.dotted' must be lowercase words joined by underscores, with no dotted prefix."
+    )]
+    [InlineData(
+        "BrokenGroupItem.Choice uses control Radio, which a group's question cannot use; use Text, Textarea, PrefixedNumber or TextList."
+    )]
+    [InlineData(
+        "BrokenGroupItem.RequiredName is bound to a non-nullable column, so it needs [FormRequired]."
+    )]
+    [InlineData("BrokenGroupEntity.Items has more than one question with Order 10.")]
+    public void Validate_BrokenGroup_ReportsTheProblem(string expected)
+    {
+        Problems(typeof(BrokenGroupEntity)).ShouldContain(expected);
     }
 
     [Fact]
@@ -235,18 +302,9 @@ public class FormModelValidatorTests
     [Fact]
     public void Validate_SeveralProvidersOfOneType_AsksForFormOptions()
     {
-        OptionProviderRegistry options = OptionProviderRegistry.CreateDefault();
-        options.AddEnum("yes-no", (YesNoUnknown.Yes, "Yes"), (YesNoUnknown.No, "No"));
-
-        var (declarations, _) = FormModelScanner.Scan(
-            _model,
-            [typeof(VaccineTestLayout), typeof(ValidEntity)]
-        );
-
-        FormModelValidator
-            .Validate(declarations, options)
+        Problems(typeof(AmbiguousChoiceEntity))
             .ShouldContain(
-                "ValidEntity.Choice has several Enum providers of YesNoUnknown ('yes-no', 'yes-no-unknown'); choose one with [FormOptions]."
+                "AmbiguousChoiceEntity.Choice has several Enum providers of YesNoUnknown ('clinical-trials-recruiting-in-uk', 'yes-no-unknown'); choose one with [FormOptions]."
             );
     }
 
@@ -479,10 +537,10 @@ public class FormModelValidatorTests
         "BrokenListedEntity.WrongKind has [FormListSource] kind Yes, but BrokenListedEntityName does not have exactly one non-nullable YesNoUnknown enum column to hold it."
     )]
     [InlineData(
-        "BrokenListedEntity.ListLabelsOnText has [FormDistinct], which only a TextList uses."
+        "BrokenListedEntity.ListLabelsOnText has [FormDistinct], which only a TextList or a single-value question of a group uses."
     )]
     [InlineData(
-        "BrokenListedEntity.ListLabelsOnText sets RemoveLabel, which only a TextList uses."
+        "BrokenListedEntity.ListLabelsOnText sets RemoveLabel, which only a Group or a TextList uses."
     )]
     public void Validate_BrokenListedEntity_ReportsTheProblem(string expected)
     {

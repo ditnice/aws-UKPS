@@ -89,6 +89,7 @@ internal sealed class MedicinesLaboratoryTesting
     [FormRequired(
         "Select yes if the product requires a specific biomarker or test before prescribing"
     )]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? DiagnosticTestRequired { get; set; }
 
     /// <summary>

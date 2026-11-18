@@ -21,6 +21,15 @@ internal sealed record QuestionDeclaration
     public FormDistinctAttribute? Distinct { get; init; }
     public required BindingInfo Binding { get; init; }
 
+    /// <summary>
+    /// For a group, the questions asked of each item, declared on the child entity. Their task
+    /// and page are the group's.
+    /// </summary>
+    public IReadOnlyList<QuestionDeclaration> Children { get; init; } = [];
+
+    /// <summary>True for a question asked of each item of a group.</summary>
+    public bool IsGroupChild { get; init; }
+
     public string Where => $"{EntityType.Name}.{Property.Name}";
 
     public AnswerShape Shape =>
@@ -28,6 +37,7 @@ internal sealed record QuestionDeclaration
         {
             BindingKind.Flags or BindingKind.Junction => AnswerShape.Multi,
             BindingKind.TextList => AnswerShape.List,
+            BindingKind.Group => AnswerShape.Group,
             _ => AnswerShape.Single,
         };
 

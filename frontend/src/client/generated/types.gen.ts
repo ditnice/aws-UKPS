@@ -214,6 +214,7 @@ export const FormControl = {
     ACTUAL_MONTH: 'ActualMonth',
     PREFIXED_NUMBER: 'PrefixedNumber',
     ACTUAL_DATE: 'ActualDate',
+    GROUP: 'Group',
     TEXT_LIST: 'TextList'
 } as const;
 
@@ -289,6 +290,29 @@ export type InitiateForgottenPasswordProcedureCommand = {
      * Gets the email address of the user who has forgotten their password.
      */
     email: string;
+};
+
+/**
+ * The problems that stop a record being submitted. `errors` is keyed by question ID;
+ * `fields` adds each problem's page and task.
+ */
+export type InvalidRecordProblemDetails = {
+    type?: null | string;
+    title?: null | string;
+    status?: null | number;
+    detail?: null | string;
+    instance?: null | string;
+    /**
+     * Identifies the problem; always `record_invalid`.
+     */
+    code: string;
+    /**
+     * Each problem with its page and task, in form order.
+     */
+    fields: Array<SubmissionErrorDto>;
+    errors: {
+        [key: string]: Array<string>;
+    };
 };
 
 /**
@@ -1265,7 +1289,8 @@ export type RecordPageQuestionDto = {
     type: FormControl;
     /**
      * True when the answer is an array of strings rather than a string or null, as for a
-     * checkbox, a multi-value hierarchical select or a text list.
+     * checkbox, a multi-value hierarchical select or a text list. False for a group, whose answer
+     * is an array of objects.
      */
     multiple: boolean;
     /**
@@ -1293,21 +1318,35 @@ export type RecordPageQuestionDto = {
      */
     childPlaceholder: null | string;
     /**
-     * The button text that adds another entry to a multi-value hierarchical select or a text
-     * list.
+     * The button text that adds another entry to a multi-value hierarchical select, a group or a
+     * text list.
      */
     addAnotherLabel: null | string;
     /**
-     * The button text that removes an entry of a text list; null for other controls. Not
-     * `required`, so existing clients and fixtures are unaffected.
+     * The heading of each item of a group, numbered from 1; null for other controls.
+     */
+    itemLabel?: null | string;
+    /**
+     * The button text that removes an item of a group or an entry of a text list.
      */
     removeLabel?: null | string;
+    /**
+     * The questions asked of each item of a group, in order, or null for other controls. Each
+     * item of the answer is an object keyed by these questions' IDs, and their errors are keyed
+     * `{group id}[{item index}].{child id}`.
+     */
+    children?: null | Array<RecordPageQuestionDto>;
     /**
      * The prefixes a `PrefixedNumber` question offers before its digits, in order, or
      * null for any other control. Not `required`, so existing clients and fixtures are
      * unaffected.
      */
     prefixes?: null | Array<string>;
+    /**
+     * The exact number of digits a `PrefixedNumber` needs after its prefix, or null when up
+     * to 5 are allowed.
+     */
+    prefixDigits?: null | number;
     /**
      * What a FormControl.PrecisionDate question's date is of, for its error
      * messages, for example `submission`; null for other questions.
@@ -1748,6 +1787,64 @@ export const SortDirection = { ASCENDING: 'Ascending', DESCENDING: 'Descending' 
  * Specifies the direction in which query results are sorted.
  */
 export type SortDirection = typeof SortDirection[keyof typeof SortDirection];
+
+/**
+ * A submission or selected-organisation conflict. Schema only: runtime responses use the
+ * problem details factory and extensions to preserve tracing metadata.
+ */
+export type SubmissionConflictProblemDetails = {
+    type?: null | string;
+    title?: null | string;
+    status?: null | number;
+    detail?: null | string;
+    instance?: null | string;
+    /**
+     * The domain code (record_not_submittable, form_version_changed or record_changed),
+     * or the authentication code SelectedOrganisationMismatch.
+     */
+    code: string;
+    /**
+     * The organisation requested, when it differs from the selected organisation.
+     */
+    organisationId?: null | number;
+};
+
+/**
+ * A problem that stops a record being submitted, and the question it is on.
+ */
+export type SubmissionErrorDto = {
+    /**
+     * The question to highlight, which is also its key in `errors`.
+     */
+    questionId: string;
+    /**
+     * The page the question is on, to link to.
+     */
+    pageId: string;
+    /**
+     * The task the page belongs to.
+     */
+    taskId: string;
+    /**
+     * What is wrong and how to fix it.
+     */
+    message: string;
+};
+
+/**
+ * Submits a record's draft revision, as it was when check your answers loaded.
+ */
+export type SubmitRecordCommand = {
+    /**
+     * The form version check your answers was loaded with.
+     */
+    formVersion: string;
+    /**
+     * The hash of the whole revision check your answers was loaded with. If anything in the
+     * revision has changed since, the submission is rejected.
+     */
+    revisionHash: string;
+};
 
 export const TrialPhase = {
     PRECLINICAL: 'Preclinical',
@@ -3313,6 +3410,61 @@ export type SaveRecordFormPageResponses = {
 };
 
 export type SaveRecordFormPageResponse = SaveRecordFormPageResponses[keyof SaveRecordFormPageResponses];
+
+export type SubmitRecordData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: SubmitRecordCommand;
+    path: {
+        /**
+         * The record to submit.
+         */
+        recordId: number;
+    };
+    query?: never;
+    url: '/records/{recordId}/submit';
+};
+
+export type SubmitRecordErrors = {
+    /**
+     * The request body is missing or malformed.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but not submit it.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record can't be submitted in its current state, or the form or revision changed since
+     * check your answers loaded, or the selected organisation differs. The `code` member says which.
+     */
+    409: SubmissionConflictProblemDetails;
+    /**
+     * The revision has problems to fix first. `errors` is keyed by question ID, and
+     * `fields` lists each problem with its page and task, in form order.
+     */
+    422: InvalidRecordProblemDetails;
+};
+
+export type SubmitRecordError = SubmitRecordErrors[keyof SubmitRecordErrors];
+
+export type SubmitRecordResponses = {
+    /**
+     * The record was submitted.
+     */
+    204: void;
+};
+
+export type SubmitRecordResponse = SubmitRecordResponses[keyof SubmitRecordResponses];
 
 export type GetRecordTaskListData = {
     body?: never;

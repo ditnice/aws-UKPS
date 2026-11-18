@@ -31,6 +31,12 @@ internal sealed class MedicineFormLayout()
                 ]
             ),
             new FormLayoutSection(
+                "clinical-trial-information",
+                "Provide clinical trial information",
+                20,
+                [new FormLayoutTask(ClinicalTrials, "Clinical trials", 10)]
+            ),
+            new FormLayoutSection(
                 "regulatory-access-and-launch",
                 "Provide regulatory, access, and launch information",
                 30,
@@ -89,6 +95,9 @@ internal sealed class MedicineFormLayout()
 
     /// <summary>The "Development background" task's ID.</summary>
     public const string DevelopmentBackground = "development-background";
+
+    /// <summary>The "Clinical trials" task's ID.</summary>
+    public const string ClinicalTrials = "clinical-trials";
 
     /// <summary>
     /// The "Medicines and Healthcare products Regulatory Agency (MHRA) procedure and dates" task's

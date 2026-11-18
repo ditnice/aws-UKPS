@@ -13,7 +13,8 @@ public sealed record RecordPageQuestionDto
 
     /// <summary>
     /// True when the answer is an array of strings rather than a string or null, as for a
-    /// checkbox, a multi-value hierarchical select or a text list.
+    /// checkbox, a multi-value hierarchical select or a text list. False for a group, whose answer
+    /// is an array of objects.
     /// </summary>
     public required bool Multiple { get; init; }
 
@@ -36,16 +37,23 @@ public sealed record RecordPageQuestionDto
     public required string? ChildPlaceholder { get; init; }
 
     /// <summary>
-    /// The button text that adds another entry to a multi-value hierarchical select or a text
-    /// list.
+    /// The button text that adds another entry to a multi-value hierarchical select, a group or a
+    /// text list.
     /// </summary>
     public required string? AddAnotherLabel { get; init; }
 
-    /// <summary>
-    /// The button text that removes an entry of a text list; null for other controls. Not
-    /// <c>required</c>, so existing clients and fixtures are unaffected.
-    /// </summary>
+    /// <summary>The heading of each item of a group, numbered from 1; null for other controls.</summary>
+    public string? ItemLabel { get; init; }
+
+    /// <summary>The button text that removes an item of a group or an entry of a text list.</summary>
     public string? RemoveLabel { get; init; }
+
+    /// <summary>
+    /// The questions asked of each item of a group, in order, or null for other controls. Each
+    /// item of the answer is an object keyed by these questions' IDs, and their errors are keyed
+    /// <c>{group id}[{item index}].{child id}</c>.
+    /// </summary>
+    public IReadOnlyList<RecordPageQuestionDto>? Children { get; init; }
 
     /// <summary>
     /// The prefixes a <c>PrefixedNumber</c> question offers before its digits, in order, or
@@ -53,6 +61,12 @@ public sealed record RecordPageQuestionDto
     /// unaffected.
     /// </summary>
     public IReadOnlyList<string>? Prefixes { get; init; }
+
+    /// <summary>
+    /// The exact number of digits a <c>PrefixedNumber</c> needs after its prefix, or null when up
+    /// to 5 are allowed.
+    /// </summary>
+    public int? PrefixDigits { get; init; }
 
     /// <summary>
     /// What a <see cref="FormControl.PrecisionDate"/> question's date is of, for its error

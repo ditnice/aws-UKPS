@@ -29,6 +29,7 @@ internal sealed class ValidEntity
 
     [FormPage("valid-task", "text", "Text", Order = 10)]
     [FormField("valid_entity.choice", "Choice", FormControl.Radio, Order = 20)]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? Choice { get; set; }
 
     [FormPage("valid-task", "chapter", "Chapter", Order = 20)]
@@ -161,6 +162,16 @@ internal sealed class BrokenEntity
     [FormValuePrefixes("GID", "GID-TA")]
     public string? OverlappingPrefix { get; set; }
 
+    [FormPage("broken-task", "broken-prefixes", "Broken prefixes", Order = 50)]
+    [FormField(
+        "broken_entity.negative_digits",
+        "Negative digits",
+        FormControl.PrefixedNumber,
+        Order = 6
+    )]
+    [FormValuePrefixes("NCT", Digits = -1)]
+    public string? NegativeDigits { get; set; }
+
     public RecordRevision? Revision { get; set; }
 }
 
@@ -245,6 +256,7 @@ internal sealed class ConditionalEntity
 
     [FormPage("conditional-task", "gate", "Gate", Order = 10)]
     [FormField("conditional_entity.gate", "Gate", FormControl.Radio, Order = 10)]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? Gate { get; set; }
 
     [FormPage("conditional-task", "gate", "Gate", Order = 10)]
@@ -254,6 +266,7 @@ internal sealed class ConditionalEntity
 
     [FormPage("conditional-task", "follow-up", "Follow up", Order = 20)]
     [FormField("conditional_entity.detail", "Detail", FormControl.Radio, Order = 10)]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? Detail { get; set; }
 
     [FormPage("conditional-task", "follow-up", "Follow up", Order = 20)]
@@ -285,6 +298,7 @@ internal sealed class BrokenConditionEntity
 
     [FormPage("broken-conditions-task", "first", "First", Order = 10)]
     [FormField("broken_condition_entity.trigger", "Trigger", FormControl.Radio, Order = 10)]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? Trigger { get; set; }
 
     [FormPage("broken-conditions-task", "first", "First", Order = 10)]
@@ -299,6 +313,7 @@ internal sealed class BrokenConditionEntity
 
     [FormPage("broken-conditions-task", "first", "First", Order = 10)]
     [FormField("broken_condition_entity.after", "After", FormControl.Radio, Order = 40)]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? After { get; set; }
 
     [FormPage("broken-conditions-task", "first", "First", Order = 10)]
@@ -329,6 +344,7 @@ internal sealed class BrokenConditionEntity
 
     [FormPage("broken-conditions-task", "second", "Second", Order = 20)]
     [FormField("broken_condition_entity.later", "Later", FormControl.Radio, Order = 10)]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? Later { get; set; }
 
     [FormPage("broken-conditions-task", "second", "Second", Order = 20)]
@@ -503,6 +519,23 @@ internal sealed class BrokenCodedEntity
     public MhraProcedureType? Procedure { get; set; }
 }
 
+/// <summary>A YesNoUnknown question that does not choose between the providers of its type.</summary>
+[FormEntity]
+internal sealed class AmbiguousChoiceEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    [FormPage("ambiguous-task", "ambiguous", "Ambiguous", Order = 10)]
+    [FormField("ambiguous_choice_entity.choice", "Choice", FormControl.Radio)]
+    public YesNoUnknown? Choice { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+}
+
 /// <summary>Has pages in a Vaccine task and in a Medicine task.</summary>
 [FormEntity]
 internal sealed class SplitFormEntity
@@ -592,9 +625,27 @@ internal sealed class VaccineTestLayout()
                 [new FormLayoutTask("broken-coded-task", "Broken coded task", 10)]
             ),
             new FormLayoutSection(
+                "ambiguous",
+                "Ambiguous",
+                100,
+                [new FormLayoutTask("ambiguous-task", "Ambiguous task", 10)]
+            ),
+            new FormLayoutSection(
+                "grouped",
+                "Grouped",
+                110,
+                [new FormLayoutTask("group-task", "Group task", 10)]
+            ),
+            new FormLayoutSection(
+                "broken-group",
+                "Broken group",
+                120,
+                [new FormLayoutTask("broken-group-task", "Broken group task", 10)]
+            ),
+            new FormLayoutSection(
                 "listed",
                 "Listed",
-                100,
+                130,
                 [
                     new FormLayoutTask("listed-task", "Listed task", 10),
                     new FormLayoutTask("broken-listed-task", "Broken listed task", 20),
@@ -664,6 +715,7 @@ internal sealed class UnplacedConditionEntity
 
     [FormPage("valid-task", "unplaced-gate", "Gate", Order = 10)]
     [FormField("unplaced_condition_entity.gate", "Gate", FormControl.Radio)]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? Gate { get; set; }
 
     [FormPage("no-such-task", "unplaced-follow-up", "Follow up", Order = 20)]
@@ -671,6 +723,132 @@ internal sealed class UnplacedConditionEntity
     public string? Detail { get; set; }
 
     public RecordRevision? Revision { get; set; }
+}
+
+/// <summary>A valid group whose items hold text, a prefixed number and a text list.</summary>
+[FormEntity]
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class GroupEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+
+    [FormPage("group-task", "items", "Items", Order = 10)]
+    [FormField(
+        "group_entity_item",
+        "Items",
+        FormControl.Group,
+        ItemLabel = "Item",
+        AddAnotherLabel = "Add another item",
+        RemoveLabel = "Remove item",
+        ItemKey = "code"
+    )]
+    [FormRequired("Add at least one item")]
+    [FormMaxItems(5, "Add up to 5 items")]
+    public ICollection<GroupEntityItem> Items { get; set; } = [];
+}
+
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class GroupEntityItem
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Parent ownership")]
+    public int GroupEntityId { get; set; }
+
+    [FormField("name", "Name", FormControl.Text, Order = 10)]
+    [FormRequired("Enter a name")]
+    [FormMaxLength(10, "Name is too long")]
+    public required string Name { get; set; }
+
+    [FormField("code", "Code", FormControl.PrefixedNumber, Order = 20)]
+    [FormValuePrefixes("NCT", Digits = 8)]
+    [FormRequired("Enter a code")]
+    [FormDistinct("Code already entered")]
+    public string? Code { get; set; }
+
+    [FormField(
+        "numbers",
+        "Numbers",
+        FormControl.TextList,
+        AddAnotherLabel = "Add another number",
+        Order = 30
+    )]
+    [FormDistinct("Number already entered")]
+    public ICollection<GroupEntityItemNumber> Numbers { get; set; } = [];
+
+    public GroupEntity? GroupEntity { get; set; }
+}
+
+internal sealed class GroupEntityItemNumber
+{
+    public int Id { get; set; }
+    public int GroupEntityItemId { get; set; }
+    public required string Number { get; set; }
+    public int? DisplayOrder { get; set; }
+    public GroupEntityItem? Item { get; set; }
+}
+
+/// <summary>Breaks the group and text list checks.</summary>
+[FormEntity]
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class BrokenGroupEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+
+    [FormPage("broken-group-task", "broken-items", "Broken items", Order = 10)]
+    [FormField("broken_group_item", "Items", FormControl.Group, ItemKey = "free_text")]
+    public ICollection<BrokenGroupItem> Items { get; set; } = [];
+
+    [FormPage("broken-group-task", "broken-items", "Broken items", Order = 10)]
+    [FormField(
+        "broken_group_entity.text",
+        "Text",
+        FormControl.Text,
+        Order = 10,
+        ItemLabel = "Not a group",
+        RemoveLabel = "Not a list"
+    )]
+    [FormDistinct("Not a list")]
+    public string? Text { get; set; }
+}
+
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class BrokenGroupItem
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Parent ownership")]
+    public int BrokenGroupEntityId { get; set; }
+
+    [FormPage("broken-group-task", "broken-items", "Broken items", Order = 10)]
+    [FormField("broken.dotted", "Dotted", FormControl.Text, Order = 10)]
+    public string? Dotted { get; set; }
+
+    [FormField("free_text", "Free text", FormControl.Text, Order = 10)]
+    public string? FreeText { get; set; }
+
+    [FormField("choice", "Choice", FormControl.Radio, Order = 20)]
+    [FormOptions(OptionKeys.YesNoUnknown)]
+    public YesNoUnknown? Choice { get; set; }
+
+    [FormField("required_name", "Required name", FormControl.Text, Order = 30)]
+    public required string RequiredName { get; set; }
+
+    public BrokenGroupEntity? BrokenGroupEntity { get; set; }
 }
 
 internal enum ListedNameKind

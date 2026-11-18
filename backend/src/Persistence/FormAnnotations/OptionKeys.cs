@@ -185,4 +185,16 @@ internal static class OptionKeys
     /// <c>NetUkBudgetImpactBand?</c> property.
     /// </summary>
     public const string NetUkBudgetImpactBand = "net-uk-budget-impact-band";
+
+    /// <summary>
+    /// The <c>YesNo</c> enum: Yes and No. For a <see cref="FormControl.Radio"/> or
+    /// <see cref="FormControl.Select"/> on a <c>YesNo?</c> property.
+    /// </summary>
+    public const string YesNo = "yes-no";
+
+    /// <summary>
+    /// The <c>YesNoUnknown</c> enum for whether clinical trials are recruiting in the UK: "Yes,
+    /// trials are open and recruiting in the UK", No and Unknown at this stage.
+    /// </summary>
+    public const string ClinicalTrialsRecruitingInUk = "clinical-trials-recruiting-in-uk";
 }

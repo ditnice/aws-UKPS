@@ -68,14 +68,31 @@ internal sealed class FormFieldAttribute(string id, string label, FormControl co
 
     /// <summary>
     /// The button text that adds another entry, for example <c>Add another therapy area</c>. Only
-    /// a <see cref="FormControl.HierarchicalSelect"/> on a junction or a
-    /// <see cref="FormControl.TextList"/> may set it; defaults to <c>Add another</c>.
+    /// a <see cref="FormControl.HierarchicalSelect"/> on a junction, a
+    /// <see cref="FormControl.Group"/> or a <see cref="FormControl.TextList"/> may set it;
+    /// defaults to <c>Add another</c>.
     /// </summary>
     public string? AddAnotherLabel { get; set; }
 
     /// <summary>
-    /// The button text that removes an entry of a <see cref="FormControl.TextList"/>, for example
-    /// <c>Remove identifier</c>. Only a text list may set it; defaults to <c>Remove</c>.
+    /// The heading of each item of a <see cref="FormControl.Group"/>, numbered from 1, for example
+    /// <c>Clinical trial</c> gives "Clinical trial 1". Required on a group and not allowed on any
+    /// other control.
+    /// </summary>
+    public string? ItemLabel { get; set; }
+
+    /// <summary>
+    /// The button text that removes an item of a <see cref="FormControl.Group"/> or an entry of a
+    /// <see cref="FormControl.TextList"/>, for example <c>Remove clinical trial</c>. Defaults to
+    /// <c>Remove</c>.
     /// </summary>
     public string? RemoveLabel { get; set; }
+
+    /// <summary>
+    /// The ID of the child question whose answer identifies each item of a
+    /// <see cref="FormControl.Group"/> in the field audit, for example
+    /// <c>clinical_trials_gov_number</c>. The child must be required and distinct. When not set,
+    /// the audit lists the items in order.
+    /// </summary>
+    public string? ItemKey { get; set; }
 }

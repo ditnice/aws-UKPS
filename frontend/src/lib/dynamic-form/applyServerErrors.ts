@@ -1,7 +1,7 @@
 import type { ValidationProblemDetails } from '@/client/generated'
 import { updateFormApiErrors } from '@/lib/form/formErrorHandling'
 
-import { fieldName, isTextList } from './answers'
+import { fieldName, groupItems, isGroup, isTextList } from './answers'
 
 import type { FormValue, Question } from './types'
 import type { AnyFieldLikeMetaBase, Updater } from '@tanstack/react-form'
@@ -23,9 +23,9 @@ const shownIndex = (entries: unknown, serverIndex: number): number => {
 }
 
 /**
- * Converts the server's key for an error on a text list entry, such as
- * `record_product_detail.generic_names[1]`, to its key in `QuestionError.items`, renumbered as
- * shown. Undefined for any other key.
+ * Converts the server's key for an error inside a text list or group, such as
+ * `record_clinical_trial[0].other_registry_numbers[1]`, to its key in `QuestionError.items`, such as
+ * `0.other_registry_numbers.2`, renumbering text list entries as shown. Undefined for any other key.
  */
 export const itemErrorKey = (
   question: Question,
@@ -40,13 +40,22 @@ export const itemErrorKey = (
     const match = /^\[(\d+)\]$/.exec(rest)
     return match ? String(shownIndex(value, Number(match[1]))) : undefined
   }
-  return undefined
+  const match = /^\[(\d+)\]\.([a-z0-9_]+)(?:\[(\d+)\])?$/.exec(rest)
+  if (!isGroup(question) || !match) {
+    return undefined
+  }
+  const [, item, childId, entry] = match
+  if (entry === undefined) {
+    return `${item}.${childId}`
+  }
+  const entries = groupItems(value)[Number(item)]?.[childId]
+  return `${item}.${childId}.${shownIndex(entries, Number(entry))}`
 }
 
 /**
- * Shows server validation errors against their fields; errors on a text list's entries go on its
- * field as item errors. Returns the messages for keys that belong to no question on the page, so
- * they can be shown as a general error.
+ * Shows server validation errors against their fields; errors inside a text list or group go on
+ * its field as item errors. Returns the messages for keys that belong to no question on the page,
+ * so they can be shown as a general error.
  */
 export const applyServerErrors = (
   formApi: FieldMetaSetter,
@@ -56,7 +65,7 @@ export const applyServerErrors = (
   const handled = new Set<string>()
   questions.forEach((question, index) => {
     const name = fieldName(index)
-    if (!isTextList(question)) {
+    if (!isGroup(question) && !isTextList(question)) {
       formApi.setFieldMeta(name, updateFormApiErrors(problem, question.id))
       handled.add(question.id)
       return

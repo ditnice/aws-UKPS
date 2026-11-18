@@ -21,6 +21,9 @@ internal enum BindingKind
     /// <summary>An integer foreign key to a regulatory date row.</summary>
     RegulatoryDate = 5,
 
+    /// <summary>A collection navigation to child rows, each holding a group item's answers.</summary>
+    Group = 6,
+
     /// <summary>A collection navigation to child rows with one string column each.</summary>
     TextList = 7,
 }

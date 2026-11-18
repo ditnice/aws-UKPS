@@ -1,16 +1,18 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
 
 namespace UKPS.Api.Application.RecordForms.Model;
 
 /// <summary>
-/// A normalised answer: a single string (or null), a sorted set of strings, or an ordered list
-/// of strings. Two answers are equal when they would be stored the same way, so a reordered
-/// multi-value selection is not a change, but a reordered list is.
+/// A normalised answer: a single string (or null), a sorted set of strings, an ordered list of
+/// strings, or an ordered list of group items. Two answers are equal when they would be stored the
+/// same way, so a reordered multi-value selection is not a change, but a reordered list is.
 /// </summary>
 internal sealed class FormAnswer : IEquatable<FormAnswer>
 {
     private static readonly IReadOnlyList<string> _noValues = [];
+    private static readonly IReadOnlyList<FormGroupItem> _noItems = [];
 
     public AnswerShape Shape { get; }
 
@@ -22,22 +24,41 @@ internal sealed class FormAnswer : IEquatable<FormAnswer>
     /// </summary>
     public IReadOnlyList<string> Values { get; }
 
-    public bool IsEmpty => Shape == AnswerShape.Single ? Value is null : Values.Count == 0;
+    /// <summary>The items of a group question, in order.</summary>
+    public IReadOnlyList<FormGroupItem> Items { get; }
 
-    private FormAnswer(AnswerShape shape, string? value, IReadOnlyList<string> values)
+    public bool IsEmpty =>
+        Shape switch
+        {
+            AnswerShape.Single => Value is null,
+            AnswerShape.Group => Items.Count == 0,
+            _ => Values.Count == 0,
+        };
+
+    private FormAnswer(
+        AnswerShape shape,
+        string? value,
+        IReadOnlyList<string> values,
+        IReadOnlyList<FormGroupItem> items
+    )
     {
         Shape = shape;
         Value = value;
         Values = values;
+        Items = items;
     }
 
-    public static FormAnswer Single(string? value) => new(AnswerShape.Single, value, _noValues);
+    public static FormAnswer Single(string? value) =>
+        new(AnswerShape.Single, value, _noValues, _noItems);
 
     public static FormAnswer Multi(IEnumerable<string> values) =>
-        new(AnswerShape.Multi, null, values.Order(StringComparer.Ordinal).ToArray());
+        new(AnswerShape.Multi, null, values.Order(StringComparer.Ordinal).ToArray(), _noItems);
 
     public static FormAnswer List(IEnumerable<string> values) =>
-        new(AnswerShape.List, null, values.ToArray());
+        new(AnswerShape.List, null, values.ToArray(), _noItems);
+
+    public static FormAnswer Group(IEnumerable<FormGroupItem> items) =>
+        new(AnswerShape.Group, null, _noValues, items.ToArray());
 
     public static FormAnswer Empty(AnswerShape shape) =>
         shape switch
@@ -45,14 +66,15 @@ internal sealed class FormAnswer : IEquatable<FormAnswer>
             AnswerShape.Single => Single(null),
             AnswerShape.Multi => Multi([]),
             AnswerShape.List => List([]),
+            AnswerShape.Group => Group([]),
             _ => throw new InvalidOperationException($"Unsupported answer shape {shape}."),
         };
 
-    /// <summary>Every value in the answer, whatever its shape.</summary>
+    /// <summary>Every option value in the answer, for a single or multi-value answer.</summary>
     public IEnumerable<string> AllValues() => Value is null ? Values : [Value];
 
     /// <summary>
-    /// The audit representation: single values raw, lists as a JSON array, no answer as null.
+    /// The audit representation: single values raw, lists and groups as JSON, no answer as null.
     /// </summary>
     public string? ToAuditText()
     {
@@ -61,13 +83,24 @@ internal sealed class FormAnswer : IEquatable<FormAnswer>
             return null;
         }
 
-        return Shape == AnswerShape.Single ? Value : FieldAuditJson.Serialize(Values);
+        return Shape switch
+        {
+            AnswerShape.Single => Value,
+            AnswerShape.Group => FieldAuditJson.Serialize(ToJsonNode()),
+            _ => FieldAuditJson.Serialize(Values),
+        };
     }
 
-    public JsonElement ToJson() =>
-        Shape == AnswerShape.Single
-            ? JsonSerializer.SerializeToElement(Value)
-            : JsonSerializer.SerializeToElement(Values);
+    public JsonElement ToJson() => JsonSerializer.SerializeToElement(ToJsonNode());
+
+    /// <summary>The answer as it is sent on the wire.</summary>
+    public JsonNode? ToJsonNode() =>
+        Shape switch
+        {
+            AnswerShape.Single => Value is null ? null : JsonValue.Create(Value),
+            AnswerShape.Group => new JsonArray([.. Items.Select(static i => i.ToJsonNode())]),
+            _ => new JsonArray([.. Values.Select(static v => (JsonNode?)JsonValue.Create(v))]),
+        };
 
     public bool Equals(FormAnswer? other)
     {
@@ -78,7 +111,8 @@ internal sealed class FormAnswer : IEquatable<FormAnswer>
 
         return Shape == other.Shape
             && string.Equals(Value, other.Value, StringComparison.Ordinal)
-            && Values.SequenceEqual(other.Values, StringComparer.Ordinal);
+            && Values.SequenceEqual(other.Values, StringComparer.Ordinal)
+            && Items.SequenceEqual(other.Items);
     }
 
     public override bool Equals(object? obj) => Equals(obj as FormAnswer);
@@ -91,6 +125,11 @@ internal sealed class FormAnswer : IEquatable<FormAnswer>
         foreach (string value in Values)
         {
             hash.Add(value, StringComparer.Ordinal);
+        }
+
+        foreach (FormGroupItem item in Items)
+        {
+            hash.Add(item);
         }
 
         return hash.ToHashCode();

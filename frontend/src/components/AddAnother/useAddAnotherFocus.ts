@@ -14,7 +14,11 @@ const focusable = 'input, select, textarea'
  * item's wrapper. An item's own heading is marked with `data-add-another-heading`.
  */
 export function useAddAnotherFocus() {
-  const headingRef = useRef<HTMLElement>(null)
+  const heading = useRef<HTMLElement | null>(null)
+  // A callback ref suits any heading element (h2, legend) without casting.
+  const headingRef = useCallback((element: HTMLElement | null) => {
+    heading.current = element
+  }, [])
   const items = useRef<(HTMLElement | null)[]>([])
   // The request waits in a ref until the list has re-rendered; the counter re-runs the effect.
   const pending = useRef<FocusRequest | null>(null)
@@ -33,7 +37,7 @@ export function useAddAnotherFocus() {
     const item = request.index === null ? null : items.current[request.index]
     const target =
       request.index === null
-        ? headingRef.current
+        ? heading.current
         : request.part === 'heading'
           ? (item?.querySelector<HTMLElement>('[data-add-another-heading]') ??
             item?.querySelector<HTMLElement>(focusable))
@@ -58,8 +62,6 @@ export function useAddAnotherFocus() {
      * heading (or first field) of the item at `index`.
      */
     focusHeading: (index: number) =>
-      setRequest(
-        headingRef.current ? { index: null, part: 'heading' } : { index, part: 'heading' },
-      ),
+      setRequest(heading.current ? { index: null, part: 'heading' } : { index, part: 'heading' }),
   }
 }

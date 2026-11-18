@@ -376,11 +376,11 @@ It is still revision 1, because sessions and users don't create revisions. Exist
 
 **`record_clinical_trial_information`** is inserted:
 
-| id | revision_id | recruiting_in_uk |
-| --- | --- | --- |
-| 1 | 1 | `yes` |
+| id | revision_id | has_clinical_trials | recruiting_in_uk |
+| --- | --- | --- | --- |
+| 1 | 1 | `yes` | `yes` |
 
-**`record_clinical_trials`** is inserted (one-to-many by `revision_id`, with no unique index):
+**`record_clinical_trials`** is inserted (one-to-many by `revision_id`, which is also a foreign key to the information row's `revision_id`):
 
 | id | revision_id | study_name | clinical_trials_gov_number | trial_phase | brief_description |
 | --- | --- | --- | --- | --- | --- |
@@ -397,11 +397,12 @@ It is still revision 1, because sessions and users don't create revisions. Exist
 
 | id | field_path | old_value | new_value |
 | --- | --- | --- | --- |
-| 22 | `record_clinical_trial_information.recruiting_in_uk` | NULL | `Yes` |
-| 23 | `record_clinical_trial` | NULL | `{"NCT06123456":{"study_name":"ION-UK","trial_phase":"PhaseIII","brief_description":"Open-label study of 12 weeks' treatment in treatment-naive adults","other_registry_numbers":["2025-001234-56","ISRCTN12345678"]}}` |
+| 22 | `record_clinical_trial_information.has_clinical_trials` | NULL | `Yes` |
+| 23 | `record_clinical_trial` | NULL | `{"NCT06123456":{"other_registry_numbers":["2025-001234-56","ISRCTN12345678"],"study_name":"ION-UK"}}` |
+| 24 | `record_clinical_trial_information.recruiting_in_uk` | NULL | `Yes` |
 
 > [!NOTE]
-> The trials collection, with the grandchild registry numbers nested inside it, is one JSON object keyed by NCT number, so the diff can match trials across revisions even though their PKs change. If a user edits the NCT number itself, the diff shows one trial removed and one added.
+> The trials collection, with the grandchild registry numbers nested inside it, is one JSON object keyed by NCT number, holding the answers the Medicine form asks (the vaccines-only phase and description are not on it), so the diff can match trials across revisions even though their PKs change. If a user edits the NCT number itself, the diff shows one trial removed and one added.
 
 <br>
 

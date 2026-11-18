@@ -18,11 +18,29 @@ internal sealed record FormQuestion
     public string? ChildPlaceholder { get; init; }
     public string? AddAnotherLabel { get; init; }
 
-    /// <summary>The button text that removes an entry of a text list.</summary>
+    /// <summary>The heading of each item of a group, numbered from 1.</summary>
+    public string? ItemLabel { get; init; }
+
+    /// <summary>The button text that removes an item of a group or an entry of a text list.</summary>
     public string? RemoveLabel { get; init; }
+
+    /// <summary>The child question whose answer identifies a group item in the field audit.</summary>
+    public string? ItemKey { get; init; }
+
+    /// <summary>
+    /// The questions asked of each item of a <see cref="FormControl.Group"/>, in order; empty for
+    /// other controls. Their IDs are local to the group.
+    /// </summary>
+    public IReadOnlyList<FormQuestion> Children { get; init; } = [];
 
     /// <summary>The prefixes a <see cref="FormControl.PrefixedNumber"/> offers, in order.</summary>
     public IReadOnlyList<string>? Prefixes { get; init; }
+
+    /// <summary>
+    /// The exact number of digits a <see cref="FormControl.PrefixedNumber"/> needs after its
+    /// prefix, or null when up to 5 are allowed.
+    /// </summary>
+    public int? PrefixDigits { get; init; }
 
     /// <summary>What a date question's date is of, as its error messages name it.</summary>
     public string? DateName { get; init; }
@@ -38,6 +56,10 @@ internal sealed record FormQuestion
     /// <summary>The reference data entity of a reference ID or junction question.</summary>
     public Type? ReferenceType { get; init; }
 
+    /// <summary>
+    /// The content entity whose row holds the answer. For a group child, the entity holding the
+    /// group, since the child is read and written only through the group.
+    /// </summary>
     public required FormEntity Entity { get; init; }
     public required IFormBinding Binding { get; init; }
 

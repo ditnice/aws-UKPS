@@ -27,7 +27,11 @@ public class PrefixedNumberCasesTests
         var (answer, parseError) = AnswerParser.Parse(AnswerShape.Single, prefixedCase.Answer);
         parseError.ShouldBeNull();
 
-        var (value, error) = PrefixedNumberAnswer.Evaluate(prefixedCase.Prefixes, answer!.Value);
+        var (value, error) = PrefixedNumberAnswer.Evaluate(
+            prefixedCase.Prefixes,
+            prefixedCase.Digits,
+            answer!.Value
+        );
 
         error.ShouldBe(prefixedCase.Error);
         value.ShouldBe(prefixedCase.Value);
@@ -64,6 +68,7 @@ public class PrefixedNumberCasesTests
     private sealed record PrefixedNumberCase(
         string Name,
         IReadOnlyList<string> Prefixes,
+        int? Digits,
         JsonElement Answer,
         string? Value,
         string? Error

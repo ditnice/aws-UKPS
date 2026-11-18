@@ -5,6 +5,7 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
+using UKPS.Api.WebApi.CustomResponses;
 
 namespace UKPS.Api.WebApi.Controllers;
 
@@ -292,9 +293,5 @@ public class UserController(IUserService userService) : ControllerBase
     }
 
     private ObjectResult UserNotFound() =>
-        Problem(
-            statusCode: StatusCodes.Status404NotFound,
-            title: "Not Found",
-            detail: "The specified user could not be found."
-        );
+        this.NotFoundProblem("The specified user could not be found.");
 }

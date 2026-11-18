@@ -93,16 +93,12 @@ export const AddAnother = <T extends string>({
   return (
     <Root className={clsx(styles.root, legend && styles.fieldset)}>
       {legend && (
-        <legend
-          className={clsx('input__label', styles.legend)}
-          ref={headingRef as React.Ref<HTMLLegendElement>}
-          tabIndex={-1}
-        >
+        <legend className={clsx('input__label', styles.legend)} ref={headingRef} tabIndex={-1}>
           {legend}
         </legend>
       )}
       {title && (
-        <h2 ref={headingRef as React.Ref<HTMLHeadingElement>} tabIndex={-1}>
+        <h2 ref={headingRef} tabIndex={-1}>
           {title}
         </h2>
       )}
@@ -162,8 +158,9 @@ export const AddAnother = <T extends string>({
         type="button"
         variant="primary"
         onClick={() => {
+          const index = field.state.value.length
           field.pushValue('')
-          focusField(field.state.value.length)
+          focusField(index)
         }}
       >
         {addItemLabel}
