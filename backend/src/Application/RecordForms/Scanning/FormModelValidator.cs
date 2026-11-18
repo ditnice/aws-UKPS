@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -62,6 +63,9 @@ internal static partial class FormModelValidator
 
     [GeneratedRegex(@"^[a-z0-9_]+(\.[a-z0-9_]+)?$", RegexOptions.ExplicitCapture, 1000)]
     private static partial Regex QuestionIdPattern();
+
+    [GeneratedRegex("^[a-z0-9_]+$", RegexOptions.ExplicitCapture, 1000)]
+    private static partial Regex ChildIdPattern();
 
     private static void ValidateLayouts(IReadOnlyList<FormLayout> layouts, List<string> problems)
     {
@@ -217,27 +221,7 @@ internal static partial class FormModelValidator
         string where = question.Where;
         FormFieldAttribute field = question.Field;
 
-        if (!QuestionIdPattern().IsMatch(field.Id))
-        {
-            problems.Add($"{where} has a badly formed question ID '{field.Id}'.");
-        }
-
-        if (
-            !SlugPattern().IsMatch(question.Page.Id)
-            || string.IsNullOrWhiteSpace(question.Page.Title)
-        )
-        {
-            problems.Add(
-                $"{where} declares page '{question.Page.Id}' with a badly formed ID or a blank title."
-            );
-        }
-
-        if (string.Equals(question.Page.Id, TaskListRoute, StringComparison.Ordinal))
-        {
-            problems.Add(
-                $"{where} declares page '{TaskListRoute}', which is reserved for the task list."
-            );
-        }
+        ValidateIds(question, problems);
 
         if (string.IsNullOrWhiteSpace(field.Label))
         {
@@ -262,6 +246,120 @@ internal static partial class FormModelValidator
         ValidateOptions(question, control, options, problems);
         ValidateRules(question, control, problems);
         ValidatePresentation(question, control, problems);
+        if (control == FormControl.Group)
+        {
+            ValidateGroup(question, options, problems);
+        }
+    }
+
+    /// <summary>
+    /// Checks a group's child questions: each is a valid question that suits a group, with an ID
+    /// local to the group, and the item key names a required, distinct child.
+    /// </summary>
+    private static void ValidateGroup(
+        QuestionDeclaration group,
+        OptionProviderRegistry options,
+        List<string> problems
+    )
+    {
+        string where = group.Where;
+        foreach (QuestionDeclaration child in group.Children)
+        {
+            string childWhere = child.Where;
+            if (!ChildIdPattern().IsMatch(child.Field.Id))
+            {
+                problems.Add(
+                    $"{childWhere} is a question of group {where}, so its ID '{child.Field.Id}' must be lowercase words joined by underscores, with no dotted prefix."
+                );
+            }
+
+            if (!ControlRules.IsAllowedInGroup(child.Control))
+            {
+                problems.Add(
+                    $"{childWhere} uses control {child.Control}, which a group's question cannot use; use Text, Textarea, PrefixedNumber or TextList."
+                );
+                continue;
+            }
+
+            if (child.ShowWhen is not null)
+            {
+                problems.Add(
+                    $"{childWhere} has [FormShowWhen], which a group's question cannot have."
+                );
+            }
+
+            ValidateQuestion(child, options, problems);
+        }
+
+        ReportDuplicates(
+            group.Children.Select(static c => c.Field.Id),
+            id => $"{where} has more than one question with ID '{id}'.",
+            problems
+        );
+        ReportDuplicates(
+            group.Children.Select(static c => c.Field.Order.ToString(CultureInfo.InvariantCulture)),
+            order => $"{where} has more than one question with Order {order}.",
+            problems
+        );
+
+        if (group.Field.ItemKey is { } itemKey)
+        {
+            QuestionDeclaration? key = group.Children.FirstOrDefault(c =>
+                string.Equals(c.Field.Id, itemKey, StringComparison.Ordinal)
+            );
+            if (
+                key is null
+                || key.Shape != AnswerShape.Single
+                || key.Required is null
+                || key.Distinct is null
+            )
+            {
+                problems.Add(
+                    $"{where} has ItemKey '{itemKey}', which must name a single-value question of the group with [FormRequired] and [FormDistinct]."
+                );
+            }
+        }
+    }
+
+    private static void ReportDuplicates(
+        IEnumerable<string> ids,
+        Func<string, string> message,
+        List<string> problems
+    )
+    {
+        problems.AddRange(
+            ids.GroupBy(static id => id, StringComparer.Ordinal)
+                .Where(static g => g.Count() > 1)
+                .Select(g => message(g.Key))
+        );
+    }
+
+    private static void ValidateIds(QuestionDeclaration question, List<string> problems)
+    {
+        string where = question.Where;
+        FormFieldAttribute field = question.Field;
+
+        if (!QuestionIdPattern().IsMatch(field.Id))
+        {
+            problems.Add($"{where} has a badly formed question ID '{field.Id}'.");
+        }
+
+        if (
+            !SlugPattern().IsMatch(question.Page.Id)
+            || string.IsNullOrWhiteSpace(question.Page.Title)
+        )
+        {
+            problems.Add(
+                $"{where} declares page '{question.Page.Id}' with a badly formed ID or a blank title."
+            );
+        }
+
+        if (string.Equals(question.Page.Id, TaskListRoute, StringComparison.Ordinal))
+        {
+            problems.Add(
+                $"{where} declares page '{TaskListRoute}', which is reserved for the task list."
+            );
+        }
     }
 
     private static void ValidateDateEvent(
@@ -418,11 +516,21 @@ internal static partial class FormModelValidator
 
         if (
             question.MaxItems is { } maxItems
-            && (question.Shape != AnswerShape.Multi || maxItems.Max <= 0)
+            && (question.Shape == AnswerShape.Single || maxItems.Max <= 0)
         )
         {
             problems.Add(
-                $"{where} has [FormMaxItems], which needs a multi-value question and a positive maximum."
+                $"{where} has [FormMaxItems], which needs a multi-value, text list or group question and a positive maximum."
+            );
+        }
+
+        bool distinctApplies =
+            control == FormControl.TextList
+            || (question.IsGroupChild && question.Shape == AnswerShape.Single);
+        if (question.Distinct is not null && !distinctApplies)
+        {
+            problems.Add(
+                $"{where} has [FormDistinct], which only a TextList or a single-value question of a group uses."
             );
         }
     }
@@ -458,6 +566,13 @@ internal static partial class FormModelValidator
         {
             problems.Add(
                 $"{where} has a blank prefix, or one ending in a digit, which would make the number ambiguous."
+            );
+        }
+
+        if (question.Prefixes!.Digits < 0)
+        {
+            problems.Add(
+                $"{where} has a negative Digits in [FormValuePrefixes]; use 0 for up to 5 digits."
             );
         }
 
@@ -517,16 +632,53 @@ internal static partial class FormModelValidator
         if (
             field.AddAnotherLabel is not null
             && !(isHierarchical && question.Shape == AnswerShape.Multi)
+            && control is not (FormControl.Group or FormControl.TextList)
         )
         {
             problems.Add(
-                $"{where} sets AddAnotherLabel, which only a multi-value HierarchicalSelect uses."
+                $"{where} sets AddAnotherLabel, which only a multi-value HierarchicalSelect, a Group or a TextList uses."
             );
         }
+
+        ValidateItemPresentation(question, control, problems);
 
         if (isHierarchical && field.ChildLabel is null)
         {
             problems.Add($"{where} uses HierarchicalSelect, which needs a ChildLabel.");
+        }
+    }
+
+    /// <summary>Checks the item and remove labels and item key only a group or text list uses.</summary>
+    private static void ValidateItemPresentation(
+        QuestionDeclaration question,
+        FormControl control,
+        List<string> problems
+    )
+    {
+        string where = question.Where;
+        FormFieldAttribute field = question.Field;
+        bool isGroup = control == FormControl.Group;
+
+        if (
+            field.RemoveLabel is not null
+            && control is not (FormControl.Group or FormControl.TextList)
+        )
+        {
+            problems.Add($"{where} sets RemoveLabel, which only a Group or a TextList uses.");
+        }
+
+        if (field.ItemKey is not null && !isGroup)
+        {
+            problems.Add($"{where} sets ItemKey, which only a Group uses.");
+        }
+
+        if (isGroup != !string.IsNullOrWhiteSpace(field.ItemLabel))
+        {
+            problems.Add(
+                isGroup
+                    ? $"{where} uses Group, which needs an ItemLabel."
+                    : $"{where} sets ItemLabel, which only a Group uses."
+            );
         }
     }
 

@@ -29,6 +29,7 @@ internal sealed class MedicinesPatientIdentification
     [FormRequired(
         "Select yes if a screening or surveillance programme is required to identify eligible patients"
     )]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? ScreeningRequired { get; set; }
 
     /// <summary>Conditional on ScreeningRequired = Yes.</summary>
@@ -67,6 +68,7 @@ internal sealed class MedicinesPatientIdentification
     [FormRequired(
         "Select yes if urgent patient identification and treatment delivery is required for your product"
     )]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? UrgentIdentificationRequired { get; set; }
 
     /// <summary>Conditional on UrgentIdentificationRequired = Yes.</summary>

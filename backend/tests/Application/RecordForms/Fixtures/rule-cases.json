@@ -1,5 +1,5 @@
 {
-  "description": "Shared rule cases run by both the backend (RuleCasesTests) and the frontend (lib/dynamic-form). Each answer is the wire answer before normalisation; error is the first failing rule's message, or null.",
+  "description": "Shared rule cases run by both the backend (RuleCasesTests) and the frontend (lib/dynamic-form). Each answer is the wire answer before normalisation; multiple marks a multi-value answer (an unordered set) and list a text list answer (ordered, blank entries dropped); error is the first failing rule's message, or null.",
   "cases": [
     { "name": "required text answered", "multiple": false, "rules": [{ "kind": "Required", "value": null, "message": "Enter a value" }], "answer": "abc", "error": null },
     { "name": "required text null", "multiple": false, "rules": [{ "kind": "Required", "value": null, "message": "Enter a value" }], "answer": null, "error": "Enter a value" },
@@ -18,6 +18,12 @@
     { "name": "required multi one ticked", "multiple": true, "rules": [{ "kind": "Required", "value": null, "message": "Select at least one" }], "answer": ["2"], "error": null },
     { "name": "max items at limit", "multiple": true, "rules": [{ "kind": "MaxItems", "value": 3, "message": "Select up to 3" }], "answer": ["1", "2", "3"], "error": null },
     { "name": "max items over limit", "multiple": true, "rules": [{ "kind": "MaxItems", "value": 3, "message": "Select up to 3" }], "answer": ["1", "2", "3", "4"], "error": "Select up to 3" },
-    { "name": "optional multi none ticked", "multiple": true, "rules": [{ "kind": "MaxItems", "value": 3, "message": "Select up to 3" }], "answer": [], "error": null }
+    { "name": "optional multi none ticked", "multiple": true, "rules": [{ "kind": "MaxItems", "value": 3, "message": "Select up to 3" }], "answer": [], "error": null },
+    { "name": "distinct list all different", "multiple": true, "list": true, "rules": [{ "kind": "Distinct", "value": null, "message": "Already entered" }], "answer": ["ISRCTN1", "2025-001"], "error": null },
+    { "name": "distinct list repeats ignoring case", "multiple": true, "list": true, "rules": [{ "kind": "Distinct", "value": null, "message": "Already entered" }], "answer": ["isrctn1", "ISRCTN1"], "error": "Already entered" },
+    { "name": "distinct list repeats after trimming", "multiple": true, "list": true, "rules": [{ "kind": "Distinct", "value": null, "message": "Already entered" }], "answer": ["A1", " A1 "], "error": "Already entered" },
+    { "name": "distinct list ignores blank entries", "multiple": true, "list": true, "rules": [{ "kind": "Distinct", "value": null, "message": "Already entered" }], "answer": ["A1", "", "  "], "error": null },
+    { "name": "required list with only blank entries", "multiple": true, "list": true, "rules": [{ "kind": "Required", "value": null, "message": "Enter a value" }], "answer": ["", " "], "error": "Enter a value" },
+    { "name": "distinct passes on a single value", "multiple": false, "rules": [{ "kind": "Distinct", "value": null, "message": "Already entered" }], "answer": "abc", "error": null }
   ]
 }

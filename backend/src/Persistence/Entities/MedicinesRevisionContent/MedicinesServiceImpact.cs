@@ -74,6 +74,7 @@ internal sealed class MedicinesServiceImpact
     [FormRequired(
         "Select yes if there are specific requirements for handling or storing the product that may cause service issues"
     )]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? HandlingStorageRequirements { get; set; }
 
     /// <summary>Conditional on HandlingStorageRequirements = Yes.</summary>

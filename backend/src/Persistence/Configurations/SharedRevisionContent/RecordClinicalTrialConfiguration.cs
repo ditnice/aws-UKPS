@@ -14,6 +14,7 @@ internal sealed class RecordClinicalTrialConfiguration
         builder.Property(x => x.StudyName).IsRequired();
         builder.Property(x => x.ClinicalTrialsGovNumber).IsRequired();
         builder.Property(x => x.TrialPhase);
+        builder.Property(x => x.DisplayOrder);
 
         builder.HasIndex(x => x.RevisionId).HasDatabaseName("ix_record_clinical_trial_revision_id");
 

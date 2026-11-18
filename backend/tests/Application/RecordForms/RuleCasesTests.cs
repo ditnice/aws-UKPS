@@ -26,7 +26,12 @@ public class RuleCasesTests
         RuleCase ruleCase = _cases.Single(c =>
             string.Equals(c.Name, name, StringComparison.Ordinal)
         );
-        AnswerShape shape = ruleCase.Multiple ? AnswerShape.Multi : AnswerShape.Single;
+        AnswerShape shape = (ruleCase.Multiple, ruleCase.List) switch
+        {
+            (_, true) => AnswerShape.List,
+            (true, _) => AnswerShape.Multi,
+            _ => AnswerShape.Single,
+        };
 
         var (answer, parseError) = AnswerParser.Parse(shape, ruleCase.Answer);
 
@@ -84,6 +89,7 @@ public class RuleCasesTests
     private sealed record RuleCase(
         string Name,
         bool Multiple,
+        bool List,
         IReadOnlyList<FormRule> Rules,
         JsonElement Answer,
         string? Error

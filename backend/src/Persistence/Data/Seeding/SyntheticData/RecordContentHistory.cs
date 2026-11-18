@@ -210,11 +210,35 @@ internal static class RecordContentHistory
                     )
             ),
             (
+                "record_clinical_trial_information.has_clinical_trials",
+                record.ClinicalTrialInformation.ClinicalTrials.Count == 0 ? null : nameof(YesNo.Yes)
+            ),
+            ("record_clinical_trial", ClinicalTrialsAudit(record.ClinicalTrialInformation)),
+            (
                 "record_clinical_trial_information.recruiting_in_uk",
                 record.ClinicalTrialInformation.RecruitingInUk?.ToString()
             ),
         ];
     }
+
+    /// <summary>
+    /// The trials as the form audits them: one object keyed by trial number, each holding the
+    /// trial's other answers in ordinal key order.
+    /// </summary>
+    private static string? ClinicalTrialsAudit(SyntheticClinicalTrialInformation section) =>
+        section.ClinicalTrials.Count == 0
+            ? null
+            : FieldAuditJson.Serialize(
+                section.ClinicalTrials.ToDictionary(
+                    static t => t.ClinicalTrialsGovNumber,
+                    static t => new Dictionary<string, object>(StringComparer.Ordinal)
+                    {
+                        ["other_registry_numbers"] = t.OtherClinicalTrialNumbers,
+                        ["study_name"] = t.StudyName,
+                    },
+                    StringComparer.Ordinal
+                )
+            );
 
     private static (string Path, string? Value)[] DevelopmentBackgroundFields(
         SyntheticDevelopmentBackground background

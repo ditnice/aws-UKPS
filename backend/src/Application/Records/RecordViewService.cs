@@ -108,7 +108,8 @@ internal sealed class RecordViewService(
                 x.LatestRevisionId,
                 x.DisplayStatus,
                 x.LatestRevisionStatus,
-                x.HasSingleRevision
+                x.HasSingleRevision,
+                x.NextUpdateDue
             ))
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -139,6 +140,7 @@ internal sealed class RecordViewService(
             ReviewedAt = record.ReviewedAt,
             CanEditContent = CanEditContent(record),
             Actions = actions,
+            NextUpdateDue = record.NextUpdateDue,
             RecordProductDetail = await GetRecordProductDetail(revisionId, cancellationToken),
             MedicinesIndicationDetail = await GetMedicinesIndicationDetail(
                 revisionId,
@@ -199,6 +201,7 @@ internal sealed class RecordViewService(
             ReviewedAt = record.ReviewedAt,
             CanEditContent = CanEditContent(record),
             Actions = actions,
+            NextUpdateDue = record.NextUpdateDue,
         };
     }
 
@@ -462,7 +465,8 @@ internal sealed class RecordViewService(
         await dbContext
             .RecordClinicalTrials.AsNoTracking()
             .Where(x => x.RevisionId == revisionId)
-            .OrderBy(x => x.Id)
+            .OrderBy(x => x.DisplayOrder ?? int.MaxValue)
+            .ThenBy(x => x.Id)
             .Select(x => new RecordClinicalTrialDto
             {
                 StudyName = x.StudyName,
@@ -556,6 +560,7 @@ internal sealed class RecordViewService(
         int? LatestRevisionId,
         RecordDisplayStatus DisplayStatus,
         WorkflowStatus? LatestRevisionStatus,
-        bool HasSingleRevision
+        bool HasSingleRevision,
+        DateTime? NextUpdateDue
     );
 }
