@@ -20,6 +20,8 @@ export type AddAnotherGroupProps = {
   itemHeadingLevel?: 2 | 3 | 4
   /** No more items may be added once there are this many. */
   maxItems?: number
+  /** The id of the item at `index`, so a link can scroll to it. */
+  itemId?: (index: number) => string
 }
 
 /**
@@ -40,6 +42,7 @@ export function AddAnotherGroup({
   onRemove,
   itemHeadingLevel = 2,
   maxItems = Infinity,
+  itemId,
 }: AddAnotherGroupProps) {
   const { itemRef, focusField, focusHeading } = useAddAnotherFocus()
   const canRemove = count > 1
@@ -49,7 +52,7 @@ export function AddAnotherGroup({
     <div className={styles.root}>
       {Array.from({ length: count }, (_, index) => (
         // Items have no identity of their own; position is what the user edits.
-        <fieldset className={styles.item} key={index} ref={itemRef(index)}>
+        <fieldset className={styles.item} id={itemId?.(index)} key={index} ref={itemRef(index)}>
           <legend className={styles.heading} data-add-another-heading tabIndex={-1}>
             <ItemHeading className={styles.headingText}>{itemHeading(index)}</ItemHeading>
           </legend>

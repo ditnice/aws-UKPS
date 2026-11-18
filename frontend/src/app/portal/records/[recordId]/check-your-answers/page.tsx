@@ -1,9 +1,11 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { getRecordCheckAnswers, ProblemDetails } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { Alert } from '@/components/Alert/Alert'
 import { BackLink } from '@/components/BackLink/BackLink'
+import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { SummaryCard } from '@/components/SummaryCard/SummaryCard'
@@ -14,10 +16,17 @@ import {
 } from '@/components/SummaryList/SummaryList'
 import { Tag } from '@/components/Tag/Tag'
 import { formatAnswer } from '@/lib/dynamic-form/answerDisplay'
-import { checkAnswersReturnTo, pageHref, taskListHref } from '@/lib/dynamic-form/links'
+import {
+  addGroupItemToken,
+  checkAnswersReturnTo,
+  groupItemAnchor,
+  pageHref,
+  taskListHref,
+} from '@/lib/dynamic-form/links'
 import { parsePositiveInteger } from '@/lib/valueParsing'
 
 import { CheckAnswersActions } from './_components/CheckAnswersActions'
+import { GroupItemCards } from './_components/GroupItemCards'
 
 type CheckAnswersPageProps = {
   params: Promise<{ recordId: string }>
@@ -96,31 +105,48 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
       />
 
       {data.sections.flatMap((section) =>
-        section.tasks.map((task) => (
-          <SummaryCard key={task.id} title={task.title}>
-            <SummaryList variant="wide-value">
-              {task.questions.map((question) => (
-                <SummaryListRow
-                  key={question.id}
-                  label={question.label}
-                  value={formatAnswer(question)}
-                  tag={
-                    errorsByQuestionId.get(question.id) && (
-                      <Tag colour="red">There is a problem</Tag>
-                    )
-                  }
-                >
-                  <SummaryListAction
-                    href={`${pageHref({ recordId }, question.pageId)}?returnTo=${checkAnswersReturnTo}`}
-                    visuallyHiddenText={question.label}
-                  >
-                    Change
-                  </SummaryListAction>
-                </SummaryListRow>
+        section.tasks.map((task) => {
+          const groups = task.questions.filter((question) => question.items)
+          const rows = task.questions.filter((question) => !question.items)
+
+          return (
+            <SummaryCard key={task.id} title={task.title}>
+              {groups.map((group) => (
+                <GroupItemCards key={group.id} question={group} recordId={recordId} />
               ))}
-            </SummaryList>
-          </SummaryCard>
-        )),
+              <SummaryList variant="wide-value">
+                {rows.map((question) => (
+                  <SummaryListRow
+                    key={question.id}
+                    label={question.label}
+                    value={formatAnswer(question)}
+                    tag={
+                      errorsByQuestionId.get(question.id) && (
+                        <Tag colour="red">There is a problem</Tag>
+                      )
+                    }
+                  >
+                    <SummaryListAction
+                      href={`${pageHref({ recordId }, question.pageId)}?returnTo=${checkAnswersReturnTo}`}
+                      visuallyHiddenText={question.label}
+                    >
+                      Change
+                    </SummaryListAction>
+                  </SummaryListRow>
+                ))}
+              </SummaryList>
+              {groups.map((group) => (
+                <Button
+                  elementType={Link}
+                  href={`${pageHref({ recordId }, group.pageId)}?returnTo=${checkAnswersReturnTo}&add=${addGroupItemToken}#${groupItemAnchor(group.id, group.items?.length ?? 0)}`}
+                  key={group.id}
+                >
+                  Add another {group.itemLabel?.toLowerCase() ?? 'item'}
+                </Button>
+              ))}
+            </SummaryCard>
+          )
+        }),
       )}
 
       <CheckAnswersActions
