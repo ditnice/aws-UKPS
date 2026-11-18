@@ -251,7 +251,7 @@ module "ecs_backend" {
     Email__MaxResendSignUpLinkAttempts = "3"
     Email__QueueUrl                    = module.sqs_email_backend.queue_url
     Seeding__ReseedOnStartup           = "false"
-    UserOnboarding__SetupLink          = "https://${module.alb.frontend_host_name}"
+    UserOnboarding__SetupLink          = "https://${module.alb.frontend_host_name}" # TODO 824: Remove this in favour of using the HostUri variable
     Hosting__HostUri                   = "https://${module.alb.frontend_host_name}"
   }
   container_secrets = {
