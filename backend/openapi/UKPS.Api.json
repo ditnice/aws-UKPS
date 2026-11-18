@@ -8442,6 +8442,7 @@
           "allowedPharmaceuticalEntity": {
             "description": "Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.",
             "$ref": "#/components/schemas/PharmaceuticalEntity"
+          },
           "pendingWorkEmail": {
             "oneOf": [
               {
