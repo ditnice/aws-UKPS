@@ -1237,7 +1237,11 @@ public class UserServiceTests : DatabaseTestBase
             .Emails.Sent.OfType<EmailChangeVerificationRequestEmail>()
             .ShouldHaveSingleItem();
 
-        email.EmailVerificationLink.Host.ShouldBe(Tokeniser.Generate(testEmail));
+        var user = await _harness
+            .GetClearedContext()
+            .Users.FindAsync([currentUser.Id], TestContext.Current.CancellationToken);
+
+        email.EmailVerificationLink.Host.ShouldBe(user!.PendingEmailVerificationToken);
     }
 
     [Fact]

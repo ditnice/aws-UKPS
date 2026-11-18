@@ -324,6 +324,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnName("normalised_work_email")
                         .HasComputedColumnSql("ukps.normalise_email(work_email)", true);
 
+                    b.Property<string>("PendingEmailVerificationToken")
+                        .HasColumnType("text")
+                        .HasColumnName("pending_email_verification_token");
+
                     b.Property<DateTime?>("PendingEmailVerifiedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("pending_email_verified_at");

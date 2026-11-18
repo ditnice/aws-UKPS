@@ -289,7 +289,7 @@ internal partial class UserService(
                         ? new()
                         {
                             Value = m.User.PendingWorkEmail,
-                            VerifiedByEmail = m.User.MarkPendingEmailAsVerified != null,
+                            VerifiedByEmail = m.User.PendingEmailVerifiedAt != null,
                         }
                         : null,
             })
@@ -615,7 +615,11 @@ internal partial class UserService(
                 return Result<UpdateUserEmailError>.Err(error);
             }
 
-            user!.UpdateEmail(command.Value, timeProvider.GetUtcNow());
+            user!.UpdateEmail(
+                command.Value,
+                VerificationTokenGenerator.Generate(),
+                timeProvider.GetUtcNow()
+            );
 
             await dbContext.SaveChangesAsync(cancellationToken);
             await HandleUserEvents(user, cancellationToken);
@@ -647,13 +651,22 @@ internal partial class UserService(
         {
             User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
 
-            var error = ValidatePendingEmailVerificationPermitted(user, command);
+            var error = ValidatePendingEmailVerificationPermitted(user);
             if (error is not null)
             {
                 return VerifyPendingEmailAddressResult.Err(error);
             }
 
-            user!.MarkPendingEmailAsVerified(timeProvider.GetUtcNow());
+            User.VerificationError? domainError = user!.TryMarkPendingEmailAsVerified(
+                command.VerificationToken,
+                timeProvider.GetUtcNow()
+            );
+            if (domainError.HasValue)
+            {
+                return VerifyPendingEmailAddressResult.Err(
+                    MapPendingEmailAsVerifiedError(domainError.Value)
+                );
+            }
             await HandleUserEvents(user, cancellationToken);
 
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -667,10 +680,25 @@ internal partial class UserService(
         }
     }
 
-    private VerifyPendingEmailAddressError? ValidatePendingEmailVerificationPermitted(
-        User? user,
-        VerifyPendingEmailAddressCommand command
+    private static VerifyPendingEmailAddressError MapPendingEmailAsVerifiedError(
+        User.VerificationError domainError
     )
+    {
+        return domainError switch
+        {
+            User.VerificationError.NoPendingEmailToVerify =>
+                new VerifyPendingEmailAddressError.NoPendingEmailToVerify(),
+            User.VerificationError.InvalidVerificationToken =>
+                new VerifyPendingEmailAddressError.InvalidTokenProvided(),
+            User.VerificationError.AlreadyVerified =>
+                new VerifyPendingEmailAddressError.EmailAlreadyVerified(),
+            _ => throw new InvalidOperationException(
+                $"The user verification error '{domainError}' is not supported."
+            ),
+        };
+    }
+
+    private VerifyPendingEmailAddressError? ValidatePendingEmailVerificationPermitted(User? user)
     {
         if (user is null)
         {
@@ -681,27 +709,6 @@ internal partial class UserService(
         if (!isTheCurrentUserModifyingTheirOwnDetails)
         {
             return new VerifyPendingEmailAddressError.Unauthorised();
-        }
-
-        if (user.PendingWorkEmail is null)
-        {
-            return new VerifyPendingEmailAddressError.NoPendingEmailToVerify();
-        }
-
-        if (user.PendingEmailVerifiedAt is not null)
-        {
-            return new VerifyPendingEmailAddressError.EmailAlreadyVerified();
-        }
-
-        string pendingWorkEmailToken = Tokeniser.Generate(user.PendingWorkEmail);
-        bool providedTokenMatchesPendingEmail = string.Equals(
-            command.VerificationToken,
-            pendingWorkEmailToken,
-            StringComparison.Ordinal
-        );
-        if (!providedTokenMatchesPendingEmail)
-        {
-            return new VerifyPendingEmailAddressError.InvalidTokenProvided();
         }
 
         return null;
@@ -967,8 +974,9 @@ internal partial class UserService(
         CancellationToken cancellationToken
     )
     {
-        var token = Tokeniser.Generate(pendingEmailUpdatedEvent.RequestedEmail);
-        var link = emailVerificationLinkCreator.GetVerificationLink(token);
+        var link = emailVerificationLinkCreator.GetVerificationLink(
+            pendingEmailUpdatedEvent.VerificationToken
+        );
         await emailService.SendEmail(
             new SendEmailCommand()
             {
