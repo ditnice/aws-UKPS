@@ -671,6 +671,18 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async Task VerifyPendingEmailAddress_WhenConcurrentChangeDetected_ShouldReturn409()
+    {
+        MockVerifyPendingEmailAddressResponse(
+            Result<VerifyPendingEmailAddressError>.Err(
+                new VerifyPendingEmailAddressError.ConcurrentChangeDetected()
+            )
+        );
+        HttpResponseMessage response = await SendVerifyPendingEmailAddressRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
     public async Task RemoveUser_WhenValidRequest_ShouldReturnOk()
     {
         var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);

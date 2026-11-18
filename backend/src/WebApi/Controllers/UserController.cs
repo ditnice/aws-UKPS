@@ -303,6 +303,12 @@ public class UserController(IUserService userService) : ControllerBase
                             title: "Invalid verification token",
                             detail: "The verification token provided is invalid or has expired.",
                             statusCode: StatusCodes.Status400BadRequest
+                        ),
+                    concurrentChangeDetected: () =>
+                        Problem(
+                            title: "Email address change could not be completed",
+                            detail: "A concurrent change was detected. Please try changing your email address again through the portal.",
+                            statusCode: StatusCodes.Status409Conflict
                         )
                 )
         );
