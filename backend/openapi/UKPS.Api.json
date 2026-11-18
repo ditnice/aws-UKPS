@@ -8998,6 +8998,7 @@
           "organisationName",
           "userRole",
           "status",
+          "allowedPharmaceuticalEntity",
           "mfaMethod",
           "mfaPhoneNumber",
           "hasMultipleOrganisations"
@@ -9046,6 +9047,10 @@
           "hasMultipleOrganisations": {
             "type": "boolean",
             "description": "Gets whether the user can select more than one organisation. Only set for the current user."
+          },
+          "allowedPharmaceuticalEntity": {
+            "description": "Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.",
+            "$ref": "#/components/schemas/PharmaceuticalEntity"
           },
           "pendingWorkEmail": {
             "oneOf": [

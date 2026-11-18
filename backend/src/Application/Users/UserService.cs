@@ -95,6 +95,7 @@ internal partial class UserService(
             UserRole = currentUser.UserRole,
             Status = membership.Status.ConvertToUserOrgStatus(),
             HasMultipleOrganisations = user.HasMultipleSelectableOrganisations(),
+            AllowedPharmaceuticalEntity = membership.AllowedPharmaceuticalEntity,
             PendingWorkEmail = user.PendingWorkEmail is not null
                 ? new() { Value = user.PendingWorkEmail }
                 : null,
@@ -299,6 +300,7 @@ internal partial class UserService(
                 OrganisationName = m.Organisation!.OrganisationName,
                 UserRole = m.UserRole,
                 Status = (UserOrgStatus)m.Status,
+                AllowedPharmaceuticalEntity = m.AllowedPharmaceuticalEntity,
                 PendingWorkEmail =
                     m.User.PendingWorkEmail != null
                         ? new() { Value = m.User.PendingWorkEmail }

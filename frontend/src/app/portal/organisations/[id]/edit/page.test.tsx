@@ -2,7 +2,11 @@ import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getOrganisationById, getUsersMe } from '@/client/generated/sdk.gen'
-import type { UserInformationDto, UserRole } from '@/client/generated/types.gen'
+import {
+  PharmaceuticalEntity,
+  type UserInformationDto,
+  type UserRole,
+} from '@/client/generated/types.gen'
 
 import EditOrganisationPage from './page'
 
@@ -34,6 +38,7 @@ const currentUser: UserInformationDto = {
   userRole: 'Champion',
   status: 'Active',
   hasMultipleOrganisations: false,
+  allowedPharmaceuticalEntity: PharmaceuticalEntity.BOTH,
   mfaMethod: 'Unknown',
   mfaPhoneNumber: '',
 }

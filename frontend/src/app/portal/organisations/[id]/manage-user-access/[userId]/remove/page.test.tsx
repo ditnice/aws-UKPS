@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getUserDetailsWithinOrganisation, getUsersMe } from '@/client/generated/sdk.gen'
-import type { UserInformationDto } from '@/client/generated/types.gen'
+import { PharmaceuticalEntity, type UserInformationDto } from '@/client/generated/types.gen'
 import { notFound, notFoundError } from '@/test-utils/nextNavigation'
 
 import RemoveUser from './page'
@@ -39,6 +39,7 @@ const user: UserInformationDto = {
   userRole: 'Standard',
   status: 'Active',
   hasMultipleOrganisations: false,
+  allowedPharmaceuticalEntity: PharmaceuticalEntity.BOTH,
   mfaMethod: 'Unknown',
   mfaPhoneNumber: '',
 }

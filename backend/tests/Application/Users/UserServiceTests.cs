@@ -140,6 +140,7 @@ public class UserServiceTests : DatabaseTestBase
                     HasMultipleOrganisations = currentUser.HasMultipleSelectableOrganisations(),
                     MfaMethod = "Unknown",
                     MfaPhoneNumber = string.Empty,
+                    AllowedPharmaceuticalEntity = currentUserMembership.AllowedPharmaceuticalEntity,
                 }
             );
         }
@@ -1346,6 +1347,7 @@ public class UserServiceTests : DatabaseTestBase
                 Status = (UserOrgStatus)membership.Status,
                 MfaMethod = "Unknown",
                 MfaPhoneNumber = string.Empty,
+                AllowedPharmaceuticalEntity = membership.AllowedPharmaceuticalEntity,
             }
         );
     }

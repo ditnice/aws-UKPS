@@ -1023,6 +1023,7 @@ export const fakeUserInformationDto = (options?: Options): UserInformationDto =>
         userRole: fakeUserRole(options),
         status: fakeUserOrgStatus(options),
         hasMultipleOrganisations: f.datatype.boolean(),
+        allowedPharmaceuticalEntity: fakePharmaceuticalEntity(options),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { pendingWorkEmail: f.datatype.boolean() ? fakePendingWorkEmailChangeDto(options) : null },
         mfaMethod: f.string.sample(),
         mfaPhoneNumber: f.string.sample()

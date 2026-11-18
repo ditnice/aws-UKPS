@@ -2184,6 +2184,10 @@ export type UserInformationDto = {
      * Gets whether the user can select more than one organisation. Only set for the current user.
      */
     hasMultipleOrganisations: boolean;
+    /**
+     * Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.
+     */
+    allowedPharmaceuticalEntity: PharmaceuticalEntity;
     pendingWorkEmail?: null | PendingWorkEmailChangeDto;
     /**
      * Gets the MFA method in use for the current user.
