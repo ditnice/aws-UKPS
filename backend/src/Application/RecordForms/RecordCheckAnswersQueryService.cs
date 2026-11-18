@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
 using UKPS.Api.Application.RecordForms.Model;
@@ -26,12 +27,16 @@ internal sealed class RecordCheckAnswersQueryService(
         }
 
         // Check your answers is only for submitting, so it is refused as submit would be.
-        switch (revisionChecker.FindSubmitBlocker(form))
+        GetCheckAnswersError? blocked = revisionChecker.FindSubmitBlocker(form) switch
         {
-            case SubmitBlocker.CannotSubmit:
-                return GetCheckAnswersResult.Err(new GetCheckAnswersError.CannotSubmit());
-            case SubmitBlocker.NotSubmittable:
-                return GetCheckAnswersResult.Err(new GetCheckAnswersError.NotSubmittable());
+            null => null,
+            SubmitBlocker.CannotSubmit => new GetCheckAnswersError.CannotSubmit(),
+            SubmitBlocker.NotSubmittable => new GetCheckAnswersError.NotSubmittable(),
+            { } blocker => throw new UnreachableException($"Unhandled submit blocker {blocker}."),
+        };
+        if (blocked is not null)
+        {
+            return GetCheckAnswersResult.Err(blocked);
         }
 
         LoadedRevision revision = await revisionChecker.LoadAsync(form, cancellationToken);
