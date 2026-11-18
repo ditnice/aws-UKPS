@@ -291,6 +291,29 @@ export type InitiateForgottenPasswordProcedureCommand = {
 };
 
 /**
+ * The problems that stop a record being submitted. `errors` is keyed by question ID;
+ * `fields` adds each problem's page and task.
+ */
+export type InvalidRecordProblemDetails = {
+    type?: null | string;
+    title?: null | string;
+    status?: null | number;
+    detail?: null | string;
+    instance?: null | string;
+    /**
+     * Identifies the problem; always `record_invalid`.
+     */
+    code: string;
+    /**
+     * Each problem with its page and task, in form order.
+     */
+    fields: Array<SubmissionErrorDto>;
+    errors: {
+        [key: string]: Array<string>;
+    };
+};
+
+/**
  * Represents the credentials provided by a user when attempting to authenticate.
  */
 export type LoginRequest = {
@@ -847,6 +870,20 @@ export const PatientAccessSchemeRegion = {
 export type PatientAccessSchemeRegion = typeof PatientAccessSchemeRegion[keyof typeof PatientAccessSchemeRegion];
 
 /**
+ * Represents a requested change to a user's work email address that is awaiting completion.
+ */
+export type PendingWorkEmailChangeDto = {
+    /**
+     * Gets the new work email address that has been requested.
+     */
+    value: string;
+    /**
+     * Gets whether the new work email address has been verified by email.
+     */
+    verifiedByEmail: boolean;
+};
+
+/**
  * Flags enum stored as integer. Only Organisation uses Both;
  * UserOrgMembership and TermsAcceptance use Medicines or Vaccines only.
  * Represents the types of pharmaceutical entities.
@@ -1002,6 +1039,10 @@ export type RecordDtoMedicineRecordDto = {
      * of its latest revision.
      */
     actions: Array<RecordAction>;
+    /**
+     * Gets the date of when the next update is due.
+     */
+    nextUpdateDue?: null | string;
 };
 
 /**
@@ -1039,6 +1080,10 @@ export type RecordDtoVaccineRecordDto = {
      * of its latest revision.
      */
     actions: Array<RecordAction>;
+    /**
+     * Gets the date of when the next update is due.
+     */
+    nextUpdateDue?: null | string;
 };
 
 /**
@@ -1766,6 +1811,64 @@ export const SortDirection = { ASCENDING: 'Ascending', DESCENDING: 'Descending' 
  */
 export type SortDirection = typeof SortDirection[keyof typeof SortDirection];
 
+/**
+ * A submission or selected-organisation conflict. Schema only: runtime responses use the
+ * problem details factory and extensions to preserve tracing metadata.
+ */
+export type SubmissionConflictProblemDetails = {
+    type?: null | string;
+    title?: null | string;
+    status?: null | number;
+    detail?: null | string;
+    instance?: null | string;
+    /**
+     * The domain code (record_not_submittable, form_version_changed or record_changed),
+     * or the authentication code SelectedOrganisationMismatch.
+     */
+    code: string;
+    /**
+     * The organisation requested, when it differs from the selected organisation.
+     */
+    organisationId?: null | number;
+};
+
+/**
+ * A problem that stops a record being submitted, and the question it is on.
+ */
+export type SubmissionErrorDto = {
+    /**
+     * The question to highlight, which is also its key in `errors`.
+     */
+    questionId: string;
+    /**
+     * The page the question is on, to link to.
+     */
+    pageId: string;
+    /**
+     * The task the page belongs to.
+     */
+    taskId: string;
+    /**
+     * What is wrong and how to fix it.
+     */
+    message: string;
+};
+
+/**
+ * Submits a record's draft revision, as it was when check your answers loaded.
+ */
+export type SubmitRecordCommand = {
+    /**
+     * The form version check your answers was loaded with.
+     */
+    formVersion: string;
+    /**
+     * The hash of the whole revision check your answers was loaded with. If anything in the
+     * revision has changed since, the submission is rejected.
+     */
+    revisionHash: string;
+};
+
 export const TrialPhase = {
     PRECLINICAL: 'Preclinical',
     PHASE_I: 'PhaseI',
@@ -1934,6 +2037,7 @@ export type UserInformationDto = {
      * Gets whether the user can select more than one organisation. Only set for the current user.
      */
     hasMultipleOrganisations: boolean;
+    pendingWorkEmail?: null | PendingWorkEmailChangeDto;
     /**
      * Gets the MFA method in use for the current user.
      */
@@ -3420,6 +3524,61 @@ export type SaveRecordFormPageResponses = {
 };
 
 export type SaveRecordFormPageResponse = SaveRecordFormPageResponses[keyof SaveRecordFormPageResponses];
+
+export type SubmitRecordData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: SubmitRecordCommand;
+    path: {
+        /**
+         * The record to submit.
+         */
+        recordId: number;
+    };
+    query?: never;
+    url: '/records/{recordId}/submit';
+};
+
+export type SubmitRecordErrors = {
+    /**
+     * The request body is missing or malformed.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but not submit it.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record can't be submitted in its current state, or the form or revision changed since
+     * check your answers loaded, or the selected organisation differs. The `code` member says which.
+     */
+    409: SubmissionConflictProblemDetails;
+    /**
+     * The revision has problems to fix first. `errors` is keyed by question ID, and
+     * `fields` lists each problem with its page and task, in form order.
+     */
+    422: InvalidRecordProblemDetails;
+};
+
+export type SubmitRecordError = SubmitRecordErrors[keyof SubmitRecordErrors];
+
+export type SubmitRecordResponses = {
+    /**
+     * The record was submitted.
+     */
+    204: void;
+};
+
+export type SubmitRecordResponse = SubmitRecordResponses[keyof SubmitRecordResponses];
 
 export type GetRecordTaskListData = {
     body?: never;

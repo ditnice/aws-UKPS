@@ -32,8 +32,6 @@ internal partial class RecordService(
 
     private readonly IOrganisationAuthoriser _organisationAuthoriser = organisationAuthoriser;
 
-    private const int PublishedRecordUpdateDueMonths = 3;
-
     public async Task<GetRecordsResult> GetOrganisationRecords(
         int organisationId,
         GetRecordsQueryDto getRecordsQuery,
@@ -308,10 +306,7 @@ internal partial class RecordService(
                 ReviewedAt = x.Record.ReviewedAt,
                 LatestRevisionId = x.LatestRevisionId,
                 DisplayStatus = x.DisplayStatus,
-                NextUpdateDue =
-                    x.Record.ReviewedAt == null
-                        ? null
-                        : x.Record.ReviewedAt.Value.AddMonths(PublishedRecordUpdateDueMonths), // TODO rules around this need to be reviewed, requires wider-team discussion
+                NextUpdateDue = x.NextUpdateDue,
             });
 
     private IQueryable<RecordInformationTrackingProjection> JoinProductDetails(

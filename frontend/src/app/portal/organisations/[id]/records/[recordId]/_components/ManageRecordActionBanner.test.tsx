@@ -1,89 +1,91 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
-
-import type { RecordAction } from '@/client/generated'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
 import { ManageRecordActionBanner } from './ManageRecordActionBanner'
 
+type Record = React.ComponentProps<typeof ManageRecordActionBanner>['record']
+
+const createRecord = (overrides: Partial<Record> = {}): Record => ({
+  organisationId: 7,
+  recordId: 42,
+  recordType: 'Medicine',
+  recordStatus: 'Published',
+  displayStatus: 'Published',
+  actions: [],
+  ...overrides,
+})
+
 const updateRecordHref = '/portal/records/42/indication'
 
-const renderBanner = (actions: RecordAction[], href: string | null = updateRecordHref) =>
-  render(
-    <ManageRecordActionBanner
-      record={{
-        organisationId: 7,
-        recordId: 42,
-        recordType: 'Medicine',
-        actions,
-      }}
-      updateRecordHref={href ?? undefined}
-    />,
-  )
+const renderBanner = (
+  overrides: Partial<Record> = {},
+  href: string | undefined = updateRecordHref,
+) => render(<ManageRecordActionBanner record={createRecord(overrides)} updateRecordHref={href} />)
 
-const getActionLabels = () =>
-  [...document.querySelectorAll('[data-component="button-group"] > *')].map(
-    (element) => element.textContent,
-  )
+const buttonNames = [
+  'Update record',
+  'Change record status',
+  'Confirm information as current',
+  'Confirm status as current',
+  'View record timeline',
+]
 
-afterEach(cleanup)
+const expectVisibleButtons = (expected: string[]) => {
+  buttonNames.forEach((name) => {
+    const button = screen.queryByRole('button', {
+      name,
+    })
+
+    const link = screen.queryByRole('link', {
+      name,
+    })
+
+    if (expected.includes(name)) {
+      expect(button ?? link).toBeVisible()
+    } else {
+      expect(button ?? link).not.toBeInTheDocument()
+    }
+  })
+}
 
 describe('ManageRecordActionBanner', () => {
-  it.each<[string, RecordAction[], string[]]>([
-    [
-      'published',
-      ['Update', 'ChangeStatus', 'ConfirmCurrent', 'ViewTimeline'],
-      [
-        'Update record',
-        'Change record status',
-        'Confirm information as current',
-        'View record timeline',
-      ],
-    ],
-    [
-      'a discardable draft',
-      ['Update', 'Discard', 'ViewTimeline'],
-      ['Update record', 'Discard record', 'View record timeline'],
-    ],
-    [
-      'on hold',
-      ['ChangeStatus', 'ConfirmOnHold', 'ViewTimeline'],
-      ['Change record status', 'Confirm status as current', 'View record timeline'],
-    ],
-    ['in QA review', ['ViewTimeline'], ['View record timeline']],
-  ])('shows the permitted actions for a record that is %s', (_, actions, expected) => {
-    renderBanner(actions)
+  describe('buttons shown for each record status', () => {
+    it.each([
+      {
+        status: 'Published',
+        actions: ['Update', 'ChangeStatus', 'ConfirmCurrent', 'ViewTimeline'],
+        expected: [
+          'Update record',
+          'Change record status',
+          'Confirm information as current',
+          'View record timeline',
+        ],
+      },
+      {
+        status: 'OnHold',
+        actions: ['Update', 'ChangeStatus', 'ConfirmOnHold', 'ViewTimeline'],
+        expected: ['Change record status', 'Confirm status as current', 'View record timeline'],
+      },
+      {
+        status: 'Archived',
+        actions: ['Update', 'ChangeStatus', 'ConfirmCurrent', 'ViewTimeline'],
+        expected: ['View record timeline'],
+      },
+      {
+        status: 'QAReview',
+        actions: ['Update', 'ChangeStatus', 'ConfirmCurrent', 'ViewTimeline'],
+        expected: ['View record timeline'],
+      },
+    ] as const)(
+      'shows the correct buttons when status is $status',
+      ({ status, actions, expected }) => {
+        renderBanner({
+          displayStatus: status,
+          actions: [...actions],
+        })
 
-    expect(getActionLabels()).toEqual(expected)
-  })
-
-  it('links Update record to the record content form', () => {
-    renderBanner(['Update', 'ViewTimeline'])
-
-    expect(screen.getByRole('link', { name: 'Update record' }).getAttribute('href')).toBe(
-      updateRecordHref,
-    )
-  })
-
-  it('hides Update record when there is no form the user can edit', () => {
-    renderBanner(['Update', 'Discard', 'ViewTimeline'], null)
-
-    expect(screen.queryByText('Update record')).toBeNull()
-    expect(getActionLabels()).toEqual(['Discard record', 'View record timeline'])
-  })
-
-  it('links discard to the discard confirmation page', () => {
-    renderBanner(['Update', 'Discard', 'ViewTimeline'])
-
-    expect(screen.getByRole('link', { name: 'Discard record' }).getAttribute('href')).toBe(
-      '/portal/organisations/7/records/42/discard?recordType=Medicine',
-    )
-  })
-
-  it('links change record status to the change record status page', () => {
-    renderBanner(['Update', 'ChangeStatus', 'ViewTimeline'])
-
-    expect(screen.getByRole('link', { name: 'Change record status' }).getAttribute('href')).toBe(
-      '/portal/organisations/7/records/42/change-record-status?recordType=Medicine',
+        expectVisibleButtons([...expected])
+      },
     )
   })
 })

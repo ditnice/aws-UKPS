@@ -1143,6 +1143,60 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task UpdateUserEmail_ShouldUpdateUserDtoSoTheyAreMarkedAsHavingAPendingEmail()
+    {
+        var newEmail = "my-new-email@email.com";
+        User currentUser = await CreateExistingCurrentUser();
+        Result<UpdateUserEmailError> result = await Service.UpdateUserEmail(
+            currentUser.Id,
+            new UpdateUserEmailCommand() { Value = newEmail },
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeSuccess();
+
+        var userDto = await Service.GetCurrentUser(TestContext.Current.CancellationToken);
+
+        userDto.WorkEmail.ShouldBe(currentUser.WorkEmail);
+        userDto.PendingWorkEmail.ShouldNotBeNull();
+        userDto.PendingWorkEmail.Value.ShouldBe(newEmail);
+        userDto.PendingWorkEmail.VerifiedByEmail.ShouldBe(false);
+    }
+
+    [Fact]
+    public async Task UpdateUserEmail_WhenRequestedEmailTheSameAsCurrentEmail_ShouldReturnError()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        Result<UpdateUserEmailError> result = await Service.UpdateUserEmail(
+            currentUser.Id,
+            new UpdateUserEmailCommand() { Value = currentUser.WorkEmail },
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<UpdateUserEmailError.MatchesCurrentEmail>();
+    }
+
+    [Fact]
+    public async Task UpdateUserEmail_WhenThereIsAnotherPendingEmailWithTheSameValue_ShouldReturnError()
+    {
+        var newEmail = "my-new-email@email.com";
+
+        User userA = await CreateExistingCurrentUser();
+        Result<UpdateUserEmailError> resultA = await Service.UpdateUserEmail(
+            userA.Id,
+            new UpdateUserEmailCommand() { Value = newEmail },
+            TestContext.Current.CancellationToken
+        );
+        resultA.ShouldBeSuccess();
+
+        User userB = await CreateExistingCurrentUser();
+        Result<UpdateUserEmailError> resultB = await Service.UpdateUserEmail(
+            userB.Id,
+            new UpdateUserEmailCommand() { Value = newEmail },
+            TestContext.Current.CancellationToken
+        );
+        resultB.ShouldBeError().ShouldBeOfType<UpdateUserEmailError.ConflictingEmail>();
+    }
+
+    [Fact]
     public async Task UpdateUserEmail_WhenEmailConflictsWithExistingUser_ShouldReturnAnError()
     {
         var existingOtherUser = await AddEntity(
@@ -1160,7 +1214,7 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task UpdateUserEmail_WhenEmailChanges_ShouldUpdateEmailAttributeInCognito()
+    public async Task UpdateUserEmail_ShouldNotUpdateEmailAttributeInCognito()
     {
         User currentUser = await CreateExistingCurrentUser();
         string testEmail = "testupdateuserdetails@email.com";
@@ -1170,7 +1224,7 @@ public class UserServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
         MockUser? user = _harness.Cognito.GetUserByEmail(testEmail);
-        user.ShouldNotBeNull();
+        user.ShouldBeNull();
     }
 
     [Fact]

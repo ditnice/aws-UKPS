@@ -65,7 +65,19 @@ The flow is the same. On a page with several questions:
 
 Cross-page rules let users answer questions in any order without a correct answer ever being rejected. The content on each related page explains the rule, so users can (potentially) save a correct answer on a given page that breaks the rule, and then navigate to the other relevant page and update the answer there.
 
-> **CR-01:** the commercial launch date must be on or after the licence date, unless the medicine is in EAMS.
+The medicine rules, from the medicines dataset, are defined in `MedicineCrossPageRules`. Each one is reported on both dates:
+
+| Rule | Earlier date | Later date | Same day allowed |
+| --- | --- | --- | --- |
+| CR-01 | UK licence | UK commercial launch, unless the company will submit to EAMS | Yes |
+| CR-02 | UK regulatory submission | UK licence | No |
+| CR-03 | UK regulatory submission | UK commercial launch | No |
+| CR-04 | International regulatory submission | International licence | No |
+| CR-05 | Global first submission | UK regulatory submission | Yes |
+| CR-06 | Global first submission | International regulatory submission | Yes |
+| CR-07 | EAMS submission | EAMS scientific opinion | No |
+
+A rule is skipped when either date doesn't apply, is unanswered or isn't a real date; the page rules report those.
 
 Cross-page rules are checked on the check your answers page and prevent submission if the current answers are invalid. They are checked again on submission, meaning QA will only ever recieve records that are consistent.
 

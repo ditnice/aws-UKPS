@@ -27,6 +27,16 @@ internal sealed class SeedReferenceData
         ["Unknown at this stage"] = MhraProcedureTypeCodes.Unknown,
     };
 
+    private static readonly Dictionary<string, string> _pathwayPointCodes = new(
+        StringComparer.Ordinal
+    )
+    {
+        ["Initial presentation"] = PatientPathwayPointCodes.InitialPresentation,
+        ["Progression"] = PatientPathwayPointCodes.Progression,
+        ["Longitudinal testing"] = PatientPathwayPointCodes.LongitudinalTesting,
+        ["Other"] = PatientPathwayPointCodes.Other,
+    };
+
     private SeedReferenceData(SyntheticReferenceData data)
     {
         BnfChapters = CreateHierarchy(
@@ -77,7 +87,7 @@ internal sealed class SeedReferenceData
         );
         PatientPathwayPoints = CreateList(
             data.PatientPathwayPoints,
-            e => new PatientPathwayPoint { Label = e.Label }
+            e => new PatientPathwayPoint { Code = _pathwayPointCodes[e.Label], Label = e.Label }
         );
         UkPatientPopulationRanges = CreateList(
             data.UkPatientPopulationRanges,

@@ -555,6 +555,22 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async Task UpdateUserEmail_MatchesCurrentEmail_ShouldReturnValidationProblem()
+    {
+        MockUpdateUserEmailMethod(
+            Result<UpdateUserEmailError>.Err(new UpdateUserEmailError.MatchesCurrentEmail())
+        );
+        var response = await SendUpdateUserEmailRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var validationProblem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(
+            TestContext.Current.CancellationToken
+        );
+
+        validationProblem.ShouldNotBeNull();
+        validationProblem.Errors.Keys.ShouldContain(nameof(UpdateUserEmailCommand.Value));
+    }
+
+    [Fact]
     public async Task UpdateUserEmail_OnNotAuthorisedError_ShouldReturnNotFound()
     {
         MockUpdateUserEmailMethod(
@@ -951,6 +967,17 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                         UserOrgStatus.Deactivated,
                         UserOrgStatus.Removed
                     )
+            );
+            RuleFor(
+                x => x.PendingWorkEmail,
+                f =>
+                    f.Random.Bool()
+                        ? new PendingWorkEmailChangeDto()
+                        {
+                            Value = f.Internet.Email(),
+                            VerifiedByEmail = f.Random.Bool(),
+                        }
+                        : null
             );
         }
     }

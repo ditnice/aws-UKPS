@@ -5,6 +5,7 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
 using UKPS.Api.Application.Users.Errors;
+using UKPS.Api.WebApi.CustomResponses;
 
 namespace UKPS.Api.WebApi.Controllers;
 
@@ -222,6 +223,18 @@ public class UserController(IUserService userService) : ControllerBase
                             statusCode: StatusCodes.Status409Conflict,
                             title: "Conflict",
                             detail: "The specified email conflicts with an existing email."
+                        ),
+                    () =>
+                        ValidationProblem(
+                            new ValidationProblemDetails(
+                                new Dictionary<string, string[]>(StringComparer.Ordinal)
+                                {
+                                    [nameof(command.Value)] =
+                                    [
+                                        "New email cannot be the same as the current email.",
+                                    ],
+                                }
+                            )
                         )
                 )
         );
@@ -280,9 +293,5 @@ public class UserController(IUserService userService) : ControllerBase
     }
 
     private ObjectResult UserNotFound() =>
-        Problem(
-            statusCode: StatusCodes.Status404NotFound,
-            title: "Not Found",
-            detail: "The specified user could not be found."
-        );
+        this.NotFoundProblem("The specified user could not be found.");
 }
