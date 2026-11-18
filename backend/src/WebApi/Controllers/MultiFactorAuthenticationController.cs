@@ -56,11 +56,11 @@ public class MultiFactorAuthenticationController : ControllerBase
     /// A token to monitor for cancellation requests.
     /// </param>
     /// <returns>
-    /// An <see cref="ActionResult"/> containing a <see cref="MultiFactorAuthenticationSetupDto"/>
+    /// An <see cref="ActionResult"/> containing a <see cref="MultiFactorAuthenticationUpdateDto"/>
     /// with the details required to configure multi-factor authentication.
     /// </returns>
     [HttpPost("update", Name = nameof(InitiateUpdateMultiFactorAuthentication))]
-    [ProducesResponseType<MultiFactorAuthenticationSetupDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<MultiFactorAuthenticationUpdateDto>(StatusCodes.Status200OK)]
     public async Task<ActionResult> InitiateUpdateMultiFactorAuthentication(
         CancellationToken cancellationToken
     )

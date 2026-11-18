@@ -37,6 +37,8 @@ const currentUser: UserInformationDto = {
   userRole: 'Champion',
   status: 'Active',
   hasMultipleOrganisations: false,
+  mfaMethod: 'Unknown',
+  mfaPhoneNumber: '',
   allowedPharmaceuticalEntity: PharmaceuticalEntity.BOTH,
 }
 

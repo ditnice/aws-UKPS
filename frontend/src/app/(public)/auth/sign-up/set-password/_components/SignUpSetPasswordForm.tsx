@@ -12,6 +12,7 @@ import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import { signUpMfaSetupStorageKey } from '../../_lib/mfaSetupStorage'
+import { useSignUpPassword } from '../../_lib/SignUpPasswordContext'
 
 const signUpSetPasswordSchema = z.object({
   password: z
@@ -30,6 +31,7 @@ type SignUpSetPasswordFormProps = {
 
 export function SignUpSetPasswordForm({ setupToken }: SignUpSetPasswordFormProps) {
   const router = useRouter()
+  const { setPassword } = useSignUpPassword()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const form = useForm({
     defaultValues: {
@@ -76,6 +78,7 @@ export function SignUpSetPasswordForm({ setupToken }: SignUpSetPasswordFormProps
             return
           }
 
+          setPassword(value.password)
           router.push('/auth/sign-up/set-mfa')
           return
         }

@@ -14,4 +14,12 @@ internal sealed record UserOnboardingOptions
 
     [Required]
     public required Uri SetupLink { get; init; }
+
+    [Required]
+    [Range(1, int.MaxValue)]
+    public int MaxSmsSetupAttempts { get; set; } = 5;
+
+    [Required]
+    [Range(1, int.MaxValue)]
+    public int SmsSetupCooldownSeconds { get; set; } = 30;
 }

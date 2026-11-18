@@ -145,6 +145,8 @@ public class UserServiceTests : DatabaseTestBase
                     UserRole = currentUserMembership.UserRole,
                     Status = currentUserMembership.Status.ConvertToUserOrgStatus(),
                     HasMultipleOrganisations = currentUser.HasMultipleSelectableOrganisations(),
+                    MfaMethod = "Unknown",
+                    MfaPhoneNumber = string.Empty,
                     AllowedPharmaceuticalEntity = currentUserMembership.AllowedPharmaceuticalEntity,
                 }
             );
@@ -1518,6 +1520,8 @@ public class UserServiceTests : DatabaseTestBase
                 OrganisationName = membership.Organisation!.OrganisationName,
                 UserRole = membership.UserRole,
                 Status = (UserOrgStatus)membership.Status,
+                MfaMethod = "Unknown",
+                MfaPhoneNumber = string.Empty,
                 AllowedPharmaceuticalEntity = membership.AllowedPharmaceuticalEntity,
             }
         );

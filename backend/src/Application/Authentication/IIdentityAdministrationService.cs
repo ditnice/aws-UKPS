@@ -5,12 +5,20 @@ using ResendSetupTokenResult = UKPS.Api.Application.Common.Result<
     System.Guid,
     UKPS.Api.Application.Authentication.Errors.ResendSetupTokenError
 >;
+using SetupSmsMfaResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.SmsMultiFactorAuthenticationSetupDto,
+    UKPS.Api.Application.Authentication.Errors.SetupSmsMfaError
+>;
 using SetupTokenValidationResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Authentication.Errors.SetupTokenValidationError>;
 using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
     UKPS.Api.Application.Authentication.Errors.UserSetupError
 >;
 using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
+    UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
+>;
+using VerifySmsMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
 >;
@@ -127,6 +135,42 @@ public interface IIdentityAdministrationService
     Task<VerifyMultiFactorAuthenticationUpdateResult> VerifyMultiFactorAuthenticationUpdate(
         string accessToken,
         VerifyMultiFactorAuthenticationUpdateCommand command,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
+    /// Sets up SMS multi-factor authentication for a user.
+    /// </summary>
+    /// <param name="command">
+    /// The command containing the setup token and phone number required to set up
+    /// SMS MFA.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// The token used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous setup operation.
+    /// </returns>
+    Task<SetupSmsMfaResult> SetupSmsMfa(
+        SetupSmsMfaCommand command,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
+    /// Verifies SMS multi-factor authentication setup.
+    /// </summary>
+    /// <param name="command">
+    /// The command containing the setup token, authentication code, and authentication
+    /// session required to verify the SMS MFA configuration.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// The token used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous verification operation.
+    /// </returns>
+    Task<VerifySmsMultiFactorAuthenticationResult> VerifySmsMultiFactorAuthentication(
+        VerifySmsMultiFactorAuthenticationCommand command,
         CancellationToken cancellationToken
     );
 }

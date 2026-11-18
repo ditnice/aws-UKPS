@@ -12,6 +12,15 @@ internal class UserOnboardingRecord
     public DateTime? ConsumedAt { get; private set; }
     public int ResendCount { get; init; }
 
+    public int SmsSetupAttemptCount { get; private set; }
+    public DateTime? LastSmsSetupAttemptAt { get; private set; }
+
+    internal void RecordSmsSetupAttempt(DateTime dateTime)
+    {
+        SmsSetupAttemptCount++;
+        LastSmsSetupAttemptAt = dateTime;
+    }
+
     public User? CreatedByUser { get; init; }
     public User? ResultingUser { get; init; }
     public int ResultingUserId { get; init; }

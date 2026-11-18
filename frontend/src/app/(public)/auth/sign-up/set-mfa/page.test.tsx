@@ -9,6 +9,7 @@ import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
 
 import { signUpMfaSetupStorageKey } from '../_lib/mfaSetupStorage'
+import { SignUpPasswordProvider } from '../_lib/SignUpPasswordContext'
 
 import SignUpSetMfa from './page'
 
@@ -40,7 +41,11 @@ afterEach(() => {
 })
 
 function renderPage() {
-  render(<SignUpSetMfa />)
+  render(
+    <SignUpPasswordProvider>
+      <SignUpSetMfa />
+    </SignUpPasswordProvider>,
+  )
 }
 
 async function enterSecurityCode(securityCode: string) {

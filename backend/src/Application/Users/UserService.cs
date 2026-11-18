@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Linq.Expressions;
+using Amazon.Runtime;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using UKPS.Api.Application.Common;
@@ -66,6 +67,29 @@ internal partial class UserService(
                 "Current user did not have the membership as expected."
             );
 
+        string mfaMethod = "Unknown";
+        string mfaPhoneNumber = string.Empty;
+        try
+        {
+            UserMfaDetails? mfaDetails = await identityService.GetUserMfaDetails(
+                user.CognitoUsername,
+                cancellationToken
+            );
+            if (mfaDetails is not null)
+            {
+                mfaMethod = mfaDetails.MfaMethod;
+                mfaPhoneNumber = mfaDetails.MfaPhoneNumber;
+            }
+        }
+        catch (AmazonServiceException ex)
+        {
+            LogGettingUserMfaDetailsCognitoServiceFailed(ex);
+        }
+        catch (AmazonClientException ex)
+        {
+            LogGettingUserMfaDetailsAwsClientFailed(ex);
+        }
+
         return new UserInformationDto
         {
             UserId = user.Id,
@@ -86,6 +110,8 @@ internal partial class UserService(
                     VerifiedByEmail = user.PendingEmailVerifiedAt is not null,
                 }
                 : null,
+            MfaMethod = mfaMethod,
+            MfaPhoneNumber = mfaPhoneNumber,
         };
     }
 
@@ -294,6 +320,8 @@ internal partial class UserService(
                             VerifiedByEmail = m.User.PendingEmailVerifiedAt != null,
                         }
                         : null,
+                MfaMethod = "Unknown",
+                MfaPhoneNumber = string.Empty,
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -1041,6 +1069,15 @@ internal partial class UserService(
 
     [LoggerMessage(Level = LogLevel.Error, Message = "An error occurred whilst removing a user.")]
     private partial void LogRemovingUserFailed(Exception ex);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Cognito service error retrieving MFA details."
+    )]
+    private partial void LogGettingUserMfaDetailsCognitoServiceFailed(Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "AWS client error retrieving MFA details.")]
+    private partial void LogGettingUserMfaDetailsAwsClientFailed(Exception ex);
 
     public record UserInformationTrackingProjection()
     {
