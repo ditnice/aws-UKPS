@@ -152,10 +152,11 @@ describe('CheckAnswersPage', () => {
       formVersion: 'medicine-1',
       revisionHash: 'hash-1',
       organisationId: 7,
+      canSubmit: true,
     })
   })
 
-  it('still offers the actions when there are errors, so Submit can report them', async () => {
+  it('still offers the actions when there are errors, but not Submit', async () => {
     vi.mocked(getRecordCheckAnswers).mockResolvedValue({
       ...checkAnswers,
       data: { ...checkAnswers.data, errors: [genericNameError] },
@@ -164,6 +165,7 @@ describe('CheckAnswersPage', () => {
     await renderPage()
 
     expect(screen.getByText('Submit and return actions')).toBeInTheDocument()
+    expect(mocks.actions).toHaveBeenCalledWith(expect.objectContaining({ canSubmit: false }))
   })
 
   it('returns not found for an invalid record ID', async () => {

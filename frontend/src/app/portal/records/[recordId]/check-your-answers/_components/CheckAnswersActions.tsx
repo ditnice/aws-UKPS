@@ -21,6 +21,8 @@ export type CheckAnswersActionsProps = {
   formVersion: string
   revisionHash: string
   organisationId: number
+  /** False while the record has errors: Submit stays hidden until they are fixed. */
+  canSubmit: boolean
 }
 
 export function CheckAnswersActions({
@@ -28,6 +30,7 @@ export function CheckAnswersActions({
   formVersion,
   revisionHash,
   organisationId,
+  canSubmit,
 }: CheckAnswersActionsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
@@ -96,9 +99,11 @@ export function CheckAnswersActions({
         <ErrorState>There was a problem submitting your record. Please try again later.</ErrorState>
       )}
       <ButtonGroup>
-        <Button disabled={isSubmitting} onClick={() => void submit()} variant="cta">
-          Submit record for review
-        </Button>
+        {canSubmit && (
+          <Button disabled={isSubmitting} onClick={() => void submit()} variant="cta">
+            Submit record for review
+          </Button>
+        )}
         <Button to={buildRecordActionHref(organisationId, 'draft-saved')} variant="secondary">
           Return to my records
         </Button>

@@ -228,9 +228,9 @@ invalid model stops the API starting. It holds structure only: bindings receive 
   there too, whether or not the task has another page.
 - **Check your answers.** The page lists every question that applies, with its answer, a **Change**
   link (opening the page with `?returnTo=check-your-answers`) and a **There is a problem** tag on
-  questions with a submission error. The errors also appear in a summary above the heading. Submit
-  and Return to my records are always shown: selecting Submit sends the form version and revision
-  hash the page loaded, and the API rechecks everything. A 422 refreshes the page with the current
+  questions with a submission error. The errors also appear in a summary above the heading. Return
+  to my records is always shown; Submit is shown only when there are no errors. Selecting Submit sends the form version and revision hash the page loaded, and the API
+  rechecks everything. A 422 refreshes the page with the current
   errors, and a 409 shows the API's message with a link to reload. If the record can't be
   submitted (403 or 409 when loading the page), the page says so instead of showing the answers.
 - **No ties.** Two sections or pages with the same `Order`, or two questions on the same page

@@ -128,6 +128,7 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
         formVersion={data.formVersion}
         revisionHash={data.revisionHash}
         organisationId={data.organisationId}
+        canSubmit={data.errors.length === 0}
       />
     </>
   )
