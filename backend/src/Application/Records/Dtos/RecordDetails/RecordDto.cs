@@ -48,4 +48,9 @@ public abstract record RecordDto
     /// of its latest revision.
     /// </summary>
     public required IReadOnlyCollection<RecordAction> Actions { get; init; }
+
+    /// <summary>
+    /// Gets the date of when the next update is due.
+    /// </summary>
+    public DateTime? NextUpdateDue { get; init; }
 }

@@ -919,6 +919,128 @@ export const RecordAction = {
 export type RecordAction = typeof RecordAction[keyof typeof RecordAction];
 
 /**
+ * The whole of a record's latest revision for check your answers: every question that applies,
+ * grouped by section and task, and every error that would stop it being submitted.
+ */
+export type RecordCheckAnswersDto = {
+    /**
+     * The form's version. Send it back on submit.
+     */
+    formVersion: string;
+    /**
+     * The record the answers belong to.
+     */
+    recordId: number;
+    /**
+     * The organisation that owns the record; used for links back to the records list.
+     */
+    organisationId: number;
+    /**
+     * A hash of the whole revision. Send it back on submit; if anything in the revision has
+     * changed since, the submission is rejected.
+     */
+    revisionHash: string;
+    /**
+     * The sections with a question that applies, in form order.
+     */
+    sections: Array<RecordCheckAnswersSectionDto>;
+    /**
+     * The problems that would stop the record being submitted, in form order, each on a question
+     * in IReadOnlyList&lt;RecordCheckAnswersSectionDto&gt; RecordCheckAnswersDto.Sections. The record can be submitted when this is empty.
+     */
+    errors: Array<SubmissionErrorDto>;
+};
+
+/**
+ * An option chosen in an answer.
+ */
+export type RecordCheckAnswersOptionDto = {
+    /**
+     * The answer value: an enum member name or a reference ID.
+     */
+    value: string;
+    /**
+     * The text shown for the option.
+     */
+    label: string;
+    /**
+     * The label of the option's parent in a hierarchical select, or null.
+     */
+    parentLabel: null | string;
+};
+
+/**
+ * A question that applies and its answer, as a row on check your answers.
+ */
+export type RecordCheckAnswersQuestionDto = {
+    /**
+     * The question ID, which errors are keyed by.
+     */
+    id: string;
+    /**
+     * The page the question is on, for its Change link.
+     */
+    pageId: string;
+    /**
+     * The question text.
+     */
+    label: string;
+    /**
+     * The control the question uses, which says how to format the answer.
+     */
+    type: FormControl;
+    /**
+     * True when the question takes several values rather than one.
+     */
+    multiple: boolean;
+    /**
+     * The saved values: at most one for a single-value question, and none when not yet provided.
+     */
+    values: Array<string>;
+    /**
+     * For a choice question, the chosen options in the order offered, so values can be shown by
+     * label; null for any other question.
+     */
+    selectedOptions: null | Array<RecordCheckAnswersOptionDto>;
+};
+
+/**
+ * A section on check your answers.
+ */
+export type RecordCheckAnswersSectionDto = {
+    /**
+     * The section ID.
+     */
+    id: string;
+    /**
+     * The section title.
+     */
+    title: string;
+    /**
+     * The tasks with a question that applies, in order.
+     */
+    tasks: Array<RecordCheckAnswersTaskDto>;
+};
+
+/**
+ * A task on check your answers.
+ */
+export type RecordCheckAnswersTaskDto = {
+    /**
+     * The task ID.
+     */
+    id: string;
+    /**
+     * The task title.
+     */
+    title: string;
+    /**
+     * The questions that apply, in page order, including optional questions with no answer.
+     */
+    questions: Array<RecordCheckAnswersQuestionDto>;
+};
+
+/**
  * Represents a clinical trial on a record.
  */
 export type RecordClinicalTrialDto = {
@@ -1031,6 +1153,10 @@ export type RecordDtoMedicineRecordDto = {
      * of its latest revision.
      */
     actions: Array<RecordAction>;
+    /**
+     * Gets the date of when the next update is due.
+     */
+    nextUpdateDue?: null | string;
 };
 
 /**
@@ -1068,6 +1194,10 @@ export type RecordDtoVaccineRecordDto = {
      * of its latest revision.
      */
     actions: Array<RecordAction>;
+    /**
+     * Gets the date of when the next update is due.
+     */
+    nextUpdateDue?: null | string;
 };
 
 /**
@@ -1789,7 +1919,7 @@ export const SortDirection = { ASCENDING: 'Ascending', DESCENDING: 'Descending' 
 export type SortDirection = typeof SortDirection[keyof typeof SortDirection];
 
 /**
- * A submission or selected-organisation conflict. Schema only: runtime responses use the
+ * A record submission or check answers conflict, or a selected-organisation conflict. Schema only: runtime responses use the
  * problem details factory and extensions to preserve tracing metadata.
  */
 export type SubmissionConflictProblemDetails = {
@@ -3410,6 +3540,49 @@ export type SaveRecordFormPageResponses = {
 };
 
 export type SaveRecordFormPageResponse = SaveRecordFormPageResponses[keyof SaveRecordFormPageResponses];
+
+export type GetRecordCheckAnswersData = {
+    body?: never;
+    path: {
+        /**
+         * The record to check.
+         */
+        recordId: number;
+    };
+    query?: never;
+    url: '/records/{recordId}/check-answers';
+};
+
+export type GetRecordCheckAnswersErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but not submit it.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record can't be submitted in its current state, or the selected organisation differs.
+     * The `code` member says which.
+     */
+    409: SubmissionConflictProblemDetails;
+};
+
+export type GetRecordCheckAnswersError = GetRecordCheckAnswersErrors[keyof GetRecordCheckAnswersErrors];
+
+export type GetRecordCheckAnswersResponses = {
+    /**
+     * Returns the record's answers and errors.
+     */
+    200: RecordCheckAnswersDto;
+};
+
+export type GetRecordCheckAnswersResponse = GetRecordCheckAnswersResponses[keyof GetRecordCheckAnswersResponses];
 
 export type SubmitRecordData = {
     /**

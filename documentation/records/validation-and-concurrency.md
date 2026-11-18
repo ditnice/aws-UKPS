@@ -114,6 +114,20 @@ flowchart TD
 - **The revision ID is part of the cyaHash.** If a colleague submitted the draft, QA rejected it and a new draft ended up with the same answers, the user hasn't seen the rejection, so their submission is blocked.
 - **Vaccines skip QA review.** The status changes on publication follow the [lifecycle](lifecycle.md#stage-8-qa-approves), including a status history row the first time the record is published.
 
+### Loading check your answers
+
+`GET /records/{recordId}/check-answers` returns every question that applies on the latest revision with its answer, grouped by section and task, the errors that would stop it being submitted, and the revision hash to send back on submit. Submit is offered when `errors` is empty.
+
+Check your answers is only a step towards submitting, so it is refused for the same reasons Submit is, before any answer is loaded. Unlike the other record GETs, which only return 404, it can return:
+
+| Status | When |
+| --- | --- |
+| `404` | The record doesn't exist, or the caller can't read its organisation (ADR-004). |
+| `403` | The caller can read the record but not submit it, for example a Super user. |
+| `409 record_not_submittable` | The latest revision isn't a submittable draft: it has already been submitted, or the record is on hold or archived. |
+
+A read-only summary for these users is out of scope; they see the record through the record view instead.
+
 <br>
 
 ## Hashing

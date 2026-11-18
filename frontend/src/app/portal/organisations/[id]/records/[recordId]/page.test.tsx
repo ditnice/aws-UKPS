@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getRecord, RecordDto } from '@/client/generated'
+import { getOrganisationRecords, getRecord, RecordDto } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 
 import RecordPage from './page'
@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/client/generated', async () => ({
   getRecord: vi.fn(),
+  getOrganisationRecords: vi.fn(),
   RecordType: (
     await vi.importActual<typeof import('@/client/generated/types.gen')>(
       '@/client/generated/types.gen',
@@ -68,6 +69,25 @@ vi.mock('./_components/MedicineRecordDetails', () => ({
   MedicineRecordDetails: () => <div data-testid="medicine-record-details" />,
 }))
 
+beforeEach(() => {
+  vi.clearAllMocks()
+  vi.mocked(createServerApiClient).mockResolvedValue(
+    {} as Awaited<ReturnType<typeof createServerApiClient>>,
+  )
+  vi.mocked(getOrganisationRecords).mockResolvedValue({
+    data: {
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+    },
+    error: undefined,
+    response: new Response(),
+  })
+})
+
+afterEach(cleanup)
+
 type GetRecordResult = Awaited<ReturnType<typeof getRecord>>
 
 const medicineRecord: RecordDto = {
@@ -103,15 +123,6 @@ const renderPage = async (
   const viewComponent = view.type as (props: unknown) => Promise<ReactElement>
   render(await viewComponent(view.props))
 }
-
-beforeEach(() => {
-  vi.clearAllMocks()
-  vi.mocked(createServerApiClient).mockResolvedValue(
-    {} as Awaited<ReturnType<typeof createServerApiClient>>,
-  )
-})
-
-afterEach(cleanup)
 
 describe('RecordPage', () => {
   it('renders the record header, manage banner and medicine details', async () => {
@@ -180,5 +191,30 @@ describe('RecordPage', () => {
     expect(screen.getByRole('alert').textContent).toContain(
       'There was a problem retrieving the record',
     )
+  })
+
+  it.each([
+    ['Published', 'View record details'],
+    ['Archived', 'Archived record details'],
+    ['OnHold', 'Published record details'],
+    ['QAReview', 'Published record details'],
+  ] as const)('displays "%s" record with heading "%s"', async (status, expectedHeading) => {
+    mockRecord({
+      data: {
+        ...medicineRecord,
+        displayStatus: status,
+      },
+      error: undefined,
+      response: new Response(),
+    })
+
+    await renderPage()
+
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: expectedHeading,
+      }),
+    ).toBeDefined()
   })
 })
