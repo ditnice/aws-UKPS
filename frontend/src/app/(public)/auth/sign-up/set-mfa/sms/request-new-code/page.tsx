@@ -10,10 +10,14 @@ import { Button } from '@/components/Button/Button'
 import { Details } from '@/components/Details/Details'
 import { Input } from '@/components/Input/Input'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
+import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 import { errorMessages } from '@/lib/form/errorMessages'
+
+import { useSignUpPassword } from '../../../_lib/SignUpPasswordContext'
 
 export default function RequestNewCode() {
   const router = useRouter()
+  const { clearPassword, password, setPassword } = useSignUpPassword()
   const [phoneNumber, setPhoneNumber] = useState(() => {
     try {
       const stored = sessionStorage.getItem('signUpSmsSetup')
@@ -30,7 +34,9 @@ export default function RequestNewCode() {
       return ''
     }
   })
+  const [enteredPassword, setEnteredPassword] = useState('')
   const [error, setError] = useState('')
+  const [passwordError, setPasswordError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   async function requestNewCode() {
@@ -46,16 +52,30 @@ export default function RequestNewCode() {
       return
     }
 
+    const submittedPassword = password ?? enteredPassword
+    if (!submittedPassword) {
+      setPasswordError(errorMessages.passwordRequired)
+      return
+    }
+
     setError('')
+    setPasswordError('')
     setIsSubmitting(true)
 
     try {
       const result = await postAuthSetupSmsMfa({
-        body: { setupToken, phoneNumber: phoneNumber.trim() },
+        body: { setupToken, phoneNumber: phoneNumber.trim(), password: submittedPassword },
         credentials: 'include',
       })
 
       if (result.error) {
+        if (result.response?.status === 401) {
+          clearPassword()
+          setEnteredPassword('')
+          setPasswordError('The password you entered is incorrect.')
+          return
+        }
+
         setError(
           result.error.detail ?? 'We could not request a new security code. Try again later.',
         )
@@ -77,6 +97,7 @@ export default function RequestNewCode() {
         )
       } catch {}
 
+      setPassword(submittedPassword)
       router.push('/auth/sign-up/set-mfa/sms/check-your-phone')
     } catch {
       setError('We could not request a new security code. Try again later.')
@@ -106,6 +127,17 @@ export default function RequestNewCode() {
           errorMessage={error}
         />
       </Details>
+      {password === null ? (
+        <PasswordInput
+          name="password"
+          label="Password"
+          width="one-third"
+          value={enteredPassword}
+          onChange={(event) => setEnteredPassword(event.target.value)}
+          error={Boolean(passwordError)}
+          errorMessage={passwordError}
+        />
+      ) : null}
       <Button
         variant="cta"
         buttonType="submit"

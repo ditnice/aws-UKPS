@@ -14,6 +14,8 @@ import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
+import { useSignUpPassword } from '../../../_lib/SignUpPasswordContext'
+
 const codeSchema = z.object({
   securityCode: z
     .string()
@@ -33,6 +35,7 @@ function normaliseSecurityCode(value: string) {
 
 export default function CheckYourPhone() {
   const router = useRouter()
+  const { clearPassword } = useSignUpPassword()
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   let authenticationSession = ''
@@ -73,6 +76,7 @@ export default function CheckYourPhone() {
             sessionStorage.removeItem('signUpSmsSetup')
           } catch {}
 
+          clearPassword()
           router.push('/portal')
           return
         }

@@ -433,13 +433,10 @@ internal partial class IdentityAdministrationService : IIdentityAdministrationSe
             return attemptError.Value;
         }
 
-        // TODO(URP-725)
-        string password = string.Empty;
-
         return await EnableSmsMfaAndRestartAsync(
             cognitoUsername,
             e164Number!,
-            password,
+            command.Password,
             cancellationToken
         );
     }

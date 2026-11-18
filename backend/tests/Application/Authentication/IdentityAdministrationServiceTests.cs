@@ -702,6 +702,7 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             {
                 SetupToken = Guid.CreateVersion7(),
                 PhoneNumber = "07400123456",
+                Password = _validSetupUserCommand.NewPassword,
             },
             TestContext.Current.CancellationToken
         );
@@ -715,7 +716,12 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         var (setupToken, _, _) = await CreateAndDoInitialUserSetup();
 
         SetupSmsMfaResult result = await _harness.Service.SetupSmsMfa(
-            new SetupSmsMfaCommand { SetupToken = setupToken, PhoneNumber = "not-a-phone-number" },
+            new SetupSmsMfaCommand
+            {
+                SetupToken = setupToken,
+                PhoneNumber = "not-a-phone-number",
+                Password = _validSetupUserCommand.NewPassword,
+            },
             TestContext.Current.CancellationToken
         );
 
@@ -728,7 +734,12 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         UserOnboardingRecord entity = await OnboardUserViaInviteWithTimeOffset(minutesInPast: 30);
 
         SetupSmsMfaResult result = await _harness.Service.SetupSmsMfa(
-            new SetupSmsMfaCommand { SetupToken = entity.SetupToken, PhoneNumber = "07400123456" },
+            new SetupSmsMfaCommand
+            {
+                SetupToken = entity.SetupToken,
+                PhoneNumber = "07400123456",
+                Password = _validSetupUserCommand.NewPassword,
+            },
             TestContext.Current.CancellationToken
         );
 
@@ -741,7 +752,12 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         var (setupToken, _, _) = await CreateAndDoInitialUserSetup();
 
         SetupSmsMfaResult result = await _harness.Service.SetupSmsMfa(
-            new SetupSmsMfaCommand { SetupToken = setupToken, PhoneNumber = "07400123456" },
+            new SetupSmsMfaCommand
+            {
+                SetupToken = setupToken,
+                PhoneNumber = "07400123456",
+                Password = _validSetupUserCommand.NewPassword,
+            },
             TestContext.Current.CancellationToken
         );
 
@@ -754,7 +770,12 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         var (setupToken, _, _) = await CreateAndDoInitialUserSetup();
 
         SetupSmsMfaResult setupResult = await _harness.Service.SetupSmsMfa(
-            new SetupSmsMfaCommand { SetupToken = setupToken, PhoneNumber = "07400123456" },
+            new SetupSmsMfaCommand
+            {
+                SetupToken = setupToken,
+                PhoneNumber = "07400123456",
+                Password = _validSetupUserCommand.NewPassword,
+            },
             TestContext.Current.CancellationToken
         );
 
@@ -780,7 +801,12 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
         var (setupToken, _, _) = await CreateAndDoInitialUserSetup();
 
         SetupSmsMfaResult setupResult = await _harness.Service.SetupSmsMfa(
-            new SetupSmsMfaCommand { SetupToken = setupToken, PhoneNumber = "07400123456" },
+            new SetupSmsMfaCommand
+            {
+                SetupToken = setupToken,
+                PhoneNumber = "07400123456",
+                Password = _validSetupUserCommand.NewPassword,
+            },
             TestContext.Current.CancellationToken
         );
 

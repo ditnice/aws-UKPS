@@ -8067,7 +8067,8 @@
       "SetupSmsMfaCommand": {
         "required": [
           "setupToken",
-          "phoneNumber"
+          "phoneNumber",
+          "password"
         ],
         "type": "object",
         "properties": {
@@ -8079,6 +8080,11 @@
           "phoneNumber": {
             "type": "string",
             "description": "Gets the phone number to assign to the user account."
+          },
+          "password": {
+            "pattern": ".*\\S.*",
+            "type": "string",
+            "description": "Gets the password used to authenticate with the identity provider."
           }
         },
         "description": "Represents the command used to complete user setup by validating a setup token\nand assigning a phone number to the user for SMS MFA."

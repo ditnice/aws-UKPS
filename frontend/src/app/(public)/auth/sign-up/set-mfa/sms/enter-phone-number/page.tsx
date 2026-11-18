@@ -11,10 +11,12 @@ import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
+import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import { signUpMfaSetupStorageKey } from '../../../_lib/mfaSetupStorage'
+import { useSignUpPassword } from '../../../_lib/SignUpPasswordContext'
 
 const phoneSchema = z.object({
   phoneNumber: z
@@ -22,12 +24,14 @@ const phoneSchema = z.object({
     .trim()
     .min(1, errorMessages.personalPhoneRequired)
     .refine((value) => isValidPhoneNumber(value, 'GB'), errorMessages.phoneFormat),
+  password: z.string().min(1, errorMessages.passwordRequired),
 })
 
 type FormValues = z.input<typeof phoneSchema>
 
 export default function EnterPhoneNumber() {
   const router = useRouter()
+  const { clearPassword, password, setPassword } = useSignUpPassword()
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   let setupToken = ''
@@ -43,18 +47,19 @@ export default function EnterPhoneNumber() {
   }
 
   const form = useForm({
-    defaultValues: { phoneNumber: '' } satisfies FormValues,
+    defaultValues: { phoneNumber: '', password: password ?? '' } satisfies FormValues,
     validationLogic: revalidateLogic({ mode: 'submit', modeAfterSubmission: 'blur' }),
     validators: { onDynamic: phoneSchema },
     onSubmit: async ({ value, formApi }) => {
       if (!setupToken) return
 
       const { phoneNumber } = phoneSchema.parse(value)
+      const submittedPassword = password ?? value.password
       setSubmitError(null)
 
       try {
         const result = await postAuthSetupSmsMfa({
-          body: { setupToken, phoneNumber },
+          body: { setupToken, phoneNumber, password: submittedPassword },
           credentials: 'include',
         })
 
@@ -77,6 +82,7 @@ export default function EnterPhoneNumber() {
             return
           }
 
+          setPassword(submittedPassword)
           router.push('/auth/sign-up/set-mfa/sms/check-your-phone')
           return
         }
@@ -86,6 +92,19 @@ export default function EnterPhoneNumber() {
             onSubmit: {
               fields: {
                 phoneNumber: errorMessages.phoneFormat,
+              },
+            },
+          })
+          return
+        }
+
+        if (result.response?.status === 401) {
+          clearPassword()
+          formApi.setFieldValue('password', '')
+          formApi.setErrorMap({
+            onSubmit: {
+              fields: {
+                password: 'The password you entered is incorrect.',
               },
             },
           })
@@ -155,6 +174,29 @@ export default function EnterPhoneNumber() {
             )
           }}
         </form.Field>
+
+        {password === null ? (
+          <form.Field name="password">
+            {(field) => {
+              const errorMessage = getFieldErrorMessage(field.state.meta.errors)
+
+              return (
+                <PasswordInput
+                  error={Boolean(errorMessage)}
+                  errorMessage={errorMessage}
+                  label="Password"
+                  name={field.name}
+                  onBlur={field.handleBlur}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                    field.handleChange(event.target.value)
+                  }
+                  value={field.state.value}
+                  width="one-third"
+                />
+              )
+            }}
+          </form.Field>
+        ) : null}
 
         {submitError ? <p>{submitError}</p> : null}
 

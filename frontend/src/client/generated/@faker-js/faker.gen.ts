@@ -720,7 +720,8 @@ export const fakeSetupSmsMfaCommand = (options?: Options): SetupSmsMfaCommand =>
     const f = options?.faker ?? faker;
     return {
         setupToken: f.string.uuid(),
-        phoneNumber: f.phone.number()
+        phoneNumber: f.phone.number(),
+        password: f.helpers.fromRegExp('.*\\S.*')
     };
 };
 

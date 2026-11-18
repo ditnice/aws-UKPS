@@ -1724,6 +1724,10 @@ export type SetupSmsMfaCommand = {
      * Gets the phone number to assign to the user account.
      */
     phoneNumber: string;
+    /**
+     * Gets the password used to authenticate with the identity provider.
+     */
+    password: string;
 };
 
 /**

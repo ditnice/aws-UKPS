@@ -8,6 +8,7 @@ import SetupMfaForm, { SignUpMfaSetup, signUpMfaSetupSchema } from '@/lib/auth/m
 import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
 
 import { signUpMfaSetupStorageKey } from '../_lib/mfaSetupStorage'
+import { useSignUpPassword } from '../_lib/SignUpPasswordContext'
 
 type SetupState =
   { setup: SignUpMfaSetup; status: 'ready' } | { status: 'error' } | { status: 'loading' }
@@ -47,6 +48,7 @@ function subscribeToSetupStorage() {
 
 export default function SignUpSetMfa() {
   const router = useRouter()
+  const { clearPassword } = useSignUpPassword()
   const setupState = useSyncExternalStore(
     subscribeToSetupStorage,
     loadSignUpMfaSetup,
@@ -84,6 +86,7 @@ export default function SignUpSetMfa() {
             sessionStorage.removeItem(signUpMfaSetupStorageKey)
           } catch {}
 
+          clearPassword()
           router.push(routeOnSuccessfulAuth)
         }}
       />
