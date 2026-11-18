@@ -20,5 +20,5 @@ const CreateMedicineRecordPage = async ({ params }: CreateMedicineRecordPageProp
     </OrganisationPageWrapper>
   )
 }
-
+// TODO: Check that the user has the correct AllowedPharmaceuticalEntity to be on this page
 export default CreateMedicineRecordPage

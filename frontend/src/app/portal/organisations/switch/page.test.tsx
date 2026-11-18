@@ -1,16 +1,26 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getCurrentUserOrganisations, getUsersMe, UserInformationDto } from '@/client/generated'
+import {
+  getCurrentUserOrganisations,
+  getUsersMe,
+  PharmaceuticalEntity,
+  UserInformationDto,
+} from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { notFound, redirect } from '@/test-utils/nextNavigation'
 
 import SwitchOrganisationPage from './page'
 
-vi.mock('@/client/generated', () => ({
-  getCurrentUserOrganisations: vi.fn(),
-  getUsersMe: vi.fn(),
-}))
+vi.mock('@/client/generated', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/client/generated')>()
+
+  return {
+    ...actual,
+    getCurrentUserOrganisations: vi.fn(),
+    getUsersMe: vi.fn(),
+  }
+})
 
 vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(),
@@ -40,6 +50,7 @@ const currentUser: UserInformationDto = {
   userRole: 'Standard',
   status: 'Active',
   hasMultipleOrganisations: true,
+  allowedPharmaceuticalEntity: PharmaceuticalEntity.BOTH,
 }
 
 const organisations = [

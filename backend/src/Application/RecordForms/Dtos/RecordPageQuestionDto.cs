@@ -42,7 +42,10 @@ public sealed record RecordPageQuestionDto
     /// </summary>
     public required string? AddAnotherLabel { get; init; }
 
-    /// <summary>The heading of each item of a group, numbered from 1; null for other controls.</summary>
+    /// <summary>
+    /// The heading of each item of a group, numbered from 1, or the label of each entry of a text
+    /// list, numbered from 1 once there are several; null for other controls.
+    /// </summary>
     public string? ItemLabel { get; init; }
 
     /// <summary>The button text that removes an item of a group or an entry of a text list.</summary>
