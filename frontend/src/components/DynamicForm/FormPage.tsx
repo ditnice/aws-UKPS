@@ -43,7 +43,7 @@ type SaveState = { kind: 'idle' } | { kind: 'conflict'; detail: string } | { kin
 
 export type FormPageProps = {
   page: RecordPageDto
-  /* Set when the user came from check your answers, so saving returns them there. */
+  /** Set when the user came from check your answers, so saving returns them there. */
   returnToCheckAnswers?: boolean
 }
 

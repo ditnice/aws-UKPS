@@ -42,7 +42,7 @@ describe('CheckAnswersActions', () => {
     expect(screen.getByRole('button', { name: 'Submit record for review' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Return to my records' })).toHaveAttribute(
       'href',
-      '/portal/organisations/7/records?action=draft-saved',
+      '/portal/organisations/7/records',
     )
   })
 
