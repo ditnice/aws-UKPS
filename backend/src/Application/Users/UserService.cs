@@ -77,9 +77,9 @@ internal partial class UserService(
                 mfaPhoneNumber = mfaDetails.MfaPhoneNumber;
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Leave the default values when MFA details cannot be retrieved.
+            LogGettingUserMfaDetailsFailed(ex);
         }
 #pragma warning restore CA1031
 
@@ -935,6 +935,12 @@ internal partial class UserService(
 
     [LoggerMessage(Level = LogLevel.Error, Message = "An error occurred whilst removing a user.")]
     private partial void LogRemovingUserFailed(Exception ex);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Failed to retrieve MFA details for the current user."
+    )]
+    private partial void LogGettingUserMfaDetailsFailed(Exception ex);
 
     public record UserInformationTrackingProjection()
     {
