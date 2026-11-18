@@ -315,9 +315,7 @@ public class MedicineFormModelTests
     {
         FormTask task = Model
             .Sections.SelectMany(static s => s.Tasks)
-            .Single(static t =>
-                string.Equals(t.Id, MedicineFormLayout.ClinicalTrials, StringComparison.Ordinal)
-            );
+            .Single(static t => string.Equals(t.Id, "clinical-trials", StringComparison.Ordinal));
 
         task.Pages.Select(static p => (p.Id, p.CommercialInConfidence))
             .ShouldBe([

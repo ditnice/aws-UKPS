@@ -12,12 +12,7 @@ internal sealed class MedicinesTreatmentDetail
     public int RevisionId { get; set; }
 
     /// <summary>Includes likely comparators.</summary>
-    [FormPage(
-        MedicineFormLayout.PatientAndClinicalRequirements,
-        "place-in-therapy",
-        "Proposed place in therapy",
-        Order = 30
-    )]
+    [FormPage(MedicineFormLayout.PlaceInTherapy)]
     [FormField(
         "medicines_treatment_detail.proposed_place_in_therapy",
         "Enter the proposed place in therapy and likely comparators",
@@ -28,13 +23,7 @@ internal sealed class MedicinesTreatmentDetail
     public string? ProposedPlaceInTherapy { get; set; }
 
     /// <summary>CiC — Commercially in Confidence.</summary>
-    [FormPage(
-        MedicineFormLayout.PatientAndClinicalRequirements,
-        "treatment-duration",
-        "Estimated duration of treatment",
-        Order = 40,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.TreatmentDuration)]
     [FormField(
         "medicines_treatment_detail.estimated_duration_of_treatment",
         "Enter the estimated duration of treatment",

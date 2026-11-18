@@ -12,13 +12,7 @@ internal sealed class RecordMhraProcedure
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.MhraProcedureAndDates,
-        "uk-market-authorisation",
-        "UK market authorisation",
-        Order = 10,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.UkMarketAuthorisation)]
     [FormField(
         "record_mhra_procedure.mhra_procedure_type_id",
         "Select the procedure you currently expect to use for UK authorisation",
@@ -32,13 +26,7 @@ internal sealed class RecordMhraProcedure
     /// <summary>
     /// FK to IrpReferenceRegulator. On the IRP page, which shows only when MhraProcedureType = IRP.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.MhraProcedureAndDates,
-        "international-recognition",
-        "International Recognition Procedure (IRP)",
-        Order = 60,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.InternationalRecognition)]
     [FormField(
         "record_mhra_procedure.irp_reference_regulator_id",
         "Select the reference regulator",
@@ -48,13 +36,7 @@ internal sealed class RecordMhraProcedure
     [FormRequired("Select a reference regulator")]
     public int? IrpReferenceRegulatorId { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.MhraProcedureAndDates,
-        "uk-market-authorisation",
-        "UK market authorisation",
-        Order = 10,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.UkMarketAuthorisation)]
     [FormField(
         "record_mhra_procedure.procedure_details",
         "MHRA regulatory procedure details (optional)",
