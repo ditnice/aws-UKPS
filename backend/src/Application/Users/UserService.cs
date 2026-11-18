@@ -667,9 +667,30 @@ internal partial class UserService(
                     MapPendingEmailAsVerifiedError(domainError.Value)
                 );
             }
-            await HandleUserEvents(user, cancellationToken);
+            int rowsAffected = await dbContext
+                .Users.Where(x =>
+                    x.Id == user.Id
+                    && x.PendingEmailVerificationToken == user.PendingEmailVerificationToken
+                )
+                .ExecuteUpdateAsync(
+                    u =>
+                    {
+                        u.SetProperty(x => x.PendingEmailVerifiedAt, user.PendingEmailVerifiedAt);
+                        u.SetProperty(
+                            x => x.PendingEmailVerificationToken,
+                            user.PendingEmailVerificationToken
+                        );
+                    },
+                    cancellationToken
+                );
 
-            await dbContext.SaveChangesAsync(cancellationToken);
+            if (rowsAffected == 0)
+            {
+                return VerifyPendingEmailAddressResult.Err(
+                    new VerifyPendingEmailAddressError.ConcurrentChangeDetected()
+                );
+            }
+            await HandleUserEvents(user, cancellationToken);
 
             return VerifyPendingEmailAddressResult.Ok();
         }
