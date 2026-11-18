@@ -1,5 +1,5 @@
 import { TableAndFiltersGrid } from '@/app/portal/components/_components/TableAndFiltersGrid'
-import { getCurrentOrganisationChampions, getUsersMe } from '@/client/generated'
+import { getCurrentOrganisationChampions, getUsersMe, UserRole } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
@@ -24,14 +24,14 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
   const resolvedSearchParams = await searchParams
   const query = parseQueryFromSearchParams(resolvedSearchParams)
   const recordAction = parseRecordAction(resolvedSearchParams)
-  const { data: currentUser } = await getUsersMe({
-    client: await createServerApiClient(),
-  })
+  const apiClient = await createServerApiClient()
+  const { data: currentUser } = await getUsersMe({ client: apiClient })
+  const isStandardUser = currentUser?.userRole === UserRole.STANDARD
 
   let championEmails: string[] = []
-  if (currentUser?.userRole == 'Standard') {
+  if (isStandardUser) {
     const { data } = await getCurrentOrganisationChampions({
-      client: await createServerApiClient(),
+      client: apiClient,
     })
     championEmails = data ?? []
   }
@@ -42,7 +42,7 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
         <>
           {recordAction && <RecordActionAlert action={recordAction} />}
           <PageHeader heading={`${organisation.organisationName}`} />
-          {currentUser?.userRole === 'Standard' && championEmails.length > 0 && (
+          {isStandardUser && championEmails.length > 0 && (
             <>
               <div className="champion-user">
                 {championEmails.length === 1 ? (
