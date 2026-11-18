@@ -4,14 +4,17 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import { buildRecordActionHref } from '@/app/portal/organisations/[id]/records/_lib/recordActionAlert'
-import { submitRecord } from '@/client/generated'
+import { submitRecord, SubmissionConflictProblemDetails } from '@/client/generated'
 import { Alert } from '@/components/Alert/Alert'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { checkAnswersHref } from '@/lib/dynamic-form/links'
 
 type SubmitState =
-  { kind: 'idle' } | { kind: 'conflict'; detail: string } | { kind: 'failed' } | { kind: 'invalid' }
+  | { kind: 'idle' }
+  | { kind: 'conflict'; message: string }
+  | { kind: 'failed' }
+  | { kind: 'invalid' }
 
 export type CheckAnswersActionsProps = {
   recordId: number
@@ -51,8 +54,11 @@ export function CheckAnswersActions({
         router.refresh()
         setSubmitState({ kind: 'invalid' })
       } else if (response?.status === 409) {
-        const detail = (error as { detail?: string } | undefined)?.detail ?? ''
-        setSubmitState({ kind: 'conflict', detail })
+        const { detail } = (error ?? {}) as SubmissionConflictProblemDetails
+        setSubmitState({
+          kind: 'conflict',
+          message: detail ?? 'This record has changed. Reload the page and try again.',
+        })
       } else {
         setSubmitState({ kind: 'failed' })
       }
@@ -74,7 +80,7 @@ export function CheckAnswersActions({
       </p>
       {submitState.kind === 'conflict' && (
         <Alert type="caution">
-          <p>{submitState.detail}</p>
+          <p>{submitState.message}</p>
           <p>
             <a href={checkAnswersHref(recordId)}>Reload this page</a> to see the latest answers.
           </p>
