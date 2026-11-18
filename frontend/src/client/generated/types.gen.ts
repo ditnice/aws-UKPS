@@ -1463,7 +1463,8 @@ export type RecordPageQuestionDto = {
      */
     addAnotherLabel: null | string;
     /**
-     * The heading of each item of a group, numbered from 1; null for other controls.
+     * The heading of each item of a group, numbered from 1, or the label of each entry of a text
+     * list, numbered from 1 once there are several; null for other controls.
      */
     itemLabel?: null | string;
     /**

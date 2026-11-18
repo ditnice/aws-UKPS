@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { AddAnother, AddAnotherProps } from './AddAnother'
+import styles from './AddAnother.module.scss'
 
 const defaultProps: AddAnotherProps<string> = {
   addItemLabel: 'add-item-label',
@@ -423,6 +424,35 @@ describe('AddAnother', () => {
       fireEvent.click(screen.getByTestId('remove-button-0'))
 
       expect(screen.getByText('Trial numbers')).toHaveFocus()
+    })
+
+    it('hides item labels behind a legend unless the items have a label of their own', () => {
+      const props = { ...defaultProps, field: singleItemField, legend: 'Trial numbers' }
+      const labelIsHidden = (text: string) =>
+        screen.getByText(text, { selector: 'label' }).closest(`.${styles.hiddenLabel}`) !== null
+      const { rerender } = render(<AddAnother {...props} />)
+
+      expect(labelIsHidden('label-prefix')).toBe(true)
+
+      rerender(<AddAnother {...props} itemLabel="Trial number" />)
+
+      expect(labelIsHidden('Trial number')).toBe(false)
+      expect(getInputByLabelText('Trial number')).toBeInTheDocument()
+    })
+
+    it('ignores a blank item label', () => {
+      render(
+        <AddAnother
+          {...defaultProps}
+          field={singleItemField}
+          itemLabel="  "
+          legend="Trial numbers"
+        />,
+      )
+
+      expect(
+        screen.getByText('label-prefix', { selector: 'label' }).closest(`.${styles.hiddenLabel}`),
+      ).not.toBeNull()
     })
   })
 })

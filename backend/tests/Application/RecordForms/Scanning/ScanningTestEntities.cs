@@ -895,6 +895,7 @@ internal sealed class GroupEntityItem
         "Numbers",
         FormControl.TextList,
         AddAnotherLabel = "Add another number",
+        ItemLabel = "Number",
         Order = 30
     )]
     [FormDistinct("Number already entered")]
@@ -965,5 +966,17 @@ internal sealed class BrokenGroupItem
     [FormField("required_name", "Required name", FormControl.Text, Order = 30)]
     public required string RequiredName { get; set; }
 
+    [FormField("blank_labels", "Blank labels", FormControl.TextList, ItemLabel = " ", Order = 40)]
+    public ICollection<BrokenGroupItemLabel> BlankLabels { get; set; } = [];
+
     public BrokenGroupEntity? BrokenGroupEntity { get; set; }
+}
+
+internal sealed class BrokenGroupItemLabel
+{
+    public int Id { get; set; }
+    public int BrokenGroupItemId { get; set; }
+    public required string Label { get; set; }
+    public int? DisplayOrder { get; set; }
+    public BrokenGroupItem? BrokenGroupItem { get; set; }
 }

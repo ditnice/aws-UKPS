@@ -704,13 +704,21 @@ internal static partial class FormModelValidator
             problems.Add($"{where} sets ItemKey, which only a Group uses.");
         }
 
-        if (isGroup != !string.IsNullOrWhiteSpace(field.ItemLabel))
+        bool itemLabelIsBlank = string.IsNullOrWhiteSpace(field.ItemLabel);
+        if (
+            field.ItemLabel is not null
+            && control is not (FormControl.Group or FormControl.TextList)
+        )
         {
-            problems.Add(
-                isGroup
-                    ? $"{where} uses Group, which needs an ItemLabel."
-                    : $"{where} sets ItemLabel, which only a Group uses."
-            );
+            problems.Add($"{where} sets ItemLabel, which only a Group or a TextList uses.");
+        }
+        else if (isGroup && itemLabelIsBlank)
+        {
+            problems.Add($"{where} uses Group, which needs an ItemLabel.");
+        }
+        else if (field.ItemLabel is not null && itemLabelIsBlank)
+        {
+            problems.Add($"{where} sets a blank ItemLabel.");
         }
     }
 

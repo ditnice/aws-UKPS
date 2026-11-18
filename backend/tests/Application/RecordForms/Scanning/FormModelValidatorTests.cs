@@ -120,6 +120,7 @@ public class FormModelValidatorTests
             .Rules.Select(static r => r.Kind)
             .ShouldBe([RuleKind.Required, RuleKind.Distinct]);
         group.Children[2].Rules.Single().Kind.ShouldBe(RuleKind.Distinct);
+        group.Children[2].ItemLabel.ShouldBe("Number");
         form.FindQuestion("name").ShouldBeNull("a group's questions are not form questions");
     }
 
@@ -128,7 +129,8 @@ public class FormModelValidatorTests
     [InlineData(
         "BrokenGroupEntity.Items has ItemKey 'free_text', which must name a single-value question of the group with [FormRequired] and [FormDistinct]."
     )]
-    [InlineData("BrokenGroupEntity.Text sets ItemLabel, which only a Group uses.")]
+    [InlineData("BrokenGroupEntity.Text sets ItemLabel, which only a Group or a TextList uses.")]
+    [InlineData("BrokenGroupItem.BlankLabels sets a blank ItemLabel.")]
     [InlineData("BrokenGroupEntity.Text sets RemoveLabel, which only a Group or a TextList uses.")]
     [InlineData(
         "BrokenGroupEntity.Text has [FormDistinct], which only a TextList or a single-value question of a group uses."
