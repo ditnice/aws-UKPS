@@ -60,46 +60,6 @@ internal class LoginService : ILoginService
         return await HandlePostAuthentication(result, lookupResult, cancellationToken);
     }
 
-    private async Task<InitiateAuthenticationResult> HandlePostAuthentication(
-        InitiateAuthenticationResult result,
-        UserLookupResult userLookupResult,
-        CancellationToken cancellationToken
-    )
-    {
-        if (result.IsErr)
-        {
-            return result;
-        }
-
-        if (userLookupResult.FoundFromPendingEmail)
-        {
-            var emailUpdateResult = await _userService.UpdateEmailToCompletePendingEmailChange(
-                userLookupResult.User.Id,
-                cancellationToken
-            );
-
-            if (emailUpdateResult.IsErr)
-            {
-                var error = emailUpdateResult.Error.Match<InitiateAuthenticationError>(
-                    notFound: _ =>
-                        throw new InvalidOperationException(
-                            "Failed to update pending email address."
-                        ),
-                    conflictingEmail: _ =>
-                        throw new InvalidOperationException(
-                            "Failed to update pending email address."
-                        ),
-                    notVerified: _ => new InitiateAuthenticationError.VerificationRequired()
-                );
-                return InitiateAuthenticationResult.Err(error);
-            }
-        }
-
-        await ResetCurrentOrganisation(userLookupResult.User, cancellationToken);
-
-        return result;
-    }
-
     public async Task<InitiateAuthenticationResult> RespondToMultiFactorAuthenticationChallenge(
         RespondToMultiFactorAuthenticationChallengeCommand command,
         CancellationToken cancellationToken
@@ -189,6 +149,46 @@ internal class LoginService : ILoginService
         return string.IsNullOrWhiteSpace(refreshToken)
             ? Task.CompletedTask
             : _identityService.RevokeRefreshToken(refreshToken, cancellationToken);
+    }
+
+    private async Task<InitiateAuthenticationResult> HandlePostAuthentication(
+        InitiateAuthenticationResult result,
+        UserLookupResult userLookupResult,
+        CancellationToken cancellationToken
+    )
+    {
+        if (result.IsErr)
+        {
+            return result;
+        }
+
+        if (userLookupResult.FoundFromPendingEmail)
+        {
+            var emailUpdateResult = await _userService.UpdateEmailToCompletePendingEmailChange(
+                userLookupResult.User.Id,
+                cancellationToken
+            );
+
+            if (emailUpdateResult.IsErr)
+            {
+                var error = emailUpdateResult.Error.Match<InitiateAuthenticationError>(
+                    notFound: _ =>
+                        throw new InvalidOperationException(
+                            "Failed to update pending email address. User was not found despite previously being found during this request."
+                        ),
+                    conflictingEmail: _ =>
+                        throw new InvalidOperationException(
+                            "Failed to update pending email address. Conflicting email occured despite checks to ensure email/pending email uniqueness"
+                        ),
+                    notVerified: _ => new InitiateAuthenticationError.VerificationRequired()
+                );
+                return InitiateAuthenticationResult.Err(error);
+            }
+        }
+
+        await ResetCurrentOrganisation(userLookupResult.User, cancellationToken);
+
+        return result;
     }
 
     private async Task<UserLookupResult?> RetrieveUserToLogin(
