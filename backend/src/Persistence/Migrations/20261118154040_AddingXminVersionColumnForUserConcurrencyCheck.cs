@@ -10,20 +10,21 @@ namespace UKPS.Api.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<byte[]>(
-                name: "version",
+            migrationBuilder.AddColumn<uint>(
+                name: "xmin",
                 schema: "ukps",
                 table: "app_user",
-                type: "bytea",
+                type: "xid",
                 rowVersion: true,
-                nullable: true);
+                nullable: false,
+                defaultValue: 0u);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "version",
+                name: "xmin",
                 schema: "ukps",
                 table: "app_user");
         }

@@ -13,7 +13,7 @@ using UKPS.Api.Persistence;
 namespace UKPS.Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261118152014_AddingXminVersionColumnForUserConcurrencyCheck")]
+    [Migration("20261118154040_AddingXminVersionColumnForUserConcurrencyCheck")]
     partial class AddingXminVersionColumnForUserConcurrencyCheck
     {
         /// <inheritdoc />
@@ -351,11 +351,11 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("user_type");
 
-                    b.Property<byte[]>("Version")
+                    b.Property<uint>("Version")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea")
-                        .HasColumnName("version");
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.Property<string>("WorkEmail")
                         .IsRequired()
