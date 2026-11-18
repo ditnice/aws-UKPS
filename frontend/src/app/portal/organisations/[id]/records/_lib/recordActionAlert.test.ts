@@ -7,8 +7,8 @@ describe('parseRecordAction', () => {
     expect(parseRecordAction({ action: 'discarded' })).toBe('discarded')
   })
 
-  it.each(['submitted', 'draft-saved'] as const)('recognises the %s confirmation', (action) => {
-    expect(parseRecordAction({ action })).toBe(action)
+  it('recognises the record submitted confirmation', () => {
+    expect(parseRecordAction({ action: 'submitted' })).toBe('submitted')
   })
 
   it.each([undefined, '', 'unknown', 'Discarded', ' discarded '])(
@@ -26,9 +26,9 @@ describe('buildRecordActionHref', () => {
     )
   })
 
-  it.each(['submitted', 'draft-saved'] as const)('links to the records list with %s', (action) => {
-    expect(buildRecordActionHref(7, action)).toBe(
-      `/portal/organisations/7/records?action=${action}`,
+  it('links to the records list with submitted', () => {
+    expect(buildRecordActionHref(7, 'submitted')).toBe(
+      '/portal/organisations/7/records?action=submitted',
     )
   })
 })

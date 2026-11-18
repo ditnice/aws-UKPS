@@ -3,10 +3,12 @@ using Amazon.CognitoIdentityProvider.Model;
 using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Shouldly;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.Organisations.Dtos;
 using UKPS.Api.Application.Users;
@@ -44,6 +46,8 @@ public class UserServiceTests : DatabaseTestBase
     private readonly UpdateUserDetailsCommandFaker _updateUserDetailsCommandFaker = new();
     private IServiceTestHarness<IUserService> _harness;
     private IUserService Service => _harness.Service;
+    private readonly IEmailVerificationLinkCreator _mockEmailVerificationLinkCreator =
+        Substitute.For<IEmailVerificationLinkCreator>();
 
     private readonly DateTime _currentDateTime = new DateTime(
         2003,
@@ -72,9 +76,12 @@ public class UserServiceTests : DatabaseTestBase
     {
         Randomizer.Seed = new Random(342);
 
-        _harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentTime(
-            _currentDateTime
-        );
+        _harness = new ServiceTestHarness<IUserService>(Context)
+            .UpdateCurrentTime(_currentDateTime)
+            .ConfigureServices(services =>
+            {
+                return services.AddSingleton(_mockEmailVerificationLinkCreator);
+            });
 
         var organisations = _organisationFaker.Generate(3);
         var userFaker = new UserFaker().RuleFor(
@@ -138,6 +145,9 @@ public class UserServiceTests : DatabaseTestBase
                     UserRole = currentUserMembership.UserRole,
                     Status = currentUserMembership.Status.ConvertToUserOrgStatus(),
                     HasMultipleOrganisations = currentUser.HasMultipleSelectableOrganisations(),
+                    MfaMethod = "Unknown",
+                    MfaPhoneNumber = string.Empty,
+                    AllowedPharmaceuticalEntity = currentUserMembership.AllowedPharmaceuticalEntity,
                 }
             );
         }
@@ -1212,6 +1222,32 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task UpdateUserEmail_WhenValidRequest_ShouldSendVerificationEmail()
+    {
+        _mockEmailVerificationLinkCreator
+            .GetVerificationLink(Arg.Any<string>())
+            .Returns(callInfo => new Uri($"http://{callInfo.Arg<string>()}"));
+
+        User currentUser = await CreateExistingCurrentUser();
+        string testEmail = "testupdateuserdetails@email.com";
+        var result = await Service.UpdateUserEmail(
+            currentUser.Id,
+            new UpdateUserEmailCommand() { Value = testEmail },
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeSuccess();
+        var email = _harness
+            .Emails.Sent.OfType<EmailChangeVerificationRequestEmail>()
+            .ShouldHaveSingleItem();
+
+        var user = await _harness
+            .GetClearedContext()
+            .Users.FindAsync([currentUser.Id], TestContext.Current.CancellationToken);
+
+        email.EmailVerificationLink.Host.ShouldBe(user!.PendingEmailVerificationToken);
+    }
+
+    [Fact]
     public async Task UpdateUserEmail_ShouldNotUpdateEmailAttributeInCognito()
     {
         User currentUser = await CreateExistingCurrentUser();
@@ -1223,6 +1259,148 @@ public class UserServiceTests : DatabaseTestBase
         );
         MockUser? user = _harness.Cognito.GetUserByEmail(testEmail);
         user.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task VerifyPendingEmailAddress_ShouldMarkPendingEmailAsVerified()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        var token = await RequestEmailUpdate(currentUser);
+        var result = await Service.VerifyPendingEmailAddress(
+            currentUser.Id,
+            new VerifyPendingEmailAddressCommand() { VerificationToken = token },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        var updatedUser = await _harness
+            .GetClearedContext()
+            .Users.FindAsync([currentUser.Id], TestContext.Current.CancellationToken);
+
+        updatedUser.ShouldNotBeNull().PendingEmailVerifiedAt.ShouldBe(_currentDateTime);
+    }
+
+    [Fact]
+    public async Task VerifyPendingEmailAddress_ShouldShowUserAsVerifiedInTheReturnedDto()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        var token = await RequestEmailUpdate(currentUser);
+        var result = await Service.VerifyPendingEmailAddress(
+            currentUser.Id,
+            new VerifyPendingEmailAddressCommand() { VerificationToken = token },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        var userInformation = await Service.GetCurrentUser(TestContext.Current.CancellationToken);
+        userInformation.PendingWorkEmail.ShouldNotBeNull().VerifiedByEmail.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task VerifyPendingEmailAddress_WhenUserDoesNotExist_ShouldReturnNotFoundError()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        var token = await RequestEmailUpdate(currentUser);
+        var result = await Service.VerifyPendingEmailAddress(
+            999,
+            new VerifyPendingEmailAddressCommand() { VerificationToken = token },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<VerifyPendingEmailAddressError.UserNotFound>();
+    }
+
+    [Fact]
+    public async Task VerifyPendingEmailAddress_WhenUserIsNotModifyingTheirOwnDetails_ShouldReturnUnauthorisedError()
+    {
+        User firstUser = await CreateExistingCurrentUser();
+        var token = await RequestEmailUpdate(firstUser);
+
+        _ = await CreateExistingCurrentUser(); // Sets a different user as current
+        var result = await Service.VerifyPendingEmailAddress(
+            firstUser.Id,
+            new VerifyPendingEmailAddressCommand() { VerificationToken = token },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<VerifyPendingEmailAddressError.Unauthorised>();
+    }
+
+    [Fact]
+    public async Task VerifyPendingEmailAddress_WhenNoEmailChangeIsPending_ShouldReturnNoPendingEmailToVerifyError()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        var result = await Service.VerifyPendingEmailAddress(
+            currentUser.Id,
+            new VerifyPendingEmailAddressCommand() { VerificationToken = "token" },
+            TestContext.Current.CancellationToken
+        );
+
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<VerifyPendingEmailAddressError.NoPendingEmailToVerify>();
+    }
+
+    [Fact]
+    public async Task VerifyPendingEmailAddress_WhenEmailIsAlreadyVerified_ShouldReturnEmailAlreadyVerifiedError()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        var token = await RequestEmailUpdate(currentUser);
+        var result = await Service.VerifyPendingEmailAddress(
+            currentUser.Id,
+            new VerifyPendingEmailAddressCommand() { VerificationToken = token },
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeSuccess();
+
+        var result2 = await Service.VerifyPendingEmailAddress(
+            currentUser.Id,
+            new VerifyPendingEmailAddressCommand() { VerificationToken = token },
+            TestContext.Current.CancellationToken
+        );
+        result2
+            .ShouldBeError()
+            .ShouldBeOfType<VerifyPendingEmailAddressError.EmailAlreadyVerified>();
+    }
+
+    [Fact]
+    public async Task VerifyPendingEmailAddress_WhenProvidedTokenIsInvalid_ShouldReturnInvalidTokenProvidedError()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        _ = await RequestEmailUpdate(currentUser);
+        var result = await Service.VerifyPendingEmailAddress(
+            currentUser.Id,
+            new VerifyPendingEmailAddressCommand() { VerificationToken = "invalid-token" },
+            TestContext.Current.CancellationToken
+        );
+
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<VerifyPendingEmailAddressError.InvalidTokenProvided>();
+    }
+
+    private async Task<string> RequestEmailUpdate(User currentUser)
+    {
+        const string TestEmail = "testupdateuserdetails@email.com";
+        _mockEmailVerificationLinkCreator
+            .GetVerificationLink(Arg.Any<string>())
+            .Returns(callInfo => new Uri($"http://{callInfo.Arg<string>()}"));
+
+        var result = await Service.UpdateUserEmail(
+            currentUser.Id,
+            new UpdateUserEmailCommand { Value = TestEmail },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        var email = _harness
+            .Emails.Sent.OfType<EmailChangeVerificationRequestEmail>()
+            .ShouldHaveSingleItem();
+
+        return email.EmailVerificationLink.Host;
     }
 
     [Fact]
@@ -1342,6 +1520,9 @@ public class UserServiceTests : DatabaseTestBase
                 OrganisationName = membership.Organisation!.OrganisationName,
                 UserRole = membership.UserRole,
                 Status = (UserOrgStatus)membership.Status,
+                MfaMethod = "Unknown",
+                MfaPhoneNumber = string.Empty,
+                AllowedPharmaceuticalEntity = membership.AllowedPharmaceuticalEntity,
             }
         );
     }

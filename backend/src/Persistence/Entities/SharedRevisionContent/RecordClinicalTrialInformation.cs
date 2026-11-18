@@ -10,12 +10,12 @@ namespace UKPS.Api.Persistence.Entities.SharedRevisionContent;
 /// </summary>
 [FormEntity]
 [FormPageShowWhen(
-    "clinical-trial-details",
+    MedicineFormLayout.ClinicalTrialDetails,
     "record_clinical_trial_information.has_clinical_trials",
     YesNo.Yes
 )]
 [FormPageShowWhen(
-    "recruiting-in-uk",
+    MedicineFormLayout.RecruitingInUk,
     "record_clinical_trial_information.has_clinical_trials",
     YesNo.Yes
 )]
@@ -28,12 +28,7 @@ internal sealed class RecordClinicalTrialInformation
     public int RevisionId { get; set; }
 
     /// <summary>Does the user wish to add clinical trials to the record?</summary>
-    [FormPage(
-        MedicineFormLayout.ClinicalTrials,
-        "add-clinical-trial",
-        "Add a clinical trial",
-        Order = 10
-    )]
+    [FormPage(MedicineFormLayout.AddClinicalTrial)]
     [FormField(
         "record_clinical_trial_information.has_clinical_trials",
         "Do you wish to add a clinical trial?",
@@ -44,13 +39,7 @@ internal sealed class RecordClinicalTrialInformation
     public YesNo? HasClinicalTrials { get; set; }
 
     /// <summary>Are any of the record's clinical trials recruiting in the UK?</summary>
-    [FormPage(
-        MedicineFormLayout.ClinicalTrials,
-        "recruiting-in-uk",
-        "Recruiting in the UK",
-        Order = 30,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.RecruitingInUk)]
     [FormField(
         "record_clinical_trial_information.recruiting_in_uk",
         "Are any clinical trials recruiting in the UK?",
@@ -64,12 +53,7 @@ internal sealed class RecordClinicalTrialInformation
     public RecordWorkflow.RecordRevision? Revision { get; set; }
 
     /// <summary>The revision's clinical trials, joined on <see cref="RevisionId"/>.</summary>
-    [FormPage(
-        MedicineFormLayout.ClinicalTrials,
-        "clinical-trial-details",
-        "Clinical trial details",
-        Order = 20
-    )]
+    [FormPage(MedicineFormLayout.ClinicalTrialDetails)]
     [FormField(
         "record_clinical_trial",
         "Enter clinical trial details",

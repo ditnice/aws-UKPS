@@ -3,7 +3,6 @@ using Shouldly;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Application.RecordForms.Scanning;
-using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 using UKPS.Api.Persistence.Entities.ReferenceData;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Persistence.FormAnnotations;
@@ -53,9 +52,6 @@ public class FormModelValidatorTests
     [InlineData("BrokenEntity.BlankReason has [FormIgnore] with a blank reason.")]
     [InlineData("BrokenEntity.NoPage has [FormField] but no [FormPage].")]
     [InlineData("BrokenEntity.BadIds has a badly formed question ID 'Broken.Bad ID'.")]
-    [InlineData(
-        "BrokenEntity.BadIds declares page 'Bad Page' with a badly formed ID or a blank title."
-    )]
     [InlineData("BrokenEntity.WrongControl uses control Radio which does not suit a Text binding.")]
     [InlineData(
         "BrokenEntity.ChoiceWithoutProvider uses choice control Radio but no Enum provider of UnprovidedChoice is registered; register one or add [FormOptions]."
@@ -68,10 +64,7 @@ public class FormModelValidatorTests
     )]
     [InlineData("BrokenEntity.UnknownKey uses unknown option provider 'no-such-provider'.")]
     [InlineData(
-        "BrokenEntity.UnknownTask declares page 'unknown-task' in task 'no-such-task', which no FormLayout declares."
-    )]
-    [InlineData(
-        "BrokenEntity.ReservedPage declares page 'task-list', which is reserved for the task list."
+        "BrokenEntity.UnknownPage declares page 'unknown-page', which no FormLayout declares."
     )]
     [InlineData(
         "BrokenEntity.PrefixesOnText has [FormValuePrefixes], which only a PrefixedNumber uses."
@@ -127,6 +120,7 @@ public class FormModelValidatorTests
             .Rules.Select(static r => r.Kind)
             .ShouldBe([RuleKind.Required, RuleKind.Distinct]);
         group.Children[2].Rules.Single().Kind.ShouldBe(RuleKind.Distinct);
+        group.Children[2].ItemLabel.ShouldBe("Number");
         form.FindQuestion("name").ShouldBeNull("a group's questions are not form questions");
     }
 
@@ -135,7 +129,8 @@ public class FormModelValidatorTests
     [InlineData(
         "BrokenGroupEntity.Items has ItemKey 'free_text', which must name a single-value question of the group with [FormRequired] and [FormDistinct]."
     )]
-    [InlineData("BrokenGroupEntity.Text sets ItemLabel, which only a Group uses.")]
+    [InlineData("BrokenGroupEntity.Text sets ItemLabel, which only a Group or a TextList uses.")]
+    [InlineData("BrokenGroupItem.BlankLabels sets a blank ItemLabel.")]
     [InlineData("BrokenGroupEntity.Text sets RemoveLabel, which only a Group or a TextList uses.")]
     [InlineData(
         "BrokenGroupEntity.Text has [FormDistinct], which only a TextList or a single-value question of a group uses."
@@ -320,24 +315,13 @@ public class FormModelValidatorTests
     }
 
     [Fact]
-    public void Validate_Disagreements_AreReported()
+    public void Validate_RepeatedQuestionId_IsReported()
     {
         IReadOnlyList<string> problems = Problems(typeof(ValidEntity), typeof(DisagreeingEntity));
 
         problems.ShouldContain(
-            "The Vaccine form declares page 'text' with different titles, orders or commercial in confidence flags."
-        );
-        problems.ShouldContain(
             "The Vaccine form uses question ID 'valid_entity.text' more than once."
         );
-    }
-
-    [Fact]
-    public void Validate_PageInTwoTasks_IsReported()
-    {
-        IReadOnlyList<string> problems = Problems(typeof(ValidEntity), typeof(TaskConflictEntity));
-
-        problems.ShouldContain("The Vaccine form has page 'text' in more than one task.");
     }
 
     [Theory]
@@ -356,6 +340,15 @@ public class FormModelValidatorTests
     )]
     [InlineData("Task ID 'repeated-task' is declared more than once in the form layouts.")]
     [InlineData("BrokenTestLayout declares section 'empty' with no tasks.")]
+    [InlineData("BrokenTestLayout declares task 'no-pages-task' with no pages.")]
+    [InlineData(
+        "BrokenTestLayout declares page 'Bad Page' with a badly formed ID or a blank title."
+    )]
+    [InlineData("BrokenTestLayout declares page 'task-list', which is reserved for the task list.")]
+    [InlineData(
+        "BrokenTestLayout, task 'tied-task', has page 'tied-first' and page 'tied-second' with the same Order 10."
+    )]
+    [InlineData("Page ID 'repeated-page' is declared more than once in the form layouts.")]
     public void Validate_BrokenLayout_ReportsTheProblem(string expected)
     {
         var (declarations, problems) = FormModelScanner.Scan(_model, [typeof(BrokenTestLayout)]);
@@ -393,13 +386,13 @@ public class FormModelValidatorTests
     }
 
     [Fact]
-    public void Validate_PageConditionOnUnplacedPage_ReportsTheUnknownTask()
+    public void Validate_PageConditionOnUnplacedPage_ReportsTheUnknownPage()
     {
         IReadOnlyList<string> problems = Problems(typeof(UnplacedConditionEntity));
 
         problems.ShouldBe(
             [
-                "UnplacedConditionEntity.Detail declares page 'unplaced-follow-up' in task 'no-such-task', which no FormLayout declares.",
+                "UnplacedConditionEntity.Detail declares page 'unplaced-follow-up', which no FormLayout declares.",
                 "The Vaccine form has no entry in FormVersions.",
             ],
             ignoreOrder: true
@@ -426,7 +419,7 @@ public class FormModelValidatorTests
     {
         var (declarations, _) = FormModelScanner.Scan(
             _model,
-            [typeof(VaccineTestLayout), typeof(MedicineFormLayout), typeof(SplitFormEntity)]
+            [typeof(VaccineTestLayout), typeof(SplitMedicineTestLayout), typeof(SplitFormEntity)]
         );
 
         FormModelValidator
@@ -434,19 +427,6 @@ public class FormModelValidatorTests
             .ShouldContain(
                 "SplitFormEntity has pages in more than one form (Medicine, Vaccine); an entity belongs to one form."
             );
-    }
-
-    [Fact]
-    public void Validate_PageFlagDisagreement_IsReported()
-    {
-        IReadOnlyList<string> problems = Problems(
-            typeof(ValidEntity),
-            typeof(FlagDisagreeingEntity)
-        );
-
-        problems.ShouldContain(
-            "The Vaccine form declares page 'text' with different titles, orders or commercial in confidence flags."
-        );
     }
 
     [Fact]

@@ -76,8 +76,10 @@ internal sealed class FormFieldAttribute(string id, string label, FormControl co
 
     /// <summary>
     /// The heading of each item of a <see cref="FormControl.Group"/>, numbered from 1, for example
-    /// <c>Clinical trial</c> gives "Clinical trial 1". Required on a group and not allowed on any
-    /// other control.
+    /// <c>Clinical trial</c> gives "Clinical trial 1". Required on a group. A
+    /// <see cref="FormControl.TextList"/> may also set it as the visible label of each entry: the
+    /// label alone while there is one entry, numbered from 1 once there are several. Not allowed
+    /// on any other control.
     /// </summary>
     public string? ItemLabel { get; set; }
 

@@ -240,6 +240,211 @@
         }
       }
     },
+    "/auth/setup-sms-mfa": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Sets up SMS multi-factor authentication for a user.",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupSmsMfaCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupSmsMfaCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupSmsMfaCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsMultiFactorAuthenticationSetupDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsMultiFactorAuthenticationSetupDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsMultiFactorAuthenticationSetupDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify-sms-mfa": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Verifies the user's SMS multi-factor authentication setup by validating the provided authentication code.",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifySmsMultiFactorAuthenticationCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifySmsMultiFactorAuthenticationCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifySmsMultiFactorAuthenticationCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/validate-setup-token": {
       "get": {
         "tags": [
@@ -1080,17 +1285,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/MultiFactorAuthenticationSetupDto"
+                  "$ref": "#/components/schemas/MultiFactorAuthenticationUpdateDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MultiFactorAuthenticationSetupDto"
+                  "$ref": "#/components/schemas/MultiFactorAuthenticationUpdateDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MultiFactorAuthenticationSetupDto"
+                  "$ref": "#/components/schemas/MultiFactorAuthenticationUpdateDto"
                 }
               }
             }
@@ -4720,6 +4925,153 @@
         }
       }
     },
+    "/users/{userId}/email/verify": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Verifies a user's pending email address using a verification token.",
+        "operationId": "VerifyPendingEmailAddress",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "The ID of the user whose pending email address is being verified.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A token to cancel the operation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyPendingEmailAddressCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyPendingEmailAddressCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyPendingEmailAddressCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The pending email address was verified successfully."
+          },
+          "400": {
+            "description": "The verification token provided is invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not authorised to verify the email address for this user.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The user does not exist.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The user has no pending email address, or the pending email address has already been verified.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/onboard": {
       "post": {
         "tags": [
@@ -6482,6 +6834,20 @@
         },
         "description": "Represents the details required for a user to complete multi-factor authentication setup."
       },
+      "MultiFactorAuthenticationUpdateDto": {
+        "required": [
+          "otpAuthUri"
+        ],
+        "type": "object",
+        "properties": {
+          "otpAuthUri": {
+            "type": "string",
+            "description": "Gets the OTP authentication URI used to configure an authenticator application.",
+            "format": "uri"
+          }
+        },
+        "description": "Represents the details required for a user to complete multi-factor authentication update."
+      },
       "NameAndIdentifierType": {
         "enum": [
           "GenericName",
@@ -7925,7 +8291,7 @@
               "null",
               "string"
             ],
-            "description": "The heading of each item of a group, numbered from 1; null for other controls."
+            "description": "The heading of each item of a group, numbered from 1, or the label of each entry of a text\nlist, numbered from 1 once there are several; null for other controls."
           },
           "removeLabel": {
             "type": [
@@ -8485,6 +8851,31 @@
         },
         "description": "Where to go after saving a page."
       },
+      "SetupSmsMfaCommand": {
+        "required": [
+          "setupToken",
+          "phoneNumber",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "setupToken": {
+            "type": "string",
+            "description": "Gets the unique token used to identify and validate the pending user setup request.",
+            "format": "uuid"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "Gets the phone number to assign to the user account."
+          },
+          "password": {
+            "pattern": ".*\\S.*",
+            "type": "string",
+            "description": "Gets the password used to authenticate with the identity provider."
+          }
+        },
+        "description": "Represents the command used to complete user setup by validating a setup token\nand assigning a phone number to the user for SMS MFA."
+      },
       "SetupUserCommand": {
         "required": [
           "setupToken",
@@ -8503,6 +8894,19 @@
           }
         },
         "description": "Represents the command used to complete user setup by validating a setup token\nand assigning a new password to the user."
+      },
+      "SmsMultiFactorAuthenticationSetupDto": {
+        "required": [
+          "authenticationSession"
+        ],
+        "type": "object",
+        "properties": {
+          "authenticationSession": {
+            "type": "string",
+            "description": "Gets the authentication session identifier required to complete the\nmulti-factor authentication setup flow."
+          }
+        },
+        "description": "Represents the details required for a user to complete SMS multi-factor authentication setup."
       },
       "SortDirection": {
         "enum": [
@@ -8784,6 +9188,9 @@
           "organisationName",
           "userRole",
           "status",
+          "allowedPharmaceuticalEntity",
+          "mfaMethod",
+          "mfaPhoneNumber",
           "hasMultipleOrganisations"
         ],
         "type": "object",
@@ -8831,6 +9238,10 @@
             "type": "boolean",
             "description": "Gets whether the user can select more than one organisation. Only set for the current user."
           },
+          "allowedPharmaceuticalEntity": {
+            "description": "Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.",
+            "$ref": "#/components/schemas/PharmaceuticalEntity"
+          },
           "pendingWorkEmail": {
             "oneOf": [
               {
@@ -8841,6 +9252,14 @@
                 "$ref": "#/components/schemas/PendingWorkEmailChangeDto"
               }
             ]
+          },
+          "mfaMethod": {
+            "type": "string",
+            "description": "Gets the MFA method in use for the current user."
+          },
+          "mfaPhoneNumber": {
+            "type": "string",
+            "description": "Gets the obfuscated phone number used for SMS MFA, if applicable."
           }
         },
         "description": "Represents information about a user and their membership within an organisation."
@@ -9033,6 +9452,43 @@
           }
         },
         "description": "Represents a command to verify a multi-factor authentication update by supplying\na verification code from the user's authenticator application."
+      },
+      "VerifyPendingEmailAddressCommand": {
+        "required": [
+          "verificationToken"
+        ],
+        "type": "object",
+        "properties": {
+          "verificationToken": {
+            "type": "string",
+            "description": "The verification token that was sent to the pending email address."
+          }
+        },
+        "description": "Command to verify a user's pending email address using a previously issued verification token."
+      },
+      "VerifySmsMultiFactorAuthenticationCommand": {
+        "required": [
+          "setupToken",
+          "code",
+          "authenticationSession"
+        ],
+        "type": "object",
+        "properties": {
+          "setupToken": {
+            "type": "string",
+            "description": "Gets the unique token associated with the user onboarding record.",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "description": "Gets the verification code generated by the user's authenticator application."
+          },
+          "authenticationSession": {
+            "type": "string",
+            "description": "Gets the authentication session identifier required to complete the\nmulti-factor authentication verification flow."
+          }
+        },
+        "description": "Represents the details required to verify a user's SMS multi-factor authentication setup."
       },
       "YesNoUnknown": {
         "enum": [

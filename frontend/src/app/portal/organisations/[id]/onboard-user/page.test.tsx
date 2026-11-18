@@ -2,7 +2,11 @@ import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getOrganisationById, getUsersMe } from '@/client/generated/sdk.gen'
-import type { UserInformationDto, UserRole } from '@/client/generated/types.gen'
+import {
+  PharmaceuticalEntity,
+  type UserInformationDto,
+  type UserRole,
+} from '@/client/generated/types.gen'
 import { notFoundError, redirect } from '@/test-utils/nextNavigation'
 
 import OrganisationOnboardUserPage from './page'
@@ -33,6 +37,9 @@ const currentUser: UserInformationDto = {
   userRole: 'Champion',
   status: 'Active',
   hasMultipleOrganisations: false,
+  mfaMethod: 'Unknown',
+  mfaPhoneNumber: '',
+  allowedPharmaceuticalEntity: PharmaceuticalEntity.BOTH,
 }
 
 const params = Promise.resolve({ id: '2' })

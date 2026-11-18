@@ -1,13 +1,13 @@
 'use client'
 
-import { MultiFactorAuthenticationSetupDto } from '@/client/generated'
+import { MultiFactorAuthenticationUpdateDto } from '@/client/generated'
 import SetupMfaForm from '@/lib/auth/mfa/SetupMfaForm'
 
 import { completeMfaSetup } from './serverActions'
 
 type SetupMfaFormWrapperProps = {
   redirectOnSuccess: string
-  setup: MultiFactorAuthenticationSetupDto
+  setup: MultiFactorAuthenticationUpdateDto
 }
 const SetupMfaFormWrapper = ({ setup, redirectOnSuccess }: SetupMfaFormWrapperProps) => {
   return (

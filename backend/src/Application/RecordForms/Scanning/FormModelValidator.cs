@@ -40,7 +40,7 @@ internal static partial class FormModelValidator
                 if (declarations.Place(question) is null)
                 {
                     problems.Add(
-                        $"{question.Where} declares page '{question.Page.Id}' in task '{question.Page.Task}', which no FormLayout declares."
+                        $"{question.Where} declares page '{question.PageId}', which no FormLayout declares."
                     );
                 }
             }
@@ -92,6 +92,20 @@ internal static partial class FormModelValidator
             );
         }
 
+        foreach (
+            IGrouping<string, FormLayoutPage> duplicate in layouts
+                .SelectMany(static l => l.Sections)
+                .SelectMany(static s => s.Tasks)
+                .SelectMany(static t => t.Pages)
+                .GroupBy(static p => p.Id, StringComparer.Ordinal)
+                .Where(static g => g.Count() > 1)
+        )
+        {
+            problems.Add(
+                $"Page ID '{duplicate.Key}' is declared more than once in the form layouts."
+            );
+        }
+
         foreach (FormLayout layout in layouts)
         {
             ValidateLayout(layout, problems);
@@ -128,6 +142,8 @@ internal static partial class FormModelValidator
                         $"{name} declares task '{task.Id}' with a badly formed ID or a blank title."
                     );
                 }
+
+                ValidateLayoutTask(name, task, problems);
             }
 
             ReportTies(
@@ -153,6 +169,39 @@ internal static partial class FormModelValidator
             static s => s.Order,
             static s => $"section '{s.Id}'",
             name,
+            problems
+        );
+    }
+
+    private static void ValidateLayoutTask(string name, FormLayoutTask task, List<string> problems)
+    {
+        if (task.Pages.Count == 0)
+        {
+            problems.Add($"{name} declares task '{task.Id}' with no pages.");
+        }
+
+        foreach (FormLayoutPage page in task.Pages)
+        {
+            if (!SlugPattern().IsMatch(page.Id) || string.IsNullOrWhiteSpace(page.Title))
+            {
+                problems.Add(
+                    $"{name} declares page '{page.Id}' with a badly formed ID or a blank title."
+                );
+            }
+
+            if (string.Equals(page.Id, TaskListRoute, StringComparison.Ordinal))
+            {
+                problems.Add(
+                    $"{name} declares page '{TaskListRoute}', which is reserved for the task list."
+                );
+            }
+        }
+
+        ReportTies(
+            task.Pages,
+            static p => p.Order,
+            static p => $"page '{p.Id}'",
+            $"{name}, task '{task.Id}',",
             problems
         );
     }
@@ -342,23 +391,6 @@ internal static partial class FormModelValidator
         if (!QuestionIdPattern().IsMatch(field.Id))
         {
             problems.Add($"{where} has a badly formed question ID '{field.Id}'.");
-        }
-
-        if (
-            !SlugPattern().IsMatch(question.Page.Id)
-            || string.IsNullOrWhiteSpace(question.Page.Title)
-        )
-        {
-            problems.Add(
-                $"{where} declares page '{question.Page.Id}' with a badly formed ID or a blank title."
-            );
-        }
-
-        if (string.Equals(question.Page.Id, TaskListRoute, StringComparison.Ordinal))
-        {
-            problems.Add(
-                $"{where} declares page '{TaskListRoute}', which is reserved for the task list."
-            );
         }
     }
 
@@ -672,13 +704,21 @@ internal static partial class FormModelValidator
             problems.Add($"{where} sets ItemKey, which only a Group uses.");
         }
 
-        if (isGroup != !string.IsNullOrWhiteSpace(field.ItemLabel))
+        bool itemLabelIsBlank = string.IsNullOrWhiteSpace(field.ItemLabel);
+        if (
+            field.ItemLabel is not null
+            && control is not (FormControl.Group or FormControl.TextList)
+        )
         {
-            problems.Add(
-                isGroup
-                    ? $"{where} uses Group, which needs an ItemLabel."
-                    : $"{where} sets ItemLabel, which only a Group uses."
-            );
+            problems.Add($"{where} sets ItemLabel, which only a Group or a TextList uses.");
+        }
+        else if (isGroup && itemLabelIsBlank)
+        {
+            problems.Add($"{where} uses Group, which needs an ItemLabel.");
+        }
+        else if (field.ItemLabel is not null && itemLabelIsBlank)
+        {
+            problems.Add($"{where} sets a blank ItemLabel.");
         }
     }
 
@@ -743,48 +783,15 @@ internal static partial class FormModelValidator
         List<string> problems
     )
     {
-        var pages = questions
-            .GroupBy(
-                static x => (x.TaskId, x.Question.Page.Id),
-                EqualityComparer<(string TaskId, string Id)>.Default
-            )
-            .ToArray();
-        ValidatePageMetadata(form, pages, problems);
-        foreach (var page in pages)
+        foreach (var page in questions.GroupBy(static x => x.PageId, StringComparer.Ordinal))
         {
             ReportTies(
                 page,
                 static x => x.Question.Field.Order,
                 static x => $"question '{x.Question.Field.Id}'",
-                $"{form}, page '{page.Key.Id}',",
+                $"{form}, page '{page.Key}',",
                 problems
             );
-        }
-
-        foreach (
-            var task in pages
-                .Select(static p => p.First())
-                .GroupBy(static x => x.TaskId, StringComparer.Ordinal)
-        )
-        {
-            ReportTies(
-                task,
-                static x => x.Question.Page.Order,
-                static x => $"page '{x.Question.Page.Id}'",
-                $"{form}, task '{task.Key}',",
-                problems
-            );
-        }
-
-        foreach (
-            var page in questions
-                .GroupBy(static x => x.Question.Page.Id, StringComparer.Ordinal)
-                .Where(static page =>
-                    page.Select(x => x.TaskId).Distinct(StringComparer.Ordinal).Count() > 1
-                )
-        )
-        {
-            problems.Add($"{form} has page '{page.Key}' in more than one task.");
         }
     }
 
@@ -833,7 +840,7 @@ internal static partial class FormModelValidator
             }
 
             if (
-                !string.Equals(trigger.Question.Page.Id, question.Page.Id, StringComparison.Ordinal)
+                !string.Equals(trigger.PageId, question.PageId, StringComparison.Ordinal)
                 || trigger.Question.Field.Order >= question.Field.Order
             )
             {
@@ -876,15 +883,14 @@ internal static partial class FormModelValidator
                 $"{entity.ClrType.Name} [FormPageShowWhen] for page '{condition.PageId}'";
             PlacedQuestion? onPage = placed.FirstOrDefault(x =>
                 x.Entity == entity
-                && string.Equals(x.Question.Page.Id, condition.PageId, StringComparison.Ordinal)
+                && string.Equals(x.PageId, condition.PageId, StringComparison.Ordinal)
             );
             if (onPage is null)
             {
-                // A page whose task no layout declares, or that is in another form, is reported
-                // elsewhere.
+                // A page no layout declares, or that is in another form, is reported elsewhere.
                 if (
                     entity.Questions.Any(q =>
-                        string.Equals(q.Page.Id, condition.PageId, StringComparison.Ordinal)
+                        string.Equals(q.PageId, condition.PageId, StringComparison.Ordinal)
                     )
                 )
                 {
@@ -923,8 +929,8 @@ internal static partial class FormModelValidator
     {
         int firstPageOrder = questions
             .Values.Where(x => string.Equals(x.TaskId, onPage.TaskId, StringComparison.Ordinal))
-            .Min(static x => x.Question.Page.Order);
-        if (onPage.Question.Page.Order == firstPageOrder)
+            .Min(static x => x.Placement.Page.Order);
+        if (onPage.Placement.Page.Order == firstPageOrder)
         {
             problems.Add(
                 $"{where} is on the first page of task '{onPage.TaskId}', which must always apply."
@@ -1006,33 +1012,6 @@ internal static partial class FormModelValidator
         return trigger.Binding.ReferenceType?.GetProperty("Code")?.PropertyType == typeof(string)
             ? typeof(string)
             : null;
-    }
-
-    private static void ValidatePageMetadata(
-        string form,
-        IGrouping<(string TaskId, string Id), PlacedQuestion>[] pages,
-        List<string> problems
-    )
-    {
-        foreach (var page in pages)
-        {
-            if (
-                page.Select(static x =>
-                        (
-                            x.Question.Page.Title,
-                            x.Question.Page.Order,
-                            x.Question.Page.CommercialInConfidence
-                        )
-                    )
-                    .Distinct()
-                    .Count() > 1
-            )
-            {
-                problems.Add(
-                    $"{form} declares page '{page.Key.Id}' with different titles, orders or commercial in confidence flags."
-                );
-            }
-        }
     }
 
     private static void ReportTies<T>(

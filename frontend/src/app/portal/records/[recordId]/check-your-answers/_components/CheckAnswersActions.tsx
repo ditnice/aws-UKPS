@@ -104,7 +104,7 @@ export function CheckAnswersActions({
             Submit record for review
           </Button>
         )}
-        <Button to={buildRecordActionHref(organisationId, 'draft-saved')} variant="secondary">
+        <Button to={`/portal/organisations/${organisationId}/records`} variant="secondary">
           Return to my records
         </Button>
       </ButtonGroup>

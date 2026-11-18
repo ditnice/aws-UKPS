@@ -9,7 +9,9 @@ internal sealed record QuestionDeclaration
 {
     public required Type EntityType { get; init; }
     public required PropertyInfo Property { get; init; }
-    public required FormPageAttribute Page { get; init; }
+
+    /// <summary>The ID of the page the question is on; a group's question takes the group's.</summary>
+    public required string PageId { get; init; }
     public required FormFieldAttribute Field { get; init; }
     public FormRequiredAttribute? Required { get; init; }
     public FormMaxLengthAttribute? MaxLength { get; init; }
@@ -22,8 +24,8 @@ internal sealed record QuestionDeclaration
     public required BindingInfo Binding { get; init; }
 
     /// <summary>
-    /// For a group, the questions asked of each item, declared on the child entity. Their task
-    /// and page are the group's.
+    /// For a group, the questions asked of each item, declared on the child entity. Their page is
+    /// the group's.
     /// </summary>
     public IReadOnlyList<QuestionDeclaration> Children { get; init; } = [];
 

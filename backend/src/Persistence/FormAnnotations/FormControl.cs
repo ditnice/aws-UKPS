@@ -106,7 +106,8 @@ public enum FormControl
     /// navigation to a child entity with exactly one string column (the value) and optionally an
     /// <c>int? DisplayOrder</c>. The answer is an ordered array of trimmed strings; blank entries
     /// are dropped. May have <see cref="FormMaxItemsAttribute"/> and
-    /// <see cref="FormDistinctAttribute"/>.
+    /// <see cref="FormDistinctAttribute"/>, and may set <see cref="FormFieldAttribute.ItemLabel"/>
+    /// to label each entry.
     /// </summary>
     TextList = 11,
 }

@@ -43,9 +43,9 @@ type SaveState = { kind: 'idle' } | { kind: 'conflict'; detail: string } | { kin
 
 export type FormPageProps = {
   page: RecordPageDto
-  /* Set when the user came from check your answers, so saving returns them there. */
+  /** Set when the user came from check your answers, so saving returns them there. */
   returnToCheckAnswers?: boolean
-  /* Set when the user chose "add another" on check your answers: group questions open with a new blank item. */
+  /** Set when the user chose "add another" on check your answers: group questions open with a new blank item. */
   addGroupItem?: boolean
 }
 

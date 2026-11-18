@@ -1,10 +1,10 @@
 import { cookies } from 'next/headers'
 
-import { MultiFactorAuthenticationSetupDto } from '@/client/generated'
+import { MultiFactorAuthenticationUpdateDto } from '@/client/generated'
 
 const otpChallengeKey = 'otp_challenge'
 
-export const setOtpCookieData = async (data: MultiFactorAuthenticationSetupDto) => {
+export const setOtpCookieData = async (data: MultiFactorAuthenticationUpdateDto) => {
   const cookieCollection = await cookies()
   cookieCollection.set(otpChallengeKey, JSON.stringify(data), {
     httpOnly: true,
@@ -22,7 +22,7 @@ export const getOtpCookieData = async () => {
     return null
   }
 
-  return JSON.parse(challenge) as MultiFactorAuthenticationSetupDto
+  return JSON.parse(challenge) as MultiFactorAuthenticationUpdateDto
 }
 
 export const clearOtpCookieData = async () => {

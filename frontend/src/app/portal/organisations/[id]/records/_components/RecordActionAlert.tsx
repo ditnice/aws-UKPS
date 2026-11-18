@@ -27,12 +27,5 @@ export const RecordActionAlert = ({ action }: RecordActionAlertProps) => {
           </p>
         </Alert>
       )
-    case 'draft-saved':
-      return (
-        <Alert type="success">
-          <h3>Draft record saved</h3>
-          <p>Your answers have been saved as a draft. You can update them at any time.</p>
-        </Alert>
-      )
   }
 }

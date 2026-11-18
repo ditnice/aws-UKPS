@@ -1,9 +1,12 @@
 using System.Diagnostics;
 using System.Linq.Expressions;
+using Amazon.Runtime;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Communication;
+using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Organisations.Dtos;
@@ -44,6 +47,8 @@ internal partial class UserService(
     IIdentityService identityService,
     CurrentDbUserEntityService currentDbUserEntityService,
     ICurrentUserInfoService currentUserInfoService,
+    IEmailService emailService,
+    IEmailVerificationLinkCreator emailVerificationLinkCreator,
     ILogger<UserService> logger
 ) : IUserService
 {
@@ -62,6 +67,29 @@ internal partial class UserService(
                 "Current user did not have the membership as expected."
             );
 
+        string mfaMethod = "Unknown";
+        string mfaPhoneNumber = string.Empty;
+        try
+        {
+            UserMfaDetails? mfaDetails = await identityService.GetUserMfaDetails(
+                user.CognitoUsername,
+                cancellationToken
+            );
+            if (mfaDetails is not null)
+            {
+                mfaMethod = mfaDetails.MfaMethod;
+                mfaPhoneNumber = mfaDetails.MfaPhoneNumber;
+            }
+        }
+        catch (AmazonServiceException ex)
+        {
+            LogGettingUserMfaDetailsCognitoServiceFailed(ex);
+        }
+        catch (AmazonClientException ex)
+        {
+            LogGettingUserMfaDetailsAwsClientFailed(ex);
+        }
+
         return new UserInformationDto
         {
             UserId = user.Id,
@@ -74,9 +102,16 @@ internal partial class UserService(
             UserRole = currentUser.UserRole,
             Status = membership.Status.ConvertToUserOrgStatus(),
             HasMultipleOrganisations = user.HasMultipleSelectableOrganisations(),
+            AllowedPharmaceuticalEntity = membership.AllowedPharmaceuticalEntity,
             PendingWorkEmail = user.PendingWorkEmail is not null
-                ? new() { Value = user.PendingWorkEmail }
+                ? new()
+                {
+                    Value = user.PendingWorkEmail,
+                    VerifiedByEmail = user.PendingEmailVerifiedAt is not null,
+                }
                 : null,
+            MfaMethod = mfaMethod,
+            MfaPhoneNumber = mfaPhoneNumber,
         };
     }
 
@@ -276,10 +311,17 @@ internal partial class UserService(
                 OrganisationName = m.Organisation!.OrganisationName,
                 UserRole = m.UserRole,
                 Status = (UserOrgStatus)m.Status,
+                AllowedPharmaceuticalEntity = m.AllowedPharmaceuticalEntity,
                 PendingWorkEmail =
                     m.User.PendingWorkEmail != null
-                        ? new() { Value = m.User.PendingWorkEmail }
+                        ? new()
+                        {
+                            Value = m.User.PendingWorkEmail,
+                            VerifiedByEmail = m.User.PendingEmailVerifiedAt != null,
+                        }
                         : null,
+                MfaMethod = "Unknown",
+                MfaPhoneNumber = string.Empty,
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -603,13 +645,23 @@ internal partial class UserService(
                 return Result<UpdateUserEmailError>.Err(error);
             }
 
-            user!.UpdateEmail(command.Value, timeProvider.GetUtcNow());
+            user!.UpdateEmail(
+                command.Value,
+                VerificationTokenGenerator.Generate(),
+                timeProvider.GetUtcNow()
+            );
 
             await dbContext.SaveChangesAsync(cancellationToken);
             await HandleUserEvents(user, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             return Result<UpdateUserEmailError>.Ok();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result<UpdateUserEmailError>.Err(
+                new UpdateUserEmailError.ConcurrentChangeDetected()
+            );
         }
         catch (DbUpdateException updateException)
             when (ConstraintExceptions.IsUniquePendingEmailException(updateException))
@@ -623,6 +675,84 @@ internal partial class UserService(
             await transaction.RollbackAsync(cancellationToken);
             throw;
         }
+    }
+
+    public async Task<VerifyPendingEmailAddressResult> VerifyPendingEmailAddress(
+        int userId,
+        VerifyPendingEmailAddressCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
+
+            var error = ValidatePendingEmailVerificationPermitted(user);
+            if (error is not null)
+            {
+                return VerifyPendingEmailAddressResult.Err(error);
+            }
+
+            User.VerificationError? domainError = user!.TryMarkPendingEmailAsVerified(
+                command.VerificationToken,
+                timeProvider.GetUtcNow()
+            );
+            if (domainError.HasValue)
+            {
+                return VerifyPendingEmailAddressResult.Err(
+                    MapPendingEmailAsVerifiedError(domainError.Value)
+                );
+            }
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await HandleUserEvents(user, cancellationToken);
+
+            return VerifyPendingEmailAddressResult.Ok();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return VerifyPendingEmailAddressResult.Err(
+                new VerifyPendingEmailAddressError.ConcurrentChangeDetected()
+            );
+        }
+        catch (Exception ex)
+        {
+            LogUpdatePendingEmailAsVerifiedFailed(ex);
+            throw;
+        }
+    }
+
+    private static VerifyPendingEmailAddressError MapPendingEmailAsVerifiedError(
+        User.VerificationError domainError
+    )
+    {
+        return domainError switch
+        {
+            User.VerificationError.NoPendingEmailToVerify =>
+                new VerifyPendingEmailAddressError.NoPendingEmailToVerify(),
+            User.VerificationError.InvalidVerificationToken =>
+                new VerifyPendingEmailAddressError.InvalidTokenProvided(),
+            User.VerificationError.AlreadyVerified =>
+                new VerifyPendingEmailAddressError.EmailAlreadyVerified(),
+            _ => throw new InvalidOperationException(
+                $"The user verification error '{domainError}' is not supported."
+            ),
+        };
+    }
+
+    private VerifyPendingEmailAddressError? ValidatePendingEmailVerificationPermitted(User? user)
+    {
+        if (user is null)
+        {
+            return new VerifyPendingEmailAddressError.UserNotFound();
+        }
+
+        bool isTheCurrentUserModifyingTheirOwnDetails = currentUserInfoService.IsCurrentUser(user);
+        if (!isTheCurrentUserModifyingTheirOwnDetails)
+        {
+            return new VerifyPendingEmailAddressError.Unauthorised();
+        }
+
+        return null;
     }
 
     public async Task<RemoveUserResult> RemoveUser(int userId, CancellationToken cancellationToken)
@@ -872,8 +1002,31 @@ internal partial class UserService(
                 case User.EmailUpdatedEvent emailUpdatedEvent:
                     await HandleUserEvent(user, emailUpdatedEvent, cancellationToken);
                     break;
+                case User.PendingEmailUpdatedEvent pendingEmailUpdatedEvent:
+                    await HandleUserEvent(user, pendingEmailUpdatedEvent, cancellationToken);
+                    break;
             }
         }
+    }
+
+    private async Task HandleUserEvent(
+        User user,
+        User.PendingEmailUpdatedEvent pendingEmailUpdatedEvent,
+        CancellationToken cancellationToken
+    )
+    {
+        var link = emailVerificationLinkCreator.GetVerificationLink(
+            pendingEmailUpdatedEvent.VerificationToken
+        );
+        await emailService.SendEmail(
+            new SendEmailCommand()
+            {
+                RecipientAddress = pendingEmailUpdatedEvent.RequestedEmail,
+                PersonIdentifier = user.CognitoUsername,
+                Email = new EmailChangeVerificationRequestEmail() { EmailVerificationLink = link },
+            },
+            cancellationToken
+        );
     }
 
     private async Task HandleUserEvent(
@@ -908,8 +1061,23 @@ internal partial class UserService(
     )]
     private partial void LogUpdatingUserDetailsFailed(Exception ex);
 
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "An error occur whilst attempting to mark the pending email as verified."
+    )]
+    private partial void LogUpdatePendingEmailAsVerifiedFailed(Exception ex);
+
     [LoggerMessage(Level = LogLevel.Error, Message = "An error occurred whilst removing a user.")]
     private partial void LogRemovingUserFailed(Exception ex);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Cognito service error retrieving MFA details."
+    )]
+    private partial void LogGettingUserMfaDetailsCognitoServiceFailed(Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "AWS client error retrieving MFA details.")]
+    private partial void LogGettingUserMfaDetailsAwsClientFailed(Exception ex);
 
     public record UserInformationTrackingProjection()
     {
