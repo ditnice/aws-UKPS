@@ -71,7 +71,8 @@ const RecordTaskListPage = async ({ params, searchParams }: RecordTaskListPagePr
   }
 
   // TODO: service readiness becomes mandatory within 12 months of market authorisation;
-  // that rule requires backend work, so it is marked always optional here.
+  // that rule requires backend work, so it is marked always optional here for now. When
+  // that rule is implemented, the optional section IDs should be determined by the backend
   const optionalSectionIds = ['service-readiness']
   const allMandatoryComplete = taskList.sections
     .filter((section) => !optionalSectionIds.includes(section.id))
