@@ -149,7 +149,9 @@ describe('CheckAnswersActions', () => {
   it('hides the Submit record button when errors are present', async () => {
     render(<CheckAnswersActions {...props} canSubmit={false} />)
 
-    expect(screen.getByRole('button', { name: 'Submit record for review' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Submit record for review' }),
+    ).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Return to my records' })).toBeInTheDocument()
   })
 })
