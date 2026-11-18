@@ -324,6 +324,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnName("normalised_work_email")
                         .HasComputedColumnSql("ukps.normalise_email(work_email)", true);
 
+                    b.Property<string>("PendingEmailVerificationToken")
+                        .HasColumnType("text")
+                        .HasColumnName("pending_email_verification_token");
+
                     b.Property<DateTime?>("PendingEmailVerifiedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("pending_email_verified_at");
@@ -343,6 +347,12 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Property<int>("UserType")
                         .HasColumnType("integer")
                         .HasColumnName("user_type");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.Property<string>("WorkEmail")
                         .IsRequired()
@@ -448,6 +458,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("created_by_user_id");
 
+                    b.Property<DateTime?>("LastSmsSetupAttemptAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_sms_setup_attempt_at");
+
                     b.Property<int>("OnboardingFlow")
                         .HasColumnType("integer")
                         .HasColumnName("onboarding_flow");
@@ -459,6 +473,10 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Property<int>("ResultingUserId")
                         .HasColumnType("integer")
                         .HasColumnName("resulting_user_id");
+
+                    b.Property<int>("SmsSetupAttemptCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("sms_setup_attempt_count");
 
                     b.HasKey("SetupToken")
                         .HasName("pk_user_onboarding_records");

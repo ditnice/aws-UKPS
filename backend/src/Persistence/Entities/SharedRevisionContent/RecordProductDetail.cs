@@ -13,9 +13,6 @@ namespace UKPS.Api.Persistence.Entities.SharedRevisionContent;
 [FormEntity(RowSource = FormRowSource.RecordCreation)]
 internal sealed class RecordProductDetail
 {
-    private const string PageId = "names-and-identifiers";
-    private const string PageTitle = "Provide product record details";
-
     [FormIgnore("Database identity")]
     public int Id { get; set; }
 
@@ -26,7 +23,7 @@ internal sealed class RecordProductDetail
     /// Internal code or working name e.g. ABC-123, mRNA-1273, BNT162b2.
     /// Primary identifier at pipeline stage.
     /// </summary>
-    [FormPage(MedicineFormLayout.NamesAndIdentifiers, PageId, PageTitle, Order = 10)]
+    [FormPage(MedicineFormLayout.NamesAndIdentifiers)]
     [FormField(
         CreationPageFieldPaths.CompanyCode,
         "Company code",
@@ -37,7 +34,7 @@ internal sealed class RecordProductDetail
     [FormRequired("Enter company code")]
     public required string CompanyCode { get; set; }
 
-    [FormPage(MedicineFormLayout.NamesAndIdentifiers, PageId, PageTitle, Order = 10)]
+    [FormPage(MedicineFormLayout.NamesAndIdentifiers)]
     [FormField(
         CreationPageFieldPaths.BrandedName,
         "Branded name (optional)",
@@ -51,7 +48,7 @@ internal sealed class RecordProductDetail
     /// Short human-readable label to identify this record on the homepage.
     /// e.g. Chronic hepatitis C in adults, RSV — adults 60+.
     /// </summary>
-    [FormPage(MedicineFormLayout.NamesAndIdentifiers, PageId, PageTitle, Order = 10)]
+    [FormPage(MedicineFormLayout.NamesAndIdentifiers)]
     [FormField(
         CreationPageFieldPaths.RecordTitle,
         "Record title",
@@ -72,7 +69,7 @@ internal sealed class RecordProductDetail
     public ICollection<RecordNameAndIdentifier> NamesAndIdentifiers { get; set; } = [];
 
     /// <summary>The other names, codes or synonyms, in display order. Not mapped.</summary>
-    [FormPage(MedicineFormLayout.NamesAndIdentifiers, PageId, PageTitle, Order = 10)]
+    [FormPage(MedicineFormLayout.NamesAndIdentifiers)]
     [FormField(
         CreationPageFieldPaths.OtherIdentifiers,
         "Other names and identifiers (optional)",
@@ -86,7 +83,7 @@ internal sealed class RecordProductDetail
     public IEnumerable<string> OtherIdentifiers => Names(NameAndIdentifierType.OtherIdentifier);
 
     /// <summary>The generic names, in display order. Not mapped.</summary>
-    [FormPage(MedicineFormLayout.NamesAndIdentifiers, PageId, PageTitle, Order = 10)]
+    [FormPage(MedicineFormLayout.NamesAndIdentifiers)]
     [FormField(
         CreationPageFieldPaths.GenericNames,
         "Active substance",

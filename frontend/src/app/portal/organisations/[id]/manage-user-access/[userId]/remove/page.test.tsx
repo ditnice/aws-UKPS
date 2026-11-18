@@ -40,6 +40,8 @@ const user: UserInformationDto = {
   status: 'Active',
   hasMultipleOrganisations: false,
   allowedPharmaceuticalEntity: PharmaceuticalEntity.BOTH,
+  mfaMethod: 'Unknown',
+  mfaPhoneNumber: '',
 }
 
 function mockResponse() {

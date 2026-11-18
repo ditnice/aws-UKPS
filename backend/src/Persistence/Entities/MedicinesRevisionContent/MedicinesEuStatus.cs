@@ -13,12 +13,7 @@ internal sealed class MedicinesEuStatus
     [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
 
-    [FormPage(
-        MedicineFormLayout.OrphanAndAtmp,
-        "orphan-status",
-        "Orphan medicine status",
-        Order = 10
-    )]
+    [FormPage(MedicineFormLayout.OrphanStatus)]
     [FormField(
         "medicines_eu_status.eu_orphan_status",
         "Have you or will you apply for orphan medicine status in the EU?",
@@ -33,12 +28,7 @@ internal sealed class MedicinesEuStatus
     public DesignationStatus? EuOrphanStatus { get; set; }
 
     /// <summary>Conditional on EuOrphanStatus = Granted.</summary>
-    [FormPage(
-        MedicineFormLayout.OrphanAndAtmp,
-        "orphan-status",
-        "Orphan medicine status",
-        Order = 10
-    )]
+    [FormPage(MedicineFormLayout.OrphanStatus)]
     [FormField(
         "medicines_eu_status.eu_orphan_status_number",
         "EU orphan status number",
@@ -51,12 +41,7 @@ internal sealed class MedicinesEuStatus
     public string? EuOrphanStatusNumber { get; set; }
 
     /// <summary>Conditional on EuOrphanStatus = Granted.</summary>
-    [FormPage(
-        MedicineFormLayout.OrphanAndAtmp,
-        "orphan-status",
-        "Orphan medicine status",
-        Order = 10
-    )]
+    [FormPage(MedicineFormLayout.OrphanStatus)]
     [FormField(
         "medicines_eu_status.eu_orphan_granted_date",
         "Date EU orphan medicine status granted",
@@ -70,12 +55,7 @@ internal sealed class MedicinesEuStatus
     public int? EuOrphanGrantedDateId { get; set; }
 
     /// <summary>EU ATMP classification status.</summary>
-    [FormPage(
-        MedicineFormLayout.OrphanAndAtmp,
-        "atmp-classification",
-        "ATMP classification",
-        Order = 20
-    )]
+    [FormPage(MedicineFormLayout.AtmpClassification)]
     [FormField(
         "medicines_eu_status.eu_atmp_classification_status",
         "Is this product classified as an ATMP in the EU?",
@@ -91,12 +71,7 @@ internal sealed class MedicinesEuStatus
     /// Date the ATMP classification recommendation was provided.
     /// Conditional on EuAtmpClassificationStatus = Granted.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.OrphanAndAtmp,
-        "atmp-classification",
-        "ATMP classification",
-        Order = 20
-    )]
+    [FormPage(MedicineFormLayout.AtmpClassification)]
     [FormField(
         "medicines_eu_status.atmp_recommendation_date",
         "Enter the date when the ATMP classification recommendation was provided",
@@ -112,12 +87,7 @@ internal sealed class MedicinesEuStatus
     public int? AtmpRecommendationDateId { get; set; }
 
     /// <summary>Conditional on EuAtmpClassificationStatus = Granted.</summary>
-    [FormPage(
-        MedicineFormLayout.OrphanAndAtmp,
-        "atmp-classification",
-        "ATMP classification",
-        Order = 20
-    )]
+    [FormPage(MedicineFormLayout.AtmpClassification)]
     [FormField(
         "medicines_eu_status.atmp_classification_id",
         "Select the category that best reflects the classification outcome",

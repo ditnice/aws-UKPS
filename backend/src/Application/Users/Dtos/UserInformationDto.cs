@@ -67,4 +67,14 @@ public sealed record UserInformationDto
     /// completed, or <see langword="null"/> if there is no pending change.
     /// </summary>
     public PendingWorkEmailChangeDto? PendingWorkEmail { get; init; }
+
+    /// <summary>
+    /// Gets the MFA method in use for the current user.
+    /// </summary>
+    public required string MfaMethod { get; init; }
+
+    /// <summary>
+    /// Gets the obfuscated phone number used for SMS MFA, if applicable.
+    /// </summary>
+    public required string MfaPhoneNumber { get; init; }
 }

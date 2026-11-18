@@ -39,6 +39,8 @@ const currentUser: UserInformationDto = {
   status: 'Active',
   hasMultipleOrganisations: false,
   allowedPharmaceuticalEntity: PharmaceuticalEntity.BOTH,
+  mfaMethod: 'Unknown',
+  mfaPhoneNumber: '',
 }
 
 const params = Promise.resolve({ id: '2' })

@@ -187,8 +187,8 @@ internal static class FormModelScanner
             return null;
         }
 
-        page = PlaceQuestion(where, page, parent, problems);
-        if (page is null)
+        string? pageId = PlaceQuestion(where, page, parent, problems);
+        if (pageId is null)
         {
             return null;
         }
@@ -205,7 +205,7 @@ internal static class FormModelScanner
         {
             EntityType = type,
             Property = property,
-            Page = page,
+            PageId = pageId,
             Field = field,
             Required = property.GetCustomAttribute<FormRequiredAttribute>(),
             MaxLength = property.GetCustomAttribute<FormMaxLengthAttribute>(),
@@ -228,10 +228,10 @@ internal static class FormModelScanner
     }
 
     /// <summary>
-    /// The page of a question: its own, or for a group's question the group's, which it must not
-    /// declare itself. Null when it is missing.
+    /// The page ID of a question: its own, or for a group's question the group's, which it must
+    /// not declare itself. Null when it is missing.
     /// </summary>
-    private static FormPageAttribute? PlaceQuestion(
+    private static string? PlaceQuestion(
         string where,
         FormPageAttribute? page,
         QuestionDeclaration? parent,
@@ -247,7 +247,7 @@ internal static class FormModelScanner
                 );
             }
 
-            return parent.Page;
+            return parent.PageId;
         }
 
         if (page is null)
@@ -255,7 +255,7 @@ internal static class FormModelScanner
             problems.Add($"{where} has [FormField] but no [FormPage].");
         }
 
-        return page;
+        return page?.Id;
     }
 
     /// <summary>The questions declared on a group's child entity.</summary>

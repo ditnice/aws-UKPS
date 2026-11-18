@@ -16,5 +16,5 @@ public sealed record PendingWorkEmailChangeDto
     /// <remarks>
     /// Email verification is not yet implemented.
     /// </remarks>
-    public bool VerifiedByEmail { get; init; }
+    public required bool VerifiedByEmail { get; init; }
 }

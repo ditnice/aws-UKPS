@@ -5,8 +5,20 @@ export const selectOrganisationPath = '/portal/organisations/select'
 export const switchOrganisationPath = '/portal/organisations/switch'
 export const routeOnSuccessfulAuth = '/portal'
 
-export function buildSignInHref(returnTo: string | undefined): string {
-  return buildHref(signInPath, { returnTo: getSafeReturnTo(returnTo) })
+export type SignInOptions = {
+  emailVerified?: true
+}
+export function buildSignInHref(
+  returnTo: string | undefined,
+  signInOptions?: SignInOptions,
+): string {
+  const additionalSearchParams: Record<string, string | undefined> = {}
+
+  if (signInOptions?.emailVerified !== undefined) {
+    additionalSearchParams.emailVerified = String(signInOptions.emailVerified)
+  }
+
+  return buildHref(signInPath, { returnTo: getSafeReturnTo(returnTo), ...additionalSearchParams })
 }
 
 // Links to the organisation picker are not nested, so the picker never returns to itself.

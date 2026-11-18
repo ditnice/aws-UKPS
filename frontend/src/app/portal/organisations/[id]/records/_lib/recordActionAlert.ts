@@ -1,4 +1,4 @@
-const recordAlertActions = ['discarded'] as const
+const recordAlertActions = ['discarded', 'submitted'] as const
 export type RecordAlertAction = (typeof recordAlertActions)[number]
 
 export type RecordActionSearchParams = {

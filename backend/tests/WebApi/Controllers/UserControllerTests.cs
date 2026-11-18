@@ -591,6 +591,98 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async Task VerifyPendingEmailAddress_OnSuccess_ShouldReturn200()
+    {
+        MockVerifyPendingEmailAddressResponse(Result<VerifyPendingEmailAddressError>.Ok());
+        HttpResponseMessage response = await SendVerifyPendingEmailAddressRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task VerifyPendingEmailAddress_OnValidRequest_ShouldPassValuesToServiceMethod()
+    {
+        int userId = 43;
+        VerifyPendingEmailAddressCommand command = new() { VerificationToken = "iuhf9783hwf" };
+        MockVerifyPendingEmailAddressResponse(Result<VerifyPendingEmailAddressError>.Ok());
+        _ = await SendVerifyPendingEmailAddressRequest(userId, command);
+        await _mockUserService
+            .Received(1)
+            .VerifyPendingEmailAddress(userId, command, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task VerifyPendingEmailAddress_WhenUserNotFound_ShouldReturn404()
+    {
+        MockVerifyPendingEmailAddressResponse(
+            Result<VerifyPendingEmailAddressError>.Err(
+                new VerifyPendingEmailAddressError.UserNotFound()
+            )
+        );
+        HttpResponseMessage response = await SendVerifyPendingEmailAddressRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task VerifyPendingEmailAddress_WhenUnauthorised_ShouldReturn403()
+    {
+        MockVerifyPendingEmailAddressResponse(
+            Result<VerifyPendingEmailAddressError>.Err(
+                new VerifyPendingEmailAddressError.Unauthorised()
+            )
+        );
+        HttpResponseMessage response = await SendVerifyPendingEmailAddressRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task VerifyPendingEmailAddress_WhenNoPendingEmailToVerify_ShouldReturn409()
+    {
+        MockVerifyPendingEmailAddressResponse(
+            Result<VerifyPendingEmailAddressError>.Err(
+                new VerifyPendingEmailAddressError.NoPendingEmailToVerify()
+            )
+        );
+        HttpResponseMessage response = await SendVerifyPendingEmailAddressRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task VerifyPendingEmailAddress_WhenEmailAlreadyVerified_ShouldReturn409()
+    {
+        MockVerifyPendingEmailAddressResponse(
+            Result<VerifyPendingEmailAddressError>.Err(
+                new VerifyPendingEmailAddressError.EmailAlreadyVerified()
+            )
+        );
+        HttpResponseMessage response = await SendVerifyPendingEmailAddressRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task VerifyPendingEmailAddress_WhenInvalidTokenProvided_ShouldReturn400()
+    {
+        MockVerifyPendingEmailAddressResponse(
+            Result<VerifyPendingEmailAddressError>.Err(
+                new VerifyPendingEmailAddressError.InvalidTokenProvided()
+            )
+        );
+        HttpResponseMessage response = await SendVerifyPendingEmailAddressRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task VerifyPendingEmailAddress_WhenConcurrentChangeDetected_ShouldReturn409()
+    {
+        MockVerifyPendingEmailAddressResponse(
+            Result<VerifyPendingEmailAddressError>.Err(
+                new VerifyPendingEmailAddressError.ConcurrentChangeDetected()
+            )
+        );
+        HttpResponseMessage response = await SendVerifyPendingEmailAddressRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
     public async Task RemoveUser_WhenValidRequest_ShouldReturnOk()
     {
         var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
@@ -751,6 +843,33 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         problem.Status.ShouldBe(400);
         problem.Title.ShouldBe("Last remaining champion");
         problem.Detail.ShouldBe("This action would leave an organisation without a champion user.");
+    }
+
+    private async Task<HttpResponseMessage> SendVerifyPendingEmailAddressRequest(
+        int userId = 1,
+        VerifyPendingEmailAddressCommand? command = null
+    )
+    {
+        var defaultCommand = new VerifyPendingEmailAddressCommand() { VerificationToken = "token" };
+        var url = new Uri($"{UsersUrl}/{userId}/email/verify", UriKind.Relative);
+        return await _client.PostAsJsonAsync(
+            url,
+            command ?? defaultCommand,
+            TestContext.Current.CancellationToken
+        );
+    }
+
+    private void MockVerifyPendingEmailAddressResponse(
+        Result<VerifyPendingEmailAddressError> result
+    )
+    {
+        _mockUserService
+            .VerifyPendingEmailAddress(
+                Arg.Any<int>(),
+                Arg.Any<VerifyPendingEmailAddressCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(result);
     }
 
     private async Task<HttpResponseMessage> SendUpdateUserDetailsRequest(
@@ -955,6 +1074,8 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             RuleFor(x => x.OrganisationName, f => f.Company.CompanyName());
             RuleFor(x => x.UserRole, f => f.PickRandom<UserRole>());
             RuleFor(x => x.HasMultipleOrganisations, f => f.Random.Bool());
+            RuleFor(x => x.MfaMethod, f => f.PickRandom("Sms", "AuthenticatorApp", "Unknown"));
+            RuleFor(x => x.MfaPhoneNumber, f => f.Phone.PhoneNumber("07#########"));
             RuleFor(x => x.AllowedPharmaceuticalEntity, f => f.PickRandom<PharmaceuticalEntity>());
             RuleFor(
                 x => x.Status,

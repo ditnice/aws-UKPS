@@ -1,8 +1,8 @@
 import { cookies } from 'next/headers'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { MultiFactorAuthenticationSetupDto } from '@/client/generated'
-import { fakeMultiFactorAuthenticationSetupDto } from '@/client/generated/@faker-js/faker.gen'
+import type { MultiFactorAuthenticationUpdateDto } from '@/client/generated'
+import { fakeMultiFactorAuthenticationUpdateDto } from '@/client/generated/@faker-js/faker.gen'
 
 import { getOtpCookieData, setOtpCookieData } from './mfaHelpers'
 
@@ -10,7 +10,7 @@ vi.mock('next/headers', () => ({
   cookies: vi.fn(),
 }))
 
-const mockData: MultiFactorAuthenticationSetupDto = fakeMultiFactorAuthenticationSetupDto()
+const mockData: MultiFactorAuthenticationUpdateDto = fakeMultiFactorAuthenticationUpdateDto()
 
 describe('otp cookie helpers', () => {
   const cookieStore = {

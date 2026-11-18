@@ -6,7 +6,7 @@ namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 /// <summary>Medicines only — the global first submission of this product.</summary>
 [FormEntity]
 [FormPageShowWhen(
-    "global-first-submission",
+    MedicineFormLayout.GlobalFirstSubmission,
     "record_mhra_date.uk_submission_date",
     DatePrecision.ActualDate
 )]
@@ -22,13 +22,7 @@ internal sealed class MedicinesGlobalSubmission
     /// Conditional on an actual UK submission date being entered.
     /// The region or regulator responsible for the global first submission.
     /// </summary>
-    [FormPage(
-        MedicineFormLayout.MhraProcedureAndDates,
-        "global-first-submission",
-        "Global first submission (GFS)",
-        Order = 30,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.GlobalFirstSubmission)]
     [FormField(
         "medicines_global_submission.global_first_submission_region",
         "Enter the GFS location of this product",
@@ -41,13 +35,7 @@ internal sealed class MedicinesGlobalSubmission
     public string? GlobalFirstSubmissionRegion { get; set; }
 
     /// <summary>Conditional on an actual UK submission date being entered.</summary>
-    [FormPage(
-        MedicineFormLayout.MhraProcedureAndDates,
-        "global-first-submission",
-        "Global first submission (GFS)",
-        Order = 30,
-        CommercialInConfidence = true
-    )]
+    [FormPage(MedicineFormLayout.GlobalFirstSubmission)]
     [FormField(
         "medicines_global_submission.global_submission_actual_date",
         "Actual global first submission date",
