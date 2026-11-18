@@ -298,6 +298,51 @@ internal sealed class MockAmazonCognitoIdentityProvider
                 return Task.FromResult(new AdminUpdateUserAttributesResponse());
             });
 
+        Mock.AdminGetUserAsync(Arg.Any<AdminGetUserRequest>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var request = callInfo.Arg<AdminGetUserRequest>();
+                var user = _users.SingleOrDefault(x =>
+                    string.Equals(x.Username, request.Username, StringComparison.Ordinal)
+                );
+
+                if (user is null)
+                {
+                    throw new UserNotFoundException($"User '{request.Username}' not found.");
+                }
+
+                List<AttributeType> attributes = [new() { Name = "email", Value = user.Email }];
+                List<string> mfaSettings;
+                string? preferredMfa;
+
+                if (_phoneNumbers.TryGetValue(user.Username, out string? phoneNumber))
+                {
+                    attributes.Add(new() { Name = "phone_number", Value = phoneNumber });
+                    mfaSettings = ["SMS_MFA"];
+                    preferredMfa = "SMS_MFA";
+                }
+                else if (user.MfaSetup)
+                {
+                    mfaSettings = ["SOFTWARE_TOKEN_MFA"];
+                    preferredMfa = "SOFTWARE_TOKEN_MFA";
+                }
+                else
+                {
+                    mfaSettings = [];
+                    preferredMfa = null;
+                }
+
+                return Task.FromResult(
+                    new AdminGetUserResponse
+                    {
+                        Username = user.Username,
+                        UserAttributes = attributes,
+                        UserMFASettingList = mfaSettings,
+                        PreferredMfaSetting = preferredMfa,
+                    }
+                );
+            });
+
         Mock.AdminRespondToAuthChallengeAsync(
                 Arg.Any<AdminRespondToAuthChallengeRequest>(),
                 Arg.Any<CancellationToken>()
