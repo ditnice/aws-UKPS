@@ -11,6 +11,7 @@ import { errorMessages } from '@/lib/form/errorMessages'
 import { buildMyDetailsHref } from '../../navigation'
 
 import EditUserDetailForm from './editUserDetailValue/EditUserDetailForm'
+import CancelPendingEmailChange from './editUserEmail/CancelPendingEmailChange'
 import EditUserEmailForm from './editUserEmail/EditUserEmailForm'
 import { findTypedPageProps, PageProps, UserDetail } from './navigation'
 import PendingEmailUpdateAlert from './PendingEmailUpdateAlert'
@@ -56,7 +57,14 @@ const Page = async (props: PageProps) => {
 
   const getHeader = () => {
     if (detail === 'email' && me.pendingWorkEmail) {
-      return <PendingEmailUpdateAlert userId={me.userId} {...me.pendingWorkEmail} />
+      return (
+        <>
+          <PendingEmailUpdateAlert userId={me.userId} {...me.pendingWorkEmail} />
+          {!me.pendingWorkEmail.verifiedByEmail ? (
+            <CancelPendingEmailChange userId={me.userId} />
+          ) : null}
+        </>
+      )
     }
     return undefined
   }

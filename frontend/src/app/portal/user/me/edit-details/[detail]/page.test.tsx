@@ -38,6 +38,10 @@ vi.mock('./PendingEmailUpdateAlert', () => ({
   default: vi.fn(() => null),
 }))
 
+vi.mock('./editUserEmail/CancelPendingEmailChange', () => ({
+  default: () => <div data-testid="cancel-pending-email-change" />,
+}))
+
 vi.mock('@/components/BackLink/BackLink', () => ({
   BackLink: ({ href }: { href: string }) => (
     <a data-testid="back-link" href={href}>
@@ -241,10 +245,25 @@ describe('Edit user detail page', () => {
   })
 
   describe('pending email update', () => {
-    it('renders pending email update alert when pending email shown', async () => {
+    it('renders pending email update alert and cancel button when pending email is not verified', async () => {
       setDetail('email')
 
-      const pendingWorkEmail = fakePendingWorkEmailChangeDto()
+      const pendingWorkEmail = { ...fakePendingWorkEmailChangeDto(), verifiedByEmail: false }
+      mockGetUsersMe({
+        data: { ...fakeUserInformationDto(), pendingWorkEmail },
+      })
+
+      await renderPage()
+
+      expect(PendingEmailUpdateAlertMock).toHaveBeenCalledTimes(1)
+      expect(PendingEmailUpdateAlertMock.mock.calls[0][0]).toEqual(pendingWorkEmail)
+      expect(screen.getByTestId('cancel-pending-email-change')).toBeInTheDocument()
+    })
+
+    it('does not render cancel button when pending email is verified', async () => {
+      setDetail('email')
+
+      const pendingWorkEmail = { ...fakePendingWorkEmailChangeDto(), verifiedByEmail: true }
       mockGetUsersMe({
         data: { ...fakeUserInformationDto(), pendingWorkEmail: pendingWorkEmail, userId: 123 },
       })
@@ -256,6 +275,7 @@ describe('Edit user detail page', () => {
         ...pendingWorkEmail,
         userId: 123,
       })
+      expect(screen.queryByTestId('cancel-pending-email-change')).not.toBeInTheDocument()
     })
   })
 })
