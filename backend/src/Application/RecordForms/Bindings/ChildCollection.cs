@@ -21,7 +21,7 @@ internal sealed class ChildCollection
     private readonly PropertyInfo _idProperty;
     private readonly PropertyInfo? _displayOrderProperty;
     private readonly PropertyInfo? _kindProperty;
-    private readonly object? _kind;
+    private readonly Enum? _kind;
     private readonly MethodInfo _add;
     private readonly MethodInfo _remove;
 
@@ -42,14 +42,14 @@ internal sealed class ChildCollection
         PropertyInfo idProperty,
         PropertyInfo? displayOrderProperty,
         PropertyInfo? kindProperty = null,
-        object? kind = null
+        Enum? kind = null
     )
     {
-        _kindProperty = kindProperty;
-        _kind = kind;
         _navigation = navigation;
         _idProperty = idProperty;
         _displayOrderProperty = displayOrderProperty;
+        _kindProperty = kindProperty;
+        _kind = kind;
         ChildType = childType;
         Type collectionType = typeof(ICollection<>).MakeGenericType(childType);
         _add = collectionType.GetMethod(nameof(ICollection<>.Add))!;

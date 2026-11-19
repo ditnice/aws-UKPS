@@ -63,6 +63,7 @@ internal class RecordCreationService : IRecordCreationService
             return CreateRecordResult.Err(new CreateRecordError.OrganisationDoesNotExist());
         }
 
+        command = Trimmed(command);
         DateTime time = _dateTimeProvider.GetUtcNow();
         User currentUser = await _currentDbUserEntityService.GetCurrentUser(cancellationToken);
 
@@ -98,6 +99,20 @@ internal class RecordCreationService : IRecordCreationService
             }
         );
     }
+
+    /// <summary>
+    /// The command with each answer trimmed, as the names and identifiers form page stores them,
+    /// so saving that page unchanged after creation finds nothing to change.
+    /// </summary>
+    private static CreateRecordCommand Trimmed(CreateRecordCommand command) =>
+        command with
+        {
+            CompanyCode = command.CompanyCode.Trim(),
+            BrandedName = command.BrandedName?.Trim(),
+            GenericNames = [.. command.GenericNames.Select(static x => x.Trim())],
+            OtherIdentifiers = [.. command.OtherIdentifiers.Select(static x => x.Trim())],
+            RecordTitle = command.RecordTitle.Trim(),
+        };
 
     private static RecordNameAndIdentifier[] CreateNamesAndIdentifiersArray(
         CreateRecordCommand command

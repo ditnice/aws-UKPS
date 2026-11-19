@@ -676,11 +676,10 @@ internal static class FormModelScanner
         List<string> problems
     )
     {
+        // The generic attribute makes the kind an enum member, and a nullable column's CLR type is
+        // Nullable<T>, so this matches only non-nullable columns of the kind's enum.
         Type kindType = listSource.Kind.GetType();
-        IProperty[] kindColumns = child
-            .GetProperties()
-            .Where(p => kindType.IsEnum && p.ClrType == kindType)
-            .ToArray();
+        IProperty[] kindColumns = child.GetProperties().Where(p => p.ClrType == kindType).ToArray();
         if (kindColumns is [{ PropertyInfo: { } kindColumn }])
         {
             return kindColumn;

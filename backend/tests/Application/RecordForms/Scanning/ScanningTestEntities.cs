@@ -1033,12 +1033,12 @@ internal sealed class ListedEntity
     [FormRequired("Enter a first name")]
     [FormMaxItems(3, "Enter up to 3 first names")]
     [FormDistinct("First name has already been entered")]
-    [FormListSource(nameof(Names), ListedNameKind.First)]
+    [FormListSource<ListedNameKind>(nameof(Names), ListedNameKind.First)]
     public IEnumerable<string> FirstNames => Names.Select(static n => n.Name);
 
     [FormPage("listed")]
     [FormField("listed_entity.second_names", "Second names", FormControl.TextList, Order = 20)]
-    [FormListSource(nameof(Names), ListedNameKind.Second)]
+    [FormListSource<ListedNameKind>(nameof(Names), ListedNameKind.Second)]
     public IEnumerable<string> SecondNames => Names.Select(static n => n.Name);
 }
 
@@ -1070,22 +1070,22 @@ internal sealed class BrokenListedEntity
 
     [FormPage("broken-listed")]
     [FormField("broken_listed_entity.mapped", "Mapped", FormControl.TextList, Order = 10)]
-    [FormListSource(nameof(Names), ListedNameKind.First)]
+    [FormListSource<ListedNameKind>(nameof(Names), ListedNameKind.First)]
     public string? Mapped { get; set; }
 
     [FormPage("broken-listed")]
     [FormField("broken_listed_entity.unknown", "Unknown", FormControl.TextList, Order = 20)]
-    [FormListSource("NoSuchNavigation", ListedNameKind.First)]
+    [FormListSource<ListedNameKind>("NoSuchNavigation", ListedNameKind.First)]
     public IEnumerable<string> Unknown => Names.Select(static n => n.Name);
 
     [FormPage("broken-listed")]
     [FormField("broken_listed_entity.not_a_list", "Not a list", FormControl.Text, Order = 30)]
-    [FormListSource(nameof(Names), ListedNameKind.First)]
+    [FormListSource<ListedNameKind>(nameof(Names), ListedNameKind.First)]
     public IEnumerable<string> NotAList => Names.Select(static n => n.Name);
 
     [FormPage("broken-listed")]
     [FormField("broken_listed_entity.wrong_kind", "Wrong kind", FormControl.TextList, Order = 40)]
-    [FormListSource(nameof(Names), YesNoUnknown.Yes)]
+    [FormListSource<YesNoUnknown>(nameof(Names), YesNoUnknown.Yes)]
     public IEnumerable<string> WrongKind => Names.Select(static n => n.Name);
 
     [FormPage("broken-listed")]

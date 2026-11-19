@@ -42,5 +42,5 @@ internal sealed record BindingInfo(BindingKind Kind)
     public PropertyInfo? ChildKindProperty { get; init; }
 
     /// <summary>The enum member of this list's rows in a shared collection.</summary>
-    public object? ChildKind { get; init; }
+    public Enum? ChildKind { get; init; }
 }

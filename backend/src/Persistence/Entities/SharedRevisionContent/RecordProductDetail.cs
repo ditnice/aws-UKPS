@@ -79,7 +79,10 @@ internal sealed class RecordProductDetail
         ItemLabel = "Identifier",
         Order = 20
     )]
-    [FormListSource(nameof(NamesAndIdentifiers), NameAndIdentifierType.OtherIdentifier)]
+    [FormListSource<NameAndIdentifierType>(
+        nameof(NamesAndIdentifiers),
+        NameAndIdentifierType.OtherIdentifier
+    )]
     public IEnumerable<string> OtherIdentifiers => Names(NameAndIdentifierType.OtherIdentifier);
 
     /// <summary>The generic names, in display order. Not mapped.</summary>
@@ -95,13 +98,17 @@ internal sealed class RecordProductDetail
     )]
     [FormRequired("Enter generic name")]
     [FormDistinct("Generic names must be distinct")]
-    [FormListSource(nameof(NamesAndIdentifiers), NameAndIdentifierType.GenericName)]
+    [FormListSource<NameAndIdentifierType>(
+        nameof(NamesAndIdentifiers),
+        NameAndIdentifierType.GenericName
+    )]
     public IEnumerable<string> GenericNames => Names(NameAndIdentifierType.GenericName);
 
     private IEnumerable<string> Names(NameAndIdentifierType type) =>
         NamesAndIdentifiers
             .Where(x => x.NameType == type)
-            .OrderBy(static x => x.DisplayOrder)
+            // Rows with no display order last, as the form reads them.
+            .OrderBy(static x => x.DisplayOrder ?? int.MaxValue)
             .ThenBy(static x => x.Id)
             .Select(static x => x.Name);
 }
