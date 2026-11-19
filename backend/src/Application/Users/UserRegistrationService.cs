@@ -141,9 +141,7 @@ internal class UserRegistrationService : IUserRegistrationService
             organisationId
         );
         if (!isAuthorised)
-        {
             return Result<ApproveRequestError>.Err(new ApproveRequestError.NotAllowed());
-        }
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(
             cancellationToken
         );
@@ -153,18 +151,14 @@ internal class UserRegistrationService : IUserRegistrationService
                 cancellationToken
             );
         if (registrationRequest is null)
-        {
             return Result<ApproveRequestError>.Err(new ApproveRequestError.RequestNotFound());
-        }
 
         Result<ApproveRequestError>? validStateResult = CheckRegistrationUpdateResult(
             registrationRequest
         );
 
         if (validStateResult is not null)
-        {
             return validStateResult.Value;
-        }
 
         var currentUser = await _currentDbUserEntityService.GetCurrentUser(cancellationToken);
         registrationRequest.Approve(currentUser, _dateTimeProvider.GetUtcNow());
@@ -177,11 +171,11 @@ internal class UserRegistrationService : IUserRegistrationService
         {
             return Result<ApproveRequestError>.Err(new ApproveRequestError.ConcurrencyError());
         }
-
         var result = await _userOnboardingService.OnboardUserToOrganisation(
             MapToOnboardUserCommandDto(registrationRequest),
             OnboardingFlow.SelfSignUp,
-            cancellationToken
+            cancellationToken,
+            externalTx: transaction
         );
         return await result.Match(
             outcome =>

@@ -11,6 +11,7 @@ using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Entities.ReferenceData;
 using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Persistence.FormAnnotations;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
@@ -33,6 +34,7 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
     private const string UkLaunchDate = "record_hta.uk_launch_date";
     private const string BiomarkerTypeQuestion = "medicines_laboratory_testing.biomarker_type";
     private const string MhraProcedureQuestion = "record_mhra_procedure.mhra_procedure_type_id";
+    private const string Trials = "record_clinical_trial";
 
     private static readonly DateTime _now = new(2026, 10, 15, 9, 30, 0, DateTimeKind.Utc);
 
@@ -182,6 +184,50 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
         option.Value.ShouldBe(nameof(YesNoUnknown.No));
         option.Label.ShouldBe("No");
         option.ParentLabel.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task GetCheckAnswers_ClinicalTrials_AreReturnedAsOneItemEach()
+    {
+        await CompleteMedicineRevision.AddClinicalTrialAsync(Context, _revision.Id, Ct);
+        // The helper adds one trial; a second with two other numbers shows order is kept.
+        await AddEntity(
+            new RecordClinicalTrial
+            {
+                RevisionId = _revision.Id,
+                DisplayOrder = 2,
+                StudyName = "SURVEYOR-2",
+                ClinicalTrialsGovNumber = "NCT07654321",
+                OtherClinicalTrialNumbers =
+                [
+                    new OtherClinicalTrialNumber { OtherRegistryNumber = "A1", DisplayOrder = 1 },
+                    new OtherClinicalTrialNumber { OtherRegistryNumber = "B2", DisplayOrder = 2 },
+                ],
+            },
+            Ct
+        );
+
+        RecordCheckAnswersDto dto = await GetCheckAnswers();
+
+        RecordCheckAnswersQuestionDto trials = Question(dto, Trials);
+        trials.ItemLabel.ShouldBe("Clinical trial");
+        trials.AddAnotherLabel.ShouldBe("Add another clinical trial");
+        IReadOnlyList<RecordCheckAnswersGroupItemDto> items = trials.Items.ShouldNotBeNull();
+
+        trials.Values.ShouldBeEmpty();
+        items.Count.ShouldBe(2);
+
+        // Items come back in display order.
+        Child(items[0], "study_name").Values.ShouldBe(["SURVEYOR-1"]);
+        Child(items[1], "study_name").Values.ShouldBe(["SURVEYOR-2"]);
+
+        // A child row carries what the frontend needs to format it.
+        RecordCheckAnswersQuestionDto studyName = Child(items[0], "study_name");
+        studyName.Label.ShouldBe("Study name");
+        studyName.Type.ShouldBe(FormControl.Text);
+
+        // A text list child keeps its entries in order.
+        Child(items[1], "other_registry_numbers").Values.ShouldBe(["A1", "B2"]);
     }
 
     [Fact]
@@ -380,6 +426,11 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
             .Sections.SelectMany(static s => s.Tasks)
             .SelectMany(static t => t.Questions)
             .Single(q => string.Equals(q.Id, questionId, StringComparison.Ordinal));
+
+    private static RecordCheckAnswersQuestionDto Child(
+        RecordCheckAnswersGroupItemDto item,
+        string questionId
+    ) => item.Questions.Single(q => string.Equals(q.Id, questionId, StringComparison.Ordinal));
 
     private async Task UpdateRow<TEntity>(Action<TEntity> update)
         where TEntity : class

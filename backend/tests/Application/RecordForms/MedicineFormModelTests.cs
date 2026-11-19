@@ -15,9 +15,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.19.1";
+    private const string ExpectedVersion = "2026.11.19.3";
     private const string ExpectedFingerprint =
-        "6d904cf5e31eeb4d7fae500cd52630db1296964a34cc7420e94845a336e82ba4";
+        "3fb0b6e0254be0dee88764755ec3b4225d82650e1c5ee81771534e99b5d68576";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -352,7 +352,7 @@ public class MedicineFormModelTests
             ]);
         trials.Children[1].Prefixes.ShouldBe(["NCT"]);
         trials.Children[1].PrefixDigits.ShouldBe(8);
-        trials.Children[2].ItemLabel.ShouldBe("Trial number");
+        trials.Children[2].ItemLabel.ShouldBe("Other registry number");
         trials
             .Children.Select(static c => string.Join(",", c.Rules.Select(static r => r.Kind)))
             .ShouldBe(["Required", "Required", "Distinct"]);
@@ -370,6 +370,7 @@ public class MedicineFormModelTests
                 $"{s.Id}: {string.Join(", ", s.Tasks.Select(static t => t.Id))}"
             )
             .ShouldBe([
+                "product-record-details: names-and-identifiers",
                 "indication-and-development: indication-details, development-background",
                 "clinical-trial-information: clinical-trials",
                 "regulatory-access-and-launch: mhra-procedure-and-dates, hta-and-launch",
@@ -500,6 +501,11 @@ public class MedicineFormModelTests
             .ToArray();
 
         questions.ShouldBe([
+            ("record_product_detail.company_code", FormControl.Text, AnswerShape.Single),
+            ("record_product_detail.other_identifiers", FormControl.TextList, AnswerShape.List),
+            ("record_product_detail.branded_name", FormControl.Text, AnswerShape.Single),
+            ("record_product_detail.generic_names", FormControl.TextList, AnswerShape.List),
+            ("record_product_detail.record_title", FormControl.Textarea, AnswerShape.Single),
             ("medicines_indication_detail.indication", FormControl.Textarea, AnswerShape.Single),
             (
                 "medicines_indication_detail.bnf_chapter_id",

@@ -14,6 +14,21 @@ export const extractErrorMessage = (error: unknown): string | undefined => {
   return undefined
 }
 
+export function getFormErrorMessage(submitError: unknown): string | undefined {
+  if (typeof submitError === 'string') return submitError
+
+  if (
+    typeof submitError === 'object' &&
+    submitError !== null &&
+    'form' in submitError &&
+    typeof submitError.form === 'string'
+  ) {
+    return submitError.form
+  }
+
+  return undefined
+}
+
 export function getFieldErrorMessage(errors: unknown[]): string | undefined {
   const firstError = errors[0]
 

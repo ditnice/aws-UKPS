@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace UKPS.Api.Persistence.FormAnnotations;
 
 /// <summary>
@@ -10,6 +12,11 @@ namespace UKPS.Api.Persistence.FormAnnotations;
 /// A choice control takes its options from the one provider registered for the property's enum
 /// or referenced entity, unless <see cref="FormOptionsAttribute"/> names another.
 /// </remarks>
+[SuppressMessage(
+    "Design",
+    "CA1027:Mark enums with FlagsAttribute",
+    Justification = "Each value is one control, not a combination."
+)]
 public enum FormControl
 {
     /// <summary>

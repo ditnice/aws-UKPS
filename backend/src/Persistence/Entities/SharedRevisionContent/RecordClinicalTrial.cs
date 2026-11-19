@@ -61,7 +61,7 @@ internal sealed class RecordClinicalTrial
         FormControl.TextList,
         Hint = "Enter any additional trial numbers from other registries.",
         AddAnotherLabel = "Add another trial number",
-        ItemLabel = "Trial number",
+        ItemLabel = "Other registry number",
         RemoveLabel = "Remove",
         Order = 30
     )]

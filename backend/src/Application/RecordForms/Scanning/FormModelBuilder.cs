@@ -36,8 +36,12 @@ internal static class FormModelBuilder
     )
     {
         // Junction, regulatory date, group and text list questions read their answers through a
-        // navigation; a group's text lists through a navigation of each child row.
-        string[] includes = entity.Questions.SelectMany(static q => Includes(q)).ToArray();
+        // navigation, which text lists sharing a collection share; a group's text lists through a
+        // navigation of each child row.
+        string[] includes = entity
+            .Questions.SelectMany(static q => Includes(q))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
 
         FormEntity formEntity = new(
             entity.ClrType,
@@ -52,7 +56,8 @@ internal static class FormModelBuilder
     private static IEnumerable<string> Includes(QuestionDeclaration question) =>
         question.Binding.Kind switch
         {
-            BindingKind.Junction or BindingKind.TextList => [question.Property.Name],
+            BindingKind.Junction => [question.Property.Name],
+            BindingKind.TextList => [question.Binding.ChildNavigation!.Name],
             BindingKind.RegulatoryDate => [question.Binding.DateNavigation!.Name],
             BindingKind.Group =>
             [
@@ -206,10 +211,12 @@ internal static class FormModelBuilder
 
     private static ChildCollection ChildCollection(QuestionDeclaration question) =>
         new(
-            question.Property,
+            question.Binding.ChildNavigation ?? question.Property,
             question.Binding.ChildType!,
             question.Binding.ChildIdProperty!,
-            question.Binding.ChildDisplayOrderProperty
+            question.Binding.ChildDisplayOrderProperty,
+            question.Binding.ChildKindProperty,
+            question.Binding.ChildKind
         );
 
     private static FormModel BuildForm(FormLayout layout, BuiltQuestion[] allQuestions)

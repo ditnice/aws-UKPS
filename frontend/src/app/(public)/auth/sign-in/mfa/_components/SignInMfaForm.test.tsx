@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 
-import { postAuthMfa } from '@/client/generated'
+import { respondToMultiFactorAuthenticationChallenge } from '@/client/generated'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
@@ -14,7 +14,11 @@ const { push: mockPush } = router
 vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@/client/generated', () => ({
-  postAuthMfa: vi.fn(),
+  respondToMultiFactorAuthenticationChallenge: vi.fn(),
+}))
+
+vi.mock('../../../EmailVerificationRequiredAlert', () => ({
+  default: () => <div data-testid="email-verification-required-alert" />,
 }))
 
 const exampleUserEmail = 'user@email.com'
@@ -39,7 +43,10 @@ const updateForm = async (formValues: FormValues) => {
 let user: ReturnType<typeof userEvent.setup>
 
 beforeEach(() => {
-  vi.mocked(postAuthMfa).mockResolvedValue({ error: undefined, data: undefined })
+  vi.mocked(respondToMultiFactorAuthenticationChallenge).mockResolvedValue({
+    error: undefined,
+    data: undefined,
+  })
   user = userEvent.setup()
 })
 
@@ -58,7 +65,7 @@ describe('SignInMfaForm', () => {
     await updateForm(validFormValues)
     await submitForm()
     await waitFor(() => {
-      expect(postAuthMfa).toHaveBeenCalledWith({
+      expect(respondToMultiFactorAuthenticationChallenge).toHaveBeenCalledWith({
         body: {
           authenticationSession: exampleSession,
           code: '123456',
@@ -86,7 +93,7 @@ describe('SignInMfaForm', () => {
     })
   })
   it('shows security code error on 401 response', async () => {
-    vi.mocked(postAuthMfa).mockResolvedValue({
+    vi.mocked(respondToMultiFactorAuthenticationChallenge).mockResolvedValue({
       error: { status: 401 },
       data: undefined,
     })
@@ -126,7 +133,7 @@ describe('SignInMfaForm', () => {
     await submitForm()
 
     await waitFor(() => {
-      expect(postAuthMfa).toHaveBeenCalledWith({
+      expect(respondToMultiFactorAuthenticationChallenge).toHaveBeenCalledWith({
         body: {
           authenticationSession: exampleSession,
           code: '123246',
@@ -151,5 +158,56 @@ describe('SignInMfaForm', () => {
       expect(screen.queryByText('Enter your security code')).toBeNull()
       expect(screen.queryByText('Enter a 6-digit security code')).toBeNull()
     })
+  })
+
+  it('shows the email verification alert when the response error is PendingEmailRequiredVerification', async () => {
+    vi.mocked(respondToMultiFactorAuthenticationChallenge).mockResolvedValue({
+      error: { code: 'PendingEmailRequiredVerification' },
+      data: undefined,
+    })
+    renderValidForm()
+    await updateForm(validFormValues)
+    await submitForm()
+
+    expect(await screen.findByTestId('email-verification-required-alert')).toBeInTheDocument()
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('does not show the raw error code or a security code error when email verification is required', async () => {
+    vi.mocked(respondToMultiFactorAuthenticationChallenge).mockResolvedValue({
+      error: { code: 'PendingEmailRequiredVerification' },
+      data: undefined,
+    })
+    renderValidForm()
+    await updateForm(validFormValues)
+    await submitForm()
+
+    await screen.findByTestId('email-verification-required-alert')
+    expect(screen.queryByText('PendingEmailRequiredVerification')).toBeNull()
+    expect(screen.queryByText(errorMessages.incorrectMfaCode)).toBeNull()
+  })
+
+  it('does not show the email verification alert on a successful authentication', async () => {
+    renderValidForm()
+    await updateForm(validFormValues)
+    await submitForm()
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalled()
+    })
+    expect(screen.queryByTestId('email-verification-required-alert')).toBeNull()
+  })
+
+  it('does not show the email verification alert on a 401 response', async () => {
+    vi.mocked(respondToMultiFactorAuthenticationChallenge).mockResolvedValue({
+      error: { status: 401 },
+      data: undefined,
+    })
+    renderValidForm()
+    await updateForm(validFormValues)
+    await submitForm()
+
+    expect(await screen.findByText(errorMessages.incorrectMfaCode)).toBeInTheDocument()
+    expect(screen.queryByTestId('email-verification-required-alert')).toBeNull()
   })
 })

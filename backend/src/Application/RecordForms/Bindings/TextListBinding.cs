@@ -7,7 +7,7 @@ namespace UKPS.Api.Application.RecordForms.Bindings;
 
 /// <summary>
 /// Stores an ordered list of strings as child rows with one string column each, such as a
-/// clinical trial's other registry numbers.
+/// product's generic names or a clinical trial's other registry numbers.
 /// </summary>
 internal sealed class TextListBinding(ChildCollection children, PropertyInfo valueProperty)
     : IFormBinding

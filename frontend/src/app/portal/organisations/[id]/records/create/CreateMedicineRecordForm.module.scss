@@ -1,0 +1,11 @@
+@use '@/styles/spacing';
+@use '@/styles/utils';
+
+// Spaced to match the names and identifiers page in the record's task list.
+.question + .question {
+  margin-top: utils.rem(spacing.$x_large);
+}
+
+.actions {
+  margin-top: utils.rem(spacing.$large);
+}

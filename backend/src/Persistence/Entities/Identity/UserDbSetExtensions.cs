@@ -15,4 +15,16 @@ internal static class UserDbSetExtensions
             cancellationToken
         );
     }
+
+    public static Task<User?> GetByPendingEmailOrDefault(
+        this IQueryable<User> usersSet,
+        string email,
+        CancellationToken cancellationToken
+    )
+    {
+        return usersSet.FirstOrDefaultAsync(
+            x => x.NormalisedPendingWorkEmail == EmailDbFunctions.Normalise(email),
+            cancellationToken
+        );
+    }
 }
