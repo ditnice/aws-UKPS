@@ -15,9 +15,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.19.2";
+    private const string ExpectedVersion = "2026.11.19.3";
     private const string ExpectedFingerprint =
-        "3d57dd4431fd94b42c86afba3e964d311368478573d9be80a533ce79ea37553b";
+        "3fb0b6e0254be0dee88764755ec3b4225d82650e1c5ee81771534e99b5d68576";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -341,12 +341,7 @@ public class MedicineFormModelTests
         FormQuestion trials = Model.FindQuestion("record_clinical_trial")!;
 
         (trials.ItemLabel, trials.AddAnotherLabel, trials.RemoveLabel, trials.ItemKey).ShouldBe(
-            (
-                "Clinical trial",
-                "Add another clinical trial",
-                "Remove clinical trial",
-                "clinical_trials_gov_number"
-            )
+            ("Clinical trial", "Add another clinical trial", "Remove clinical trial", null)
         );
         trials
             .Children.Select(static c => (c.Id, c.Control))
@@ -360,7 +355,7 @@ public class MedicineFormModelTests
         trials.Children[2].ItemLabel.ShouldBe("Other registry number");
         trials
             .Children.Select(static c => string.Join(",", c.Rules.Select(static r => r.Kind)))
-            .ShouldBe(["Required", "Required,Distinct", "Distinct"]);
+            .ShouldBe(["Required", "Required", "Distinct"]);
         trials.Entity.Includes.ShouldBe([
             "ClinicalTrials",
             "ClinicalTrials.OtherClinicalTrialNumbers",
