@@ -16,7 +16,10 @@ internal static class RecordFormMessages
     public const string InvalidDate = "Enter a real date";
     public const string ActualMonthInFuture = "The date must be this month or in the past";
 
-    public static string IdDigits(int digits) => $"ID must be {digits} digits";
+    // Only the clinical trial number (NCT, Digits = 8) uses this, so the message names it. If another
+    // prefixed number needs an exact digit count, pass its name in, as DateName does for dates, instead
+    // of reusing this wording. Mirrored in lib/dynamic-form/prefixedNumber.ts.
+    public static string IdDigits(int digits) => $"Trial number must be {digits} digits long";
 
     // A PrecisionDate's or ActualDate's messages name its date, for example "submission". The
     // page also says "Enter the actual submission date" when a part is blank, which never
@@ -28,5 +31,5 @@ internal static class RecordFormMessages
         $"Actual date of {name} must be today or in the past";
 
     public static string EstimatedDateInPast(string name) =>
-        $"Estimated date of {name} must be in the future";
+        $"Estimated date of {name} must not be in the past";
 }

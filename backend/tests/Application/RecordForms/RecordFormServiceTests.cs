@@ -763,7 +763,7 @@ public class RecordFormServiceTests : DatabaseTestBase
         (await SaveInvalid("co-marketing", CoMarketing("Yes", companyName: "  "))).ShouldBe(
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
-                [CoMarketingName] = "Enter the co-marketing company name",
+                [CoMarketingName] = "Enter details",
             }
         );
     }

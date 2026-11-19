@@ -26,7 +26,7 @@ internal sealed class RecordClinicalTrial
         Hint = "Enter the official or commonly used study title. Use consistent naming across UK PharmaScan and public trial registries.",
         Order = 10
     )]
-    [FormRequired("Enter the study name")]
+    [FormRequired("Enter study name")]
     public required string StudyName { get; set; }
 
     /// <summary>8-digit NCT identifier; system auto-links to ClinicalTrials.gov. Mandatory for both record types.</summary>

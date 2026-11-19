@@ -41,7 +41,7 @@ const OverdueRecordAlert = () => (
     <h3>Record update overdue</h3>
     <p>
       This record needs to be reviewed for any updates. You can edit the record to update published
-      record information or confirm the information is up-to-date.
+      record information or confirm the information is up to date.
     </p>
   </Alert>
 )

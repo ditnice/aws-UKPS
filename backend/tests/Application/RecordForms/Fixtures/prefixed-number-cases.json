@@ -162,7 +162,7 @@
       "digits": 8,
       "answer": "NCT1234567",
       "value": "NCT1234567",
-      "error": "ID must be 8 digits"
+      "error": "Trial number must be 8 digits long"
     },
     {
       "name": "exact digits too many",
@@ -170,7 +170,7 @@
       "digits": 8,
       "answer": "NCT123456789",
       "value": "NCT123456789",
-      "error": "ID must be 8 digits"
+      "error": "Trial number must be 8 digits long"
     },
     {
       "name": "exact digits may exceed five",

@@ -300,7 +300,7 @@ internal sealed class MedicinesLaboratoryTesting
         FormControl.Textarea,
         Hint = "Describe any tests required to monitor for treatment-related side effects or toxicity that go beyond what is currently used in routine clinical practice. Include the type of test, frequency, and the duration of monitoring required."
     )]
-    [FormRequired("Enter details of tests needed to assess the safety of the treatment")]
+    [FormRequired("Enter details")]
     public string? SafetyTestsDetails { get; set; }
 
     // Navigation

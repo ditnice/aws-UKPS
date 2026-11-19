@@ -20,9 +20,7 @@ internal sealed class MedicinesPatientIdentification
         Order = 10,
         Hint = "Select yes if identifying patients requires proactive screening, testing, or surveillance beyond usual care. Select no if patients are typically identified through existing clinical pathways. Select unknown if this is not yet clear."
     )]
-    [FormRequired(
-        "Select yes if a screening or surveillance programme is required to identify eligible patients"
-    )]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? ScreeningRequired { get; set; }
 

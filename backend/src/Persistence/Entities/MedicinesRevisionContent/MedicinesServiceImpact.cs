@@ -22,7 +22,7 @@ internal sealed class MedicinesServiceImpact
         FormControl.Radio,
         Order = 10
     )]
-    [FormRequired("Select if any changes to NHS services are required to deliver this product")]
+    [FormRequired("Select an option")]
     public NhsServiceChangesRequired? NhsServiceChangesRequired { get; set; }
 
     /// <summary>
@@ -94,7 +94,7 @@ internal sealed class MedicinesServiceImpact
         Hint = "Provide references and calculations and use UK data where possible. If UK data is not available, use reliable data from England, Scotland, or Wales and extrapolate to estimate the UK population.\n\nExamples of acceptable sources include guidance from the National Institute for Health and Care Excellence (NICE), epidemiology data from NHS National Services Scotland (NHS NSS) or Health Protection Scotland (HPS), or Welsh health statistics.\n\nIf epidemiology data about this condition is not available from these sources, data that has been obtained from a review of published literature may be used instead. Always provide references for the sources used.\n\nIf complex calculations or assumptions are used, explain them clearly.",
         Order = 20
     )]
-    [FormRequired("Enter UK patient population notes")]
+    [FormRequired("Enter details")]
     public string? UkPatientPopulationNotes { get; set; }
 
     /// <summary>
@@ -107,7 +107,7 @@ internal sealed class MedicinesServiceImpact
         FormControl.Textarea,
         Hint = "Provide an estimate of patients likely to be eligible for treatment in the UK. Include references and outline the calculation approach.\n\nInclude any relevant references and calculations."
     )]
-    [FormRequired("Enter an estimated UK eligible population range")]
+    [FormRequired("Enter details")]
     public string? EstimatedEligiblePatientPopulation { get; set; }
 
     // Navigation

@@ -19,7 +19,7 @@ internal sealed class MedicinesDevelopmentBackground
         FormControl.Radio,
         Order = 10
     )]
-    [FormRequired("Select whether this product is a repurposed medicine")]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IsRepurposedMedicine { get; set; }
 
@@ -43,7 +43,7 @@ internal sealed class MedicinesDevelopmentBackground
         Order = 10,
         Hint = "Select no if you are a partner, licensee, or distributor."
     )]
-    [FormRequired("Select whether your company is the original developer of this product")]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IsOriginatorCompany { get; set; }
 
@@ -56,7 +56,7 @@ internal sealed class MedicinesDevelopmentBackground
         Hint = "Enter the full name of the company who developed this product"
     )]
     [FormShowWhen("medicines_development_background.is_originator_company", YesNoUnknown.No)]
-    [FormRequired("Enter the originator company name")]
+    [FormRequired("Enter details")]
     [FormMaxLength(200, "Originator company name must be 200 characters or fewer")]
     public string? OriginatorCompanyName { get; set; }
 
@@ -66,9 +66,9 @@ internal sealed class MedicinesDevelopmentBackground
         "Is this product co-marketed?",
         FormControl.Radio,
         Order = 10,
-        Hint = "Select yes if another company will market the same product under the same or different brand name."
+        Hint = "Select yes if another company will market the same product under the same or different brand name. Select no if you are a partner, licensee, or distributor."
     )]
-    [FormRequired("Select whether this product is co-marketed")]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IsCoMarketed { get; set; }
 
@@ -81,7 +81,7 @@ internal sealed class MedicinesDevelopmentBackground
         Hint = "Enter the full name of the company who will co-market this product"
     )]
     [FormShowWhen("medicines_development_background.is_co_marketed", YesNoUnknown.Yes)]
-    [FormRequired("Enter the co-marketing company name")]
+    [FormRequired("Enter details")]
     [FormMaxLength(200, "Co-marketing company name must be 200 characters or fewer")]
     public string? CoMarketingCompanyName { get; set; }
 

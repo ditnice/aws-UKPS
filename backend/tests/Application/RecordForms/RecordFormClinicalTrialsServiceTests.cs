@@ -329,12 +329,12 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
         errors.ShouldBe(
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
-                [$"{Trials}[0].study_name"] = "Enter the study name",
+                [$"{Trials}[0].study_name"] = "Enter study name",
                 [$"{Trials}[0].clinical_trials_gov_number"] =
                     "Enter the trial number from ClinicalTrials.gov",
                 [$"{Trials}[0].other_registry_numbers[1]"] =
                     "Trial number from other registry must be different for each entry",
-                [$"{Trials}[1].clinical_trials_gov_number"] = "ID must be 8 digits",
+                [$"{Trials}[1].clinical_trials_gov_number"] = "Trial number must be 8 digits long",
                 [$"{Trials}[3].clinical_trials_gov_number"] =
                     "Trial number from ClinicalTrials.gov must be different for each clinical trial",
             },
