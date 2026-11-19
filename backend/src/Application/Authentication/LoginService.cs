@@ -209,13 +209,13 @@ internal class LoginService : ILoginService
         {
             // Handles edge cases where there is a pending email that only changes in case.
             bool hasPendingEmailThatMatchesCase =
-                user.NormalisedPendingWorkEmail is not null
+                user.IsPendingEmailVerified()
                 && string.Equals(
                     user.NormalisedPendingWorkEmail,
                     user.NormalisedWorkEmail,
                     StringComparison.Ordinal
                 );
-            return new(user, hasPendingEmailThatMatchesCase);
+            return new(user, FoundFromPendingEmail: hasPendingEmailThatMatchesCase);
         }
         var userWithPendingEmail = await ApplyRequiredInclusions(_appDbContext.Users)
             .GetByPendingEmailOrDefault(emailUsername, cancellationToken);

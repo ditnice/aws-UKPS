@@ -188,6 +188,11 @@ internal sealed class User
         }
     }
 
+    internal bool IsPendingEmailVerified()
+    {
+        return PendingWorkEmail is not null && PendingEmailVerifiedAt is not null;
+    }
+
     internal void CompletePendingEmail(DateTime dateTime)
     {
         if (PendingEmailVerifiedAt is null)
