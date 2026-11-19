@@ -177,9 +177,9 @@ describe('Edit user detail page', () => {
 
   describe('page header', () => {
     it.each([
-      ['fullName', 'Edit Full name'],
-      ['contactNumber', 'Edit Contact number'],
-      ['email', 'Edit Work email address'],
+      ['fullName', 'Edit full name'],
+      ['contactNumber', 'Edit contact number'],
+      ['email', 'Edit work email address'],
     ])('renders the heading for %s', async (detail, heading) => {
       setDetail(detail)
 
