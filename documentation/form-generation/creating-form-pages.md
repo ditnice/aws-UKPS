@@ -419,8 +419,7 @@ is not supported. The worked example is the Clinical trials task:
     FormControl.Group,
     ItemLabel = "Clinical trial",
     AddAnotherLabel = "Add another clinical trial",
-    RemoveLabel = "Remove clinical trial",
-    ItemKey = "clinical_trials_gov_number")]
+    RemoveLabel = "Remove clinical trial")]
 [FormRequired("Add at least one clinical trial")]
 public ICollection<RecordClinicalTrial> ClinicalTrials { get; set; } = [];
 
@@ -429,7 +428,6 @@ public ICollection<RecordClinicalTrial> ClinicalTrials { get; set; } = [];
     FormControl.PrefixedNumber, Order = 20)]
 [FormValuePrefixes("NCT", Digits = 8)]
 [FormRequired("Enter the trial number from ClinicalTrials.gov")]
-[FormDistinct("Trial number from ClinicalTrials.gov must be different for each clinical trial")]
 public required string ClinicalTrialsGovNumber { get; set; }
 
 [FormField("other_registry_numbers", "Trial number from other registry (optional)",
@@ -456,12 +454,14 @@ public ICollection<OtherClinicalTrialNumber> OtherClinicalTrialNumbers { get; se
 - **Saving** matches items to stored rows. With `ItemKey`, an item keeps the row holding the same
   key answer (ignoring case), so removing one trial leaves the others on their own rows; items
   still unmatched (new, or with an edited key) reuse a leftover row between their neighbours, so
-  the stored order holds. Without `ItemKey`, items are matched by position. Rows left over (and
-  their own child rows) are deleted, and missing ones are added.
+  the stored order holds. Without `ItemKey`, items are matched by position; clinical trials have
+  none, because NCT numbers can repeat. Rows left over (and their own child rows) are deleted, and
+  missing ones are added.
 - **Audit:** one row for the whole group. With `ItemKey`, it is a JSON object keyed by that
   question's answer, so items can be matched however they move, for example
   `{"NCT06123456":{"other_registry_numbers":["ISRCTN12345678"],"study_name":"ION-UK"}}`. The item
-  key must be a required, distinct question of the group. Without it, the items are listed in order.
+  key must be a required, distinct question of the group. Without it, as for clinical trials, the
+  items are listed in order.
 - **Focus** follows the MoJ pattern: adding an item focuses its first field; removing one focuses
   a heading (the list's legend, or the previous item's heading).
 

@@ -398,11 +398,11 @@ It is still revision 1, because sessions and users don't create revisions. Exist
 | id | field_path | old_value | new_value |
 | --- | --- | --- | --- |
 | 22 | `record_clinical_trial_information.has_clinical_trials` | NULL | `Yes` |
-| 23 | `record_clinical_trial` | NULL | `{"NCT06123456":{"other_registry_numbers":["2025-001234-56","ISRCTN12345678"],"study_name":"ION-UK"}}` |
+| 23 | `record_clinical_trial` | NULL | `[{"clinical_trials_gov_number":"NCT06123456","other_registry_numbers":["2025-001234-56","ISRCTN12345678"],"study_name":"ION-UK"}]` |
 | 24 | `record_clinical_trial_information.recruiting_in_uk` | NULL | `Yes` |
 
 > [!NOTE]
-> The trials collection, with the grandchild registry numbers nested inside it, is one JSON object keyed by NCT number, holding the answers the Medicine form asks (the vaccines-only phase and description are not on it), so the diff can match trials across revisions even though their PKs change. If a user edits the NCT number itself, the diff shows one trial removed and one added.
+> The trials collection, with the grandchild registry numbers nested inside it, is one JSON array in the order the trials were entered, holding the answers the Medicine form asks (the vaccines-only phase and description are not on it). It is not keyed by NCT number, because NCT numbers can repeat, so a diff compares trials by position.
 
 <br>
 
