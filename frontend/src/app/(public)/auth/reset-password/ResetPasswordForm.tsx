@@ -1,7 +1,7 @@
 'use client'
 
 import { initialFormState, mergeForm, useForm, useTransform } from '@tanstack/react-form-nextjs'
-import { ChangeEvent, startTransition, useActionState, useEffect } from 'react'
+import { ChangeEvent, startTransition, useActionState, useEffect, useRef } from 'react'
 
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
@@ -21,9 +21,18 @@ const ResetPasswordForm = ({ email, buttonContentOverride, onSuccess }: ResetPas
   const boundAction = resetPasswordAction.bind(null, !email)
   const [state, action, isPending] = useActionState(boundAction, initialFormState)
 
+  const hasHandledSuccess = useRef(false)
+
   useEffect(() => {
-    if ('success' in state) {
+    const isSuccessful = 'success' in state
+
+    if (isSuccessful && !hasHandledSuccess.current) {
+      hasHandledSuccess.current = true
       onSuccess?.()
+    }
+
+    if (!isSuccessful) {
+      hasHandledSuccess.current = false
     }
   }, [state, onSuccess])
 
@@ -45,13 +54,6 @@ const ResetPasswordForm = ({ email, buttonContentOverride, onSuccess }: ResetPas
         }),
       [state],
     ),
-    onSubmitMeta: {} as { formData: FormData },
-    onSubmit: ({ meta }) => {
-      startTransition(() => {
-        action(meta.formData)
-        onSuccess?.()
-      })
-    },
   })
 
   return (
@@ -59,7 +61,7 @@ const ResetPasswordForm = ({ email, buttonContentOverride, onSuccess }: ResetPas
       action={action as never}
       onSubmit={(e) => {
         e.preventDefault()
-        void form.handleSubmit({ formData: new FormData(e.currentTarget) })
+        void form.handleSubmit()
       }}
     >
       <FormLevelErrors errors={state.errors} />
