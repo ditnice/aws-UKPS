@@ -134,7 +134,11 @@ internal sealed partial class CognitoIdentityService : IIdentityService
             {
                 UserPoolId = _options.Value.UserPoolId,
                 Username = cognitoUsername.Value,
-                UserAttributes = [new AttributeType { Name = "email", Value = updatedEmail }],
+                UserAttributes =
+                [
+                    new AttributeType { Name = "email", Value = updatedEmail },
+                    new AttributeType { Name = "email_verified", Value = "true" },
+                ],
             },
             cancellationToken
         );

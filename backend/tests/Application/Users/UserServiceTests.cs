@@ -1420,7 +1420,7 @@ public class UserServiceTests : DatabaseTestBase
         result.ShouldBeSuccess();
 
         MockUser? user = _harness.Cognito.GetUserByEmail(updateEmail);
-        user.ShouldNotBeNull();
+        user.ShouldNotBeNull().EmailVerified.ShouldBeTrue();
     }
 
     [Fact]
