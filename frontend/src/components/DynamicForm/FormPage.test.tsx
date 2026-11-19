@@ -1519,6 +1519,42 @@ describe('FormPage clinical trials', () => {
     expect(screen.getByRole('button', { name: 'Add another trial number' })).toBeInTheDocument()
   })
 
+  it('gives each trial an id that a link can scroll to', () => {
+    render(
+      <FormPage
+        page={trialsPage([
+          savedTrial,
+          { ...savedTrial, clinical_trials_gov_number: 'NCT06123457' },
+        ])}
+      />,
+    )
+
+    expect(screen.getByRole('group', { name: 'Clinical trial 1' })).toHaveAttribute(
+      'id',
+      'record_clinical_trial-item-0',
+    )
+    expect(screen.getByRole('group', { name: 'Clinical trial 2' })).toHaveAttribute(
+      'id',
+      'record_clinical_trial-item-1',
+    )
+  })
+
+  it('opens with a new blank trial after the saved ones when asked to add one', () => {
+    render(<FormPage addGroupItem page={trialsPage([savedTrial])} />)
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Clinical trial 2' })).toBeInTheDocument()
+    const studyNames = screen.getAllByLabelText('Study name')
+    expect(studyNames[0]).toHaveValue('ION-UK')
+    expect(studyNames[1]).toHaveValue('')
+  })
+
+  it('opens with one blank trial when asked to add one and none are saved', () => {
+    render(<FormPage addGroupItem page={trialsPage()} />)
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Clinical trial 1' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Clinical trial 2' })).not.toBeInTheDocument()
+  })
+
   it('shows the trial number with a fixed NCT prefix', () => {
     render(<FormPage page={trialsPage([savedTrial])} />)
 

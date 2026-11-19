@@ -104,9 +104,7 @@ export function CheckAnswersActions({
             Submit record for review
           </Button>
         )}
-        <Button to={`/portal/organisations/${organisationId}/records`} variant="secondary">
-          Return to my records
-        </Button>
+        <Button to={`/portal/organisations/${organisationId}/records`}>Return to my records</Button>
       </ButtonGroup>
     </section>
   )

@@ -95,22 +95,50 @@ internal sealed class RecordCheckAnswersQueryService(
         private RecordCheckAnswersQuestionDto ToQuestion(FormQuestion question)
         {
             FormAnswer answer = revision.Answers[question.Id];
-            return new()
+            return ToRow(
+                question,
+                answer,
+                model.PageOf(question).Id,
+                check.Options.TryGetValue(question.Id, out IReadOnlyList<FormOption>? options)
+                    ? SelectedOptions(answer, options)
+                    : null
+            );
+        }
+
+        private static RecordCheckAnswersQuestionDto ToRow(
+            FormQuestion question,
+            FormAnswer answer,
+            string pageId,
+            IReadOnlyList<RecordCheckAnswersOptionDto>? selectedOptions
+        ) =>
+            new()
             {
                 Id = question.Id,
-                PageId = model.PageOf(question).Id,
+                PageId = pageId,
                 Label = question.Label,
                 Type = question.Control,
                 Multiple = question.Shape == AnswerShape.Multi,
                 Values = [.. answer.AllValues()],
-                SelectedOptions = check.Options.TryGetValue(
-                    question.Id,
-                    out IReadOnlyList<FormOption>? options
-                )
-                    ? SelectedOptions(answer, options)
-                    : null,
+                SelectedOptions = selectedOptions,
+                ItemLabel = question.ItemLabel,
+                AddAnotherLabel = question.AddAnotherLabel,
+                Items =
+                    answer.Shape == AnswerShape.Group
+                        ?
+                        [
+                            .. answer.Items.Select(item => new RecordCheckAnswersGroupItemDto
+                            {
+                                // Children take the group's page; their IDs are local to the group.
+                                Questions =
+                                [
+                                    .. question.Children.Select(child =>
+                                        ToRow(child, item[child.Id], pageId, null)
+                                    ),
+                                ],
+                            }),
+                        ]
+                        : null,
             };
-        }
 
         /// <summary>
         /// The options the answer chose, in the order offered. A value that is not offered is left
