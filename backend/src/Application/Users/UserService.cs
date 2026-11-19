@@ -701,6 +701,13 @@ internal partial class UserService(
             );
         }
 
+        if (user.PendingEmailVerifiedAt is not null)
+        {
+            return ResendVerificationEmailResult.Err(
+                new ResendVerificationEmailError.PendingEmailAlreadyVerified()
+            );
+        }
+
         var token = VerificationTokenGenerator.Generate();
         user.RefreshVerificationToken(token, timeProvider.GetUtcNow());
 

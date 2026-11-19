@@ -32,13 +32,19 @@ describe('PendingEmailUpdateAlert', () => {
     expect(screen.getByTestId('target-email')).toHaveTextContent(email)
   })
 
-  it('renders the resend verification email button with the user id', async () => {
+  it('renders the resend verification email button with the user id when verifiedByEmail is false', async () => {
     await renderAlert({ value: email, verifiedByEmail: false, userId })
 
     expect(screen.getByTestId('resend-verification-email-button')).toHaveAttribute(
       'data-user-id',
       String(userId),
     )
+  })
+
+  it('does not render the resend verification email button with the user id when verifiedByEmail is true', async () => {
+    await renderAlert({ value: email, verifiedByEmail: true, userId })
+
+    expect(screen.queryByTestId('resend-verification-email-button')).not.toBeInTheDocument()
   })
 
   describe('when the address has not been verified', () => {

@@ -276,28 +276,29 @@ public class UserController(IUserService userService) : ControllerBase
             cancellationToken
         );
 
+        var notFoundResult = Problem(
+            statusCode: StatusCodes.Status404NotFound,
+            title: "User not found",
+            detail: $"No user with id '{userId}' exists."
+        );
         return result.Match(
             Ok,
             err =>
                 err.Match<ActionResult>(
-                    notFound: _ =>
-                        Problem(
-                            statusCode: StatusCodes.Status404NotFound,
-                            title: "User not found",
-                            detail: $"No user with id '{userId}' exists."
-                        ),
+                    notFound: _ => notFoundResult,
                     noPendingVerification: _ =>
                         Problem(
                             statusCode: StatusCodes.Status409Conflict,
                             title: "No pending verification",
-                            detail: $"User has no pending email verification to resend."
+                            detail: "User has no pending email verification to resend."
                         ),
-                    forbidden: _ =>
+                    _ =>
                         Problem(
-                            statusCode: StatusCodes.Status403Forbidden,
-                            title: "Forbidden",
-                            detail: "You are not allowed to resend the verification email for this user."
+                            statusCode: StatusCodes.Status409Conflict,
+                            title: "Email already verified",
+                            detail: "The user has already verified this email."
                         ),
+                    forbidden: _ => notFoundResult,
                     concurrencyDetected: _ =>
                         Problem(
                             statusCode: StatusCodes.Status409Conflict,

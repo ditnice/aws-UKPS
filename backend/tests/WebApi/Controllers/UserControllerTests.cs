@@ -25,6 +25,43 @@ namespace UKPS.Api.Tests.WebApi.Controllers;
 
 public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
+    public static IEnumerable<
+        TheoryDataRow<Result<ResendVerificationEmailError>, HttpStatusCode>
+    > ResendVerificationEmailData =>
+        [
+            new(Result<ResendVerificationEmailError>.Ok(), HttpStatusCode.OK),
+            new(
+                Result<ResendVerificationEmailError>.Err(
+                    new ResendVerificationEmailError.NotFound()
+                ),
+                HttpStatusCode.NotFound
+            ),
+            new(
+                Result<ResendVerificationEmailError>.Err(
+                    new ResendVerificationEmailError.NoPendingVerification()
+                ),
+                HttpStatusCode.Conflict
+            ),
+            new(
+                Result<ResendVerificationEmailError>.Err(
+                    new ResendVerificationEmailError.PendingEmailAlreadyVerified()
+                ),
+                HttpStatusCode.Conflict
+            ),
+            new(
+                Result<ResendVerificationEmailError>.Err(
+                    new ResendVerificationEmailError.NotFound()
+                ),
+                HttpStatusCode.Forbidden
+            ),
+            new(
+                Result<ResendVerificationEmailError>.Err(
+                    new ResendVerificationEmailError.ConcurrencyDetected()
+                ),
+                HttpStatusCode.Conflict
+            ),
+        ];
+
     private const string UsersUrl = "/users";
     private readonly IUserService _mockUserService = Substitute.For<IUserService>();
     private readonly HttpClient _client;
@@ -589,37 +626,6 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         var response = await SendUpdateUserEmailRequest();
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
-
-    public static IEnumerable<
-        TheoryDataRow<Result<ResendVerificationEmailError>, HttpStatusCode>
-    > ResendVerificationEmailData =>
-        [
-            new(Result<ResendVerificationEmailError>.Ok(), HttpStatusCode.OK),
-            new(
-                Result<ResendVerificationEmailError>.Err(
-                    new ResendVerificationEmailError.NotFound()
-                ),
-                HttpStatusCode.NotFound
-            ),
-            new(
-                Result<ResendVerificationEmailError>.Err(
-                    new ResendVerificationEmailError.NoPendingVerification()
-                ),
-                HttpStatusCode.Conflict
-            ),
-            new(
-                Result<ResendVerificationEmailError>.Err(
-                    new ResendVerificationEmailError.Forbidden()
-                ),
-                HttpStatusCode.Forbidden
-            ),
-            new(
-                Result<ResendVerificationEmailError>.Err(
-                    new ResendVerificationEmailError.ConcurrencyDetected()
-                ),
-                HttpStatusCode.Conflict
-            ),
-        ];
 
     [Theory]
     [MemberData(nameof(ResendVerificationEmailData))]

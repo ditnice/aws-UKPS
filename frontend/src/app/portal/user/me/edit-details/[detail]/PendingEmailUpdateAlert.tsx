@@ -25,14 +25,16 @@ const PendingEmailUpdateAlert = async ({
           address.
         </p>
       ) : (
-        <p>
-          We&rsquo;ve sent a verification email to{' '}
-          <strong data-testid="target-email-not-verified">{value}</strong>. Check your inbox and use
-          the link in the email to verify this address. Once it&rsquo;s verified, log in with it to
-          complete the change.
-        </p>
+        <>
+          <p>
+            We&rsquo;ve sent a verification email to{' '}
+            <strong data-testid="target-email-not-verified">{value}</strong>. Check your inbox and
+            use the link in the email to verify this address. Once it&rsquo;s verified, log in with
+            it to complete the change.
+          </p>
+          <ResendVerificationEmailButton userId={userId} />
+        </>
       )}
-      <ResendVerificationEmailButton userId={userId} />
     </Alert>
   )
 }

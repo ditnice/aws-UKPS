@@ -1322,6 +1322,27 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task ResendVerificationEmail_WhenTheEmailHasAlreadyBeenVerified_ShouldReturnAlreadyVerifiedError()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        var token = await RequestEmailUpdate(currentUser);
+        await Service.VerifyPendingEmailAddress(
+            currentUser.Id,
+            new VerifyPendingEmailAddressCommand() { VerificationToken = token },
+            TestContext.Current.CancellationToken
+        );
+
+        _harness.Emails.Clear();
+
+        var result = await Service.ResendVerificationEmail(currentUser.Id, Ct);
+
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<ResendVerificationEmailError.PendingEmailAlreadyVerified>();
+        _harness.Emails.Sent.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task VerifyPendingEmailAddress_ShouldMarkPendingEmailAsVerified()
     {
         User currentUser = await CreateExistingCurrentUser();
