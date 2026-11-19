@@ -13,6 +13,8 @@ export const metadata = {
   title: 'UK PharmaScan Portal',
 }
 
+export const dynamic = 'force-dynamic'
+
 export default async function PortalLayout({ children }: { children: ReactNode }) {
   const me = await getUserOrganisationContext()
   const links = createLinks(me)
