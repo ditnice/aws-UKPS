@@ -235,6 +235,34 @@ describe('CheckAnswersPage', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('tags a group with an error once, naming the group', async () => {
+    vi.mocked(getRecordCheckAnswers).mockResolvedValue({
+      ...trialsCheckAnswers,
+      data: {
+        ...trialsCheckAnswers.data,
+        errors: [
+          {
+            questionId: 'record_clinical_trial',
+            pageId: 'clinical-trial-details',
+            taskId: 'clinical-trials',
+            message: 'Add a clinical trial',
+          },
+        ],
+      },
+    })
+
+    await renderPage()
+
+    const tags = screen.getAllByText(
+      (_, element) =>
+        element?.textContent === 'There is a problem with Enter clinical trial details' &&
+        element.tagName === 'SPAN',
+    )
+    expect(tags).toHaveLength(1)
+    const firstTrial = screen.getByRole('heading', { level: 3, name: 'Clinical trial 1' })
+    expect(tags[0].compareDocumentPosition(firstTrial)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
   it('shows no error summary or problem tags when there are no errors', async () => {
     await renderPage()
 

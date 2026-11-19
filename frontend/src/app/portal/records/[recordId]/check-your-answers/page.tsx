@@ -20,13 +20,7 @@ import {
 } from '@/components/SummaryList/SummaryList'
 import { Tag } from '@/components/Tag/Tag'
 import { formatAnswer } from '@/lib/dynamic-form/answerDisplay'
-import {
-  addGroupItemToken,
-  checkAnswersReturnTo,
-  groupItemAnchor,
-  pageHref,
-  taskListHref,
-} from '@/lib/dynamic-form/links'
+import { checkAnswersPageHref, groupItemAnchor, taskListHref } from '@/lib/dynamic-form/links'
 import { parsePositiveInteger } from '@/lib/valueParsing'
 
 import { CheckAnswersActions } from './_components/CheckAnswersActions'
@@ -113,7 +107,7 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
             {data.errors.map((error) => (
               <li key={error.questionId}>
                 <a
-                  href={`${pageHref({ recordId }, error.pageId)}?returnTo=${checkAnswersReturnTo}#${error.questionId}`}
+                  href={checkAnswersPageHref(recordId, error.pageId, { anchor: error.questionId })}
                 >
                   {error.message}
                 </a>
@@ -137,6 +131,7 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
               {blocks.map((block, index) =>
                 block.kind === 'group' ? (
                   <GroupItemCards
+                    hasError={errorsByQuestionId.has(block.question.id)}
                     key={block.question.id}
                     question={block.question}
                     recordId={recordId}
@@ -155,7 +150,7 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
                         }
                       >
                         <SummaryListAction
-                          href={`${pageHref({ recordId }, question.pageId)}?returnTo=${checkAnswersReturnTo}`}
+                          href={checkAnswersPageHref(recordId, question.pageId)}
                           visuallyHiddenText={question.label}
                         >
                           Change
@@ -170,7 +165,13 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
                   block.kind === 'group' && (
                     <Button
                       elementType={Link}
-                      href={`${pageHref({ recordId }, block.question.pageId)}?returnTo=${checkAnswersReturnTo}&add=${addGroupItemToken}#${groupItemAnchor(block.question.id, block.question.items?.length ?? 0)}`}
+                      href={checkAnswersPageHref(recordId, block.question.pageId, {
+                        addGroupItem: true,
+                        anchor: groupItemAnchor(
+                          block.question.id,
+                          block.question.items?.length ?? 0,
+                        ),
+                      })}
                       key={block.question.id}
                     >
                       {block.question.addAnotherLabel ?? 'Add another'}
