@@ -1477,7 +1477,7 @@ describe('FormPage clinical trials', () => {
         label: 'Trial number from other registry (optional)',
         hint: 'Enter any additional trial numbers from other registries.',
         addAnotherLabel: 'Add another trial number',
-        itemLabel: 'Trial number',
+        itemLabel: 'Other registry number',
         removeLabel: 'Remove',
         rules: [{ kind: 'Distinct', value: null, message: 'Registry number must be different' }],
       }),
@@ -1589,8 +1589,8 @@ describe('FormPage clinical trials', () => {
     render(<FormPage page={trialsPage([savedTrial])} />)
 
     expect(screen.getByLabelText('Study name')).toHaveValue('ION-UK')
-    expect(screen.getByLabelText('Trial number 1')).toHaveValue('A1')
-    expect(screen.getByLabelText('Trial number 2')).toHaveValue('B2')
+    expect(screen.getByLabelText('Other registry number 1')).toHaveValue('A1')
+    expect(screen.getByLabelText('Other registry number 2')).toHaveValue('B2')
   })
 
   it('adds a trial, focusing its first field, and sends every trial as an item', async () => {
@@ -1641,14 +1641,14 @@ describe('FormPage clinical trials', () => {
     const user = userEvent.setup()
     render(<FormPage page={trialsPage([{ ...savedTrial, other_registry_numbers: [] }])} />)
 
-    expect(screen.getByLabelText('Trial number')).toBeVisible()
-    expect(screen.queryByLabelText('Trial number 1')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Other registry number')).toBeVisible()
+    expect(screen.queryByLabelText('Other registry number 1')).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Add another trial number' }))
 
-    expect(screen.queryByLabelText('Trial number')).not.toBeInTheDocument()
-    expect(screen.getByLabelText('Trial number 1')).toBeInTheDocument()
-    expect(screen.getByLabelText('Trial number 2')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Other registry number')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Other registry number 1')).toBeInTheDocument()
+    expect(screen.getByLabelText('Other registry number 2')).toBeInTheDocument()
   })
 
   it('adds and removes registry numbers, focusing the new box and then the list legend', async () => {
@@ -1657,9 +1657,9 @@ describe('FormPage clinical trials', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add another trial number' }))
 
-    const second = screen.getByLabelText('Trial number 2')
+    const second = screen.getByLabelText('Other registry number 2')
     expect(second).toHaveFocus()
-    await user.click(screen.getByRole('button', { name: 'Remove Trial number 2' }))
+    await user.click(screen.getByRole('button', { name: 'Remove Other registry number 2' }))
     expect(
       screen.getByText('Trial number from other registry (optional)', { selector: 'legend' }),
     ).toHaveFocus()
@@ -1719,13 +1719,13 @@ describe('FormPage clinical trials', () => {
 
       await user.click(
         screen.getByRole('button', {
-          name: `Remove Trial number ${entry}`,
+          name: `Remove Other registry number ${entry}`,
         }),
       )
 
       expect(screen.queryByText('Registry number must be different')).not.toBeInTheDocument()
-      const first = screen.getByLabelText('Trial number 1')
-      const second = screen.getByLabelText('Trial number 2')
+      const first = screen.getByLabelText('Other registry number 1')
+      const second = screen.getByLabelText('Other registry number 2')
       expect(first).toHaveValue('A1')
       expect(second).toHaveValue('B2')
       expect(first).not.toHaveAttribute('aria-invalid', 'true')
@@ -1777,11 +1777,11 @@ describe('FormPage clinical trials', () => {
         )
         expect(screen.getByLabelText('Study name')).toHaveValue('ION-EU')
       } else if (change === 'fill a blank registry entry') {
-        await user.type(screen.getAllByLabelText('Trial number 1')[0], 'A1')
+        await user.type(screen.getAllByLabelText('Other registry number 1')[0], 'A1')
       } else {
         await user.click(
           screen.getAllByRole('button', {
-            name: 'Remove Trial number 1',
+            name: 'Remove Other registry number 1',
           })[0],
         )
       }
@@ -1819,7 +1819,10 @@ describe('FormPage clinical trials', () => {
     expect(await screen.findByText('Study name from the server')).toBeInTheDocument()
     expect(screen.getByText('Add at least one clinical trial')).toBeInTheDocument()
     expect(screen.getByText('Entry from the server')).toBeInTheDocument()
-    expect(screen.getByLabelText('Trial number 2')).toHaveAttribute('aria-invalid', 'true')
-    expect(screen.getByLabelText('Trial number 1')).not.toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByLabelText('Other registry number 2')).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByLabelText('Other registry number 1')).not.toHaveAttribute(
+      'aria-invalid',
+      'true',
+    )
   })
 })
