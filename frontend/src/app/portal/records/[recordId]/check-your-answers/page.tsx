@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import {
   getRecordCheckAnswers,
   ProblemDetails,
-  type RecordCheckAnswersQuestionDto,
+  type RecordAnswersQuestionDto,
 } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { Alert } from '@/components/Alert/Alert'
@@ -31,11 +31,11 @@ type CheckAnswersPageProps = {
 }
 
 type TaskBlock =
-  | { kind: 'rows'; questions: RecordCheckAnswersQuestionDto[] }
-  | { kind: 'group'; question: RecordCheckAnswersQuestionDto }
+  | { kind: 'rows'; questions: RecordAnswersQuestionDto[] }
+  | { kind: 'group'; question: RecordAnswersQuestionDto }
 
 /** Splits a task's questions, in form order, into runs of plain rows and the group questions between them. */
-const splitTaskQuestions = (questions: RecordCheckAnswersQuestionDto[]): TaskBlock[] => {
+const splitTaskQuestions = (questions: RecordAnswersQuestionDto[]): TaskBlock[] => {
   const blocks: TaskBlock[] = []
   for (const question of questions) {
     const last = blocks.at(-1)

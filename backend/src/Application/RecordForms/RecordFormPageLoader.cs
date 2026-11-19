@@ -157,13 +157,12 @@ internal sealed class RecordFormPageLoader(
     public async Task<(
         Dictionary<string, FormAnswer> Answers,
         Applicability Applicability
-    )> LoadAllAnswersAsync(LoadedForm form, CancellationToken cancellationToken)
+    )> LoadAllAnswersAsync(FormModel model, int revisionId, CancellationToken cancellationToken)
     {
-        FormModel model = form.Model;
         var (_, answers) = await LoadRowsAsync(
             model,
             model.Questions.Select(static q => q.Entity).Distinct(),
-            form.Revision.Id,
+            revisionId,
             track: false,
             cancellationToken
         );
@@ -243,6 +242,38 @@ internal sealed class RecordFormPageLoader(
     }
 
     /// <summary>
+    /// The options of every answered choice question on the pages that apply, enough to label and
+    /// check the chosen values. Saved answers are passed in so archived items already chosen stay
+    /// offered.
+    /// </summary>
+    public async Task<Dictionary<string, IReadOnlyList<FormOption>>> LoadAllOptionsAsync(
+        FormModel model,
+        IReadOnlyDictionary<string, FormAnswer> answers,
+        Applicability applicability,
+        CancellationToken cancellationToken
+    )
+    {
+        Dictionary<string, IReadOnlyList<FormOption>> options = new(StringComparer.Ordinal);
+        foreach (FormPage page in model.Pages.Where(applicability.Applies))
+        {
+            foreach (FormQuestion question in page.Questions.Where(static q => q.HasOptions))
+            {
+                string[] values = [.. answers[question.Id].AllValues()];
+                if (values.Length > 0)
+                {
+                    options[question.Id] = await LoadQuestionOptionsAsync(
+                        question,
+                        values,
+                        cancellationToken
+                    );
+                }
+            }
+        }
+
+        return options;
+    }
+
+    /// <summary>
     /// Loads the options of every choice question. Saved answers are passed in so archived items
     /// already chosen stay offered.
     /// </summary>
@@ -255,18 +286,27 @@ internal sealed class RecordFormPageLoader(
         Dictionary<string, IReadOnlyList<FormOption>> options = new(StringComparer.Ordinal);
         foreach (FormQuestion question in page.Questions.Where(static q => q.HasOptions))
         {
-            IOptionProvider provider =
-                optionProviders.Find(question.OptionKey!)
-                ?? throw new InvalidOperationException(
-                    $"Option provider '{question.OptionKey}' is not registered."
-                );
-            options[question.Id] = await provider.GetOptionsAsync(
-                dbContext,
-                savedAnswers[question.Id].AllValues().ToArray(),
+            options[question.Id] = await LoadQuestionOptionsAsync(
+                question,
+                [.. savedAnswers[question.Id].AllValues()],
                 cancellationToken
             );
         }
 
         return options;
+    }
+
+    private Task<IReadOnlyList<FormOption>> LoadQuestionOptionsAsync(
+        FormQuestion question,
+        string[] savedValues,
+        CancellationToken cancellationToken
+    )
+    {
+        IOptionProvider provider =
+            optionProviders.Find(question.OptionKey!)
+            ?? throw new InvalidOperationException(
+                $"Option provider '{question.OptionKey}' is not registered."
+            );
+        return provider.GetOptionsAsync(dbContext, savedValues, cancellationToken);
     }
 }

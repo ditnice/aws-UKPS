@@ -7222,6 +7222,179 @@
         "type": "string",
         "description": "Defines the actions a user can take on a record."
       },
+      "RecordAnswersGroupItemDto": {
+        "required": [
+          "questions"
+        ],
+        "type": "object",
+        "properties": {
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordAnswersQuestionDto"
+            },
+            "description": "The answer to each of the group's questions, in order."
+          }
+        },
+        "description": "One item of a group answer, such as a clinical trial."
+      },
+      "RecordAnswersOptionDto": {
+        "required": [
+          "value",
+          "label",
+          "parentLabel"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "The answer value: an enum member name or a reference ID."
+          },
+          "label": {
+            "type": "string",
+            "description": "The text shown for the option."
+          },
+          "parentLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The label of the option's parent in a hierarchical select, or null."
+          }
+        },
+        "description": "An option chosen in an answer."
+      },
+      "RecordAnswersQuestionDto": {
+        "required": [
+          "id",
+          "pageId",
+          "label",
+          "type",
+          "multiple",
+          "values",
+          "selectedOptions",
+          "itemLabel",
+          "items",
+          "addAnotherLabel"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The question ID, which errors are keyed by. A group's question has an ID local to the group."
+          },
+          "pageId": {
+            "type": "string",
+            "description": "The page the question is on, for its Change link."
+          },
+          "label": {
+            "type": "string",
+            "description": "The question text."
+          },
+          "type": {
+            "description": "The control the question uses, which says how to format the answer.",
+            "$ref": "#/components/schemas/FormControl"
+          },
+          "multiple": {
+            "type": "boolean",
+            "description": "True when the question takes several values rather than one."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The saved values: at most one for a single-value question, and none when not yet provided\nor for a group."
+          },
+          "selectedOptions": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/RecordAnswersOptionDto"
+            },
+            "description": "For a choice question, the chosen options in the order offered, so values can be shown by\nlabel; null for any other question."
+          },
+          "itemLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For a group, the heading of each item, numbered from 1, such as \"Clinical trial\"; null for\nany other question."
+          },
+          "items": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/RecordAnswersGroupItemDto"
+            },
+            "description": "For a group, its items in order; null for any other question."
+          },
+          "addAnotherLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For a group, the label of its add-another button, such as \"Add another clinical trial\";\nnull for any other question."
+          }
+        },
+        "description": "A question that applies and its answer, shown as a summary row."
+      },
+      "RecordAnswersSectionDto": {
+        "required": [
+          "id",
+          "title",
+          "tasks"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The section ID."
+          },
+          "title": {
+            "type": "string",
+            "description": "The section title."
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordAnswersTaskDto"
+            },
+            "description": "The tasks with a question that applies, in order."
+          }
+        },
+        "description": "A section of a record's answers."
+      },
+      "RecordAnswersTaskDto": {
+        "required": [
+          "id",
+          "title",
+          "questions"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The task ID."
+          },
+          "title": {
+            "type": "string",
+            "description": "The task title."
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordAnswersQuestionDto"
+            },
+            "description": "The questions that apply, in page order, including optional questions with no answer."
+          }
+        },
+        "description": "A task of a record's answers."
+      },
       "RecordCheckAnswersDto": {
         "required": [
           "formVersion",
@@ -7254,7 +7427,7 @@
           "sections": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/RecordCheckAnswersSectionDto"
+              "$ref": "#/components/schemas/RecordAnswersSectionDto"
             },
             "description": "The sections with a question that applies, in form order."
           },
@@ -7263,183 +7436,10 @@
             "items": {
               "$ref": "#/components/schemas/SubmissionErrorDto"
             },
-            "description": "The problems that would stop the record being submitted, in form order, each on a question\nin IReadOnlyList&lt;RecordCheckAnswersSectionDto&gt; RecordCheckAnswersDto.Sections. The record can be submitted when this is empty."
+            "description": "The problems that would stop the record being submitted, in form order, each on a question\nin IReadOnlyList&lt;RecordAnswersSectionDto&gt; RecordCheckAnswersDto.Sections. The record can be submitted when this is empty."
           }
         },
         "description": "The whole of a record's latest revision for check your answers: every question that applies,\ngrouped by section and task, and every error that would stop it being submitted."
-      },
-      "RecordCheckAnswersGroupItemDto": {
-        "required": [
-          "questions"
-        ],
-        "type": "object",
-        "properties": {
-          "questions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RecordCheckAnswersQuestionDto"
-            },
-            "description": "A row for each child question of the group, in order."
-          }
-        },
-        "description": "One item of a group question: a row for each of its child questions."
-      },
-      "RecordCheckAnswersOptionDto": {
-        "required": [
-          "value",
-          "label",
-          "parentLabel"
-        ],
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "string",
-            "description": "The answer value: an enum member name or a reference ID."
-          },
-          "label": {
-            "type": "string",
-            "description": "The text shown for the option."
-          },
-          "parentLabel": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "The label of the option's parent in a hierarchical select, or null."
-          }
-        },
-        "description": "An option chosen in an answer."
-      },
-      "RecordCheckAnswersQuestionDto": {
-        "required": [
-          "id",
-          "pageId",
-          "label",
-          "itemLabel",
-          "items",
-          "addAnotherLabel",
-          "type",
-          "multiple",
-          "values",
-          "selectedOptions"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "The question ID, which errors are keyed by."
-          },
-          "pageId": {
-            "type": "string",
-            "description": "The page the question is on, for its Change link."
-          },
-          "label": {
-            "type": "string",
-            "description": "The question text."
-          },
-          "itemLabel": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "For a group question, the heading of each item, such as \"Clinical trial\"; null otherwise."
-          },
-          "items": {
-            "type": [
-              "null",
-              "array"
-            ],
-            "items": {
-              "$ref": "#/components/schemas/RecordCheckAnswersGroupItemDto"
-            },
-            "description": "For a group question, its items in order, each with a row per child question; null for any other question."
-          },
-          "addAnotherLabel": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "For a group question, the label of its add-another button, such as \"Add another clinical trial\"; null otherwise."
-          },
-          "type": {
-            "description": "The control the question uses, which says how to format the answer.",
-            "$ref": "#/components/schemas/FormControl"
-          },
-          "multiple": {
-            "type": "boolean",
-            "description": "True when the question takes several values rather than one."
-          },
-          "values": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "The saved values: at most one for a single-value question, and none when not yet provided."
-          },
-          "selectedOptions": {
-            "type": [
-              "null",
-              "array"
-            ],
-            "items": {
-              "$ref": "#/components/schemas/RecordCheckAnswersOptionDto"
-            },
-            "description": "For a choice question, the chosen options in the order offered, so values can be shown by\nlabel; null for any other question."
-          }
-        },
-        "description": "A question that applies and its answer, as a row on check your answers."
-      },
-      "RecordCheckAnswersSectionDto": {
-        "required": [
-          "id",
-          "title",
-          "tasks"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "The section ID."
-          },
-          "title": {
-            "type": "string",
-            "description": "The section title."
-          },
-          "tasks": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RecordCheckAnswersTaskDto"
-            },
-            "description": "The tasks with a question that applies, in order."
-          }
-        },
-        "description": "A section on check your answers."
-      },
-      "RecordCheckAnswersTaskDto": {
-        "required": [
-          "id",
-          "title",
-          "questions"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "The task ID."
-          },
-          "title": {
-            "type": "string",
-            "description": "The task title."
-          },
-          "questions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RecordCheckAnswersQuestionDto"
-            },
-            "description": "The questions that apply, in page order, including optional questions with no answer."
-          }
-        },
-        "description": "A task on check your answers."
       },
       "RecordClinicalTrialDto": {
         "required": [

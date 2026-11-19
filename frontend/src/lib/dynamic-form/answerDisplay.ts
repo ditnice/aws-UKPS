@@ -5,7 +5,7 @@ import {
   notProvidedText,
   parseDateOnly,
 } from '@/app/portal/organisations/[id]/records/[recordId]/_lib/recordValueFormatters'
-import type { RecordCheckAnswersOptionDto, RecordCheckAnswersQuestionDto } from '@/client/generated'
+import type { RecordAnswersOptionDto, RecordAnswersQuestionDto } from '@/client/generated'
 
 import { isDateControl } from './dates'
 
@@ -27,7 +27,7 @@ const formatDateAnswer = (answer: string, control: DateControl): string => {
   return control === 'ActualMonth' ? month : `${month} (estimated)`
 }
 
-const optionLabel = ({ label, parentLabel }: RecordCheckAnswersOptionDto) =>
+const optionLabel = ({ label, parentLabel }: RecordAnswersOptionDto) =>
   parentLabel ? `${parentLabel}: ${label}` : label
 
 /** The text a check your answers row shows for a question's saved answer. */
@@ -35,7 +35,7 @@ export const formatAnswer = ({
   type,
   values,
   selectedOptions,
-}: RecordCheckAnswersQuestionDto): string => {
+}: RecordAnswersQuestionDto): string => {
   if (selectedOptions) {
     return formatList(selectedOptions.map(optionLabel))
   }

@@ -1,4 +1,4 @@
-import type { RecordCheckAnswersQuestionDto } from '@/client/generated'
+import type { RecordAnswersQuestionDto } from '@/client/generated'
 import { SummaryCard } from '@/components/SummaryCard/SummaryCard'
 import {
   SummaryList,
@@ -12,7 +12,7 @@ import { checkAnswersPageHref, groupItemAnchor } from '@/lib/dynamic-form/links'
 type GroupItemCardsProps = {
   recordId: number
   /** A group question, whose `items` are shown one card each. */
-  question: RecordCheckAnswersQuestionDto
+  question: RecordAnswersQuestionDto
   /** Set when the group has a submission error, which is tagged on the group rather than an item. */
   hasError?: boolean
 }

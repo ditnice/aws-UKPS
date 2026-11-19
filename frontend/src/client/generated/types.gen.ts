@@ -930,6 +930,120 @@ export const RecordAction = {
 export type RecordAction = typeof RecordAction[keyof typeof RecordAction];
 
 /**
+ * One item of a group answer, such as a clinical trial.
+ */
+export type RecordAnswersGroupItemDto = {
+    /**
+     * The answer to each of the group's questions, in order.
+     */
+    questions: Array<RecordAnswersQuestionDto>;
+};
+
+/**
+ * An option chosen in an answer.
+ */
+export type RecordAnswersOptionDto = {
+    /**
+     * The answer value: an enum member name or a reference ID.
+     */
+    value: string;
+    /**
+     * The text shown for the option.
+     */
+    label: string;
+    /**
+     * The label of the option's parent in a hierarchical select, or null.
+     */
+    parentLabel: null | string;
+};
+
+/**
+ * A question that applies and its answer, shown as a summary row.
+ */
+export type RecordAnswersQuestionDto = {
+    /**
+     * The question ID, which errors are keyed by. A group's question has an ID local to the group.
+     */
+    id: string;
+    /**
+     * The page the question is on, for its Change link.
+     */
+    pageId: string;
+    /**
+     * The question text.
+     */
+    label: string;
+    /**
+     * The control the question uses, which says how to format the answer.
+     */
+    type: FormControl;
+    /**
+     * True when the question takes several values rather than one.
+     */
+    multiple: boolean;
+    /**
+     * The saved values: at most one for a single-value question, and none when not yet provided
+     * or for a group.
+     */
+    values: Array<string>;
+    /**
+     * For a choice question, the chosen options in the order offered, so values can be shown by
+     * label; null for any other question.
+     */
+    selectedOptions: null | Array<RecordAnswersOptionDto>;
+    /**
+     * For a group, the heading of each item, numbered from 1, such as "Clinical trial"; null for
+     * any other question.
+     */
+    itemLabel: null | string;
+    /**
+     * For a group, its items in order; null for any other question.
+     */
+    items: null | Array<RecordAnswersGroupItemDto>;
+    /**
+     * For a group, the label of its add-another button, such as "Add another clinical trial";
+     * null for any other question.
+     */
+    addAnotherLabel: null | string;
+};
+
+/**
+ * A section of a record's answers.
+ */
+export type RecordAnswersSectionDto = {
+    /**
+     * The section ID.
+     */
+    id: string;
+    /**
+     * The section title.
+     */
+    title: string;
+    /**
+     * The tasks with a question that applies, in order.
+     */
+    tasks: Array<RecordAnswersTaskDto>;
+};
+
+/**
+ * A task of a record's answers.
+ */
+export type RecordAnswersTaskDto = {
+    /**
+     * The task ID.
+     */
+    id: string;
+    /**
+     * The task title.
+     */
+    title: string;
+    /**
+     * The questions that apply, in page order, including optional questions with no answer.
+     */
+    questions: Array<RecordAnswersQuestionDto>;
+};
+
+/**
  * The whole of a record's latest revision for check your answers: every question that applies,
  * grouped by section and task, and every error that would stop it being submitted.
  */
@@ -954,123 +1068,12 @@ export type RecordCheckAnswersDto = {
     /**
      * The sections with a question that applies, in form order.
      */
-    sections: Array<RecordCheckAnswersSectionDto>;
+    sections: Array<RecordAnswersSectionDto>;
     /**
      * The problems that would stop the record being submitted, in form order, each on a question
-     * in IReadOnlyList&lt;RecordCheckAnswersSectionDto&gt; RecordCheckAnswersDto.Sections. The record can be submitted when this is empty.
+     * in IReadOnlyList&lt;RecordAnswersSectionDto&gt; RecordCheckAnswersDto.Sections. The record can be submitted when this is empty.
      */
     errors: Array<SubmissionErrorDto>;
-};
-
-/**
- * One item of a group question: a row for each of its child questions.
- */
-export type RecordCheckAnswersGroupItemDto = {
-    /**
-     * A row for each child question of the group, in order.
-     */
-    questions: Array<RecordCheckAnswersQuestionDto>;
-};
-
-/**
- * An option chosen in an answer.
- */
-export type RecordCheckAnswersOptionDto = {
-    /**
-     * The answer value: an enum member name or a reference ID.
-     */
-    value: string;
-    /**
-     * The text shown for the option.
-     */
-    label: string;
-    /**
-     * The label of the option's parent in a hierarchical select, or null.
-     */
-    parentLabel: null | string;
-};
-
-/**
- * A question that applies and its answer, as a row on check your answers.
- */
-export type RecordCheckAnswersQuestionDto = {
-    /**
-     * The question ID, which errors are keyed by.
-     */
-    id: string;
-    /**
-     * The page the question is on, for its Change link.
-     */
-    pageId: string;
-    /**
-     * The question text.
-     */
-    label: string;
-    /**
-     * For a group question, the heading of each item, such as "Clinical trial"; null otherwise.
-     */
-    itemLabel: null | string;
-    /**
-     * For a group question, its items in order, each with a row per child question; null for any other question.
-     */
-    items: null | Array<RecordCheckAnswersGroupItemDto>;
-    /**
-     * For a group question, the label of its add-another button, such as "Add another clinical trial"; null otherwise.
-     */
-    addAnotherLabel: null | string;
-    /**
-     * The control the question uses, which says how to format the answer.
-     */
-    type: FormControl;
-    /**
-     * True when the question takes several values rather than one.
-     */
-    multiple: boolean;
-    /**
-     * The saved values: at most one for a single-value question, and none when not yet provided.
-     */
-    values: Array<string>;
-    /**
-     * For a choice question, the chosen options in the order offered, so values can be shown by
-     * label; null for any other question.
-     */
-    selectedOptions: null | Array<RecordCheckAnswersOptionDto>;
-};
-
-/**
- * A section on check your answers.
- */
-export type RecordCheckAnswersSectionDto = {
-    /**
-     * The section ID.
-     */
-    id: string;
-    /**
-     * The section title.
-     */
-    title: string;
-    /**
-     * The tasks with a question that applies, in order.
-     */
-    tasks: Array<RecordCheckAnswersTaskDto>;
-};
-
-/**
- * A task on check your answers.
- */
-export type RecordCheckAnswersTaskDto = {
-    /**
-     * The task ID.
-     */
-    id: string;
-    /**
-     * The task title.
-     */
-    title: string;
-    /**
-     * The questions that apply, in page order, including optional questions with no answer.
-     */
-    questions: Array<RecordCheckAnswersQuestionDto>;
 };
 
 /**
