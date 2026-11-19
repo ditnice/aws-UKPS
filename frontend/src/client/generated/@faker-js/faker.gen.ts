@@ -1990,8 +1990,6 @@ export const fakeResendVerificationEmailResponse200 = (): ResendVerificationEmai
 
 export const fakeResendVerificationEmailResponse401 = (options?: Options): ResendVerificationEmailErrors[401] => fakeAuthenticationProblemDetails(options);
 
-export const fakeResendVerificationEmailResponse403 = (options?: Options): ResendVerificationEmailErrors[403] => fakeProblemDetails(options);
-
 export const fakeResendVerificationEmailResponse404 = (options?: Options): ResendVerificationEmailErrors[404] => fakeProblemDetails(options);
 
 export const fakeResendVerificationEmailResponse409 = (options?: Options): ResendVerificationEmailErrors[409] => fakeAuthenticationProblemDetails(options);

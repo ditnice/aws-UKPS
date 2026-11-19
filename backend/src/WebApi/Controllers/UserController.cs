@@ -215,7 +215,7 @@ public class UserController(IUserService userService) : ControllerBase
         return result.Match(
             Ok,
             err =>
-                err.Match<ActionResult>(
+                err.Match(
                     unauthorised: () => UserNotFound(),
                     userDoesNotExist: () => UserNotFound(),
                     conflictingEmail: () =>
@@ -255,7 +255,6 @@ public class UserController(IUserService userService) : ControllerBase
     /// An empty <c>200 OK</c> response when the verification email has been queued for sending.
     /// </returns>
     /// <response code="200">The verification email was successfully resent.</response>
-    /// <response code="403">The caller is not allowed to resend a verification email for this user.</response>
     /// <response code="404">No user exists with the specified <paramref name="userId"/>.</response>
     /// <response code="409">
     /// The request could not be completed because there is no pending verification for the user,
@@ -263,7 +262,6 @@ public class UserController(IUserService userService) : ControllerBase
     /// </response>
     [HttpPost("{userId:int}/email/resend", Name = nameof(ResendVerificationEmail))]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult> ResendVerificationEmail(

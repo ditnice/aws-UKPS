@@ -4154,10 +4154,6 @@ export type ResendVerificationEmailErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The caller is not allowed to resend a verification email for this user.
-     */
-    403: ProblemDetails;
-    /**
      * No user exists with the specified userId.
      */
     404: ProblemDetails;
