@@ -184,7 +184,7 @@ const ClinicalTrialsSection = ({ record }: SectionProps) => {
         </SummaryList>
       ) : (
         record.recordClinicalTrials.map((trial, index) => (
-          <SummaryList key={trial.clinicalTrialsGovNumber} title={`Trial ${index + 1}`}>
+          <SummaryList key={index} title={`Trial ${index + 1}`}>
             <SummaryListRow label="Study name" value={trial.studyName} />
             <SummaryListRow
               label="ClinicalTrials.gov number"
