@@ -108,8 +108,20 @@ export const toFormValue = (question: Question, answer: unknown): FormValue => {
   return isHierarchical(question) ? findEntry(question.options, value) : value
 }
 
-export const toFormValues = (questions: Question[], answers: Record<string, unknown>): FormValues =>
-  Object.fromEntries(questions.map((q, i) => [fieldName(i), toFormValue(q, answers[q.id])]))
+export const toFormValues = (
+  questions: Question[],
+  answers: Record<string, unknown>,
+  addGroupItem = false,
+): FormValues =>
+  Object.fromEntries(
+    questions.map((q, i) => {
+      const value = toFormValue(q, answers[q.id])
+      const saved = answers[q.id]
+      // A group with nothing saved already shows one blank item, so only add after saved items.
+      const addBlank = addGroupItem && isGroup(q) && Array.isArray(saved) && saved.length > 0
+      return [fieldName(i), addBlank ? [...groupItems(value), emptyGroupItem(q)] : value]
+    }),
+  )
 
 const entryValue = (entry: HierarchicalEntry) => entry.child || entry.parent
 

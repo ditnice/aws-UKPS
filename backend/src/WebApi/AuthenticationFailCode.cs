@@ -45,4 +45,9 @@ public enum AuthenticationFailCode
     /// organisation.
     /// </summary>
     SelectedOrganisationMismatch = 7,
+
+    /// <summary>
+    /// The user must verify their pending email address before authentication can continue.
+    /// </summary>
+    PendingEmailRequiredVerification = 8,
 }

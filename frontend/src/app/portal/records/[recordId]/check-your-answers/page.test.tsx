@@ -2,6 +2,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getRecordCheckAnswers } from '@/client/generated'
+import type { RecordCheckAnswersGroupItemDto } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 
 import CheckAnswersPage from './page'
@@ -58,6 +59,9 @@ const checkAnswers = {
                 multiple: false,
                 values: ['GC22'],
                 selectedOptions: null,
+                itemLabel: null,
+                addAnotherLabel: null,
+                items: null,
               },
               {
                 id: 'generic-name',
@@ -67,6 +71,9 @@ const checkAnswers = {
                 multiple: false,
                 values: [],
                 selectedOptions: null,
+                itemLabel: null,
+                addAnotherLabel: null,
+                items: null,
               },
             ],
           },
@@ -85,6 +92,68 @@ const genericNameError = {
   taskId: 'names-and-identifiers',
   message: 'Enter a generic name',
 }
+
+const trialItem = (studyName: string): RecordCheckAnswersGroupItemDto => ({
+  questions: [
+    {
+      id: 'study_name',
+      pageId: 'clinical-trial-details',
+      label: 'Study name',
+      type: 'Text',
+      multiple: false,
+      values: [studyName],
+      selectedOptions: null,
+      itemLabel: null,
+      addAnotherLabel: null,
+      items: null,
+    },
+  ],
+})
+
+const trialsCheckAnswers = {
+  ...checkAnswers,
+  data: {
+    ...checkAnswers.data,
+    sections: [
+      {
+        id: 'clinical-trials',
+        title: 'Clinical trials',
+        tasks: [
+          {
+            id: 'clinical-trials',
+            title: 'Clinical trials',
+            questions: [
+              {
+                id: 'has_clinical_trials',
+                pageId: 'add-clinical-trial',
+                label: 'Do you wish to add a clinical trial?',
+                type: 'Radio',
+                multiple: false,
+                values: ['Yes'],
+                selectedOptions: null,
+                itemLabel: null,
+                addAnotherLabel: null,
+                items: null,
+              },
+              {
+                id: 'record_clinical_trial',
+                pageId: 'clinical-trial-details',
+                label: 'Enter clinical trial details',
+                type: 'Group',
+                multiple: false,
+                values: [],
+                selectedOptions: null,
+                itemLabel: 'Clinical trial',
+                addAnotherLabel: 'Add another clinical trial',
+                items: [trialItem('SURVEYOR-1'), trialItem('SURVEYOR-2')],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+} satisfies GetRecordCheckAnswersResult
 
 const renderPage = async (recordId = '42') => {
   const page = await CheckAnswersPage({ params: Promise.resolve({ recordId }) })
@@ -119,6 +188,79 @@ describe('CheckAnswersPage', () => {
       'href',
       '/portal/records/42/names?returnTo=check-your-answers',
     )
+  })
+
+  it('shows each item of a group as its own card with an Edit link to that item', async () => {
+    vi.mocked(getRecordCheckAnswers).mockResolvedValue(trialsCheckAnswers)
+
+    await renderPage()
+
+    expect(screen.getByRole('heading', { level: 3, name: 'Clinical trial 1' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 3, name: 'Clinical trial 2' })).toBeInTheDocument()
+    expect(screen.getByText('SURVEYOR-1')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Edit\s*Clinical trial 2/ })).toHaveAttribute(
+      'href',
+      '/portal/records/42/clinical-trial-details?returnTo=check-your-answers#record_clinical_trial-item-1',
+    )
+  })
+
+  it('offers to add another item, opening it after the saved ones', async () => {
+    vi.mocked(getRecordCheckAnswers).mockResolvedValue(trialsCheckAnswers)
+
+    await renderPage()
+
+    expect(screen.getByRole('link', { name: 'Add another clinical trial' })).toHaveAttribute(
+      'href',
+      '/portal/records/42/clinical-trial-details?returnTo=check-your-answers&add=group-item#record_clinical_trial-item-2',
+    )
+  })
+
+  it('shows a question that comes before a group above its items', async () => {
+    vi.mocked(getRecordCheckAnswers).mockResolvedValue(trialsCheckAnswers)
+
+    await renderPage()
+
+    const question = screen.getByText('Do you wish to add a clinical trial?', { selector: 'dt' })
+    const firstTrial = screen.getByRole('heading', { level: 3, name: 'Clinical trial 1' })
+    expect(question.compareDocumentPosition(firstTrial)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
+  it('does not show a group as a Change row', async () => {
+    vi.mocked(getRecordCheckAnswers).mockResolvedValue(trialsCheckAnswers)
+
+    await renderPage()
+
+    expect(
+      screen.queryByRole('link', { name: /Change\s*Enter clinical trial details/ }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('tags a group with an error once, naming the group', async () => {
+    vi.mocked(getRecordCheckAnswers).mockResolvedValue({
+      ...trialsCheckAnswers,
+      data: {
+        ...trialsCheckAnswers.data,
+        errors: [
+          {
+            questionId: 'record_clinical_trial',
+            pageId: 'clinical-trial-details',
+            taskId: 'clinical-trials',
+            message: 'Add a clinical trial',
+          },
+        ],
+      },
+    })
+
+    await renderPage()
+
+    const tags = screen.getAllByText(
+      (_, element) =>
+        element?.textContent === 'There is a problem with Enter clinical trial details' &&
+        element.tagName === 'SPAN',
+    )
+    expect(tags).toHaveLength(1)
+    const firstTrial = screen.getByRole('heading', { level: 3, name: 'Clinical trial 1' })
+    expect(tags[0].compareDocumentPosition(firstTrial)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 
   it('shows no error summary or problem tags when there are no errors', async () => {

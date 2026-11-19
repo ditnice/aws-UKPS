@@ -14,6 +14,15 @@ public sealed record RecordCheckAnswersQuestionDto
     /// <summary>The question text.</summary>
     public required string Label { get; init; }
 
+    /// <summary>For a group question, the heading of each item, such as "Clinical trial"; null otherwise.</summary>
+    public required string? ItemLabel { get; init; }
+
+    /// <summary>For a group question, its items in order, each with a row per child question; null for any other question.</summary>
+    public required IReadOnlyList<RecordCheckAnswersGroupItemDto>? Items { get; init; }
+
+    /// <summary>For a group question, the label of its add-another button, such as "Add another clinical trial"; null otherwise.</summary>
+    public required string? AddAnotherLabel { get; init; }
+
     /// <summary>The control the question uses, which says how to format the answer.</summary>
     public required FormControl Type { get; init; }
 

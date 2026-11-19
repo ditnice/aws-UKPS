@@ -15,9 +15,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.18.2";
+    private const string ExpectedVersion = "2026.11.19.2";
     private const string ExpectedFingerprint =
-        "e77d18241f9f60358ba9ad066a4bd31031680c15b206e6ae8d7b054b2dfe7550";
+        "3d57dd4431fd94b42c86afba3e964d311368478573d9be80a533ce79ea37553b";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -357,7 +357,7 @@ public class MedicineFormModelTests
             ]);
         trials.Children[1].Prefixes.ShouldBe(["NCT"]);
         trials.Children[1].PrefixDigits.ShouldBe(8);
-        trials.Children[2].ItemLabel.ShouldBe("Trial number");
+        trials.Children[2].ItemLabel.ShouldBe("Other registry number");
         trials
             .Children.Select(static c => string.Join(",", c.Rules.Select(static r => r.Kind)))
             .ShouldBe(["Required", "Required,Distinct", "Distinct"]);
