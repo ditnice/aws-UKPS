@@ -207,7 +207,15 @@ internal class LoginService : ILoginService
             .GetByEmailOrDefault(emailUsername, cancellationToken);
         if (user is not null)
         {
-            return new(user, false);
+            // Handles edge cases where there is a pending email that only changes in case.
+            bool hasPendingEmailThatMatchesCase =
+                user.NormalisedPendingWorkEmail is not null
+                && string.Equals(
+                    user.NormalisedPendingWorkEmail,
+                    user.NormalisedWorkEmail,
+                    StringComparison.Ordinal
+                );
+            return new(user, hasPendingEmailThatMatchesCase);
         }
         var userWithPendingEmail = await ApplyRequiredInclusions(_appDbContext.Users)
             .GetByPendingEmailOrDefault(emailUsername, cancellationToken);
