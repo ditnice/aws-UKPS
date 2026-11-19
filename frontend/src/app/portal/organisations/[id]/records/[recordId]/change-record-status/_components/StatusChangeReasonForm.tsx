@@ -110,7 +110,7 @@ const ReasonForm = <TReason extends RecordStatusChangeReason>({
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form method="post" onSubmit={handleSubmit}>
       {saveFailed && (
         <ErrorState>There was a problem saving your answer. Please try again later.</ErrorState>
       )}

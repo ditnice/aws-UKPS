@@ -91,6 +91,7 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
 
   return (
     <form
+      method="form"
       noValidate
       onSubmit={(event) => {
         event.preventDefault()
