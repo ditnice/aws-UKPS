@@ -14,6 +14,9 @@ const question = (
   multiple: false,
   values: [],
   selectedOptions: null,
+  itemLabel: null,
+  addAnotherLabel: null,
+  items: null,
   ...overrides,
 })
 

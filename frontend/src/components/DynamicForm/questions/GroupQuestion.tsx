@@ -2,6 +2,7 @@ import { RuleKind } from '@/client/generated'
 import { AddAnotherGroup } from '@/components/AddAnother/AddAnotherGroup'
 import { FormGroup } from '@/components/FormGroup/FormGroup'
 import { emptyGroupItem } from '@/lib/dynamic-form/answers'
+import { groupItemAnchor } from '@/lib/dynamic-form/links'
 import type { FormValue, GroupItemValue } from '@/lib/dynamic-form/types'
 
 import { questionRegistry } from '../questionRegistry'
@@ -59,6 +60,7 @@ export function GroupQuestion({
         count={items.length}
         itemHeading={(index) => `${question.itemLabel ?? 'Item'} ${index + 1}`}
         itemHeadingLevel={labelAsHeading ? 2 : 3}
+        itemId={(index) => groupItemAnchor(question.id, index)}
         maxItems={maxItems ?? undefined}
         onAdd={() => onChange([...items, emptyGroupItem(question)])}
         onRemove={(index) => {

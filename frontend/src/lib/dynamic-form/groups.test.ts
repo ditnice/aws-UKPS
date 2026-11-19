@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { RecordPageQuestionDto } from '@/client/generated'
 
-import { questionError, repeatIndexes, toFormValue, toPayloadAnswer } from './answers'
+import { questionError, repeatIndexes, toFormValue, toFormValues, toPayloadAnswer } from './answers'
 import { itemErrorKey } from './applyServerErrors'
 
 const base: RecordPageQuestionDto = {
@@ -69,6 +69,20 @@ describe('text lists', () => {
 describe('groups', () => {
   it('shows one blank item when there are none', () => {
     expect(toFormValue(group, [])).toEqual([{ name: '', code: '', numbers: [''] }])
+  })
+
+  it('adds a blank item after the saved ones when asked to', () => {
+    const saved = { name: 'A', code: 'NCT12345678', numbers: ['X'] }
+
+    expect(toFormValues([group], { record_clinical_trial: [saved] }, true)).toEqual({
+      q0: [saved, { name: '', code: '', numbers: [''] }],
+    })
+  })
+
+  it('shows only the one blank item when asked to add one and nothing is saved', () => {
+    expect(toFormValues([group], { record_clinical_trial: [] }, true)).toEqual({
+      q0: [{ name: '', code: '', numbers: [''] }],
+    })
   })
 
   it('reads and sends each item keyed by child ID', () => {
