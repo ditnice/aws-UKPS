@@ -247,6 +247,68 @@ public class UserController(IUserService userService) : ControllerBase
     }
 
     /// <summary>
+    /// Resends the email verification message to a user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user to resend the verification email to.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>
+    /// An empty <c>200 OK</c> response when the verification email has been queued for sending.
+    /// </returns>
+    /// <response code="200">The verification email was successfully resent.</response>
+    /// <response code="403">The caller is not allowed to resend a verification email for this user.</response>
+    /// <response code="404">No user exists with the specified <paramref name="userId"/>.</response>
+    /// <response code="409">
+    /// The request could not be completed because there is no pending verification for the user,
+    /// or because a concurrent modification was detected. Retry may succeed in the latter case.
+    /// </response>
+    [HttpPost("{userId:int}/email/resend", Name = nameof(ResendVerificationEmail))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult> ResendVerificationEmail(
+        [FromRoute] int userId,
+        CancellationToken cancellationToken
+    )
+    {
+        ResendVerificationEmailResult result = await userService.ResendVerificationEmail(
+            userId,
+            cancellationToken
+        );
+
+        return result.Match(
+            Ok,
+            err =>
+                err.Match<ActionResult>(
+                    notFound: _ =>
+                        Problem(
+                            statusCode: StatusCodes.Status404NotFound,
+                            title: "User not found",
+                            detail: $"No user with id '{userId}' exists."
+                        ),
+                    noPendingVerification: _ =>
+                        Problem(
+                            statusCode: StatusCodes.Status409Conflict,
+                            title: "No pending verification",
+                            detail: $"User has no pending email verification to resend."
+                        ),
+                    forbidden: _ =>
+                        Problem(
+                            statusCode: StatusCodes.Status403Forbidden,
+                            title: "Forbidden",
+                            detail: "You are not allowed to resend the verification email for this user."
+                        ),
+                    concurrencyDetected: _ =>
+                        Problem(
+                            statusCode: StatusCodes.Status409Conflict,
+                            title: "Concurrency conflict",
+                            detail: "The user was modified by another request. Please try again."
+                        )
+                )
+        );
+    }
+
+    /// <summary>
     /// Verifies a user's pending email address using a verification token.
     /// </summary>
     /// <param name="userId">The ID of the user whose pending email address is being verified.</param>

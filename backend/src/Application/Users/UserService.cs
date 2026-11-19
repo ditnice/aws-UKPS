@@ -677,6 +677,53 @@ internal partial class UserService(
         }
     }
 
+    public async Task<ResendVerificationEmailResult> ResendVerificationEmail(
+        int userId,
+        CancellationToken cancellationToken
+    )
+    {
+        User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
+
+        if (user is null)
+        {
+            return ResendVerificationEmailResult.Err(new ResendVerificationEmailError.NotFound());
+        }
+
+        if (!currentUserInfoService.IsCurrentUser(user))
+        {
+            return ResendVerificationEmailResult.Err(new ResendVerificationEmailError.Forbidden());
+        }
+
+        if (user.PendingWorkEmail is null)
+        {
+            return ResendVerificationEmailResult.Err(
+                new ResendVerificationEmailError.NoPendingVerification()
+            );
+        }
+
+        var token = VerificationTokenGenerator.Generate();
+        user.RefreshVerificationToken(token, timeProvider.GetUtcNow());
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await SendEmailVerificationEmail(
+                user.PendingWorkEmail,
+                token,
+                user.CognitoUsername,
+                cancellationToken
+            );
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return ResendVerificationEmailResult.Err(
+                new ResendVerificationEmailError.ConcurrencyDetected()
+            );
+        }
+
+        return ResendVerificationEmailResult.Ok();
+    }
+
     public async Task<VerifyPendingEmailAddressResult> VerifyPendingEmailAddress(
         int userId,
         VerifyPendingEmailAddressCommand command,
@@ -1009,22 +1056,16 @@ internal partial class UserService(
         }
     }
 
-    private async Task HandleUserEvent(
+    private Task HandleUserEvent(
         User user,
         User.PendingEmailUpdatedEvent pendingEmailUpdatedEvent,
         CancellationToken cancellationToken
     )
     {
-        var link = emailVerificationLinkCreator.GetVerificationLink(
-            pendingEmailUpdatedEvent.VerificationToken
-        );
-        await emailService.SendEmail(
-            new SendEmailCommand()
-            {
-                RecipientAddress = pendingEmailUpdatedEvent.RequestedEmail,
-                PersonIdentifier = user.CognitoUsername,
-                Email = new EmailChangeVerificationRequestEmail() { EmailVerificationLink = link },
-            },
+        return SendEmailVerificationEmail(
+            pendingEmailUpdatedEvent.RequestedEmail,
+            pendingEmailUpdatedEvent.VerificationToken,
+            user.CognitoUsername,
             cancellationToken
         );
     }
@@ -1038,6 +1079,25 @@ internal partial class UserService(
         await identityService.UpdateUserEmail(
             user.CognitoUsername,
             emailUpdatedEvent.NewWorkEmail,
+            cancellationToken
+        );
+    }
+
+    private async Task SendEmailVerificationEmail(
+        string newEmailAddress,
+        string verificationToken,
+        CognitoUsername cognitoUsername,
+        CancellationToken cancellationToken
+    )
+    {
+        var link = emailVerificationLinkCreator.GetVerificationLink(verificationToken);
+        await emailService.SendEmail(
+            new SendEmailCommand()
+            {
+                RecipientAddress = newEmailAddress,
+                PersonIdentifier = cognitoUsername,
+                Email = new EmailChangeVerificationRequestEmail() { EmailVerificationLink = link },
+            },
             cancellationToken
         );
     }

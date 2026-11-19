@@ -1,3 +1,4 @@
+global using ResendVerificationEmailResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.ResendVerificationEmailError>;
 global using VerifyPendingEmailAddressResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.VerifyPendingEmailAddressError>;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Organisations.Dtos;
@@ -73,6 +74,20 @@ public interface IUserService
     Task<Result<UpdateUserEmailError>> UpdateUserEmail(
         int userId,
         UpdateUserEmailCommand command,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
+    /// Resends the account verification email to the specified user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user who should receive the verification email.</param>
+    /// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result is a
+    /// <see cref="ResendVerificationEmailResult"/> describing the outcome of the request.
+    /// </returns>
+    Task<ResendVerificationEmailResult> ResendVerificationEmail(
+        int userId,
         CancellationToken cancellationToken
     );
 

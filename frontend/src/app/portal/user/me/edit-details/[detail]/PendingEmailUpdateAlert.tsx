@@ -1,9 +1,17 @@
+'use server'
+
 import { PendingWorkEmailChangeDto } from '@/client/generated'
 import { Alert } from '@/components/Alert/Alert'
 
-type PendingEmailUpdateAlertProps = PendingWorkEmailChangeDto
+import ResendVerificationEmailButton from './ResendVerificationEmail/ResendVerificationEmailButton'
 
-const PendingEmailUpdateAlert = ({ value, verifiedByEmail }: PendingEmailUpdateAlertProps) => {
+export type PendingEmailUpdateAlertProps = PendingWorkEmailChangeDto & { userId: number }
+
+const PendingEmailUpdateAlert = async ({
+  value,
+  verifiedByEmail,
+  userId,
+}: PendingEmailUpdateAlertProps) => {
   return (
     <Alert type="caution" title="Email Update Pending">
       <h2>Email Update Pending</h2>
@@ -24,6 +32,7 @@ const PendingEmailUpdateAlert = ({ value, verifiedByEmail }: PendingEmailUpdateA
           complete the change.
         </p>
       )}
+      <ResendVerificationEmailButton userId={userId} />
     </Alert>
   )
 }

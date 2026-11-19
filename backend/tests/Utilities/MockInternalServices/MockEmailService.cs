@@ -20,4 +20,9 @@ public class MockEmailService
                 return Task.CompletedTask;
             });
     }
+
+    internal void Clear()
+    {
+        _sent.Clear();
+    }
 }

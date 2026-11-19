@@ -38,6 +38,8 @@ namespace UKPS.Api.Tests.Application.Users;
 [Collection(DatabaseCollection.Name)]
 public class UserServiceTests : DatabaseTestBase
 {
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
     private readonly OrganisationFaker _organisationFaker = new();
     private readonly UserFaker _userFaker = new();
     private readonly Faker<MockUser> _mockUserFaker =
@@ -1259,6 +1261,64 @@ public class UserServiceTests : DatabaseTestBase
         );
         MockUser? user = _harness.Cognito.GetUserByEmail(testEmail);
         user.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task ResendVerificationEmail_WhenThereIsAPendingEmail_ShouldResendVerificationEmail()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        var token = await RequestEmailUpdate(currentUser);
+        _harness.Emails.Clear();
+
+        var result = await Service.ResendVerificationEmail(currentUser.Id, Ct);
+
+        result.ShouldBeSuccess();
+        var email = _harness
+            .Emails.Sent.ShouldHaveSingleItem()
+            .ShouldBeOfType<EmailChangeVerificationRequestEmail>();
+
+        email.EmailVerificationLink.AbsoluteUri.ShouldNotContain(token);
+    }
+
+    [Fact]
+    public async Task ResendVerificationEmail_WhenThereIsNoPendingEmail_ShouldNotResendVerificationEmailAndReturnANoPendingVerificationError()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+
+        _harness.Emails.Clear();
+
+        var result = await Service.ResendVerificationEmail(currentUser.Id, Ct);
+
+        result.ShouldBeError().ShouldBeOfType<ResendVerificationEmailError.NoPendingVerification>();
+        _harness.Emails.Sent.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task ResendVerificationEmail_WhenTargetUserDoesNotExist_ShouldResendVerificationEmailAndReturnANotFoundError()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        _ = await RequestEmailUpdate(currentUser);
+        _harness.Emails.Clear();
+
+        var result = await Service.ResendVerificationEmail(999, Ct);
+
+        result.ShouldBeError().ShouldBeOfType<ResendVerificationEmailError.NotFound>();
+        _harness.Emails.Sent.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task ResendVerificationEmail_WhenCurrentUserIsNotTheSameAsTargetUser_ShouldResendVerificationEmailAndReturnAForbiddenError()
+    {
+        User firstUser = await CreateExistingCurrentUser();
+        _ = await RequestEmailUpdate(firstUser);
+
+        _ = await CreateExistingCurrentUser(); // Sets a new current user.
+        _harness.Emails.Clear();
+
+        var result = await Service.ResendVerificationEmail(firstUser.Id, Ct);
+
+        result.ShouldBeError().ShouldBeOfType<ResendVerificationEmailError.Forbidden>();
+        _harness.Emails.Sent.ShouldBeEmpty();
     }
 
     [Fact]
