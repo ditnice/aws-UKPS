@@ -71,7 +71,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
         // Go to the record's task list, when its type has a content form the user can edit.
         router.push(
           created?.canEditContent
-            ? `/portal/records/${created.recordId}/task-list`
+            ? `/portal/records/${created.recordId}/task-list?action=draft-saved`
             : `/portal/organisations/${organisationId}/records`,
         )
         return

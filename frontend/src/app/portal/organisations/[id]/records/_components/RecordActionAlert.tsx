@@ -27,5 +27,15 @@ export const RecordActionAlert = ({ action }: RecordActionAlertProps) => {
           </p>
         </Alert>
       )
+    case 'draft-saved':
+      return (
+        <Alert type="success">
+          <h3>Draft record saved</h3>
+          <p>
+            This record has been saved in my records. This record has not been published and is not
+            visible to horizon scanners.
+          </p>
+        </Alert>
+      )
   }
 }
