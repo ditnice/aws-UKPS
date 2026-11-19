@@ -1826,3 +1826,96 @@ describe('FormPage clinical trials', () => {
     )
   })
 })
+
+describe('FormPage names and identifiers', () => {
+  const genericNames = question({
+    id: 'record_product_detail.generic_names',
+    type: 'TextList',
+    multiple: true,
+    label: 'Active substance',
+    hint: 'Enter the standard, non-proprietary name for the active substances.',
+    addAnotherLabel: 'Add another active substance',
+    rules: [
+      { kind: 'Required', value: null, message: 'Enter generic name' },
+      { kind: 'Distinct', value: null, message: 'Generic names must be distinct' },
+    ],
+  })
+
+  const namesPage = (answer: string[] = ['sofosbuvir', 'velpatasvir']) =>
+    page({
+      section: { id: 'product-record-details', title: 'Provide product record details' },
+      task: { id: 'names-and-identifiers', title: 'Names and identifiers' },
+      page: {
+        id: 'names-and-identifiers',
+        title: 'Provide product record details',
+        commercialInConfidence: false,
+      },
+      nextPageId: null,
+      questions: [genericNames],
+      answers: { [genericNames.id]: answer },
+    })
+
+  // The task has one page, so its button returns to the task list.
+  const saveAndReturn = () =>
+    fireEvent.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+
+  const sentAnswers = () =>
+    (mocks.saveRecordFormPage.mock.calls[0][0] as { body: { answers: Record<string, unknown> } })
+      .body.answers
+
+  it('lists the saved entries under the question as a group', () => {
+    render(<FormPage page={namesPage()} />)
+
+    expect(screen.getByRole('group', { name: 'Active substance' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Active substance 1')).toHaveValue('sofosbuvir')
+    expect(screen.getByLabelText('Active substance 2')).toHaveValue('velpatasvir')
+  })
+
+  it('adds an entry, focusing it, and sends the entries in order without blanks', async () => {
+    const user = userEvent.setup()
+    render(<FormPage page={namesPage(['sofosbuvir'])} />)
+
+    await user.click(screen.getByRole('button', { name: 'Add another active substance' }))
+    expect(screen.getByLabelText('Active substance 2')).toHaveFocus()
+    await user.click(screen.getByRole('button', { name: 'Add another active substance' }))
+    await user.type(screen.getByLabelText('Active substance 3'), 'voxilaprevir')
+    saveAndReturn()
+
+    await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+    expect(sentAnswers()).toEqual({ [genericNames.id]: ['sofosbuvir', 'voxilaprevir'] })
+  })
+
+  it('removes an entry', async () => {
+    const user = userEvent.setup()
+    render(<FormPage page={namesPage()} />)
+
+    await user.click(screen.getByRole('button', { name: 'Remove Active substance 1' }))
+    saveAndReturn()
+
+    await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+    expect(sentAnswers()).toEqual({ [genericNames.id]: ['velpatasvir'] })
+  })
+
+  it('shows a repeated entry against that entry without saving', async () => {
+    render(<FormPage page={namesPage(['sofosbuvir', 'SOFOSBUVIR'])} />)
+
+    saveAndReturn()
+
+    expect(await screen.findByText('Generic names must be distinct')).toBeInTheDocument()
+    expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+  })
+
+  it('shows a server error on an entry against the entry it names', async () => {
+    mocks.saveRecordFormPage.mockResolvedValue({
+      error: { errors: { [`${genericNames.id}[1]`]: ['Server says this one is repeated'] } },
+      response: { ok: false, status: 400 },
+    })
+    render(<FormPage page={namesPage(['sofosbuvir', '', 'velpatasvir'])} />)
+
+    saveAndReturn()
+
+    expect(await screen.findByText('Server says this one is repeated')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(mocks.push).not.toHaveBeenCalled()
+  })
+})

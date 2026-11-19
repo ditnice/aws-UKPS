@@ -1,21 +1,21 @@
-using System.Text.Json;
 using Shouldly;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
-using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Tests.Persistence.Entities.RecordWorkflow;
 
 public sealed class FieldAuditJsonTests
 {
     [Fact]
-    public void NamesAndIdentifiers_ShouldHaveAKeyForEveryNameAndIdentifierTypeInEnumOrder()
+    public void TextList_ShouldBeTheEntriesInOrderUnescaped()
     {
-        string text = FieldAuditJson.NamesAndIdentifiers(["sofosbuvir"], ["PSI-7977"]);
+        FieldAuditJson
+            .TextList(["sofosbuvir", "Mölnlycke", "A+B's <C>"])
+            .ShouldBe("""["sofosbuvir","Mölnlycke","A+B's <C>"]""");
+    }
 
-        using JsonDocument document = JsonDocument.Parse(text);
-        document
-            .RootElement.EnumerateObject()
-            .Select(static property => property.Name)
-            .ShouldBe(Enum.GetNames<NameAndIdentifierType>());
+    [Fact]
+    public void TextList_WithNoEntries_ShouldBeNull()
+    {
+        FieldAuditJson.TextList([]).ShouldBeNull();
     }
 }
