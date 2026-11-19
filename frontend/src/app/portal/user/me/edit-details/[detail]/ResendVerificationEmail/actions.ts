@@ -1,5 +1,7 @@
 'use server'
 
+import { unstable_rethrow } from 'next/navigation'
+
 import { resendVerificationEmail } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 
@@ -25,8 +27,8 @@ export const resendWorkEmailVerification = async (
       status: 'error',
       message: error?.title ?? 'An unexpected error occurred.',
     }
-  } catch {
-    // Network failures / thrown errors shouldn't crash the form
+  } catch (error) {
+    unstable_rethrow(error)
     return { status: 'error', message: 'An unexpected error occurred.' }
   }
 }
