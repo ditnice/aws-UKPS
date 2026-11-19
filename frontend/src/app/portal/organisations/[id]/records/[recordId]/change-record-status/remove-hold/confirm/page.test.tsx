@@ -1,11 +1,8 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getRecord, RecordDto } from '@/client/generated'
-import {
-  fakeRecordDtoMedicineRecordDto,
-  fakeRecordProductDetailDto,
-} from '@/client/generated/@faker-js/faker.gen'
+import { getRecordOverview, RecordOverviewDto } from '@/client/generated'
+import { fakeRecordOverviewDto } from '@/client/generated/@faker-js/faker.gen'
 import { createServerApiClient } from '@/client/server-api'
 
 import RemoveHoldConfirmPage from './page'
@@ -19,7 +16,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/client/generated', async () => ({
-  getRecord: vi.fn(),
+  getRecordOverview: vi.fn(),
   RecordType: (
     await vi.importActual<typeof import('@/client/generated/types.gen')>(
       '@/client/generated/types.gen',
@@ -79,22 +76,22 @@ vi.mock('../../_components/ConfirmStatusChangeControls', () => ({
   ),
 }))
 
-type GetRecordResult = Awaited<ReturnType<typeof getRecord>>
+type GetRecordResult = Awaited<ReturnType<typeof getRecordOverview>>
 
 const onHoldRecord = {
-  ...fakeRecordDtoMedicineRecordDto(),
+  ...fakeRecordOverviewDto(),
   recordType: 'Medicine',
   recordStatus: 'OnHold',
   displayStatus: 'OnHold',
   actions: ['Update', 'ChangeStatus', 'ConfirmOnHold', 'ViewTimeline'],
-  recordProductDetail: fakeRecordProductDetailDto(),
-} satisfies RecordDto
+  recordTitle: 'Early rheumatoid arthritis in adults',
+} satisfies RecordOverviewDto
 
 const organisationId = String(onHoldRecord.organisationId)
 const recordId = String(onHoldRecord.recordId)
 
 const mockRecord = (result: Partial<GetRecordResult>) =>
-  vi.mocked(getRecord).mockResolvedValue(result as GetRecordResult)
+  vi.mocked(getRecordOverview).mockResolvedValue(result as GetRecordResult)
 
 const renderPage = async (recordType: string = onHoldRecord.recordType) => {
   const page = await RemoveHoldConfirmPage({
@@ -121,7 +118,7 @@ describe('RemoveHoldConfirmPage', () => {
 
     await renderPage()
 
-    expect(getRecord).toHaveBeenCalledWith(
+    expect(getRecordOverview).toHaveBeenCalledWith(
       expect.objectContaining({
         path: { id: onHoldRecord.recordId },
         query: {
@@ -133,9 +130,7 @@ describe('RemoveHoldConfirmPage', () => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
       'Confirm decision to remove hold',
     )
-    expect(screen.getByTestId('preheading').textContent).toBe(
-      onHoldRecord.recordProductDetail.recordTitle,
-    )
+    expect(screen.getByTestId('preheading').textContent).toBe(onHoldRecord.recordTitle)
     expect(
       screen.getByText(
         /By removing this record from hold, you confirm that development has restarted/,

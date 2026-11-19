@@ -92,7 +92,7 @@ public class RecordSubmissionEndpointTests : DatabaseTestBase
         JsonObject dto = (
             await _httpClient.GetFromJsonAsync<JsonObject>(
                 new Uri(
-                    $"/records/{_record.Id}?recordType=Medicine&organisationId={_organisation.Id}",
+                    $"/records/{_record.Id}/overview?recordType=Medicine&organisationId={_organisation.Id}",
                     UriKind.Relative
                 ),
                 Ct

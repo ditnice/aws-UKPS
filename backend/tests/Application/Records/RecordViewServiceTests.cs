@@ -1,22 +1,26 @@
 using Bogus;
+using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
-using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
 using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
-using UKPS.Api.Persistence.Entities.ReferenceData;
-using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.AssertionHelpers;
+using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
+using GetRecordDetailResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Records.Dtos.RecordDetailDto,
+    UKPS.Api.Application.Records.Errors.GetRecordError
+>;
 using GetRecordResult = UKPS.Api.Application.Common.Result<
-    UKPS.Api.Application.Records.Dtos.RecordDetails.RecordDto,
+    UKPS.Api.Application.Records.Dtos.RecordOverviewDto,
     UKPS.Api.Application.Records.Errors.GetRecordError
 >;
 using Record = UKPS.Api.Persistence.Entities.RecordWorkflow.Record;
@@ -26,6 +30,12 @@ namespace UKPS.Api.Tests.Application.Records;
 [Collection(DatabaseCollection.Name)]
 public class RecordViewServiceTests : DatabaseTestBase
 {
+    private const string Indication = "medicines_indication_detail.indication";
+    private const string IndicationAnswer = "Chronic hepatitis C virus infection in adults";
+    private const string IndicationIsCancer = "medicines_indication_detail.indication_is_cancer";
+    private const string ScreeningDetails = "medicines_patient_identification.screening_details";
+    private const string ClinicalTrials = "record_clinical_trial";
+
     private static readonly DateTime _reviewedAt = new(2026, 6, 19, 12, 0, 0, DateTimeKind.Utc);
 
     private Organisation _organisation = null!;
@@ -62,7 +72,7 @@ public class RecordViewServiceTests : DatabaseTestBase
     [InlineData(RecordStatus.Published, WorkflowStatus.Published)]
     [InlineData(RecordStatus.OnHold, WorkflowStatus.Published)]
     [InlineData(RecordStatus.Archived, WorkflowStatus.Published)]
-    public async Task GetRecord_AnyRecordStatus_ReturnsRecordHeader(
+    public async Task GetRecordOverview_AnyRecordStatus_ReturnsRecordHeader(
         RecordStatus recordStatus,
         WorkflowStatus workflowStatus
     )
@@ -70,14 +80,14 @@ public class RecordViewServiceTests : DatabaseTestBase
         Record record = await AddRecord(recordStatus);
         await AddRevision(record, 1, workflowStatus);
 
-        GetRecordResult result = await Service.GetRecord(
+        GetRecordResult result = await Service.GetRecordOverview(
             record.Id,
             RecordType.Medicine,
             _organisation.Id,
             TestContext.Current.CancellationToken
         );
 
-        var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
+        RecordOverviewDto dto = result.ShouldBeSuccess();
         dto.RecordId.ShouldBe(record.Id);
         dto.OrganisationId.ShouldBe(_organisation.Id);
         dto.RecordStatus.ShouldBe(recordStatus);
@@ -88,7 +98,7 @@ public class RecordViewServiceTests : DatabaseTestBase
     [InlineData(UserRole.Standard, true)]
     [InlineData(UserRole.Champion, true)]
     [InlineData(UserRole.Super, false)]
-    public async Task GetRecord_CanEditContent_IsOnlyTrueForUsersWhoCanEditContent(
+    public async Task GetRecordOverview_CanEditContent_IsOnlyTrueForUsersWhoCanEditContent(
         UserRole role,
         bool expected
     )
@@ -97,24 +107,21 @@ public class RecordViewServiceTests : DatabaseTestBase
         await AddRevision(record, 1, WorkflowStatus.Draft);
         _harness.UpdateCurrentUser(x => x with { UserRole = role });
 
-        GetRecordResult result = await Service.GetRecord(
+        GetRecordResult result = await Service.GetRecordOverview(
             record.Id,
             RecordType.Medicine,
             _organisation.Id,
             TestContext.Current.CancellationToken
         );
 
-        result
-            .ShouldBeSuccess()
-            .ShouldBeOfType<MedicineRecordDto>()
-            .CanEditContent.ShouldBe(expected);
+        result.ShouldBeSuccess().CanEditContent.ShouldBe(expected);
     }
 
     [Theory]
     [InlineData(UserRole.Standard, true)]
     [InlineData(UserRole.Champion, true)]
     [InlineData(UserRole.Super, false)]
-    public async Task GetRecord_ChangeStatus_IsOnlyReturnedToUsersWhoCanChangeStatus(
+    public async Task GetRecordOverview_ChangeStatus_IsOnlyReturnedToUsersWhoCanChangeStatus(
         UserRole role,
         bool expected
     )
@@ -123,7 +130,7 @@ public class RecordViewServiceTests : DatabaseTestBase
         await AddRevision(record, 1, WorkflowStatus.Published);
         _harness.UpdateCurrentUser(x => x with { UserRole = role });
 
-        GetRecordResult result = await Service.GetRecord(
+        GetRecordResult result = await Service.GetRecordOverview(
             record.Id,
             RecordType.Medicine,
             _organisation.Id,
@@ -134,7 +141,7 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetRecord_DraftAfterPublishedRevision_ReturnsDraftRevisionContent()
+    public async Task GetRecordOverview_DraftAfterPublishedRevision_ReturnsDraftRevisionTitle()
     {
         Record record = await AddRecord(RecordStatus.Published);
         RecordRevision published = await AddRevision(record, 1, WorkflowStatus.Published);
@@ -149,17 +156,17 @@ public class RecordViewServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
 
-        GetRecordResult result = await Service.GetRecord(
+        GetRecordResult result = await Service.GetRecordOverview(
             record.Id,
             RecordType.Medicine,
             _organisation.Id,
             TestContext.Current.CancellationToken
         );
 
-        var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
+        RecordOverviewDto dto = result.ShouldBeSuccess();
         dto.RecordStatus.ShouldBe(RecordStatus.Published);
         dto.DisplayStatus.ShouldBe(RecordDisplayStatus.Draft);
-        dto.RecordProductDetail.ShouldNotBeNull().RecordTitle.ShouldBe($"Title {draft.Id}");
+        dto.RecordTitle.ShouldBe($"Title {draft.Id}");
     }
 
     [Theory]
@@ -174,7 +181,7 @@ public class RecordViewServiceTests : DatabaseTestBase
     [InlineData(RecordStatus.OnHold, WorkflowStatus.Published, RecordDisplayStatus.OnHold)]
     [InlineData(RecordStatus.Archived, WorkflowStatus.Draft, RecordDisplayStatus.Archived)]
     [InlineData(RecordStatus.Archived, WorkflowStatus.Published, RecordDisplayStatus.Archived)]
-    public async Task GetRecord_ReturnsLatestRevisionWithDisplayStatus(
+    public async Task GetRecordOverview_ReturnsLatestRevisionWithDisplayStatus(
         RecordStatus recordStatus,
         WorkflowStatus latestWorkflowStatus,
         RecordDisplayStatus expectedDisplayStatus
@@ -190,24 +197,24 @@ public class RecordViewServiceTests : DatabaseTestBase
         );
         await AddRevision(record, 2, latestWorkflowStatus);
 
-        GetRecordResult result = await Service.GetRecord(
+        GetRecordResult result = await Service.GetRecordOverview(
             record.Id,
             RecordType.Medicine,
             _organisation.Id,
             TestContext.Current.CancellationToken
         );
 
-        var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
+        RecordOverviewDto dto = result.ShouldBeSuccess();
         dto.RecordStatus.ShouldBe(recordStatus);
         dto.DisplayStatus.ShouldBe(expectedDisplayStatus);
     }
 
     [Fact]
-    public async Task GetRecord_NoRevisions_ReturnsNotFound()
+    public async Task GetRecordOverview_NoRevisions_ReturnsNotFound()
     {
         Record record = await AddRecord(RecordStatus.Unpublished);
 
-        GetRecordResult result = await Service.GetRecord(
+        GetRecordResult result = await Service.GetRecordOverview(
             record.Id,
             RecordType.Medicine,
             _organisation.Id,
@@ -218,9 +225,9 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetRecord_RecordDoesNotExist_ReturnsNotFound()
+    public async Task GetRecordOverview_RecordDoesNotExist_ReturnsNotFound()
     {
-        GetRecordResult result = await Service.GetRecord(
+        GetRecordResult result = await Service.GetRecordOverview(
             999_999,
             RecordType.Medicine,
             _organisation.Id,
@@ -231,7 +238,7 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetRecord_UserInAnotherOrganisation_ReturnsNotAllowed()
+    public async Task GetRecordOverview_UserInAnotherOrganisation_ReturnsNotAllowed()
     {
         Record record = await AddRecord(RecordStatus.Published);
         await AddRevision(record, 1, WorkflowStatus.Published);
@@ -239,7 +246,7 @@ public class RecordViewServiceTests : DatabaseTestBase
             .UpdateCurrentUser(x => x with { OrganisationId = _organisation.Id + 1 })
             .Service;
 
-        GetRecordResult result = await service.GetRecord(
+        GetRecordResult result = await service.GetRecordOverview(
             record.Id,
             RecordType.Medicine,
             _organisation.Id,
@@ -250,7 +257,7 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetRecord_RecordInAnotherOrganisation_ReturnsNotFound()
+    public async Task GetRecordOverview_RecordInAnotherOrganisation_ReturnsNotFound()
     {
         Record record = await AddRecord(RecordStatus.Published);
         await AddRevision(record, 1, WorkflowStatus.Published);
@@ -262,7 +269,7 @@ public class RecordViewServiceTests : DatabaseTestBase
             .UpdateCurrentUser(x => x with { OrganisationId = otherOrganisation.Id })
             .Service;
 
-        GetRecordResult result = await service.GetRecord(
+        GetRecordResult result = await service.GetRecordOverview(
             record.Id,
             RecordType.Medicine,
             otherOrganisation.Id,
@@ -273,12 +280,12 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetRecord_DiscardedRecord_ReturnsNotFound()
+    public async Task GetRecordOverview_DiscardedRecord_ReturnsNotFound()
     {
         Record record = await AddRecord(RecordStatus.Discarded);
         await AddRevision(record, 1, WorkflowStatus.Discarded);
 
-        GetRecordResult result = await Service.GetRecord(
+        GetRecordResult result = await Service.GetRecordOverview(
             record.Id,
             RecordType.Medicine,
             _organisation.Id,
@@ -289,7 +296,7 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetRecord_RecordNotInSelectableOrganisationThatIsNotSelected_ThrowsMismatch()
+    public async Task GetRecordOverview_RecordNotInSelectableOrganisationThatIsNotSelected_ThrowsMismatch()
     {
         Record record = await AddRecord(RecordStatus.Published);
         await AddRevision(record, 1, WorkflowStatus.Published);
@@ -308,7 +315,7 @@ public class RecordViewServiceTests : DatabaseTestBase
 
         SelectedOrganisationMismatchException exception =
             await Should.ThrowAsync<SelectedOrganisationMismatchException>(() =>
-                service.GetRecord(
+                service.GetRecordOverview(
                     record.Id,
                     RecordType.Medicine,
                     otherOrganisation.Id,
@@ -319,7 +326,7 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetRecord_RecordInSelectableOrganisationThatIsNotSelected_ThrowsMismatch()
+    public async Task GetRecordOverview_RecordInSelectableOrganisationThatIsNotSelected_ThrowsMismatch()
     {
         Record record = await AddRecord(RecordStatus.Published);
         await AddRevision(record, 1, WorkflowStatus.Published);
@@ -339,7 +346,7 @@ public class RecordViewServiceTests : DatabaseTestBase
 
         SelectedOrganisationMismatchException exception =
             await Should.ThrowAsync<SelectedOrganisationMismatchException>(() =>
-                service.GetRecord(
+                service.GetRecordOverview(
                     record.Id,
                     RecordType.Medicine,
                     _organisation.Id,
@@ -386,7 +393,7 @@ public class RecordViewServiceTests : DatabaseTestBase
         new[] { WorkflowStatus.Published, WorkflowStatus.Draft },
         new[] { RecordAction.ChangeStatus, RecordAction.ConfirmOnHold, RecordAction.ViewTimeline }
     )]
-    public async Task GetRecord_ReturnsPermittedActions(
+    public async Task GetRecordOverview_ReturnsPermittedActions(
         RecordStatus recordStatus,
         WorkflowStatus[] revisionStatuses,
         RecordAction[] expectedActions
@@ -396,7 +403,7 @@ public class RecordViewServiceTests : DatabaseTestBase
         Record record = await AddRecord(recordStatus);
         await AddRevisions(record, revisionStatuses);
 
-        GetRecordResult result = await Service.GetRecord(
+        GetRecordResult result = await Service.GetRecordOverview(
             record.Id,
             RecordType.Medicine,
             _organisation.Id,
@@ -407,26 +414,28 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetRecord_VaccineRecord_ReturnsVaccineRecord()
+    public async Task GetRecordOverview_VaccineRecord_ReturnsVaccineRecord()
     {
         Record record = await AddRecord(RecordStatus.Published, RecordType.Vaccine);
         await AddRevision(record, 1, WorkflowStatus.Published);
 
-        GetRecordResult result = await Service.GetRecord(
+        GetRecordResult result = await Service.GetRecordOverview(
             record.Id,
             RecordType.Vaccine,
             _organisation.Id,
             TestContext.Current.CancellationToken
         );
 
-        var dto = result.ShouldBeSuccess().ShouldBeOfType<VaccineRecordDto>();
+        RecordOverviewDto dto = result.ShouldBeSuccess();
         dto.RecordId.ShouldBe(record.Id);
+        dto.RecordType.ShouldBe(RecordType.Vaccine);
+        dto.CanEditContent.ShouldBeFalse();
     }
 
     [Theory]
     [InlineData(RecordType.Medicine, RecordType.Vaccine)]
     [InlineData(RecordType.Vaccine, RecordType.Medicine)]
-    public async Task GetRecord_RequestedTypeDiffers_ReturnsRecordTypeMismatch(
+    public async Task GetRecordOverview_RequestedTypeDiffers_ReturnsRecordTypeMismatch(
         RecordType actualRecordType,
         RecordType requestedRecordType
     )
@@ -434,7 +443,7 @@ public class RecordViewServiceTests : DatabaseTestBase
         Record record = await AddRecord(RecordStatus.Published, actualRecordType);
         await AddRevision(record, 1, WorkflowStatus.Published);
 
-        GetRecordResult result = await Service.GetRecord(
+        GetRecordResult result = await Service.GetRecordOverview(
             record.Id,
             requestedRecordType,
             _organisation.Id,
@@ -447,584 +456,189 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetRecord_NoSectionData_ReturnsEmptySections()
+    public async Task GetRecordOverview_NoProductDetail_ReturnsNoTitle()
     {
         Record record = await AddRecord(RecordStatus.Published);
         await AddRevision(record, 1, WorkflowStatus.Published);
 
-        GetRecordResult result = await Service.GetRecord(
+        GetRecordResult result = await Service.GetRecordOverview(
             record.Id,
             RecordType.Medicine,
             _organisation.Id,
             TestContext.Current.CancellationToken
         );
 
-        var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
-        dto.RecordProductDetail.ShouldBeNull();
-        dto.MedicinesIndicationDetail.ShouldBeNull();
-        dto.MedicinesDevelopmentBackground.ShouldBeNull();
-        dto.RecordClinicalTrialInformation.ShouldBeNull();
-        dto.MedicinesTreatmentDetail.ShouldBeNull();
-        dto.MedicinesPatientIdentification.ShouldBeNull();
-        dto.MedicinesLaboratoryTesting.ShouldBeNull();
-        dto.MedicinesServiceImpact.ShouldBeNull();
-        dto.MedicinesBudgetImpact.ShouldBeNull();
-        dto.MedicinesEamsPim.ShouldBeNull();
-        dto.MedicinesEuStatus.ShouldBeNull();
-        dto.MedicinesGlobalSubmission.ShouldBeNull();
-        dto.MedicinesIntlRecognition.ShouldBeNull();
-        dto.RecordClinicalTrials.ShouldBeEmpty();
-        dto.RecordHta.ShouldBeNull();
-        dto.RecordMhraDate.ShouldBeNull();
-        dto.RecordMhraProcedure.ShouldBeNull();
+        RecordOverviewDto dto = result.ShouldBeSuccess();
+        dto.CompanyCode.ShouldBeNull();
+        dto.RecordTitle.ShouldBeNull();
     }
 
     [Fact]
-    public async Task GetRecord_ProductDetail_MapsAllFields()
+    public async Task GetRecordDetail_CompleteDraft_ReturnsOverviewAndAnswersThatApply()
     {
-        var ct = TestContext.Current.CancellationToken;
-        Record record = await AddRecord(RecordStatus.Published);
-        RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
-        await AddEntity(
-            new RecordProductDetail
-            {
-                RevisionId = revision.Id,
-                CompanyCode = "ABC-123",
-                BrandedName = "Brand",
-                RecordTitle = "Chronic hepatitis C in adults",
-                NamesAndIdentifiers =
-                [
-                    new RecordNameAndIdentifier
-                    {
-                        Name = "ABC-001",
-                        NameType = NameAndIdentifierType.OtherIdentifier,
-                        DisplayOrder = 2,
-                    },
-                    new RecordNameAndIdentifier
-                    {
-                        Name = "abcumab",
-                        NameType = NameAndIdentifierType.GenericName,
-                        DisplayOrder = 1,
-                    },
-                ],
-            },
-            ct
+        Record record = await AddRecord(RecordStatus.Unpublished);
+        RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Draft);
+        await CompleteMedicineRevision.AddAsync(
+            Context,
+            revision.Id,
+            new(2027, 4, 1),
+            TestContext.Current.CancellationToken
         );
 
-        GetRecordResult result = await Service.GetRecord(
-            record.Id,
-            RecordType.Medicine,
-            _organisation.Id,
-            ct
-        );
+        RecordDetailDto dto = (await GetDetail(record)).ShouldBeSuccess();
 
-        var dto = result
-            .ShouldBeSuccess()
-            .ShouldBeOfType<MedicineRecordDto>()
-            .RecordProductDetail.ShouldNotBeNull();
-        dto.CompanyCode.ShouldBe("ABC-123");
-        dto.BrandedName.ShouldBe("Brand");
-        dto.RecordTitle.ShouldBe("Chronic hepatitis C in adults");
-        dto.NamesAndIdentifiers.ShouldBe([
-            new RecordNameAndIdentifierDto
-            {
-                Name = "abcumab",
-                NameType = NameAndIdentifierType.GenericName,
-            },
-            new RecordNameAndIdentifierDto
-            {
-                Name = "ABC-001",
-                NameType = NameAndIdentifierType.OtherIdentifier,
-            },
-        ]);
-    }
-
-    [Fact]
-    public async Task GetRecord_IndicationDetail_MapsAllFields()
-    {
-        var ct = TestContext.Current.CancellationToken;
-        Record record = await AddRecord(RecordStatus.Published);
-        RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
-        var bnfChapter = await AddEntity(new BnfChapter { Code = "1.1", Label = "Dyspepsia" }, ct);
-        var formulationType = await AddEntity(new FormulationType { Label = "Tablet" }, ct);
-        var areaB = await AddEntity(
-            new TherapeuticArea
-            {
-                Code = "14",
-                Label = "Oncology",
-                DisplayOrder = 2,
-            },
-            ct
-        );
-        var areaA = await AddEntity(
-            new TherapeuticArea
-            {
-                Code = "4",
-                Label = "Cardiology",
-                DisplayOrder = 1,
-            },
-            ct
-        );
-        await AddEntity(
-            new MedicinesIndicationDetail
-            {
-                RevisionId = revision.Id,
-                Indication = "Hepatitis C",
-                BnfChapterId = bnfChapter.Id,
-                TherapeuticAreas =
-                [
-                    new MedicinesIndicationDetailTherapeuticArea { TherapeuticAreaId = areaB.Id },
-                    new MedicinesIndicationDetailTherapeuticArea { TherapeuticAreaId = areaA.Id },
-                ],
-                IndicationIsPaediatric = IndicationPaediatricStatus.ExclusivelyAdults,
-                IndicationIsCancer = YesNoUnknown.No,
-                IndicationIsRareDisease = YesNoUnknown.Yes,
-                FormulationTypeId = formulationType.Id,
-                Presentation = "10mg",
-                ModeOfAction = "Mode",
-                ProposedDoseRegimen = "Dose",
-                IsPersonalisedMedicine = YesNoUnknown.Yes,
-                MedicineTechnologyStatus =
-                    MedicineTechnologyStatus.Biosimilar | MedicineTechnologyStatus.NewIndication,
-            },
-            ct
-        );
-
-        GetRecordResult result = await Service.GetRecord(
-            record.Id,
-            RecordType.Medicine,
-            _organisation.Id,
-            ct
-        );
-
-        var dto = result
-            .ShouldBeSuccess()
-            .ShouldBeOfType<MedicineRecordDto>()
-            .MedicinesIndicationDetail.ShouldNotBeNull();
-        dto.Indication.ShouldBe("Hepatitis C");
-        dto.BnfChapter.ShouldBe(new ReferenceDataDto { Id = bnfChapter.Id, Label = "Dyspepsia" });
-        dto.TherapeuticAreas.ShouldBe([
-            new ReferenceDataDto { Id = areaA.Id, Label = "Cardiology" },
-            new ReferenceDataDto { Id = areaB.Id, Label = "Oncology" },
-        ]);
-        dto.IndicationIsPaediatric.ShouldBe(IndicationPaediatricStatus.ExclusivelyAdults);
-        dto.IndicationIsCancer.ShouldBe(YesNoUnknown.No);
-        dto.IndicationIsRareDisease.ShouldBe(YesNoUnknown.Yes);
-        dto.FormulationType.ShouldBe(
-            new ReferenceDataDto { Id = formulationType.Id, Label = "Tablet" }
-        );
-        dto.Presentation.ShouldBe("10mg");
-        dto.ModeOfAction.ShouldBe("Mode");
-        dto.ProposedDoseRegimen.ShouldBe("Dose");
-        dto.IsPersonalisedMedicine.ShouldBe(YesNoUnknown.Yes);
-        dto.MedicineTechnologyStatus.ShouldBe([
-            MedicineTechnologyStatus.Biosimilar,
-            MedicineTechnologyStatus.NewIndication,
-        ]);
-    }
-
-    [Fact]
-    public async Task GetRecord_MedicineSections_MapsAllFields()
-    {
-        var ct = TestContext.Current.CancellationToken;
-        Record record = await AddRecord(RecordStatus.Published);
-        RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
-        var pathwayPoint = await AddEntity(
-            new PatientPathwayPoint { Code = PatientPathwayPointCodes.Other, Label = "Other" },
-            ct
-        );
-        var populationRange = await AddEntity(
-            new UkPatientPopulationRange { Label = "1,000 to 10,000" },
-            ct
-        );
-        var atmpClassification = await AddEntity(
-            new AtmpClassification { Label = "Gene therapy" },
-            ct
-        );
-        var irpRoute = await AddEntity(new IrpRoute { Label = "Route A" }, ct);
-        var eamsSubmission = await AddDate(revision, DateEventType.EamsSubmission, 1);
-        var eamsOpinion = await AddDate(revision, DateEventType.EamsOpinion, 2);
-        var orphanGranted = await AddDate(revision, DateEventType.EuOrphanGranted, 3);
-        var atmpRecommendation = await AddDate(
-            revision,
-            DateEventType.AtmpClassificationRecommendation,
-            4
-        );
-        var globalSubmission = await AddDate(revision, DateEventType.GlobalFirstSubmission, 5);
-        var intlSubmission = await AddDate(revision, DateEventType.IntlSubmission, 6);
-        var intlLicence = await AddDate(revision, DateEventType.IntlLicence, 7);
-
-        Context.AddRange(
-            new MedicinesDevelopmentBackground
-            {
-                RevisionId = revision.Id,
-                IsRepurposedMedicine = YesNoUnknown.No,
-                RepurposedMedicineDetails = "Repurposed",
-                IsOriginatorCompany = YesNoUnknown.No,
-                OriginatorCompanyName = "Originator",
-                IsCoMarketed = YesNoUnknown.Yes,
-                CoMarketingCompanyName = "Co-marketer",
-            },
-            new MedicinesTreatmentDetail
-            {
-                RevisionId = revision.Id,
-                ProposedPlaceInTherapy = "First line",
-                EstimatedDurationOfTreatment = "6 months",
-            },
-            new MedicinesPatientIdentification
-            {
-                RevisionId = revision.Id,
-                ScreeningRequired = YesNoUnknown.Yes,
-                ScreeningDetails = "Screening",
-                UrgentIdentificationRequired = YesNoUnknown.No,
-                UrgentIdentificationDetails = "Urgent",
-            },
-            new MedicinesLaboratoryTesting
-            {
-                RevisionId = revision.Id,
-                DiagnosticTestRequired = YesNoUnknown.Yes,
-                BiomarkerType = BiomarkerType.GenomicBiomarker,
-                NonGenomicBiomarkerDescription = "Non-genomic",
-                GenomicTarget = "Target",
-                GenomicTestNgtdRelationship = GenomicTestNgtdRelationship.NewTest,
-                GenomicSampleType = "Blood",
-                GenomicTurnaroundTimeDetails = "2 weeks",
-                PatientPathwayPointId = pathwayPoint.Id,
-                GenomicTestPathwayPointOther = "Other point",
-                GenomicAlterations = "Alterations",
-                GenomicTestUsedInTrials = "Trial test",
-                GenomicTestSpecificitySensitivity = "High",
-                GenomicTestNotes = "Notes",
-                GenomicTestMandatoryStatus = GenomicTestMandatoryStatus.MandatoryNoAlternatives,
-                AdditionalGenomicFactors = "Factors",
-                MonitoringTestsDetails = "Monitoring",
-                SafetyTestsDetails = "Safety",
-            },
-            new MedicinesServiceImpact
-            {
-                RevisionId = revision.Id,
-                NhsServiceChangesRequired = NhsServiceChangesRequired.SomeChange,
-                NhsServiceChangesDetails = "Changes",
-                HandlingStorageRequirements = YesNoUnknown.Yes,
-                HandlingStorageDetails = "Fridge",
-                UkPatientPopulationRangeId = populationRange.Id,
-                UkPatientPopulationNotes = "Population notes",
-                EstimatedEligiblePatientPopulation = "5,000",
-            },
-            new MedicinesBudgetImpact
-            {
-                RevisionId = revision.Id,
-                EstimatedUptake = "High",
-                CompassionateAccessAvailable = YesNoUnknown.No,
-                CompassionateAccessDetails = "Compassionate",
-                PatientAccessSchemePlanned = YesNoUnknown.Yes,
-                IndicationSpecificPricingPlanned = YesNoUnknown.No,
-                IndicationSpecificPricingDetails = "Pricing",
-                NetUkBudgetImpactBand = NetUkBudgetImpactBand.Between5MAnd40M,
-                PatientAccessSchemeRegions =
-                    PatientAccessSchemeRegion.England | PatientAccessSchemeRegion.Scotland,
-            },
-            new MedicinesEamsPim
-            {
-                RevisionId = revision.Id,
-                PimDesignationStatus = DesignationStatus.Granted,
-                WillSubmitToEams = YesNoUnknown.Yes,
-                EamsOpinionDecision = EamsOpinionDecision.Positive,
-                EamsSubmissionDateId = eamsSubmission.Id,
-                EamsOpinionDateId = eamsOpinion.Id,
-            },
-            new MedicinesEuStatus
-            {
-                RevisionId = revision.Id,
-                EuOrphanStatus = DesignationStatus.NotGranted,
-                EuOrphanStatusNumber = "EU/3/26/1234",
-                EuOrphanGrantedDateId = orphanGranted.Id,
-                EuAtmpClassificationStatus = DesignationStatus.Granted,
-                AtmpRecommendationDateId = atmpRecommendation.Id,
-                AtmpClassificationId = atmpClassification.Id,
-            },
-            new MedicinesGlobalSubmission
-            {
-                RevisionId = revision.Id,
-                GlobalFirstSubmissionRegion = "USA",
-                GlobalSubmissionActualDateId = globalSubmission.Id,
-            },
-            new MedicinesIntlRecognition
-            {
-                RevisionId = revision.Id,
-                IrpRouteId = irpRoute.Id,
-                IntlConditionalApprovalAnticipated = YesNoUnknown.Unknown,
-                IntlSubmissionDateId = intlSubmission.Id,
-                IntlLicenceDateId = intlLicence.Id,
-            }
-        );
-        await Context.SaveChangesAsync(ct);
-
-        GetRecordResult result = await Service.GetRecord(
-            record.Id,
-            RecordType.Medicine,
-            _organisation.Id,
-            ct
-        );
-
-        var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
-        dto.MedicinesDevelopmentBackground.ShouldBe(
-            new MedicinesDevelopmentBackgroundDto
-            {
-                IsRepurposedMedicine = YesNoUnknown.No,
-                RepurposedMedicineDetails = "Repurposed",
-                IsOriginatorCompany = YesNoUnknown.No,
-                OriginatorCompanyName = "Originator",
-                IsCoMarketed = YesNoUnknown.Yes,
-                CoMarketingCompanyName = "Co-marketer",
-            }
-        );
-        dto.MedicinesTreatmentDetail.ShouldBe(
-            new MedicinesTreatmentDetailDto
-            {
-                ProposedPlaceInTherapy = "First line",
-                EstimatedDurationOfTreatment = "6 months",
-            }
-        );
-        dto.MedicinesPatientIdentification.ShouldBe(
-            new MedicinesPatientIdentificationDto
-            {
-                ScreeningRequired = YesNoUnknown.Yes,
-                ScreeningDetails = "Screening",
-                UrgentIdentificationRequired = YesNoUnknown.No,
-                UrgentIdentificationDetails = "Urgent",
-            }
-        );
-        dto.MedicinesLaboratoryTesting.ShouldBe(
-            new MedicinesLaboratoryTestingDto
-            {
-                DiagnosticTestRequired = YesNoUnknown.Yes,
-                BiomarkerType = BiomarkerType.GenomicBiomarker,
-                NonGenomicBiomarkerDescription = "Non-genomic",
-                GenomicTarget = "Target",
-                GenomicTestNgtdRelationship = GenomicTestNgtdRelationship.NewTest,
-                GenomicSampleType = "Blood",
-                GenomicTurnaroundTimeDetails = "2 weeks",
-                PatientPathwayPoint = new ReferenceDataDto
-                {
-                    Id = pathwayPoint.Id,
-                    Label = "Other",
-                },
-                GenomicTestPathwayPointOther = "Other point",
-                GenomicAlterations = "Alterations",
-                GenomicTestUsedInTrials = "Trial test",
-                GenomicTestSpecificitySensitivity = "High",
-                GenomicTestNotes = "Notes",
-                GenomicTestMandatoryStatus = GenomicTestMandatoryStatus.MandatoryNoAlternatives,
-                AdditionalGenomicFactors = "Factors",
-                MonitoringTestsDetails = "Monitoring",
-                SafetyTestsDetails = "Safety",
-            }
-        );
-        dto.MedicinesServiceImpact.ShouldBe(
-            new MedicinesServiceImpactDto
-            {
-                NhsServiceChangesRequired = NhsServiceChangesRequired.SomeChange,
-                NhsServiceChangesDetails = "Changes",
-                HandlingStorageRequirements = YesNoUnknown.Yes,
-                HandlingStorageDetails = "Fridge",
-                UkPatientPopulationRange = new ReferenceDataDto
-                {
-                    Id = populationRange.Id,
-                    Label = "1,000 to 10,000",
-                },
-                UkPatientPopulationNotes = "Population notes",
-                EstimatedEligiblePatientPopulation = "5,000",
-            }
-        );
-
-        var budgetImpact = dto.MedicinesBudgetImpact.ShouldNotBeNull();
-        budgetImpact.EstimatedUptake.ShouldBe("High");
-        budgetImpact.CompassionateAccessAvailable.ShouldBe(YesNoUnknown.No);
-        budgetImpact.CompassionateAccessDetails.ShouldBe("Compassionate");
-        budgetImpact.PatientAccessSchemePlanned.ShouldBe(YesNoUnknown.Yes);
-        budgetImpact.IndicationSpecificPricingPlanned.ShouldBe(YesNoUnknown.No);
-        budgetImpact.IndicationSpecificPricingDetails.ShouldBe("Pricing");
-        budgetImpact.NetUkBudgetImpactBand.ShouldBe(NetUkBudgetImpactBand.Between5MAnd40M);
-        budgetImpact.PatientAccessSchemeRegions.ShouldBe([
-            PatientAccessSchemeRegion.England,
-            PatientAccessSchemeRegion.Scotland,
-        ]);
-
-        dto.MedicinesEamsPim.ShouldBe(
-            new MedicinesEamsPimDto
-            {
-                PimDesignationStatus = DesignationStatus.Granted,
-                WillSubmitToEams = YesNoUnknown.Yes,
-                EamsOpinionDecision = EamsOpinionDecision.Positive,
-                EamsSubmissionDate = ToDto(eamsSubmission),
-                EamsOpinionDate = ToDto(eamsOpinion),
-            }
-        );
-        dto.MedicinesEuStatus.ShouldBe(
-            new MedicinesEuStatusDto
-            {
-                EuOrphanStatus = DesignationStatus.NotGranted,
-                EuOrphanStatusNumber = "EU/3/26/1234",
-                EuOrphanGrantedDate = ToDto(orphanGranted),
-                EuAtmpClassificationStatus = DesignationStatus.Granted,
-                AtmpRecommendationDate = ToDto(atmpRecommendation),
-                AtmpClassification = new ReferenceDataDto
-                {
-                    Id = atmpClassification.Id,
-                    Label = "Gene therapy",
-                },
-            }
-        );
-        dto.MedicinesGlobalSubmission.ShouldBe(
-            new MedicinesGlobalSubmissionDto
-            {
-                GlobalFirstSubmissionRegion = "USA",
-                GlobalSubmissionActualDate = ToDto(globalSubmission),
-            }
-        );
-        dto.MedicinesIntlRecognition.ShouldBe(
-            new MedicinesIntlRecognitionDto
-            {
-                IrpRoute = new ReferenceDataDto { Id = irpRoute.Id, Label = "Route A" },
-                IntlConditionalApprovalAnticipated = YesNoUnknown.Unknown,
-                IntlSubmissionDate = ToDto(intlSubmission),
-                IntlLicenceDate = ToDto(intlLicence),
-            }
-        );
+        dto.Overview.RecordId.ShouldBe(record.Id);
+        Question(dto, Indication).Values.ShouldBe([IndicationAnswer]);
+        Question(dto, IndicationIsCancer)
+            .SelectedOptions.ShouldNotBeNull()
+            .ShouldHaveSingleItem()
+            .Label.ShouldBe("No");
+        // Screening details only applies when screening is required, which it isn't.
+        Questions(dto).Select(static q => q.Id).ShouldNotContain(ScreeningDetails);
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task GetRecord_SharedSections_MapsAllFields(bool reverseTrials)
+    [InlineData(RecordStatus.Published, UserRole.Standard)]
+    [InlineData(RecordStatus.Archived, UserRole.Standard)]
+    [InlineData(RecordStatus.Published, UserRole.Super)]
+    public async Task GetRecordDetail_RecordCheckYourAnswersRefuses_ReturnsAnswers(
+        RecordStatus recordStatus,
+        UserRole role
+    )
     {
-        var ct = TestContext.Current.CancellationToken;
-        Record record = await AddRecord(RecordStatus.Published);
+        Record record = await AddRecord(recordStatus);
         RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
-        var procedureType = await AddEntity(
-            new MhraProcedureType
-            {
-                Code = MhraProcedureTypeCodes.InternationalRecognition,
-                Label = "IRP",
-            },
-            ct
+        await CompleteMedicineRevision.AddAsync(
+            Context,
+            revision.Id,
+            new(2027, 4, 1),
+            TestContext.Current.CancellationToken
         );
-        var regulator = await AddEntity(new IrpReferenceRegulator { Label = "FDA" }, ct);
-        var ukSubmission = await AddDate(revision, DateEventType.UkSubmission, 1);
-        var ukLicence = await AddDate(revision, DateEventType.UkLicence, 2);
-        var ukLaunch = await AddDate(revision, DateEventType.UkLaunch, 3);
+        _harness.UpdateCurrentUser(x => x with { UserRole = role });
 
-        Context.AddRange(
-            new RecordClinicalTrial
-            {
-                RevisionId = revision.Id,
-                StudyName = "Study A",
-                DisplayOrder = reverseTrials ? 2 : 1,
-                ClinicalTrialsGovNumber = "NCT00000001",
-                BriefDescription = "Description A",
-                TrialPhase = TrialPhase.PhaseIII,
-                OtherClinicalTrialNumbers =
-                [
-                    new OtherClinicalTrialNumber
-                    {
-                        OtherRegistryNumber = "EudraCT 2",
-                        DisplayOrder = 2,
-                    },
-                    new OtherClinicalTrialNumber
-                    {
-                        OtherRegistryNumber = "ISRCTN 1",
-                        DisplayOrder = 1,
-                    },
-                ],
-            },
-            new RecordClinicalTrial
-            {
-                RevisionId = revision.Id,
-                StudyName = "Study B",
-                DisplayOrder = reverseTrials ? 1 : 2,
-                ClinicalTrialsGovNumber = "NCT00000002",
-            },
-            new RecordClinicalTrialInformation
-            {
-                RevisionId = revision.Id,
-                RecruitingInUk = YesNoUnknown.Yes,
-            },
-            new RecordHta
-            {
-                RevisionId = revision.Id,
-                MedicineHtaSubmissionIntended = YesNoUnknown.Yes,
-                MedicineHtaBodies = MedicineHtaAssessor.Nice | MedicineHtaAssessor.Awmsg,
-                HtaAdditionalDetails = "HTA details",
-                HtaNiceAlignedPathway = YesNoUnknown.No,
-                NiceTaDevelopmentId = "GID-TA1234",
-                UkLaunchDateId = ukLaunch.Id,
-            },
-            new RecordMhraDate
-            {
-                RevisionId = revision.Id,
-                UkSubmissionDateId = ukSubmission.Id,
-                UkLicenceDateId = ukLicence.Id,
-                UkConditionalApprovalAnticipated = YesNoUnknown.Yes,
-            },
-            new RecordMhraProcedure
-            {
-                RevisionId = revision.Id,
-                MhraProcedureTypeId = procedureType.Id,
-                IrpReferenceRegulatorId = regulator.Id,
-                ProcedureDetails = "Procedure details",
-            }
+        RecordDetailDto dto = (await GetDetail(record)).ShouldBeSuccess();
+
+        Question(dto, Indication).Values.ShouldBe([IndicationAnswer]);
+    }
+
+    [Fact]
+    public async Task GetRecordDetail_InvalidAnswers_ReturnsThemUnchecked()
+    {
+        // Screening details is required once screening is, but viewing doesn't check answers.
+        Record record = await AddRecord(RecordStatus.Unpublished);
+        RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Draft);
+        await CompleteMedicineRevision.AddAsync(
+            Context,
+            revision.Id,
+            new(2027, 4, 1),
+            TestContext.Current.CancellationToken
         );
-        await Context.SaveChangesAsync(ct);
+        MedicinesPatientIdentification identification =
+            await Context.MedicinesPatientIdentifications.SingleAsync(
+                x => x.RevisionId == revision.Id,
+                TestContext.Current.CancellationToken
+            );
+        identification.ScreeningRequired = YesNoUnknown.Yes;
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        Context.ChangeTracker.Clear();
 
-        GetRecordResult result = await Service.GetRecord(
+        RecordDetailDto dto = (await GetDetail(record)).ShouldBeSuccess();
+
+        Question(dto, ScreeningDetails).Values.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetRecordDetail_ClinicalTrials_ReturnsEachTrialAsAGroupItem()
+    {
+        Record record = await AddRecord(RecordStatus.Unpublished);
+        RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Draft);
+        await CompleteMedicineRevision.AddAsync(
+            Context,
+            revision.Id,
+            new(2027, 4, 1),
+            TestContext.Current.CancellationToken
+        );
+        await CompleteMedicineRevision.AddClinicalTrialAsync(
+            Context,
+            revision.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        RecordDetailDto dto = (await GetDetail(record)).ShouldBeSuccess();
+
+        RecordAnswersQuestionDto trials = Question(dto, ClinicalTrials);
+        trials.Values.ShouldBeEmpty();
+        trials.ItemLabel.ShouldBe("Clinical trial");
+        trials.AddAnotherLabel.ShouldBe("Add another clinical trial");
+        var item = trials.Items.ShouldNotBeNull().ShouldHaveSingleItem();
+        item.Questions.Select(static q => q.Id)
+            .ShouldBe(["study_name", "clinical_trials_gov_number", "other_registry_numbers"]);
+        item.Questions.ShouldAllBe(q => q.PageId == trials.PageId);
+        item.Questions[0].Values.ShouldBe(["SURVEYOR-1"]);
+        item.Questions[1].Values.ShouldBe(["NCT01234567"]);
+        item.Questions[2].Values.ShouldBe(["ISRCTN12345678"]);
+
+        // A text list has its own item and add-another labels, which are only sent for a group.
+        RecordAnswersQuestionDto registryNumbers = item.Questions[2];
+        registryNumbers.Items.ShouldBeNull();
+        registryNumbers.ItemLabel.ShouldBeNull();
+        registryNumbers.AddAnotherLabel.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task GetRecordDetail_VaccineRecord_ReturnsNoSections()
+    {
+        Record record = await AddRecord(RecordStatus.Published, RecordType.Vaccine);
+        await AddRevision(record, 1, WorkflowStatus.Published);
+
+        GetRecordDetailResult result = await Service.GetRecordDetail(
+            record.Id,
+            RecordType.Vaccine,
+            _organisation.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        RecordDetailDto dto = result.ShouldBeSuccess();
+        dto.Overview.RecordType.ShouldBe(RecordType.Vaccine);
+        dto.Sections.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetRecordDetail_RecordInAnotherOrganisation_ReturnsNotFound()
+    {
+        Record record = await AddRecord(RecordStatus.Published);
+        await AddRevision(record, 1, WorkflowStatus.Published);
+        Organisation otherOrganisation = await AddEntity(
+            new OrganisationFaker().Generate(),
+            TestContext.Current.CancellationToken
+        );
+        var service = _harness
+            .UpdateCurrentUser(x => x with { OrganisationId = otherOrganisation.Id })
+            .Service;
+
+        GetRecordDetailResult result = await service.GetRecordDetail(
+            record.Id,
+            RecordType.Medicine,
+            otherOrganisation.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<GetRecordError.NotFound>();
+    }
+
+    private Task<GetRecordDetailResult> GetDetail(Record record) =>
+        Service.GetRecordDetail(
             record.Id,
             RecordType.Medicine,
             _organisation.Id,
-            ct
+            TestContext.Current.CancellationToken
         );
 
-        var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
-        dto.RecordClinicalTrialInformation.ShouldNotBeNull()
-            .RecruitingInUk.ShouldBe(YesNoUnknown.Yes);
-        dto.RecordClinicalTrials.Count.ShouldBe(2);
-        dto.RecordClinicalTrials.Select(static t => t.StudyName)
-            .ShouldBe(reverseTrials ? ["Study B", "Study A"] : ["Study A", "Study B"]);
-        var trialA = dto.RecordClinicalTrials.ElementAt(reverseTrials ? 1 : 0);
-        trialA.StudyName.ShouldBe("Study A");
-        trialA.ClinicalTrialsGovNumber.ShouldBe("NCT00000001");
-        trialA.BriefDescription.ShouldBe("Description A");
-        trialA.TrialPhase.ShouldBe(TrialPhase.PhaseIII);
-        trialA.OtherClinicalTrialNumbers.ShouldBe(["ISRCTN 1", "EudraCT 2"]);
-        var trialB = dto.RecordClinicalTrials.ElementAt(reverseTrials ? 0 : 1);
-        trialB.StudyName.ShouldBe("Study B");
-        trialB.OtherClinicalTrialNumbers.ShouldBeEmpty();
+    private static IEnumerable<RecordAnswersQuestionDto> Questions(RecordDetailDto dto) =>
+        dto.Sections.SelectMany(static s => s.Tasks).SelectMany(static t => t.Questions);
 
-        var hta = dto.RecordHta.ShouldNotBeNull();
-        hta.MedicineHtaSubmissionIntended.ShouldBe(YesNoUnknown.Yes);
-        hta.MedicineHtaBodies.ShouldBe([MedicineHtaAssessor.Nice, MedicineHtaAssessor.Awmsg]);
-        hta.HtaAdditionalDetails.ShouldBe("HTA details");
-        hta.HtaNiceAlignedPathway.ShouldBe(YesNoUnknown.No);
-        hta.NiceTaDevelopmentId.ShouldBe("GID-TA1234");
-        hta.UkLaunchDate.ShouldBe(ToDto(ukLaunch));
-
-        dto.RecordMhraDate.ShouldBe(
-            new RecordMhraDateDto
-            {
-                UkSubmissionDate = ToDto(ukSubmission),
-                UkLicenceDate = ToDto(ukLicence),
-                UkConditionalApprovalAnticipated = YesNoUnknown.Yes,
-            }
-        );
-        dto.RecordMhraProcedure.ShouldBe(
-            new RecordMhraProcedureDto
-            {
-                MhraProcedureType = new ReferenceDataDto { Id = procedureType.Id, Label = "IRP" },
-                IrpReferenceRegulator = new ReferenceDataDto { Id = regulator.Id, Label = "FDA" },
-                ProcedureDetails = "Procedure details",
-            }
-        );
-    }
+    private static RecordAnswersQuestionDto Question(RecordDetailDto dto, string id) =>
+        Questions(dto).Single(q => string.Equals(q.Id, id, StringComparison.Ordinal));
 
     private async Task<Record> AddRecord(
         RecordStatus status,
@@ -1062,29 +676,4 @@ public class RecordViewServiceTests : DatabaseTestBase
             await AddRevision(record, i + 1, workflowStatuses[i]);
         }
     }
-
-    private async Task<RegulatoryDate> AddDate(
-        RecordRevision revision,
-        DateEventType dateEvent,
-        int month
-    ) =>
-        await AddEntity(
-            new RegulatoryDate
-            {
-                RevisionId = revision.Id,
-                DateEvent = dateEvent,
-                DatePrecision = DatePrecision.EstimatedMonth,
-                DateValue = new DateOnly(2027, month, 1),
-                IsConfidential = true,
-            },
-            TestContext.Current.CancellationToken
-        );
-
-    private static RegulatoryDateDto ToDto(RegulatoryDate date) =>
-        new()
-        {
-            DateValue = date.DateValue,
-            DatePrecision = date.DatePrecision,
-            IsConfidential = date.IsConfidential,
-        };
 }

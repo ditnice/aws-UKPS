@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 
-import { getRecord } from '@/client/generated'
+import { getRecordOverview } from '@/client/generated'
 import type { RecordType } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
@@ -41,7 +41,7 @@ export const StatusChangePage = async ({
     data: record,
     error,
     response,
-  } = await getRecord({
+  } = await getRecordOverview({
     client: await createServerApiClient(),
     path: { id: recordId },
     query: { recordType, organisationId },
@@ -65,14 +65,11 @@ export const StatusChangePage = async ({
     )
   }
 
-  //TODO: needs updating when we add vaccine DTOs
-  const productDetail = record.recordType === 'Medicine' ? record.recordProductDetail : undefined
-
   return (
     <>
       {banner}
 
-      <PageHeader backLink={backLink} heading={heading} preheading={productDetail?.recordTitle} />
+      <PageHeader backLink={backLink} heading={heading} preheading={record.recordTitle} />
 
       {children}
     </>
