@@ -522,6 +522,35 @@ public class RecordViewServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task GetRecordDetail_NamesAndIdentifiers_ReturnsThemAsQuestions()
+    {
+        Record record = await AddRecord(RecordStatus.Published);
+        RecordRevision revision = await AddRevision(record, 1, WorkflowStatus.Published);
+        await CompleteMedicineRevision.AddAsync(
+            Context,
+            revision.Id,
+            new(2027, 4, 1),
+            TestContext.Current.CancellationToken
+        );
+
+        RecordDetailDto dto = (await GetDetail(record)).ShouldBeSuccess();
+
+        dto.Overview.CompanyCode.ShouldBe("ABC-123");
+        dto.Overview.RecordTitle.ShouldBe("Chronic hepatitis C in adults");
+        Question(dto, CreationPageFieldPaths.CompanyCode).Values.ShouldBe(["ABC-123"]);
+        Question(dto, CreationPageFieldPaths.OtherIdentifiers).Values.ShouldBeEmpty();
+        Question(dto, CreationPageFieldPaths.BrandedName).Values.ShouldBeEmpty();
+        Question(dto, CreationPageFieldPaths.RecordTitle)
+            .Values.ShouldBe(["Chronic hepatitis C in adults"]);
+        RecordAnswersQuestionDto genericNames = Question(dto, CreationPageFieldPaths.GenericNames);
+        genericNames.Values.ShouldBe(["sofosbuvir"]);
+        // A text list has its own item and add-another labels, which are only sent for a group.
+        genericNames.Items.ShouldBeNull();
+        genericNames.ItemLabel.ShouldBeNull();
+        genericNames.AddAnotherLabel.ShouldBeNull();
+    }
+
+    [Fact]
     public async Task GetRecordDetail_InvalidAnswers_ReturnsThemUnchecked()
     {
         // Screening details is required once screening is, but viewing doesn't check answers.
