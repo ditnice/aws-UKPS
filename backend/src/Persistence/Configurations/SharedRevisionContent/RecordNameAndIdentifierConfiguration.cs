@@ -15,7 +15,8 @@ internal sealed class RecordNameAndIdentifierConfiguration
         builder.Property(x => x.NameType);
 
         // Each list sharing the collection (one per name type) numbers its rows from 1, so no two
-        // rows of one list may share a position. Its leading column also serves the foreign key.
+        // rows of one list may share a position, a missing one included (nulls not distinct). Its
+        // leading column also serves the foreign key.
         builder
             .HasIndex(x => new
             {
@@ -24,7 +25,8 @@ internal sealed class RecordNameAndIdentifierConfiguration
                 x.DisplayOrder,
             })
             .IsUnique()
-            .HasDatabaseName("ix_record_name_and_identifier_product_detail_type_display_order");
+            .AreNullsDistinct(false)
+            .HasDatabaseName(ConstraintNames.NameAndIdentifierUniqueDisplayOrderPerList);
 
         builder
             .HasOne(x => x.RecordProductDetail)

@@ -2292,6 +2292,8 @@ namespace UKPS.Api.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_record_name_and_identifier_product_detail_type_display_order");
 
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("RecordProductDetailId", "NameType", "DisplayOrder"), false);
+
                     b.ToTable("record_names_and_identifiers", "ukps");
                 });
 
