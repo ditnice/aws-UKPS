@@ -25,6 +25,43 @@ namespace UKPS.Api.Tests.WebApi.Controllers;
 
 public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
+    public static IEnumerable<
+        TheoryDataRow<Result<ResendVerificationEmailError>, HttpStatusCode>
+    > ResendVerificationEmailData =>
+        [
+            new(Result<ResendVerificationEmailError>.Ok(), HttpStatusCode.OK),
+            new(
+                Result<ResendVerificationEmailError>.Err(
+                    new ResendVerificationEmailError.NotFound()
+                ),
+                HttpStatusCode.NotFound
+            ),
+            new(
+                Result<ResendVerificationEmailError>.Err(
+                    new ResendVerificationEmailError.NoPendingVerification()
+                ),
+                HttpStatusCode.Conflict
+            ),
+            new(
+                Result<ResendVerificationEmailError>.Err(
+                    new ResendVerificationEmailError.PendingEmailAlreadyVerified()
+                ),
+                HttpStatusCode.Conflict
+            ),
+            new(
+                Result<ResendVerificationEmailError>.Err(
+                    new ResendVerificationEmailError.Forbidden()
+                ),
+                HttpStatusCode.NotFound
+            ),
+            new(
+                Result<ResendVerificationEmailError>.Err(
+                    new ResendVerificationEmailError.ConcurrencyDetected()
+                ),
+                HttpStatusCode.Conflict
+            ),
+        ];
+
     private const string UsersUrl = "/users";
     private readonly IUserService _mockUserService = Substitute.For<IUserService>();
     private readonly HttpClient _client;
@@ -588,6 +625,26 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         );
         var response = await SendUpdateUserEmailRequest();
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Theory]
+    [MemberData(nameof(ResendVerificationEmailData))]
+    public async Task ResendVerificationEmail_ShouldMapServiceResponseToHttpResponses(
+        Result<ResendVerificationEmailError> result,
+        HttpStatusCode expectedCode
+    )
+    {
+        _mockUserService
+            .ResendVerificationEmail(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(result);
+        var url = new Uri($"{UsersUrl}/{1}/email/resend", UriKind.Relative);
+        using StringContent stringContent = new StringContent(string.Empty);
+        var response = await _client.PostAsync(
+            url,
+            stringContent,
+            TestContext.Current.CancellationToken
+        );
+        response.StatusCode.ShouldBe(expectedCode);
     }
 
     [Fact]

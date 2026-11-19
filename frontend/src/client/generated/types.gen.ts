@@ -3594,6 +3594,43 @@ export type UpdateUserEmailResponses = {
     200: unknown;
 };
 
+export type ResendVerificationEmailData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the user to resend the verification email to.
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/users/{userId}/email/resend';
+};
+
+export type ResendVerificationEmailErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * No user exists with the specified userId.
+     */
+    404: ProblemDetails;
+    /**
+     * The request could not be completed because there is no pending verification for the user,
+     * or because a concurrent modification was detected. Retry may succeed in the latter case.
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type ResendVerificationEmailError = ResendVerificationEmailErrors[keyof ResendVerificationEmailErrors];
+
+export type ResendVerificationEmailResponses = {
+    /**
+     * The verification email was successfully resent.
+     */
+    200: unknown;
+};
+
 export type VerifyPendingEmailAddressData = {
     /**
      * A token to cancel the operation.
