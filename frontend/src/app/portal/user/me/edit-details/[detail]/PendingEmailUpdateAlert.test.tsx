@@ -27,7 +27,7 @@ describe('PendingEmailUpdateAlert', () => {
     await renderAlert({ value: email, verifiedByEmail: false, userId })
 
     expect(
-      screen.getByRole('heading', { name: 'Email Update Pending', level: 2 }),
+      screen.getByRole('heading', { name: 'Email update pending', level: 2 }),
     ).toBeInTheDocument()
     expect(screen.getByTestId('target-email')).toHaveTextContent(email)
   })

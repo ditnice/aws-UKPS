@@ -15,6 +15,12 @@ public abstract record InitiateAuthenticationError
     public sealed record Unauthorised : InitiateAuthenticationError;
 
     /// <summary>
+    /// Indicates that authentication cannot be completed until the user's identity
+    /// has been verified.
+    /// </summary>
+    public sealed record VerificationRequired : InitiateAuthenticationError;
+
+    /// <summary>
     /// Indicates that authentication cannot be completed until the specified challenge
     /// has been satisfied.
     /// </summary>
@@ -54,13 +60,29 @@ public abstract record InitiateAuthenticationError
         public Challenge() { }
     }
 
+    /// <summary>
+    /// Matches the error against its possible types and invokes the corresponding handler.
+    /// </summary>
+    /// <typeparam name="TResult">The type of the result returned by the handlers.</typeparam>
+    /// <param name="unauthorised">
+    /// The handler invoked when authentication is unauthorised.
+    /// </param>
+    /// <param name="verificationRequired">
+    /// The handler invoked when identity verification is required.
+    /// </param>
+    /// <param name="challenge">
+    /// The handler invoked when an authentication challenge must be completed.
+    /// </param>
+    /// <returns>The result returned by the matching handler.</returns>
     internal TResult Match<TResult>(
         Func<TResult> unauthorised,
+        Func<TResult> verificationRequired,
         Func<Challenge, TResult> challenge
     ) =>
         this switch
         {
             Unauthorised => unauthorised(),
+            VerificationRequired => verificationRequired(),
             Challenge c => challenge(c),
             _ => throw new UnreachableException(),
         };

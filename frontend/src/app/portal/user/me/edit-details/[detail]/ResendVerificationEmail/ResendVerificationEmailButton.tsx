@@ -16,7 +16,7 @@ const ResendVerificationEmailButton = ({ userId }: ResendVerificationEmailButton
   return (
     <form action={formAction}>
       <Button type="submit" disabled={isPending}>
-        Didn&apos;t get it? Resend email
+        Resend email
       </Button>
 
       {state.status === 'error' && <ErrorState>{state.message}</ErrorState>}

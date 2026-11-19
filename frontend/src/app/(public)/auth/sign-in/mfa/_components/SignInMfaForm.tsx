@@ -5,12 +5,15 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { z } from 'zod'
 
-import { postAuthMfa } from '@/client/generated'
+import { respondToMultiFactorAuthenticationChallenge } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
+import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { buildSelectOrganisationHref } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
-import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
+import { getFieldErrorMessage, getFormErrorMessage } from '@/lib/form/getFieldErrorMessage'
+
+import EmailVerificationRequiredAlert from '../../../EmailVerificationRequiredAlert'
 
 import styles from './SignInMfaForm.module.scss'
 
@@ -53,7 +56,7 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
     },
     onSubmit: async ({ value, formApi }) => {
       const { securityCode } = signInMfaSchema.parse(value)
-      const response = await postAuthMfa({
+      const response = await respondToMultiFactorAuthenticationChallenge({
         body: {
           username,
           code: normaliseSecurityCode(securityCode),
@@ -64,9 +67,19 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
       if (!response.error) {
         router.push(buildSelectOrganisationHref(returnTo))
       }
+      if (response.error?.code === 'PendingEmailRequiredVerification') {
+        formApi.setErrorMap({
+          onSubmit: {
+            form: 'PendingEmailRequiredVerification',
+            fields: {},
+          },
+        })
+        return
+      }
       if (response.error?.status === 401) {
         formApi.setErrorMap({
           onSubmit: {
+            form: '',
             fields: {
               securityCode: errorMessages.incorrectMfaCode,
             },
@@ -85,6 +98,14 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
         void form.handleSubmit()
       }}
     >
+      <form.Subscribe selector={(state) => getFormErrorMessage(state.errorMap.onSubmit)}>
+        {(formError) => {
+          if (!formError) return null
+          if (formError === 'PendingEmailRequiredVerification')
+            return <EmailVerificationRequiredAlert />
+          return <ErrorState>{formError}</ErrorState>
+        }}
+      </form.Subscribe>
       <form.Field name="securityCode">
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)

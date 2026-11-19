@@ -172,6 +172,7 @@
           "Authentication"
         ],
         "summary": "Completes a multi-factor authentication challenge for an existing authentication session.",
+        "operationId": "RespondToMultiFactorAuthenticationChallenge",
         "requestBody": {
           "description": "A token to monitor for cancellation requests.",
           "content": {
@@ -5711,6 +5712,7 @@
           "MembershipNotInValidState",
           "OrganisationNotActive",
           "SelectedOrganisationMismatch",
+          "PendingEmailRequiredVerification",
           null
         ],
         "type": "string"
@@ -7372,6 +7374,22 @@
         },
         "description": "The whole of a record's latest revision for check your answers: every question that applies,\ngrouped by section and task, and every error that would stop it being submitted."
       },
+      "RecordCheckAnswersGroupItemDto": {
+        "required": [
+          "questions"
+        ],
+        "type": "object",
+        "properties": {
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordCheckAnswersQuestionDto"
+            },
+            "description": "A row for each child question of the group, in order."
+          }
+        },
+        "description": "One item of a group question: a row for each of its child questions."
+      },
       "RecordCheckAnswersOptionDto": {
         "required": [
           "value",
@@ -7403,6 +7421,9 @@
           "id",
           "pageId",
           "label",
+          "itemLabel",
+          "items",
+          "addAnotherLabel",
           "type",
           "multiple",
           "values",
@@ -7421,6 +7442,30 @@
           "label": {
             "type": "string",
             "description": "The question text."
+          },
+          "itemLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For a group question, the heading of each item, such as \"Clinical trial\"; null otherwise."
+          },
+          "items": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/RecordCheckAnswersGroupItemDto"
+            },
+            "description": "For a group question, its items in order, each with a row per child question; null for any other question."
+          },
+          "addAnotherLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For a group question, the label of its add-another button, such as \"Add another clinical trial\"; null otherwise."
           },
           "type": {
             "description": "The control the question uses, which says how to format the answer.",

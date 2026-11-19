@@ -228,7 +228,12 @@ invalid model stops the API starting. It holds structure only: bindings receive 
   there too, whether or not the task has another page.
 - **Check your answers.** The page lists every question that applies, with its answer, a **Change**
   link (opening the page with `?returnTo=check-your-answers`) and a **There is a problem** tag on
-  questions with a submission error. The errors also appear in a summary above the heading. Return
+  questions with a submission error. The errors also appear in a summary above the heading. A
+  repeating group, such as clinical trials, is shown in form order among the task's other rows as
+  one nested card per item, each with an
+  **Edit** link to that item on the group's page (`#{questionId}-item-{index}`), then an **Add
+  another** button that opens the page with `?add=group-item` and a new blank item after the saved
+  ones. Errors are not tagged per item. Return
   to my records is always shown; Submit is shown only when there are no errors. Selecting Submit sends the form version and revision hash the page loaded, and the API
   rechecks everything. A 422 refreshes the page with the current
   errors, and a 409 shows the API's message with a link to reload. If the record can't be

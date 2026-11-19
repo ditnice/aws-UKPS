@@ -6,6 +6,7 @@ using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Application.Authentication.SecurityNotification;
 using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Identity;
+using UKPS.Api.Application.Users;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
 using InitiateAuthenticationResult = UKPS.Api.Application.Common.Result<
@@ -18,16 +19,19 @@ namespace UKPS.Api.Application.Authentication;
 internal class LoginService : ILoginService
 {
     private readonly IIdentityService _identityService;
+    private readonly IUserService _userService;
     private readonly AppDbContext _appDbContext;
     private readonly IEmailService _emailService;
 
     public LoginService(
         IIdentityService identityService,
+        IUserService userService,
         AppDbContext appDbContext,
         IEmailService emailService
     )
     {
         _identityService = identityService;
+        _userService = userService;
         _appDbContext = appDbContext;
         _emailService = emailService;
     }
@@ -37,21 +41,23 @@ internal class LoginService : ILoginService
         CancellationToken cancellationToken
     )
     {
-        var user = await GetUserWithMemberships(request.Username, cancellationToken);
-        if (user is null)
+        UserLookupResult? lookupResult = await RetrieveUserToLogin(
+            request.Username,
+            cancellationToken
+        );
+
+        if (lookupResult is null)
         {
             return InitiateAuthenticationResult.Err(new InitiateAuthenticationError.Unauthorised());
         }
+
         var result = await _identityService.InitiateAuthentication(
-            user.CognitoUsername,
+            lookupResult.User.CognitoUsername,
             request.Password,
             cancellationToken
         );
-        if (result.IsOk)
-        {
-            await ResetCurrentOrganisation(user, cancellationToken);
-        }
-        return result;
+
+        return await HandlePostAuthentication(result, lookupResult, cancellationToken);
     }
 
     public async Task<InitiateAuthenticationResult> RespondToMultiFactorAuthenticationChallenge(
@@ -59,22 +65,24 @@ internal class LoginService : ILoginService
         CancellationToken cancellationToken
     )
     {
-        var user = await GetUserWithMemberships(command.Username, cancellationToken);
-        if (user is null)
+        UserLookupResult? lookupResult = await RetrieveUserToLogin(
+            command.Username,
+            cancellationToken
+        );
+
+        if (lookupResult is null)
         {
             return InitiateAuthenticationResult.Err(new InitiateAuthenticationError.Unauthorised());
         }
+
         var result = await _identityService.RespondToMultiFactorAuthenticationChallenge(
-            user.CognitoUsername,
+            lookupResult.User.CognitoUsername,
             command.AuthenticationSession,
             command.Code,
             cancellationToken
         );
-        if (result.IsOk)
-        {
-            await ResetCurrentOrganisation(user, cancellationToken);
-        }
-        return result;
+
+        return await HandlePostAuthentication(result, lookupResult, cancellationToken);
     }
 
     public Task<InitiateAuthenticationResult> RefreshAuthenticationToken(
@@ -145,6 +153,75 @@ internal class LoginService : ILoginService
             : _identityService.RevokeRefreshToken(refreshToken, cancellationToken);
     }
 
+    private async Task<InitiateAuthenticationResult> HandlePostAuthentication(
+        InitiateAuthenticationResult result,
+        UserLookupResult userLookupResult,
+        CancellationToken cancellationToken
+    )
+    {
+        if (result.IsErr)
+        {
+            return result;
+        }
+
+        if (userLookupResult.FoundFromPendingEmail)
+        {
+            var emailUpdateResult = await _userService.UpdateEmailToCompletePendingEmailChange(
+                userLookupResult.User.Id,
+                cancellationToken
+            );
+
+            if (emailUpdateResult.IsErr)
+            {
+                var error = emailUpdateResult.Error.Match<InitiateAuthenticationError>(
+                    notFound: () =>
+                        throw new InvalidOperationException(
+                            "Failed to update pending email address. User was not found despite previously being found during this request."
+                        ),
+                    conflictingEmail: () =>
+                        throw new InvalidOperationException(
+                            "Failed to update pending email address. Conflicting email occurred despite checks to ensure email/pending email uniqueness"
+                        ),
+                    notVerified: () => new InitiateAuthenticationError.VerificationRequired()
+                );
+                return InitiateAuthenticationResult.Err(error);
+            }
+        }
+
+        await ResetCurrentOrganisation(userLookupResult.User, cancellationToken);
+
+        return result;
+    }
+
+    private async Task<UserLookupResult?> RetrieveUserToLogin(
+        string emailUsername,
+        CancellationToken cancellationToken
+    )
+    {
+        static IQueryable<User> ApplyRequiredInclusions(IQueryable<User> users)
+        {
+            return users.Include(x => x.UserOrgMemberships)!.ThenInclude(x => x.Organisation);
+        }
+
+        var user = await ApplyRequiredInclusions(_appDbContext.Users)
+            .GetByEmailOrDefault(emailUsername, cancellationToken);
+        if (user is not null)
+        {
+            // Handles edge cases where there is a pending email that only changes in case.
+            bool hasPendingEmailThatMatchesCase =
+                user.IsPendingEmailVerified()
+                && string.Equals(
+                    user.NormalisedPendingWorkEmail,
+                    user.NormalisedWorkEmail,
+                    StringComparison.Ordinal
+                );
+            return new(user, FoundFromPendingEmail: hasPendingEmailThatMatchesCase);
+        }
+        var userWithPendingEmail = await ApplyRequiredInclusions(_appDbContext.Users)
+            .GetByPendingEmailOrDefault(emailUsername, cancellationToken);
+        return userWithPendingEmail is not null ? new(userWithPendingEmail, true) : null;
+    }
+
     private static CognitoUsername CreateDummyUsername(string email)
     {
         byte[] bytes = Encoding.UTF8.GetBytes(email);
@@ -153,12 +230,6 @@ internal class LoginService : ILoginService
 
         return CognitoUsername.Parse(hashString);
     }
-
-    private Task<User?> GetUserWithMemberships(string email, CancellationToken cancellationToken) =>
-        _appDbContext
-            .Users.Include(x => x.UserOrgMemberships)!
-                .ThenInclude(x => x.Organisation)
-            .GetByEmailOrDefault(email, cancellationToken);
 
     // Each sign-in clears the selected organisation, then selects it again only when there is
     // just one to choose. If the flag is left null (for users with multiple memberships), they
@@ -175,4 +246,6 @@ internal class LoginService : ILoginService
             await _appDbContext.SaveChangesAsync(cancellationToken);
         }
     }
+
+    private sealed record UserLookupResult(User User, bool FoundFromPendingEmail);
 }

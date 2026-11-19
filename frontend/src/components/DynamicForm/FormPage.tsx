@@ -45,10 +45,16 @@ export type FormPageProps = {
   page: RecordPageDto
   /** Set when the user came from check your answers, so saving returns them there. */
   returnToCheckAnswers?: boolean
+  /** Set when the user chose "add another" on check your answers: group questions open with a new blank item. */
+  addGroupItem?: boolean
 }
 
 /** Renders a record content form page from its description, and saves it. */
-export function FormPage({ page, returnToCheckAnswers = false }: FormPageProps) {
+export function FormPage({
+  page,
+  returnToCheckAnswers = false,
+  addGroupItem = false,
+}: FormPageProps) {
   const router = useRouter()
   const { questions } = page
   const [saveState, setSaveState] = useState<SaveState>({ kind: 'idle' })
@@ -66,7 +72,7 @@ export function FormPage({ page, returnToCheckAnswers = false }: FormPageProps) 
   const hasNextPage = !returnToCheckAnswers && Boolean(page.nextPageId)
 
   const form = useForm({
-    defaultValues: toFormValues(questions, page.answers),
+    defaultValues: toFormValues(questions, page.answers, addGroupItem),
     onSubmitMeta: { returnToTaskList: false },
     onSubmit: async ({ value, formApi, meta }) => {
       setSaveState({ kind: 'idle' })

@@ -632,6 +632,70 @@ internal partial class UserService(
         CancellationToken cancellationToken
     )
     {
+        var strategy = dbContext.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(
+                cancellationToken
+            );
+
+            try
+            {
+                // Advisory xact lock is released when whichever transaction is in use ends.
+                await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                    $"SELECT pg_advisory_xact_lock(hashtextextended(ukps.normalise_email({command.Value}), 0))",
+                    cancellationToken
+                );
+
+                User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
+
+                var error = await ValidateEmailUpdatePermitted(user, command, cancellationToken);
+                if (error is not null)
+                {
+                    return Result<UpdateUserEmailError>.Err(error);
+                }
+
+                user!.UpdateEmail(
+                    command.Value,
+                    VerificationTokenGenerator.Generate(),
+                    timeProvider.GetUtcNow()
+                );
+
+                await dbContext.SaveChangesAsync(cancellationToken);
+                await HandleUserEvents(user, cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+
+                return Result<UpdateUserEmailError>.Ok();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return Result<UpdateUserEmailError>.Err(
+                    new UpdateUserEmailError.ConcurrentChangeDetected()
+                );
+            }
+            catch (DbUpdateException updateException)
+                when (ConstraintExceptions.IsUniquePendingEmailException(updateException))
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return Result<UpdateUserEmailError>.Err(
+                    new UpdateUserEmailError.ConflictingEmail()
+                );
+            }
+            catch (Exception ex)
+            {
+                LogUpdatingUserDetailsFailed(ex);
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
+        });
+    }
+
+    public async Task<UpdateEmailToCompletePendingEmailChangeResult> UpdateEmailToCompletePendingEmailChange(
+        int userId,
+        CancellationToken cancellationToken
+    )
+    {
         await using IDbContextTransaction transaction =
             await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
@@ -639,41 +703,34 @@ internal partial class UserService(
         {
             User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
 
-            var error = await ValidateEmailUpdatePermitted(user, command, cancellationToken);
-            if (error is not null)
+            if (user is null)
             {
-                return Result<UpdateUserEmailError>.Err(error);
+                return UpdateEmailToCompletePendingEmailChangeResult.Err(
+                    new UpdateEmailToCompletePendingEmailError.NotFound()
+                );
+            }
+            if (user.PendingEmailVerifiedAt is null)
+            {
+                return UpdateEmailToCompletePendingEmailChangeResult.Err(
+                    new UpdateEmailToCompletePendingEmailError.NotVerified()
+                );
             }
 
-            user!.UpdateEmail(
-                command.Value,
-                VerificationTokenGenerator.Generate(),
-                timeProvider.GetUtcNow()
-            );
+            user.CompletePendingEmail(timeProvider.GetUtcNow());
 
             await dbContext.SaveChangesAsync(cancellationToken);
             await HandleUserEvents(user, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            return Result<UpdateUserEmailError>.Ok();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            return Result<UpdateUserEmailError>.Err(
-                new UpdateUserEmailError.ConcurrentChangeDetected()
-            );
+            return UpdateEmailToCompletePendingEmailChangeResult.Ok();
         }
         catch (DbUpdateException updateException)
-            when (ConstraintExceptions.IsUniquePendingEmailException(updateException))
+            when (ConstraintExceptions.IsUniqueEmailException(updateException))
         {
             await transaction.RollbackAsync(cancellationToken);
-            return Result<UpdateUserEmailError>.Err(new UpdateUserEmailError.ConflictingEmail());
-        }
-        catch (Exception ex)
-        {
-            LogUpdatingUserDetailsFailed(ex);
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
+            return UpdateEmailToCompletePendingEmailChangeResult.Err(
+                new UpdateEmailToCompletePendingEmailError.ConflictingEmail()
+            );
         }
     }
 

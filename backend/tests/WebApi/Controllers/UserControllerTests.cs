@@ -50,9 +50,9 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             ),
             new(
                 Result<ResendVerificationEmailError>.Err(
-                    new ResendVerificationEmailError.NotFound()
+                    new ResendVerificationEmailError.Forbidden()
                 ),
-                HttpStatusCode.Forbidden
+                HttpStatusCode.NotFound
             ),
             new(
                 Result<ResendVerificationEmailError>.Err(

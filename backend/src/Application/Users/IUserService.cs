@@ -1,4 +1,5 @@
 global using ResendVerificationEmailResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.ResendVerificationEmailError>;
+global using UpdateEmailToCompletePendingEmailChangeResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.UpdateEmailToCompletePendingEmailError>;
 global using VerifyPendingEmailAddressResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.VerifyPendingEmailAddressError>;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Organisations.Dtos;
@@ -106,6 +107,19 @@ public interface IUserService
     Task<VerifyPendingEmailAddressResult> VerifyPendingEmailAddress(
         int userId,
         VerifyPendingEmailAddressCommand command,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
+    /// Updates the user's email address to complete a pending email change.
+    /// </summary>
+    /// <param name="userId">The ID of the user whose email address is being updated.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation, containing the result of the pending email change.
+    /// </returns>
+    Task<UpdateEmailToCompletePendingEmailChangeResult> UpdateEmailToCompletePendingEmailChange(
+        int userId,
         CancellationToken cancellationToken
     );
 
