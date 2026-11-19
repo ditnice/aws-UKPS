@@ -20,6 +20,8 @@ public abstract record UserSetupError
     /// </summary>
     internal sealed record InvalidPassword : UserSetupError;
 
+    internal sealed record InvalidPendingEmail : UserSetupError;
+
     /// <summary>
     /// Indicates that the setup token has expired and is no longer valid.
     /// </summary>

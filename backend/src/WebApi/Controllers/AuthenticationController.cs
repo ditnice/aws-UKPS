@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using UKPS.Api.Application.Authentication;
@@ -267,7 +266,7 @@ public class AuthenticationController : ControllerBase
     /// <response code="401">
     /// The authentication session or verification code was invalid.
     /// </response>
-    [HttpPost("mfa")]
+    [HttpPost("mfa", Name = nameof(RespondToMultiFactorAuthenticationChallenge))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<AuthenticationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<AuthenticationProblemDetails>(StatusCodes.Status401Unauthorized)]
@@ -803,17 +802,22 @@ public class AuthenticationController : ControllerBase
 
     private ActionResult HandleLoginError(InitiateAuthenticationError error)
     {
-        return error switch
-        {
-            InitiateAuthenticationError.Unauthorised => Unauthorized(
-                AuthenticationProblemDetails.Unauthorised()
-            ),
-            InitiateAuthenticationError.Challenge c => Unauthorized(
-                AuthenticationProblemDetails.Challenge(c.ChallengeType, c.AuthenticationSession)
-            ),
-            _ => throw new UnreachableException(
-                $"Unhandled {nameof(InitiateAuthenticationError)} variant."
-            ),
-        };
+        return error.Match<ActionResult>(
+            unauthorised: () => Unauthorized(AuthenticationProblemDetails.Unauthorised()),
+            verificationRequired: () =>
+                BadRequest(
+                    new AuthenticationProblemDetails()
+                    {
+                        Title = "Email Requires Verification",
+                        Detail = "The email for the account provided requires verification",
+                        Status = StatusCodes.Status400BadRequest,
+                        Code = AuthenticationFailCode.PendingEmailRequiredVerification,
+                    }
+                ),
+            challenge: c =>
+                Unauthorized(
+                    AuthenticationProblemDetails.Challenge(c.ChallengeType, c.AuthenticationSession)
+                )
+        );
     }
 }

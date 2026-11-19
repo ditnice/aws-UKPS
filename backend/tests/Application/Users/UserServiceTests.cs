@@ -1381,7 +1381,86 @@ public class UserServiceTests : DatabaseTestBase
             .ShouldBeOfType<VerifyPendingEmailAddressError.InvalidTokenProvided>();
     }
 
-    private async Task<string> RequestEmailUpdate(User currentUser)
+    [Fact]
+    public async Task UpdateEmailToCompletePendingEmailChange_ShouldUpdateUserToHaveNewEmailAndClearPending()
+    {
+        const string updateEmail = "testupdate@email.com";
+        User currentUser = await CreateExistingCurrentUser();
+        await RequestAndVerifyEmailUpdate(currentUser, updateEmail);
+
+        var result = await Service.UpdateEmailToCompletePendingEmailChange(
+            currentUser.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        var updatedUser = await _harness
+            .GetClearedContext()
+            .Users.GetByEmailOrDefault(updateEmail, TestContext.Current.CancellationToken);
+
+        updatedUser.ShouldNotBeNull();
+        updatedUser.WorkEmail.ShouldBe(updateEmail);
+        updatedUser.PendingEmailVerifiedAt.ShouldBeNull();
+        updatedUser.PendingEmailVerifiedAt.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task UpdateEmailToCompletePendingEmailChange_ShouldCallCognitoToUpdateEmail()
+    {
+        const string updateEmail = "testupdate@email.com";
+        User currentUser = await CreateExistingCurrentUser();
+        await RequestAndVerifyEmailUpdate(currentUser, updateEmail);
+
+        var result = await Service.UpdateEmailToCompletePendingEmailChange(
+            currentUser.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        MockUser? user = _harness.Cognito.GetUserByEmail(updateEmail);
+        user.ShouldNotBeNull().EmailVerified.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task UpdateEmailToCompletePendingEmailChange_WhenPendingChangeIsNotVerified_ShouldReturnNotVerifiedError()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        _ = await RequestEmailUpdate(currentUser);
+
+        var result = await Service.UpdateEmailToCompletePendingEmailChange(
+            currentUser.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<UpdateEmailToCompletePendingEmailError.NotVerified>();
+    }
+
+    [Fact]
+    public async Task UpdateEmailToCompletePendingEmailChange_WhenUserDoesNotExist_ShouldReturnNotVerifiedError()
+    {
+        var result = await Service.UpdateEmailToCompletePendingEmailChange(
+            999,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<UpdateEmailToCompletePendingEmailError.NotFound>();
+    }
+
+    private async Task RequestAndVerifyEmailUpdate(User currentUser, string? updateEmail = null)
+    {
+        var token = await RequestEmailUpdate(currentUser, updateEmail);
+        var result = await Service.VerifyPendingEmailAddress(
+            currentUser.Id,
+            new VerifyPendingEmailAddressCommand() { VerificationToken = token },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+    }
+
+    private async Task<string> RequestEmailUpdate(User currentUser, string? updateEmail = null)
     {
         const string TestEmail = "testupdateuserdetails@email.com";
         _mockEmailVerificationLinkCreator
@@ -1390,7 +1469,7 @@ public class UserServiceTests : DatabaseTestBase
 
         var result = await Service.UpdateUserEmail(
             currentUser.Id,
-            new UpdateUserEmailCommand { Value = TestEmail },
+            new UpdateUserEmailCommand { Value = updateEmail ?? TestEmail },
             TestContext.Current.CancellationToken
         );
 

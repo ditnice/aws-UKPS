@@ -19,6 +19,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
             Username = "test-user",
             Password = "test-user-password-123",
             Email = "example@email.com",
+            EmailVerified = true,
             SubjectId = "b7f3c5f9-8b2d-4a71-9e6c-3d4f0a8c1e52",
         };
 
@@ -55,11 +56,20 @@ internal sealed class MockAmazonCognitoIdentityProvider
                             "Expecting email attribute to be set."
                         );
 
+                    var emailVerified =
+                        request
+                            .UserAttributes.FirstOrDefault(x =>
+                                string.Equals(x.Name, "email_verified", StringComparison.Ordinal)
+                            )
+                            ?.Value.Equals($"{true}", StringComparison.OrdinalIgnoreCase)
+                        ?? false;
+
                     var newUser = new MockUser()
                     {
                         Username = request.Username,
                         SubjectId = subjectId,
                         Email = email,
+                        EmailVerified = emailVerified,
                     };
                     _users.Add(newUser);
 
@@ -276,6 +286,13 @@ internal sealed class MockAmazonCognitoIdentityProvider
                         string.Equals(x.Name, "email", StringComparison.Ordinal)
                     )
                     ?.Value;
+                var emailVerified =
+                    request
+                        .UserAttributes.FirstOrDefault(x =>
+                            string.Equals(x.Name, "email_verified", StringComparison.Ordinal)
+                        )
+                        ?.Value.Equals($"{true}", StringComparison.OrdinalIgnoreCase)
+                    ?? null;
                 var newPhoneNumberValue = request
                     .UserAttributes.FirstOrDefault(x =>
                         string.Equals(x.Name, "phone_number", StringComparison.Ordinal)
@@ -291,6 +308,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
                             ? u with
                             {
                                 Email = newEmailValue ?? u.Email,
+                                EmailVerified = emailVerified ?? u.EmailVerified,
                             }
                             : u
                     )

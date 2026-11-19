@@ -12,7 +12,8 @@ export const AuthenticationFailCode = {
     MEMBERSHIP_DEACTIVATED: 'MembershipDeactivated',
     MEMBERSHIP_NOT_IN_VALID_STATE: 'MembershipNotInValidState',
     ORGANISATION_NOT_ACTIVE: 'OrganisationNotActive',
-    SELECTED_ORGANISATION_MISMATCH: 'SelectedOrganisationMismatch'
+    SELECTED_ORGANISATION_MISMATCH: 'SelectedOrganisationMismatch',
+    PENDING_EMAIL_REQUIRED_VERIFICATION: 'PendingEmailRequiredVerification'
 } as const;
 
 export type AuthenticationFailCode = typeof AuthenticationFailCode[keyof typeof AuthenticationFailCode];
@@ -2480,7 +2481,7 @@ export type PostAuthSignOutResponses = {
     200: unknown;
 };
 
-export type PostAuthMfaData = {
+export type RespondToMultiFactorAuthenticationChallengeData = {
     /**
      * A token to monitor for cancellation requests.
      */
@@ -2490,7 +2491,7 @@ export type PostAuthMfaData = {
     url: '/auth/mfa';
 };
 
-export type PostAuthMfaErrors = {
+export type RespondToMultiFactorAuthenticationChallengeErrors = {
     /**
      * The supplied request was invalid.
      */
@@ -2501,9 +2502,9 @@ export type PostAuthMfaErrors = {
     401: AuthenticationProblemDetails;
 };
 
-export type PostAuthMfaError = PostAuthMfaErrors[keyof PostAuthMfaErrors];
+export type RespondToMultiFactorAuthenticationChallengeError = RespondToMultiFactorAuthenticationChallengeErrors[keyof RespondToMultiFactorAuthenticationChallengeErrors];
 
-export type PostAuthMfaResponses = {
+export type RespondToMultiFactorAuthenticationChallengeResponses = {
     /**
      * The multi-factor authentication challenge was successfully completed and an
      * authentication cookie was created.

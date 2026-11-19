@@ -172,6 +172,7 @@
           "Authentication"
         ],
         "summary": "Completes a multi-factor authentication challenge for an existing authentication session.",
+        "operationId": "RespondToMultiFactorAuthenticationChallenge",
         "requestBody": {
           "description": "A token to monitor for cancellation requests.",
           "content": {
@@ -5605,6 +5606,7 @@
           "MembershipNotInValidState",
           "OrganisationNotActive",
           "SelectedOrganisationMismatch",
+          "PendingEmailRequiredVerification",
           null
         ],
         "type": "string"
