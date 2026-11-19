@@ -246,13 +246,16 @@ describe('Edit user detail page', () => {
 
       const pendingWorkEmail = fakePendingWorkEmailChangeDto()
       mockGetUsersMe({
-        data: { ...fakeUserInformationDto(), pendingWorkEmail: pendingWorkEmail },
+        data: { ...fakeUserInformationDto(), pendingWorkEmail: pendingWorkEmail, userId: 123 },
       })
 
       await renderPage()
 
       expect(PendingEmailUpdateAlertMock).toHaveBeenCalledTimes(1)
-      expect(PendingEmailUpdateAlertMock.mock.calls[0][0]).toEqual(pendingWorkEmail)
+      expect(PendingEmailUpdateAlertMock.mock.calls[0][0]).toEqual({
+        ...pendingWorkEmail,
+        userId: 123,
+      })
     })
   })
 })

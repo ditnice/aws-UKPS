@@ -188,6 +188,17 @@ internal sealed class User
         }
     }
 
+    internal void RefreshVerificationToken(string verificationToken, DateTime dateTime)
+    {
+        if (PendingWorkEmail is null)
+        {
+            throw new InvalidOperationException(
+                "Cannot refresh the verification token because there is no pending work email to verify."
+            );
+        }
+        PendingEmailVerificationToken = verificationToken;
+    }
+
     internal bool IsPendingEmailVerified()
     {
         return PendingWorkEmail is not null && PendingEmailVerifiedAt is not null;
