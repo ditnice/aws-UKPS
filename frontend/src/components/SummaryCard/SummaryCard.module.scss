@@ -13,6 +13,11 @@
   > :last-child {
     margin-bottom: 0;
   }
+
+  // The card's border closes it off, so its last row needs no dividing line.
+  > [data-component='summary-list']:last-child > :last-child {
+    border-bottom: 0;
+  }
 }
 
 .header {
