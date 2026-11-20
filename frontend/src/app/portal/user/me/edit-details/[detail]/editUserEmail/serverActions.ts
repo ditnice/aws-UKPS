@@ -3,7 +3,7 @@
 import { initialFormState, ServerValidateError } from '@tanstack/react-form-nextjs'
 import { redirect } from 'next/navigation'
 
-import { updateUserEmail } from '@/client/generated'
+import { cancelPendingEmailChange, updateUserEmail } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFormStateServerErrors } from '@/lib/form/formErrorHandling'
@@ -54,5 +54,20 @@ export const updateUserEmailAction = async (userId: number, prev: unknown, formD
       return e.formState
     }
     throw e
+  }
+}
+
+export const cancelPendingEmailChangeAction = async (userId: number) => {
+  const { error, response } = await cancelPendingEmailChange({
+    client: await createServerApiClient(),
+    path: { userId },
+  })
+
+  if (response?.ok) {
+    redirect(buildMyDetailsHref())
+  }
+
+  if (error || !response?.ok) {
+    return { errors: [errorMessages.genericWithRetry] }
   }
 }

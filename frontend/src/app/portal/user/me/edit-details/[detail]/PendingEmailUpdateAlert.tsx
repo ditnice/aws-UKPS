@@ -3,6 +3,8 @@
 import { PendingWorkEmailChangeDto } from '@/client/generated'
 import { Alert } from '@/components/Alert/Alert'
 
+import CancelPendingEmailChange from './editUserEmail/CancelPendingEmailChange'
+import styles from './PendingEmailUpdateAlert.module.scss'
 import ResendVerificationEmailButton from './ResendVerificationEmail/ResendVerificationEmailButton'
 
 export type PendingEmailUpdateAlertProps = PendingWorkEmailChangeDto & { userId: number }
@@ -32,7 +34,10 @@ const PendingEmailUpdateAlert = async ({
             use the link in the email to verify this address. Once it&rsquo;s verified, log in with
             it to complete the change.
           </p>
-          <ResendVerificationEmailButton userId={userId} />
+          <div className={styles.buttons}>
+            <ResendVerificationEmailButton userId={userId} />
+            <CancelPendingEmailChange userId={userId} />
+          </div>
         </>
       )}
     </Alert>

@@ -344,11 +344,37 @@ internal sealed class User
         return null;
     }
 
+    internal PendingEmailCancellationError? TryCancelPendingEmailChange(DateTime dateTime)
+    {
+        if (PendingWorkEmail is null)
+        {
+            return PendingEmailCancellationError.NoPendingEmailToCancel;
+        }
+
+        if (PendingEmailVerifiedAt is not null)
+        {
+            return PendingEmailCancellationError.EmailAlreadyVerified;
+        }
+
+        PendingWorkEmail = null;
+        PendingEmailVerifiedAt = null;
+        PendingEmailVerificationToken = null;
+        UpdatedAt = dateTime;
+
+        return null;
+    }
+
     public enum VerificationError
     {
         NoPendingEmailToVerify = 0,
         InvalidVerificationToken = 1,
         AlreadyVerified = 2,
+    }
+
+    internal enum PendingEmailCancellationError
+    {
+        NoPendingEmailToCancel = 0,
+        EmailAlreadyVerified = 1,
     }
 
     internal record EmailUpdatedEvent : IUserDomainEvent

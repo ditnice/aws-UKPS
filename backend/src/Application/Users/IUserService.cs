@@ -124,6 +124,20 @@ public interface IUserService
     );
 
     /// <summary>
+    /// Cancels the specified user's unverified pending email change.
+    /// </summary>
+    /// <param name="userId">The identifier of the user whose pending email change is being cancelled.</param>
+    /// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+    /// <returns>
+    /// A task that resolves to a <see cref="Result{TError}"/> indicating whether the pending email
+    /// change was cancelled, or which <see cref="CancelPendingEmailChangeError"/> case prevented it.
+    /// </returns>
+    Task<Result<CancelPendingEmailChangeError>> CancelPendingEmailChange(
+        int userId,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
     /// Retrieves the details of a user, along with their membership of the specified organisation.
     /// </summary>
     /// <param name="userId">The unique identifier of the user to retrieve.</param>
