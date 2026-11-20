@@ -382,6 +382,57 @@ public class UserController(IUserService userService) : ControllerBase
     }
 
     /// <summary>
+    /// Cancels a user's unverified pending email change.
+    /// </summary>
+    /// <param name="userId">The ID of the user whose pending email change is being cancelled.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>An empty 200 response when the pending email change has been cancelled.</returns>
+    /// <response code="200">The pending email change was cancelled successfully.</response>
+    /// <response code="404">The specified user does not exist or is not accessible to the caller.</response>
+    /// <response code="409">The user has no pending email change, the pending email has already been verified, or a concurrent change was detected.</response>
+    [HttpDelete("{userId:int}/email/pending", Name = nameof(CancelPendingEmailChange))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult> CancelPendingEmailChange(
+        [FromRoute] int userId,
+        CancellationToken cancellationToken
+    )
+    {
+        Result<CancelPendingEmailChangeError> result = await userService.CancelPendingEmailChange(
+            userId,
+            cancellationToken
+        );
+
+        return result.Match(
+            Ok,
+            err =>
+                err.Match<ActionResult>(
+                    unauthorised: () => UserNotFound(),
+                    userDoesNotExist: () => UserNotFound(),
+                    noPendingEmailToCancel: () =>
+                        Problem(
+                            title: "No pending email",
+                            detail: "This user has no pending email change to cancel.",
+                            statusCode: StatusCodes.Status409Conflict
+                        ),
+                    emailAlreadyVerified: () =>
+                        Problem(
+                            title: "Email already verified",
+                            detail: "The pending email address has already been verified and cannot be cancelled.",
+                            statusCode: StatusCodes.Status409Conflict
+                        ),
+                    concurrentChangeDetected: () =>
+                        Problem(
+                            title: "Email address change could not be cancelled",
+                            detail: "A concurrent change was detected. Please try again.",
+                            statusCode: StatusCodes.Status409Conflict
+                        )
+                )
+        );
+    }
+
+    /// <summary>
     /// Removes access and anonymises the user's profile and linked approved registration requests.
     /// Personal details in user-change audit history are cleared. Records created by the user are
     /// kept; other registration requests, communications, logs and backups are not deleted.

@@ -3678,6 +3678,42 @@ export type VerifyPendingEmailAddressResponses = {
     200: unknown;
 };
 
+export type CancelPendingEmailChangeData = {
+    body?: never;
+    path: {
+        /**
+         * The ID of the user whose pending email change is being cancelled.
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/users/{userId}/email/pending';
+};
+
+export type CancelPendingEmailChangeErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The specified user does not exist or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The user has no pending email change, the pending email has already been verified, or a concurrent change was detected.
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type CancelPendingEmailChangeError = CancelPendingEmailChangeErrors[keyof CancelPendingEmailChangeErrors];
+
+export type CancelPendingEmailChangeResponses = {
+    /**
+     * The pending email change was cancelled successfully.
+     */
+    200: unknown;
+};
+
 export type PostUsersOnboardData = {
     /**
      * A token that can be used to cancel the operation.
