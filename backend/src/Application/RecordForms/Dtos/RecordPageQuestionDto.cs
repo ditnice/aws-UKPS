@@ -29,11 +29,10 @@ public sealed record RecordPageQuestionDto
 
     /// <summary>
     /// The width of a <c>Text</c> input, or of each entry of a <c>TextList</c>, overriding the
-    /// default of <c>two-thirds</c>: a character count such as <c>20</c> (<c>Text</c> only) or a
-    /// share of the container such as <c>full</c>; null for the default. Not <c>required</c>, so
-    /// existing clients and fixtures are unaffected.
+    /// default of two-thirds; null for the default. Not <c>required</c>, so existing clients and
+    /// fixtures are unaffected.
     /// </summary>
-    public string? Width { get; init; }
+    public FormInputWidth? Width { get; init; }
 
     /// <summary>The empty option text of a dropdown.</summary>
     public required string? Placeholder { get; init; }

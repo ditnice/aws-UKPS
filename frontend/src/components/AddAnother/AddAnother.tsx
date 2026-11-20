@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import { ChangeEvent, CSSProperties } from 'react'
 
 import { Button } from '@/components/Button/Button'
-import { Input, inputWidthStyles, type InputWidth } from '@/components/Input/Input'
+import { Input, inputWidthStyles, type InputFluidWidth } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { clearFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
@@ -45,8 +45,8 @@ export type AddAnotherProps<T extends string> = {
    */
   itemLabel?: string
   firstItemClassName?: string
-  /** Optional width of each input's box; defaults to two-thirds of the row. */
-  inputWidth?: InputWidth
+  /** Optional share of the row each input's box takes; defaults to two-thirds. */
+  inputWidth?: InputFluidWidth
   labelPrefix: string
   hint?: string
   field: ArrayField<T>

@@ -109,7 +109,7 @@ internal static class FormModelBuilder
             Label = field.Label,
             Hint = field.Hint,
             Display = field.Display,
-            Width = field.Width,
+            Width = field.Width == FormInputWidth.Default ? null : field.Width,
             Order = field.Order,
             Placeholder = field.Placeholder,
             ChildLabel = field.ChildLabel,

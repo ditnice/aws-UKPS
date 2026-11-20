@@ -1456,7 +1456,7 @@ describe('FormPage clinical trials', () => {
         type: 'Text',
         label: 'Study name',
         hint: 'Enter the official or commonly used study title.',
-        width: 'full',
+        width: 'Full',
         rules: [{ kind: 'Required', value: null, message: 'Enter study name' }],
       }),
       question({
@@ -1480,7 +1480,7 @@ describe('FormPage clinical trials', () => {
         addAnotherLabel: 'Add another trial number',
         itemLabel: 'Other registry number',
         removeLabel: 'Remove',
-        width: 'full',
+        width: 'Full',
         rules: [{ kind: 'Distinct', value: null, message: 'Registry number must be different' }],
       }),
     ],

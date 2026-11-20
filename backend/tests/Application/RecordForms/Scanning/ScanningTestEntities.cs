@@ -172,20 +172,10 @@ internal sealed class BrokenEntity
         "broken_entity.width_on_textarea",
         "Width on textarea",
         FormControl.Textarea,
-        Width = "full",
+        Width = FormInputWidth.Full,
         Order = 7
     )]
     public string? WidthOnTextarea { get; set; }
-
-    [FormPage("broken-prefixes")]
-    [FormField(
-        "broken_entity.unknown_width",
-        "Unknown width",
-        FormControl.Text,
-        Width = "wide",
-        Order = 8
-    )]
-    public string? UnknownWidth { get; set; }
 
     public RecordRevision? Revision { get; set; }
 }
@@ -1124,7 +1114,7 @@ internal sealed class BrokenListedEntity
         "broken_listed_entity.fixed_width_list",
         "Fixed width list",
         FormControl.TextList,
-        Width = "20",
+        Width = FormInputWidth.Chars20,
         Order = 60
     )]
     [FormListSource<ListedNameKind>(nameof(Names), ListedNameKind.Second)]

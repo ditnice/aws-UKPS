@@ -225,6 +225,25 @@ export const FormControl = {
  */
 export type FormControl = typeof FormControl[keyof typeof FormControl];
 
+export const FormInputWidth = {
+    DEFAULT: 'Default',
+    FULL: 'Full',
+    THREE_QUARTERS: 'ThreeQuarters',
+    TWO_THIRDS: 'TwoThirds',
+    ONE_HALF: 'OneHalf',
+    ONE_THIRD: 'OneThird',
+    ONE_QUARTER: 'OneQuarter',
+    CHARS2: 'Chars2',
+    CHARS3: 'Chars3',
+    CHARS4: 'Chars4',
+    CHARS5: 'Chars5',
+    CHARS10: 'Chars10',
+    CHARS20: 'Chars20',
+    CHARS30: 'Chars30'
+} as const;
+
+export type FormInputWidth = typeof FormInputWidth[keyof typeof FormInputWidth];
+
 export const GenomicTestMandatoryStatus = {
     UNKNOWN: 'Unknown',
     RECOMMENDED_NOT_REQUIRED: 'RecommendedNotRequired',
@@ -1468,13 +1487,7 @@ export type RecordPageQuestionDto = {
      * A rendering hint, for example `combobox`.
      */
     display: null | string;
-    /**
-     * The width of a `Text` input, or of each entry of a `TextList`, overriding the
-     * default of `two-thirds`: a character count such as `20` (`Text` only) or a
-     * share of the container such as `full`; null for the default. Not `required`, so
-     * existing clients and fixtures are unaffected.
-     */
-    width?: null | string;
+    width?: null | FormInputWidth;
     /**
      * The empty option text of a dropdown.
      */

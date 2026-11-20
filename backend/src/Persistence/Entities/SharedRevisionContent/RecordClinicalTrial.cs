@@ -24,7 +24,7 @@ internal sealed class RecordClinicalTrial
         "Study name",
         FormControl.Text,
         Hint = "Enter the official or commonly used study title. Use consistent naming across UK PharmaScan and public trial registries.",
-        Width = "full",
+        Width = FormInputWidth.Full,
         Order = 10
     )]
     [FormRequired("Enter study name")]
@@ -64,7 +64,7 @@ internal sealed class RecordClinicalTrial
         AddAnotherLabel = "Add another trial number",
         ItemLabel = "Other registry number",
         RemoveLabel = "Remove",
-        Width = "full",
+        Width = FormInputWidth.Full,
         Order = 30
     )]
     [FormDistinct("Trial number from other registry must be different for each entry")]

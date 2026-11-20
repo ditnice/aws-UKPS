@@ -6083,6 +6083,26 @@
         "type": "string",
         "description": "The input a record content question is rendered with. Part of the HTTP API contract: the\nmember names are sent to the frontend, so never rename or remove one."
       },
+      "FormInputWidth": {
+        "enum": [
+          "Default",
+          "Full",
+          "ThreeQuarters",
+          "TwoThirds",
+          "OneHalf",
+          "OneThird",
+          "OneQuarter",
+          "Chars2",
+          "Chars3",
+          "Chars4",
+          "Chars5",
+          "Chars10",
+          "Chars20",
+          "Chars30",
+          null
+        ],
+        "type": "string"
+      },
       "GenomicTestMandatoryStatus": {
         "enum": [
           "Unknown",
@@ -8433,11 +8453,15 @@
             "description": "A rendering hint, for example `combobox`."
           },
           "width": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "The width of a `Text` input, or of each entry of a `TextList`, overriding the\ndefault of `two-thirds`: a character count such as `20` (`Text` only) or a\nshare of the container such as `full`; null for the default. Not `required`, so\nexisting clients and fixtures are unaffected."
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The width of a `Text` input, or of each entry of a `TextList`, overriding the\ndefault of two-thirds; null for the default. Not `required`, so existing clients and\nfixtures are unaffected.",
+                "$ref": "#/components/schemas/FormInputWidth"
+              }
+            ]
           },
           "placeholder": {
             "type": [
