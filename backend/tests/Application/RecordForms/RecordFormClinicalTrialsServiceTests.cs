@@ -147,6 +147,21 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task SavePage_TrialsWithTheSameTrialNumber_AreBothStored()
+    {
+        await SaveOk(GatePage, Answer(HasTrials, "Yes"));
+
+        await SaveOk(
+            DetailsPage,
+            TrialsAnswer(Trial("ION-UK", "NCT06123456"), Trial("ION-EU", "NCT06123456"))
+        );
+
+        (await StoredTrials())
+            .Select(static t => (t.StudyName, t.ClinicalTrialsGovNumber))
+            .ShouldBe([("ION-UK", "NCT06123456"), ("ION-EU", "NCT06123456")]);
+    }
+
+    [Fact]
     public async Task GetPage_SavedTrials_AreReturnedAsSent()
     {
         await SaveOk(GatePage, Answer(HasTrials, "Yes"));
@@ -162,7 +177,7 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task SavePage_Trials_AuditsTheCollectionKeyedByTrialNumber()
+    public async Task SavePage_Trials_AuditsTheCollectionAsAnOrderedList()
     {
         await SaveOk(GatePage, Answer(HasTrials, "Yes"));
 
@@ -176,12 +191,12 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
             .SingleAsync(a => a.FieldPath == Trials, Ct);
         audit.OldValue.ShouldBeNull();
         audit.NewValue.ShouldBe(
-            """{"NCT06123456":{"other_registry_numbers":["2025-001234-56","ISRCTN12345678"],"study_name":"ION-UK"}}"""
+            """[{"clinical_trials_gov_number":"NCT06123456","other_registry_numbers":["2025-001234-56","ISRCTN12345678"],"study_name":"ION-UK"}]"""
         );
     }
 
     [Fact]
-    public async Task SavePage_RemovingATrial_KeepsEachOtherTrialOnItsOwnRow()
+    public async Task SavePage_RemovingATrial_KeepsTheOtherTrialAndDeletesItsRegistryNumbers()
     {
         await SaveOk(GatePage, Answer(HasTrials, "Yes"));
         await SaveOk(
@@ -191,20 +206,19 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
                 Trial("Second", "NCT00000002", "B1", "B2")
             )
         );
-        int secondRowId = (await StoredTrials())[1].Id;
 
         await SaveOk(DetailsPage, TrialsAnswer(Trial("Second", "NCT00000002", "B2")));
 
         RecordClinicalTrial remaining = (await StoredTrials()).Single();
-        (remaining.Id, remaining.StudyName, remaining.ClinicalTrialsGovNumber).ShouldBe(
-            (secondRowId, "Second", "NCT00000002")
+        (remaining.StudyName, remaining.ClinicalTrialsGovNumber).ShouldBe(
+            ("Second", "NCT00000002")
         );
         remaining.OtherClinicalTrialNumbers.Single().OtherRegistryNumber.ShouldBe("B2");
         (await Context.OtherClinicalTrialNumbers.CountAsync(Ct)).ShouldBe(1);
     }
 
     [Fact]
-    public async Task SavePage_EditingATrialNumber_KeepsTheTrialOnItsRow()
+    public async Task SavePage_EditingATrialNumber_UpdatesTheTrialInPlace()
     {
         await SaveOk(GatePage, Answer(HasTrials, "Yes"));
         await SaveOk(
@@ -231,7 +245,6 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
             DetailsPage,
             TrialsAnswer(Trial("First", "NCT00000001"), Trial("Second", "NCT00000002"))
         );
-        int secondRowId = (await StoredTrials())[1].Id;
 
         await SaveOk(
             DetailsPage,
@@ -240,7 +253,6 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
 
         RecordClinicalTrial[] trials = await StoredTrials();
         trials.Select(static t => t.StudyName).ShouldBe(["Second", "Third"]);
-        trials[0].Id.ShouldBe(secondRowId);
         (await GetPage(DetailsPage))
             .Answers[Trials]
             .EnumerateArray()
@@ -251,7 +263,7 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task SavePage_CrossingTrialKeys_PreservesSubmittedOrderAndAllowsIdenticalRetry(
+    public async Task SavePage_ReorderingTrials_PreservesSubmittedOrderAndAllowsIdenticalRetry(
         bool swapNumbers
     )
     {
@@ -259,11 +271,6 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
         await SaveOk(
             DetailsPage,
             TrialsAnswer(Trial("First", "NCT00000001", "A1"), Trial("Second", "NCT00000002", "B1"))
-        );
-        Dictionary<string, int> rowIds = (await StoredTrials()).ToDictionary(
-            static t => t.ClinicalTrialsGovNumber,
-            static t => t.Id,
-            StringComparer.Ordinal
         );
         RecordPageDto before = await GetPage(DetailsPage);
         Dictionary<string, JsonElement> answers = swapNumbers
@@ -288,7 +295,6 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
 
         RecordPageDto after = await GetPage(DetailsPage);
         JsonElement.DeepEquals(after.Answers[Trials], answers[Trials]).ShouldBeTrue();
-        (await StoredTrials()).ShouldAllBe(t => rowIds[t.ClinicalTrialsGovNumber] == t.Id);
         int audits = await Context.RecordFieldAudits.CountAsync(Ct);
 
         // A retry carries the original hash, not the one returned by a subsequent GET.
@@ -321,8 +327,7 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
             TrialsAnswer(
                 Trial(" ", "NCT", "A1", "a1"),
                 Trial("Second", "NCT1234"),
-                Trial("Third", "NCT00000003"),
-                Trial("Fourth", "NCT00000003")
+                Trial("Third", "NCT00000003")
             )
         );
 
@@ -335,8 +340,6 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
                 [$"{Trials}[0].other_registry_numbers[1]"] =
                     "Trial number from other registry must be different for each entry",
                 [$"{Trials}[1].clinical_trials_gov_number"] = "Trial number must be 8 digits long",
-                [$"{Trials}[3].clinical_trials_gov_number"] =
-                    "Trial number from ClinicalTrials.gov must be different for each clinical trial",
             },
             ignoreOrder: true
         );
@@ -382,7 +385,7 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
             .RecordFieldAudits.AsNoTracking()
             .SingleAsync(a => a.FieldPath == Trials && a.NewValue == null, Ct);
         cleared.OldValue.ShouldBe(
-            """{"NCT06123456":{"other_registry_numbers":["A1"],"study_name":"ION-UK"}}"""
+            """[{"clinical_trials_gov_number":"NCT06123456","other_registry_numbers":["A1"],"study_name":"ION-UK"}]"""
         );
         (await TaskStatus()).ShouldBe(RecordTaskStatus.Completed);
     }

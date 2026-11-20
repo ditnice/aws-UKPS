@@ -25,6 +25,43 @@ namespace UKPS.Api.Tests.WebApi.Controllers;
 
 public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
+    public static IEnumerable<
+        TheoryDataRow<Result<ResendVerificationEmailError>, HttpStatusCode>
+    > ResendVerificationEmailData =>
+        [
+            new(Result<ResendVerificationEmailError>.Ok(), HttpStatusCode.OK),
+            new(
+                Result<ResendVerificationEmailError>.Err(
+                    new ResendVerificationEmailError.NotFound()
+                ),
+                HttpStatusCode.NotFound
+            ),
+            new(
+                Result<ResendVerificationEmailError>.Err(
+                    new ResendVerificationEmailError.NoPendingVerification()
+                ),
+                HttpStatusCode.Conflict
+            ),
+            new(
+                Result<ResendVerificationEmailError>.Err(
+                    new ResendVerificationEmailError.PendingEmailAlreadyVerified()
+                ),
+                HttpStatusCode.Conflict
+            ),
+            new(
+                Result<ResendVerificationEmailError>.Err(
+                    new ResendVerificationEmailError.Forbidden()
+                ),
+                HttpStatusCode.NotFound
+            ),
+            new(
+                Result<ResendVerificationEmailError>.Err(
+                    new ResendVerificationEmailError.ConcurrencyDetected()
+                ),
+                HttpStatusCode.Conflict
+            ),
+        ];
+
     private const string UsersUrl = "/users";
     private readonly IUserService _mockUserService = Substitute.For<IUserService>();
     private readonly HttpClient _client;
@@ -590,6 +627,26 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
+    [Theory]
+    [MemberData(nameof(ResendVerificationEmailData))]
+    public async Task ResendVerificationEmail_ShouldMapServiceResponseToHttpResponses(
+        Result<ResendVerificationEmailError> result,
+        HttpStatusCode expectedCode
+    )
+    {
+        _mockUserService
+            .ResendVerificationEmail(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(result);
+        var url = new Uri($"{UsersUrl}/{1}/email/resend", UriKind.Relative);
+        using StringContent stringContent = new StringContent(string.Empty);
+        var response = await _client.PostAsync(
+            url,
+            stringContent,
+            TestContext.Current.CancellationToken
+        );
+        response.StatusCode.ShouldBe(expectedCode);
+    }
+
     [Fact]
     public async Task VerifyPendingEmailAddress_OnSuccess_ShouldReturn200()
     {
@@ -679,6 +736,98 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             )
         );
         HttpResponseMessage response = await SendVerifyPendingEmailAddressRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task CancelPendingEmailChange_OnSuccess_ShouldReturn200()
+    {
+        MockCancelPendingEmailChange(Result<CancelPendingEmailChangeError>.Ok());
+        var response = await SendCancelPendingEmailChangeRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task CancelPendingEmailChange_ShouldPassArgumentsToTheServiceMethod()
+    {
+        int userId = 43;
+        MockCancelPendingEmailChange(Result<CancelPendingEmailChangeError>.Ok());
+
+        _ = await SendCancelPendingEmailChangeRequest(userId);
+
+        await _mockUserService
+            .Received(1)
+            .CancelPendingEmailChange(userId, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CancelPendingEmailChange_OnUnauthorisedError_ShouldReturnNotFound()
+    {
+        MockCancelPendingEmailChange(
+            Result<CancelPendingEmailChangeError>.Err(
+                new CancelPendingEmailChangeError.Unauthorised()
+            )
+        );
+
+        var response = await SendCancelPendingEmailChangeRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task CancelPendingEmailChange_OnUserDoesNotExist_ShouldReturnNotFound()
+    {
+        MockCancelPendingEmailChange(
+            Result<CancelPendingEmailChangeError>.Err(
+                new CancelPendingEmailChangeError.UserDoesNotExist()
+            )
+        );
+
+        var response = await SendCancelPendingEmailChangeRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task CancelPendingEmailChange_WhenNoPendingEmailToCancel_ShouldReturnConflict()
+    {
+        MockCancelPendingEmailChange(
+            Result<CancelPendingEmailChangeError>.Err(
+                new CancelPendingEmailChangeError.NoPendingEmailToCancel()
+            )
+        );
+
+        var response = await SendCancelPendingEmailChangeRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task CancelPendingEmailChange_WhenEmailAlreadyVerified_ShouldReturnConflict()
+    {
+        MockCancelPendingEmailChange(
+            Result<CancelPendingEmailChangeError>.Err(
+                new CancelPendingEmailChangeError.EmailAlreadyVerified()
+            )
+        );
+
+        var response = await SendCancelPendingEmailChangeRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task CancelPendingEmailChange_WhenConcurrentChangeDetected_ShouldReturnConflict()
+    {
+        MockCancelPendingEmailChange(
+            Result<CancelPendingEmailChangeError>.Err(
+                new CancelPendingEmailChangeError.ConcurrentChangeDetected()
+            )
+        );
+
+        var response = await SendCancelPendingEmailChangeRequest();
+
         response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
@@ -952,6 +1101,19 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                 Arg.Any<UpdateUserEmailCommand>(),
                 Arg.Any<CancellationToken>()
             )
+            .Returns(result);
+    }
+
+    private async Task<HttpResponseMessage> SendCancelPendingEmailChangeRequest(int userId = 1)
+    {
+        var url = new Uri($"{UsersUrl}/{userId}/email/pending", UriKind.Relative);
+        return await _client.DeleteAsync(url, TestContext.Current.CancellationToken);
+    }
+
+    private void MockCancelPendingEmailChange(Result<CancelPendingEmailChangeError> result)
+    {
+        _mockUserService
+            .CancelPendingEmailChange(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(result);
     }
 

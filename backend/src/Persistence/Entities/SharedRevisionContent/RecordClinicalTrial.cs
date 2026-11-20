@@ -40,7 +40,6 @@ internal sealed class RecordClinicalTrial
     )]
     [FormValuePrefixes("NCT", Digits = 8)]
     [FormRequired("Enter the trial number from ClinicalTrials.gov")]
-    [FormDistinct("Trial number from ClinicalTrials.gov must be different for each clinical trial")]
     public required string ClinicalTrialsGovNumber { get; set; }
 
     /// <summary>

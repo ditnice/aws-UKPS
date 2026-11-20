@@ -17,7 +17,7 @@ public class MedicineFormModelTests
     // Bump FormVersions.Medicine whenever this changes, then update both values.
     private const string ExpectedVersion = "2026.11.20.2";
     private const string ExpectedFingerprint =
-        "c6611e2b9e8d6a38a31701b111739ec158f8361c4df4da1e9b73cab8d0324886";
+        "ba7aa17401770d6deacb073c5ac205edd6d334bd3819968dfca0090ca42830dd";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -341,12 +341,7 @@ public class MedicineFormModelTests
         FormQuestion trials = Model.FindQuestion("record_clinical_trial")!;
 
         (trials.ItemLabel, trials.AddAnotherLabel, trials.RemoveLabel, trials.ItemKey).ShouldBe(
-            (
-                "Clinical trial",
-                "Add another clinical trial",
-                "Remove clinical trial",
-                "clinical_trials_gov_number"
-            )
+            ("Clinical trial", "Add another clinical trial", "Remove clinical trial", null)
         );
         trials
             .Children.Select(static c => (c.Id, c.Control))
@@ -360,7 +355,7 @@ public class MedicineFormModelTests
         trials.Children[2].ItemLabel.ShouldBe("Other registry number");
         trials
             .Children.Select(static c => string.Join(",", c.Rules.Select(static r => r.Kind)))
-            .ShouldBe(["Required", "Required,Distinct", "Distinct"]);
+            .ShouldBe(["Required", "Required", "Distinct"]);
         trials.Entity.Includes.ShouldBe([
             "ClinicalTrials",
             "ClinicalTrials.OtherClinicalTrialNumbers",
