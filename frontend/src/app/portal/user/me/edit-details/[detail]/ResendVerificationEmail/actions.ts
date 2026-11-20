@@ -16,21 +16,18 @@ export const resendWorkEmailVerification = async (
   _formData: FormData,
 ): Promise<ResendVerificationState> => {
   try {
-    const { response, error } = await resendVerificationEmail({
+    const { response } = await resendVerificationEmail({
       path: { userId },
       client: await createServerApiClient(),
     })
 
     if (response?.ok) {
-      return redirect(buildUpdateUserDetailsHref({ detail: 'email', emailLinkResent: true }))
+      redirect(buildUpdateUserDetailsHref({ detail: 'email', emailLinkResent: true }))
     }
 
-    return {
-      status: 'error',
-      message: error?.title ?? 'An unexpected error occurred.',
-    }
+    redirect(buildUpdateUserDetailsHref({ detail: 'email', error: true }))
   } catch (error) {
     unstable_rethrow(error)
-    return { status: 'error', message: 'An unexpected error occurred.' }
+    redirect(buildUpdateUserDetailsHref({ detail: 'email', error: true }))
   }
 }

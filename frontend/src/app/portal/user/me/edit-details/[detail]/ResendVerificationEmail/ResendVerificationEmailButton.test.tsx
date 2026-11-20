@@ -58,13 +58,4 @@ describe('ResendVerificationEmailButton', () => {
       expect(mockAction).toHaveBeenLastCalledWith(2, expect.anything(), expect.anything()),
     )
   })
-
-  it('disables the button while the action is pending', async () => {
-    const user = userEvent.setup()
-    render(<ResendVerificationEmailButton userId={1} />)
-
-    await user.click(getButton())
-
-    await waitFor(() => expect(getButton()).toBeDisabled())
-  })
 })

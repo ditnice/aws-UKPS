@@ -2,6 +2,7 @@
 
 import { PendingWorkEmailChangeDto } from '@/client/generated'
 import { Alert } from '@/components/Alert/Alert'
+import { ErrorState } from '@/components/Placeholder/ErrorState'
 
 import CancelPendingEmailChange from './editUserEmail/CancelPendingEmailChange'
 import styles from './PendingEmailUpdateAlert.module.scss'
@@ -9,6 +10,7 @@ import ResendVerificationEmailButton from './ResendVerificationEmail/ResendVerif
 
 export type PendingEmailUpdateAlertProps = PendingWorkEmailChangeDto & {
   verificationEmailResent: true | undefined
+  error: true | undefined
   userId: number
 }
 
@@ -17,6 +19,7 @@ const PendingEmailUpdateAlert = async ({
   verifiedByEmail,
   userId,
   verificationEmailResent,
+  error,
 }: PendingEmailUpdateAlertProps) => {
   return (
     <Alert type="caution" title="Email update pending">
@@ -50,6 +53,7 @@ const PendingEmailUpdateAlert = async ({
           {verificationEmailResent ? (
             <p role="status">Verification email sent. Check your inbox.</p>
           ) : undefined}
+          {error ? <ErrorState>An unexpected error occurred.</ErrorState> : undefined}
         </>
       )}
     </Alert>

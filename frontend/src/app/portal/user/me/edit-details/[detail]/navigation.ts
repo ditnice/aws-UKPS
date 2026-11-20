@@ -6,8 +6,9 @@ export type PageProps = {
   params: Promise<{
     detail: string
   }>
-  searchParams: Promise<{
+  searchParams?: Promise<{
     verificationLinkResent?: string
+    error?: string
   }>
 }
 
@@ -17,6 +18,7 @@ export type TypedPageProps = {
   }
   searchParams: {
     verificationLinkResent?: true
+    error?: true
   }
 }
 
@@ -30,6 +32,7 @@ export const findTypedPageProps = async (props: PageProps): Promise<TypedPagePro
     searchParams: {
       verificationLinkResent:
         searchParams?.verificationLinkResent?.toLocaleLowerCase() === `${true}` ? true : undefined,
+      error: searchParams?.error?.toLocaleLowerCase() === `${true}` ? true : undefined,
     },
   }
 }
@@ -41,6 +44,7 @@ type buildUpdateUserDetailsHrefProps =
   | {
       detail: 'email'
       emailLinkResent?: true
+      error?: true
     }
 export const buildUpdateUserDetailsHref = (props: buildUpdateUserDetailsHrefProps) => {
   const query = new URLSearchParams()

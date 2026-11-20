@@ -60,7 +60,8 @@ const Page = async (props: PageProps) => {
         <>
           <PendingEmailUpdateAlert
             userId={me.userId}
-            verificationEmailResent={searchParams.verificationLinkResent}
+            verificationEmailResent={searchParams?.verificationLinkResent}
+            error={searchParams?.error}
             {...me.pendingWorkEmail}
           />
         </>
