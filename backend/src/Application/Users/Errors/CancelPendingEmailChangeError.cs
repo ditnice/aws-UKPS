@@ -23,11 +23,6 @@ public abstract record CancelPendingEmailChangeError
     internal sealed record NoPendingEmailToCancel : CancelPendingEmailChangeError;
 
     /// <summary>
-    /// Indicates that the pending email address has already been verified and cannot be cancelled.
-    /// </summary>
-    internal sealed record EmailAlreadyVerified : CancelPendingEmailChangeError;
-
-    /// <summary>
     /// Indicates that the user was modified by another operation while the cancellation was in progress.
     /// </summary>
     internal sealed record ConcurrentChangeDetected : CancelPendingEmailChangeError;
@@ -36,7 +31,6 @@ public abstract record CancelPendingEmailChangeError
         Func<TResult> unauthorised,
         Func<TResult> userDoesNotExist,
         Func<TResult> noPendingEmailToCancel,
-        Func<TResult> emailAlreadyVerified,
         Func<TResult> concurrentChangeDetected
     )
     {
@@ -45,7 +39,6 @@ public abstract record CancelPendingEmailChangeError
             Unauthorised => unauthorised(),
             UserDoesNotExist => userDoesNotExist(),
             NoPendingEmailToCancel => noPendingEmailToCancel(),
-            EmailAlreadyVerified => emailAlreadyVerified(),
             ConcurrentChangeDetected => concurrentChangeDetected(),
             _ => throw new UnreachableException(
                 $"Unrecognised {nameof(CancelPendingEmailChangeError)}"

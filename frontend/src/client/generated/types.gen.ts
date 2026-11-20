@@ -4242,7 +4242,7 @@ export type CancelPendingEmailChangeErrors = {
      */
     404: ProblemDetails;
     /**
-     * The user has no pending email change, the pending email has already been verified, or a concurrent change was detected.
+     * The user has no pending email change or a concurrent change was detected.
      */
     409: AuthenticationProblemDetails;
 };

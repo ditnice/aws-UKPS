@@ -1,9 +1,11 @@
 'use server'
 
-import { unstable_rethrow } from 'next/navigation'
+import { redirect, unstable_rethrow } from 'next/navigation'
 
 import { resendVerificationEmail } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
+
+import { buildUpdateUserDetailsHref } from '../navigation'
 
 export type ResendVerificationState =
   { status: 'idle' } | { status: 'success' } | { status: 'error'; message: string }
@@ -20,7 +22,7 @@ export const resendWorkEmailVerification = async (
     })
 
     if (response?.ok) {
-      return { status: 'success' }
+      return redirect(buildUpdateUserDetailsHref({ detail: 'email', emailLinkResent: true }))
     }
 
     return {

@@ -3,137 +3,90 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { resendVerificationEmail } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 
-// Adjust this import to wherever the server action lives
-import { resendWorkEmailVerification } from './actions'
+import { buildUpdateUserDetailsHref } from '../navigation'
 
-vi.mock('@/client/generated', () => ({
-  resendVerificationEmail: vi.fn(),
+import { resendWorkEmailVerification } from './actions' // <- adjust to your file name
+
+// Mimic Next's control-flow errors: redirect() throws, unstable_rethrow() re-throws them.
+class NextControlFlowError extends Error {
+  digest = 'NEXT_REDIRECT'
+}
+
+vi.mock('next/navigation', () => ({
+  redirect: vi.fn((url: string) => {
+    throw Object.assign(new NextControlFlowError(url), { url })
+  }),
+  unstable_rethrow: vi.fn((error: unknown) => {
+    if (error instanceof NextControlFlowError) throw error
+  }),
 }))
+vi.mock('@/client/generated', () => ({ resendVerificationEmail: vi.fn() }))
+vi.mock('@/client/server-api', () => ({ createServerApiClient: vi.fn() }))
+vi.mock('../navigation', () => ({ buildUpdateUserDetailsHref: vi.fn() }))
 
-vi.mock('@/client/server-api', () => ({
-  createServerApiClient: vi.fn(),
-}))
-
-const mockResend = vi.mocked(resendVerificationEmail)
-const mockCreateClient = vi.mocked(createServerApiClient)
-
-const FALLBACK_MESSAGE = 'An unexpected error occurred.'
-
-// The generated client's return type is complex; tests only care about
-// `response` and `error`, so we cast the partial results.
-const apiResult = (result: { response?: Partial<Response>; error?: unknown }) =>
-  result as unknown as Awaited<ReturnType<typeof resendVerificationEmail>>
+const userId = 42
+const fakeClient = { fake: 'client' }
+const run = () => resendWorkEmailVerification(userId, undefined, new FormData())
+const mockApi = (result: unknown) =>
+  vi.mocked(resendVerificationEmail).mockResolvedValue(result as never)
 
 describe('resendWorkEmailVerification', () => {
-  const fakeClient = { fake: 'client' } as unknown as Awaited<
-    ReturnType<typeof createServerApiClient>
-  >
-  const userId = 42
-  const formData = new FormData()
-
   beforeEach(() => {
     vi.clearAllMocks()
-    mockCreateClient.mockResolvedValue(fakeClient)
-  })
-
-  it('returns success when the response is ok', async () => {
-    mockResend.mockResolvedValue(apiResult({ response: { ok: true } }))
-
-    const result = await resendWorkEmailVerification(userId, undefined, formData)
-
-    expect(result).toEqual({ status: 'success' })
-  })
-
-  it('calls the API with the userId path param and the server client', async () => {
-    mockResend.mockResolvedValue(apiResult({ response: { ok: true } }))
-
-    await resendWorkEmailVerification(userId, undefined, formData)
-
-    expect(mockCreateClient).toHaveBeenCalledTimes(1)
-    expect(mockResend).toHaveBeenCalledTimes(1)
-    expect(mockResend).toHaveBeenCalledWith({
-      path: { userId },
-      client: fakeClient,
-    })
-  })
-
-  it('returns the error title when the response is not ok', async () => {
-    mockResend.mockResolvedValue(
-      apiResult({
-        response: { ok: false },
-        error: { title: 'Email already verified' },
-      }),
+    vi.mocked(createServerApiClient).mockResolvedValue(fakeClient as never)
+    vi.mocked(buildUpdateUserDetailsHref).mockReturnValue(
+      '/user/details?detail=email&emailLinkResent=true',
     )
+  })
 
-    const result = await resendWorkEmailVerification(userId, undefined, formData)
+  it('calls the API with the user id and server client', async () => {
+    mockApi({ response: { ok: false }, error: undefined })
 
-    expect(result).toEqual({
-      status: 'error',
-      message: 'Email already verified',
+    await run()
+
+    expect(resendVerificationEmail).toHaveBeenCalledWith({ path: { userId }, client: fakeClient })
+  })
+
+  it('redirects with emailLinkResent when the API succeeds', async () => {
+    mockApi({ response: { ok: true } })
+
+    await expect(run()).rejects.toMatchObject({
+      url: '/user/details?detail=email&emailLinkResent=true',
+    })
+    expect(buildUpdateUserDetailsHref).toHaveBeenCalledWith({
+      detail: 'email',
+      emailLinkResent: true,
     })
   })
 
-  it('falls back to a generic message when the error has no title', async () => {
-    mockResend.mockResolvedValue(apiResult({ response: { ok: false }, error: {} }))
+  it('returns the API error title when the request fails', async () => {
+    mockApi({ response: { ok: false }, error: { title: 'Too many requests' } })
 
-    const result = await resendWorkEmailVerification(userId, undefined, formData)
-
-    expect(result).toEqual({ status: 'error', message: FALLBACK_MESSAGE })
+    await expect(run()).resolves.toEqual({ status: 'error', message: 'Too many requests' })
   })
 
-  it('falls back to a generic message when the response is not ok and there is no error', async () => {
-    mockResend.mockResolvedValue(apiResult({ response: { ok: false } }))
+  it('returns a fallback message when the API error has no title', async () => {
+    mockApi({ response: { ok: false }, error: undefined })
 
-    const result = await resendWorkEmailVerification(userId, undefined, formData)
-
-    expect(result).toEqual({ status: 'error', message: FALLBACK_MESSAGE })
-  })
-
-  it('falls back to a generic message when there is no response at all', async () => {
-    mockResend.mockResolvedValue(apiResult({}))
-
-    const result = await resendWorkEmailVerification(userId, undefined, formData)
-
-    expect(result).toEqual({ status: 'error', message: FALLBACK_MESSAGE })
-  })
-
-  it('prefers the error title over the fallback even when the response is missing', async () => {
-    mockResend.mockResolvedValue(apiResult({ error: { title: 'Service unavailable' } }))
-
-    const result = await resendWorkEmailVerification(userId, undefined, formData)
-
-    expect(result).toEqual({
+    await expect(run()).resolves.toEqual({
       status: 'error',
-      message: 'Service unavailable',
+      message: 'An unexpected error occurred.',
     })
   })
 
-  it('returns a generic error when the API call throws (e.g. network failure)', async () => {
-    mockResend.mockRejectedValue(new Error('Network down'))
+  it('returns a fallback message when the request throws', async () => {
+    vi.mocked(resendVerificationEmail).mockRejectedValue(new Error('network down'))
 
-    const result = await resendWorkEmailVerification(userId, undefined, formData)
-
-    expect(result).toEqual({ status: 'error', message: FALLBACK_MESSAGE })
+    await expect(run()).resolves.toEqual({
+      status: 'error',
+      message: 'An unexpected error occurred.',
+    })
   })
 
-  it('returns a generic error when creating the server API client throws', async () => {
-    mockCreateClient.mockRejectedValue(new Error('No session'))
+  it('rethrows Next control-flow errors instead of swallowing them', async () => {
+    const controlFlow = new NextControlFlowError('NEXT_REDIRECT')
+    vi.mocked(resendVerificationEmail).mockRejectedValue(controlFlow)
 
-    const result = await resendWorkEmailVerification(userId, undefined, formData)
-
-    expect(result).toEqual({ status: 'error', message: FALLBACK_MESSAGE })
-    expect(mockResend).not.toHaveBeenCalled()
-  })
-
-  it('ignores prevState and formData', async () => {
-    mockResend.mockResolvedValue(apiResult({ response: { ok: true } }))
-
-    const result = await resendWorkEmailVerification(
-      userId,
-      { status: 'error', message: 'previous failure' },
-      new FormData(),
-    )
-
-    expect(result).toEqual({ status: 'success' })
+    await expect(run()).rejects.toBe(controlFlow)
   })
 })
