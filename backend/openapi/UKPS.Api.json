@@ -7695,6 +7695,7 @@
         "required": [
           "id",
           "title",
+          "subText",
           "tasks"
         ],
         "type": "object",
@@ -7706,6 +7707,13 @@
           "title": {
             "type": "string",
             "description": "The section title."
+          },
+          "subText": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Text shown under the section heading, or null for none. A blank line starts a new\nparagraph."
           },
           "tasks": {
             "type": "array",
@@ -7721,6 +7729,7 @@
         "required": [
           "id",
           "title",
+          "hint",
           "status",
           "firstPageId"
         ],
@@ -7733,6 +7742,13 @@
           "title": {
             "type": "string",
             "description": "The task title."
+          },
+          "hint": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Hint text shown under the task link, or null for none. A blank line starts a new paragraph."
           },
           "status": {
             "description": "The task's status, derived from the saved answers.",

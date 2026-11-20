@@ -5,5 +5,6 @@ internal sealed record FormSection(
     string Id,
     string Title,
     int Order,
-    IReadOnlyList<FormTask> Tasks
+    IReadOnlyList<FormTask> Tasks,
+    string? SubText = null
 );

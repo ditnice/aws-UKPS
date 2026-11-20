@@ -273,6 +273,11 @@ new FormLayoutSection(
 - **Section title**: the dataset's section name, such as "Provide indication and development
   information". It is the heading above the section's tasks in the task list. Each task's title
   is the dataset's sub-section name, and is also the caption above every page in the task.
+- **Section sub text** and **task hint** (optional): pass `SubText: "..."` to a
+  `FormLayoutSection` to show text under its heading in the task list, and `Hint: "..."` to a
+  `FormLayoutTask` to show a hint under its link. Both are plain text: a blank line starts a new
+  paragraph and lines starting `- ` make a list. They must not be blank when set, and they are
+  part of the form fingerprint, so changing one needs a version bump.
 - **Page title** and **`CommercialInConfidence`**: see [step 4](#step-4-add-the-page-and-the-field).
   Pass `CommercialInConfidence: true` to show the "Commercial in confidence" badge above the
   heading.

@@ -349,6 +349,7 @@ export const fakeRecordTaskListTaskDto = (options?: Options): RecordTaskListTask
     return {
         id: f.string.uuid(),
         title: f.lorem.words(),
+        hint: f.datatype.boolean() ? f.string.sample() : null,
         status: fakeRecordTaskStatus(options),
         firstPageId: f.string.uuid()
     };
@@ -359,6 +360,7 @@ export const fakeRecordTaskListSectionDto = (options?: Options): RecordTaskListS
     return {
         id: f.string.uuid(),
         title: f.lorem.words(),
+        subText: f.datatype.boolean() ? f.string.sample() : null,
         tasks: f.helpers.multiple(() => fakeRecordTaskListTaskDto(options))
     };
 };

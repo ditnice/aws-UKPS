@@ -13,9 +13,14 @@ namespace UKPS.Api.Persistence.FormAnnotations;
 /// Position of the task within its section. No two tasks in a section may share one.
 /// </param>
 /// <param name="Pages">The task's pages. Must not be empty.</param>
+/// <param name="Hint">
+/// Optional hint shown under the task link in the record task list. A blank line starts a new
+/// paragraph. When set, must not be blank.
+/// </param>
 internal sealed record FormLayoutTask(
     string Id,
     string Title,
     int Order,
-    IReadOnlyList<FormLayoutPage> Pages
+    IReadOnlyList<FormLayoutPage> Pages,
+    string? Hint = null
 );

@@ -38,3 +38,8 @@
 .task-list__summary {
   margin-bottom: spacing.$large * 1px;
 }
+
+.task-list__section-summary > :last-child,
+.task-list__task-description > :last-child {
+  margin-bottom: 0;
+}
