@@ -16,7 +16,7 @@ type ConfirmResetPasswordFormProps = {
   email: string
 }
 const ConfirmResetPasswordForm = ({ email }: ConfirmResetPasswordFormProps) => {
-  const [state, action] = useActionState(confirmResetPasswordAction, initialFormState)
+  const [state, action, isPending] = useActionState(confirmResetPasswordAction, initialFormState)
   const form = useForm({
     ...confirmPasswordResetFormOptions,
     defaultValues: {
@@ -85,8 +85,8 @@ const ConfirmResetPasswordForm = ({ email }: ConfirmResetPasswordFormProps) => {
           )
         }}
       </form.Field>
-      <Button type="submit" variant="cta" disabled={form.state.isSubmitting}>
-        Send link
+      <Button type="submit" variant="cta" disabled={isPending}>
+        Confirm password reset
       </Button>
     </form>
   )
