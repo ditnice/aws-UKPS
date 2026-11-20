@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 
 import { inputWidthStyles } from '@/components/Input/Input'
-import type { InputWidth } from '@/components/Input/Input'
+import type { InputWidth, LabelSize } from '@/components/Input/Input'
 
 import styles from './Select.module.scss'
 
@@ -18,6 +18,7 @@ export type SelectProps = Omit<ComponentPropsWithoutRef<'select'>, 'multiple'> &
   errorMessage?: string
   hint?: string
   label: string | null
+  labelSize?: LabelSize
   name: string
   selectRef?: Ref<HTMLSelectElement>
   /**
@@ -37,6 +38,7 @@ export function Select({
   hint,
   id,
   label,
+  labelSize = 'default',
   name,
   selectRef,
   style,
@@ -54,7 +56,10 @@ export function Select({
   return (
     <div className={clsx(styles.select, className)} data-component="select">
       {label && (
-        <label className={styles.label} htmlFor={selectId}>
+        <label
+          className={clsx(styles.label, labelSize === 'lead' && styles.leadLabel)}
+          htmlFor={selectId}
+        >
           {label}
         </label>
       )}

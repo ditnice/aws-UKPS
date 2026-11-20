@@ -30,6 +30,7 @@ import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 import styles from './DynamicForm.module.scss'
 import { questionRegistry } from './questionRegistry'
 
+import type { LabelStyle } from './labelStyle'
 import type { ReactNode } from 'react'
 
 export const conflictCodes = [
@@ -181,7 +182,11 @@ export function FormPage({
               if (!shown.has(question.id)) {
                 return null
               }
-              const labelAsHeading = topLevel && singleQuestion
+              const labelStyle: LabelStyle = !topLevel
+                ? 'default'
+                : singleQuestion
+                  ? 'heading'
+                  : 'lead'
               const Component = questionRegistry[question.type]
               const revealed = layout.nested.get(index)
               return (
@@ -190,8 +195,7 @@ export function FormPage({
                     <div
                       className={clsx(
                         styles.question,
-                        labelAsHeading && styles.labelAsHeading,
-                        topLevel && !singleQuestion && styles.leadLabel,
+                        labelStyle === 'heading' && styles.labelAsHeading,
                       )}
                       data-question-id={question.id}
                       id={question.id}
@@ -201,7 +205,7 @@ export function FormPage({
                         error={getFieldErrorMessage(field.state.meta.errors)}
                         errorItems={getFieldErrorItems(field.state.meta.errors)}
                         errorParts={getFieldErrorParts(field.state.meta.errors)}
-                        labelAsHeading={labelAsHeading}
+                        labelStyle={labelStyle}
                         name={field.name}
                         onBlur={field.handleBlur}
                         onChange={(next: FormValue) => field.handleChange(next)}

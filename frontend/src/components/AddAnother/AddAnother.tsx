@@ -4,6 +4,7 @@ import { ChangeEvent } from 'react'
 
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
+import type { LabelSize } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { clearFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
@@ -39,6 +40,8 @@ export type AddAnotherProps<T extends string> = {
    * label is visually hidden. Use it where the list answers one question, instead of `title`.
    */
   legend?: string
+  /** The size of the legend; the items' own labels keep the standard size. */
+  legendSize?: LabelSize
   /**
    * A label of each item's own, for example "Trial number", which is shown even when `legend` is
    * set and is used in place of `labelPrefix`. Blank values are ignored.
@@ -82,6 +85,7 @@ export const AddAnother = <T extends string>({
   removeItemLabel,
   title,
   legend,
+  legendSize = 'default',
   itemLabel,
   firstItemClassName,
   labelPrefix,
@@ -101,7 +105,15 @@ export const AddAnother = <T extends string>({
   return (
     <Root className={clsx(styles.root, legend && styles.fieldset)}>
       {legend && (
-        <legend className={clsx('input__label', styles.legend)} ref={headingRef} tabIndex={-1}>
+        <legend
+          className={clsx(
+            'input__label',
+            styles.legend,
+            legendSize === 'lead' && styles.leadLegend,
+          )}
+          ref={headingRef}
+          tabIndex={-1}
+        >
           {legend}
         </legend>
       )}

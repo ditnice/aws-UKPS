@@ -5,6 +5,8 @@ import { Children, createContext, Fragment, isValidElement, useContext, useId } 
 
 import '@nice-digital/nds-form-group/scss/form-group.scss'
 
+import type { LabelSize } from '@/components/Input/Input'
+
 import styles from './FormGroup.module.scss'
 
 import type { ComponentPropsWithRef, ElementType, ReactNode } from 'react'
@@ -45,6 +47,8 @@ export type FormGroupProps = ComponentPropsWithRef<'fieldset'> & {
   hint?: ReactNode
   error?: string
   headingLevel?: 1 | 2 | 3 | 4 | 5 | 6
+  /** The size of a legend that is not a heading. */
+  legendSize?: LabelSize
   inline?: boolean
   /** Stable prefix for hint/error IDs; otherwise React generates a hydration-safe ID. */
   identifier?: string
@@ -62,6 +66,7 @@ export function FormGroup({
   hint,
   error,
   headingLevel,
+  legendSize = 'default',
   inline = false,
   identifier,
   ...rest
@@ -85,6 +90,7 @@ export function FormGroup({
             className={clsx(
               'form-group__legend',
               Heading !== 'span' && 'form-group__legend--with-heading',
+              legendSize === 'lead' && styles.leadLegend,
             )}
           >
             {Heading === 'span' ? (

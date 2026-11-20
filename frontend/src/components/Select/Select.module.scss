@@ -15,6 +15,10 @@
   margin-bottom: utils.rem(spacing.$small);
 }
 
+.label.leadLabel {
+  @include typography.lead-label;
+}
+
 .hint {
   margin-bottom: utils.rem(spacing.$small);
   margin-top: 0;
