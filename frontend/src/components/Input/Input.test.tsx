@@ -3,7 +3,17 @@ import { describe, expect, it } from 'vitest'
 
 import { inputWidthCases } from '@/test-utils/inputWidthCases'
 
-import { Input } from './Input'
+import { Input, parseInputWidth } from './Input'
+
+describe('parseInputWidth', () => {
+  it.each(inputWidthCases)('reads the $width width the server sends', ({ width }) => {
+    expect(parseInputWidth(String(width))).toBe(width)
+  })
+
+  it.each([undefined, null, '', 'wide', 'constructor'])('ignores %s', (width) => {
+    expect(parseInputWidth(width)).toBeUndefined()
+  })
+})
 
 describe('Input', () => {
   it('renders an unmodified design system input by default', () => {

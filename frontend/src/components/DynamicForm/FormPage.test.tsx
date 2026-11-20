@@ -1458,7 +1458,8 @@ describe('FormPage clinical trials', () => {
         type: 'Text',
         label: 'Study name',
         hint: 'Enter the official or commonly used study title.',
-        rules: [{ kind: 'Required', value: null, message: 'Enter the study name' }],
+        width: 'full',
+        rules: [{ kind: 'Required', value: null, message: 'Enter study name' }],
       }),
       question({
         id: 'clinical_trials_gov_number',
@@ -1481,6 +1482,7 @@ describe('FormPage clinical trials', () => {
         addAnotherLabel: 'Add another trial number',
         itemLabel: 'Other registry number',
         removeLabel: 'Remove',
+        width: 'full',
         rules: [{ kind: 'Distinct', value: null, message: 'Registry number must be different' }],
       }),
     ],
@@ -1519,6 +1521,17 @@ describe('FormPage clinical trials', () => {
     expect(screen.getByLabelText('Study name')).toHaveValue('')
     expect(screen.queryByRole('button', { name: /Remove clinical trial/ })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Add another trial number' })).toBeInTheDocument()
+  })
+
+  it('makes the study name and the other registry number full width', () => {
+    render(<FormPage page={trialsPage()} />)
+
+    const otherRegistryBox = screen
+      .getByLabelText('Other registry number')
+      .closest('[data-component="input"]')?.parentElement
+
+    expect(screen.getByLabelText('Study name')).toHaveStyle({ width: '100%' })
+    expect(otherRegistryBox?.style.getPropertyValue('--input-basis')).toBe('100%')
   })
 
   it('gives each trial an id that a link can scroll to', () => {
@@ -1698,7 +1711,7 @@ describe('FormPage clinical trials', () => {
 
     await user.click(screen.getByRole('button', { name: 'Save and continue' }))
 
-    expect(await screen.findByText('Enter the study name')).toBeInTheDocument()
+    expect(await screen.findByText('Enter study name')).toBeInTheDocument()
     expect(screen.getByText('Trial number must be 8 digits long')).toBeInTheDocument()
     expect(screen.getByText('Registry number must be different')).toBeInTheDocument()
     expect(screen.getByText('Trial number must be different')).toBeInTheDocument()

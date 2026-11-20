@@ -82,6 +82,8 @@ public class FormModelValidatorTests
     [InlineData(
         "BrokenEntity.OverlappingPrefix has a prefix that starts another, which makes the split ambiguous."
     )]
+    [InlineData("BrokenEntity.WidthOnTextarea sets Width, which only a Text or a TextList uses.")]
+    [InlineData("BrokenEntity.UnknownWidth sets Width to \"wide\", which is not an input width.")]
     public void Validate_BrokenEntity_ReportsTheProblem(string expected)
     {
         Problems(typeof(BrokenEntity)).ShouldContain(expected);
@@ -521,6 +523,9 @@ public class FormModelValidatorTests
     )]
     [InlineData(
         "BrokenListedEntity.ListLabelsOnText sets RemoveLabel, which only a Group or a TextList uses."
+    )]
+    [InlineData(
+        "BrokenListedEntity.FixedWidthList sets Width on a TextList, which only supports a share of the container such as \"full\"."
     )]
     public void Validate_BrokenListedEntity_ReportsTheProblem(string expected)
     {

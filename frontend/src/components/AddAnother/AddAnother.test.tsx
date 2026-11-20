@@ -66,6 +66,22 @@ describe('AddAnother', () => {
     expect(input).toBeDefined()
   })
 
+  it('should leave the input box at its default width when no width is given', () => {
+    renderComponent()
+
+    const box = getInputByLabelText(`${defaultProps.labelPrefix} 1`).closest(`.${styles.input}`)
+
+    expect((box as HTMLElement).style.getPropertyValue('--input-basis')).toBe('')
+  })
+
+  it('should size the input box from the width it is given', () => {
+    renderComponent({ inputWidth: 'one-half' })
+
+    const box = getInputByLabelText(`${defaultProps.labelPrefix} 1`).closest(`.${styles.input}`)
+
+    expect((box as HTMLElement).style.getPropertyValue('--input-basis')).toBe('50%')
+  })
+
   it('should render an input for each value', () => {
     renderComponent()
 
