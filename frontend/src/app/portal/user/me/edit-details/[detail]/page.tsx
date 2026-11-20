@@ -21,7 +21,7 @@ const PageWrapper = (props: React.PropsWithChildren & { label: string; header?: 
       {props.header}
       <PageHeader
         backLink={<BackLink href={buildMyDetailsHref()} />}
-        heading={`Edit ${props.label}`}
+        heading={`Edit ${props.label.toLocaleLowerCase()}`}
       />
       {props.children}
     </>
