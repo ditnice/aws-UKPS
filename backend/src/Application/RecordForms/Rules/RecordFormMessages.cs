@@ -11,15 +11,17 @@ internal static class RecordFormMessages
     public const string InvalidOption = "Select a valid option";
     public const string Duplicate = "You have selected the same option more than once";
     public const string SelectIdType = "Select ID type";
-    public const string IdDigitsOnly = "ID must be a whole positive number";
-    public const string IdOutOfRange = "ID must not be longer than 5 digits";
     public const string InvalidDate = "Enter a real date";
     public const string ActualMonthInFuture = "The date must be this month or in the past";
 
-    // Only the clinical trial number (NCT, Digits = 8) uses this, so the message names it. If another
-    // prefixed number needs an exact digit count, pass its name in, as DateName does for dates, instead
-    // of reusing this wording. Mirrored in lib/dynamic-form/prefixedNumber.ts.
-    public static string IdDigits(int digits) => $"Trial number must be {digits} digits long";
+    // A PrefixedNumber's messages name the number, for example "Trial number", as set by
+    // FormValuePrefixesAttribute.Name. Mirrored in lib/dynamic-form/prefixedNumber.ts.
+    public static string IdDigitsOnly(string name) => $"{name} must be a whole positive number";
+
+    public static string IdOutOfRange(string name) => $"{name} must not be longer than 5 digits";
+
+    public static string IdDigits(string name, int digits) =>
+        $"{name} must be {digits} digits long";
 
     // A PrecisionDate's or ActualDate's messages name its date, for example "submission". The
     // page also says "Enter the actual submission date" when a part is blank, which never

@@ -79,6 +79,13 @@ public sealed record RecordPageQuestionDto
     public int? PrefixDigits { get; init; }
 
     /// <summary>
+    /// What a <c>PrefixedNumber</c>'s number is, as its error messages name it at the start of a
+    /// sentence, for example <c>Trial number</c>; null for any other control. Not <c>required</c>,
+    /// so existing clients and fixtures are unaffected.
+    /// </summary>
+    public string? NumberName { get; init; }
+
+    /// <summary>
     /// What a <see cref="FormControl.PrecisionDate"/> question's date is of, for its error
     /// messages, for example <c>submission</c>; null for other questions.
     /// </summary>

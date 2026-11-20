@@ -77,7 +77,7 @@ function ChosenPrefixNumber({
   const prefixes = question.prefixes ?? []
   const { prefix, number } = splitPrefixedNumber(prefixes, value)
   const placeholder = question.placeholder ?? 'Select an option'
-  const errorParts = prefixedNumberErrorParts(error)
+  const errorParts = prefixedNumberErrorParts(error, question.numberName)
   // A whole ID pasted or typed into the number box replaces both parts rather than being
   // appended after the chosen prefix, so "GID-TA123" never becomes "GID-TAGID-TA123".
   const changeNumber = (typed: string) =>

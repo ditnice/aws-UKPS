@@ -83,6 +83,7 @@ public class FormModelValidatorTests
         "BrokenEntity.OverlappingPrefix has a prefix that starts another, which makes the split ambiguous."
     )]
     [InlineData("BrokenEntity.WidthOnTextarea sets Width, which only a Text or a TextList uses.")]
+    [InlineData("BrokenEntity.BlankNumberName has a blank Name in [FormValuePrefixes].")]
     public void Validate_BrokenEntity_ReportsTheProblem(string expected)
     {
         Problems(typeof(BrokenEntity)).ShouldContain(expected);

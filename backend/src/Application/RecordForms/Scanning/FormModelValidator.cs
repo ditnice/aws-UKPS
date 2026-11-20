@@ -608,6 +608,11 @@ internal static partial class FormModelValidator
             );
         }
 
+        if (string.IsNullOrWhiteSpace(question.Prefixes.Name))
+        {
+            problems.Add($"{where} has a blank Name in [FormValuePrefixes].");
+        }
+
         if (prefixes.Distinct(StringComparer.Ordinal).Count() != prefixes.Count)
         {
             problems.Add($"{where} repeats a prefix in [FormValuePrefixes].");

@@ -1466,6 +1466,7 @@ describe('FormPage clinical trials', () => {
         hint: 'Enter the 8 digit identification number.',
         prefixes: ['NCT'],
         prefixDigits: 8,
+        numberName: 'Trial number',
         rules: [
           { kind: 'Required', value: null, message: 'Enter the trial number' },
           { kind: 'Distinct', value: null, message: 'Trial number must be different' },

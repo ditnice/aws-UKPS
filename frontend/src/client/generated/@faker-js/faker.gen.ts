@@ -724,6 +724,7 @@ export const fakeRecordPageQuestionDto = (options: Options = {}, _callDepth = 0)
         ..._callDepth > MAX_CALL_DEPTH || !resolveCondition(options?.includeOptional ?? true, f) ? {} : { children: _callDepth > MAX_CALL_DEPTH ? null : f.datatype.boolean() ? _callDepth > MAX_CALL_DEPTH ? [] : f.helpers.multiple(() => fakeRecordPageQuestionDto(options, _callDepth + 1)) : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { prefixes: f.datatype.boolean() ? f.helpers.multiple(() => f.string.sample()) : null },
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { prefixDigits: f.datatype.boolean() ? f.number.int() : null },
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { numberName: f.datatype.boolean() ? f.string.sample() : null },
         dateName: f.datatype.boolean() ? f.string.sample() : null,
         showWhen: f.datatype.boolean() ? fakeRecordPageConditionDto(options) : null,
         rules: f.helpers.multiple(() => fakeRecordPageRuleDto(options)),

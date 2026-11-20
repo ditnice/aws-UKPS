@@ -1005,7 +1005,7 @@ public class RecordFormServiceTests : DatabaseTestBase
             Answer(NiceTaId, "GID-TA12a")
         );
 
-        errors[NiceTaId].ShouldBe(RecordFormMessages.IdDigitsOnly);
+        errors[NiceTaId].ShouldBe("ID must be a whole positive number");
     }
 
     [Fact]

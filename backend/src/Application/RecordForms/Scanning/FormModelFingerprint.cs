@@ -123,7 +123,7 @@ internal static class FormModelFingerprint
                 : string.Empty;
             text.AppendLine(
                 CultureInfo.InvariantCulture,
-                $"      prefixes {string.Join(" | ", question.Prefixes)}{digits}"
+                $"      prefixes {string.Join(" | ", question.Prefixes)}{digits} | name {question.NumberName}"
             );
         }
 

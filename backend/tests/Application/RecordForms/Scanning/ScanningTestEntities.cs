@@ -177,6 +177,16 @@ internal sealed class BrokenEntity
     )]
     public string? WidthOnTextarea { get; set; }
 
+    [FormPage("broken-prefixes")]
+    [FormField(
+        "broken_entity.blank_number_name",
+        "Blank number name",
+        FormControl.PrefixedNumber,
+        Order = 8
+    )]
+    [FormValuePrefixes("NCT", Name = " ")]
+    public string? BlankNumberName { get; set; }
+
     public RecordRevision? Revision { get; set; }
 }
 

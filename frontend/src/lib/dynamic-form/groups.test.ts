@@ -43,6 +43,7 @@ const group: RecordPageQuestionDto = {
       type: 'PrefixedNumber',
       prefixes: ['NCT'],
       prefixDigits: 8,
+      numberName: 'Trial number',
       rules: [{ kind: 'Distinct', value: null, message: 'Repeated code' }],
     },
     numbers,

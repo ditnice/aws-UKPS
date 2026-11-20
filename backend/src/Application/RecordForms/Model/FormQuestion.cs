@@ -46,6 +46,12 @@ internal sealed record FormQuestion
     /// </summary>
     public int? PrefixDigits { get; init; }
 
+    /// <summary>
+    /// What a <see cref="FormControl.PrefixedNumber"/>'s number is, as its error messages name it;
+    /// set whenever <see cref="Prefixes"/> is.
+    /// </summary>
+    public string? NumberName { get; init; }
+
     /// <summary>What a date question's date is of, as its error messages name it.</summary>
     public string? DateName { get; init; }
 

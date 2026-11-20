@@ -38,7 +38,7 @@ internal sealed class RecordClinicalTrial
         Hint = "Enter the 8 digit identification number that is assigned to any clinical trial registered on ClinicalTrials.gov.",
         Order = 20
     )]
-    [FormValuePrefixes("NCT", Digits = 8)]
+    [FormValuePrefixes("NCT", Digits = 8, Name = "Trial number")]
     [FormRequired("Enter the trial number from ClinicalTrials.gov")]
     public required string ClinicalTrialsGovNumber { get; set; }
 

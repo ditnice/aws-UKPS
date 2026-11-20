@@ -1532,6 +1532,12 @@ export type RecordPageQuestionDto = {
      */
     prefixDigits?: null | number;
     /**
+     * What a `PrefixedNumber`'s number is, as its error messages name it at the start of a
+     * sentence, for example `Trial number`; null for any other control. Not `required`,
+     * so existing clients and fixtures are unaffected.
+     */
+    numberName?: null | string;
+    /**
      * What a FormControl.PrecisionDate question's date is of, for its error
      * messages, for example `submission`; null for other questions.
      */

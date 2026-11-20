@@ -121,6 +121,7 @@ internal static class FormModelBuilder
             Children = children,
             Prefixes = question.Prefixes?.Prefixes,
             PrefixDigits = question.Prefixes is { Digits: > 0 } prefixes ? prefixes.Digits : null,
+            NumberName = question.Prefixes?.Name,
             DateName = question.DateEvent?.Name,
             Rules = [.. rules.OrderBy(static r => r.Kind)],
             ShowWhen = question.ShowWhen is { } showWhen
