@@ -1,1 +1,8 @@
 @forward '@nice-digital/nds-core/scss/typography';
+@use '@nice-digital/nds-core/scss/typography' as nds;
+
+// A bold label or legend at the lead size, for each question on a page of several.
+@mixin lead-label {
+  @include nds.font-size(lead);
+  font-weight: bold;
+}

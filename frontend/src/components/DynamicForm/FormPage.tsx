@@ -30,6 +30,7 @@ import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 import styles from './DynamicForm.module.scss'
 import { questionRegistry } from './questionRegistry'
 
+import type { LabelStyle } from './labelStyle'
 import type { ReactNode } from 'react'
 
 export const conflictCodes = [
@@ -174,18 +175,28 @@ export function FormPage({
         >
           {(shownIds) => {
             const shown = new Set(shownIds.split('\n'))
-            const renderQuestion = (index: number, labelAsHeading: boolean): ReactNode => {
+            // A top-level question's label is the page heading on a single-question page, and
+            // lead text on a page of several. Questions revealed beneath an option keep theirs.
+            const renderQuestion = (index: number, topLevel: boolean): ReactNode => {
               const question = questions[index]
               if (!shown.has(question.id)) {
                 return null
               }
+              const labelStyle: LabelStyle = !topLevel
+                ? 'default'
+                : singleQuestion
+                  ? 'heading'
+                  : 'lead'
               const Component = questionRegistry[question.type]
               const revealed = layout.nested.get(index)
               return (
                 <form.Field key={question.id} name={fieldName(index)}>
                   {(field) => (
                     <div
-                      className={clsx(styles.question, labelAsHeading && styles.labelAsHeading)}
+                      className={clsx(
+                        styles.question,
+                        labelStyle === 'heading' && styles.labelAsHeading,
+                      )}
                       data-question-id={question.id}
                       id={question.id}
                     >
@@ -194,7 +205,7 @@ export function FormPage({
                         error={getFieldErrorMessage(field.state.meta.errors)}
                         errorItems={getFieldErrorItems(field.state.meta.errors)}
                         errorParts={getFieldErrorParts(field.state.meta.errors)}
-                        labelAsHeading={labelAsHeading}
+                        labelStyle={labelStyle}
                         name={field.name}
                         onBlur={field.handleBlur}
                         onChange={(next: FormValue) => field.handleChange(next)}
@@ -220,7 +231,7 @@ export function FormPage({
                 </form.Field>
               )
             }
-            return layout.topLevel.map((index) => renderQuestion(index, singleQuestion))
+            return layout.topLevel.map((index) => renderQuestion(index, true))
           }}
         </form.Subscribe>
 

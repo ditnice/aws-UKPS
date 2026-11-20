@@ -456,3 +456,18 @@ describe('AddAnother', () => {
     })
   })
 })
+
+describe('AddAnother legend size', () => {
+  it("shows the legend as lead text when asked, keeping the items' labels standard", () => {
+    renderComponent({ legend: 'Numbers', legendSize: 'lead' })
+    expect(screen.getByText('Numbers')).toHaveClass(styles.leadLegend)
+    for (const label of document.querySelectorAll('label.input__label')) {
+      expect(label).not.toHaveClass(styles.leadLegend)
+    }
+  })
+
+  it('keeps the standard legend by default', () => {
+    renderComponent({ legend: 'Numbers' })
+    expect(screen.getByText('Numbers')).not.toHaveClass(styles.leadLegend)
+  })
+})

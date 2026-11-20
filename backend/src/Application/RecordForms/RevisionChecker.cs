@@ -2,7 +2,6 @@ using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.RecordForms.CrossPageRules;
 using UKPS.Api.Application.RecordForms.Model;
-using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Application.RecordForms.Rules;
 
 namespace UKPS.Api.Application.RecordForms;
@@ -50,7 +49,11 @@ internal sealed class RevisionChecker(
         CancellationToken cancellationToken
     )
     {
-        var (answers, applicability) = await loader.LoadAllAnswersAsync(form, cancellationToken);
+        var (answers, applicability) = await loader.LoadAllAnswersAsync(
+            form.Model,
+            form.Revision.Id,
+            cancellationToken
+        );
         return new LoadedRevision(
             answers,
             applicability,
@@ -68,7 +71,12 @@ internal sealed class RevisionChecker(
         CancellationToken cancellationToken
     )
     {
-        var options = await LoadOptionsAsync(form.Model, revision, cancellationToken);
+        var options = await loader.LoadAllOptionsAsync(
+            form.Model,
+            revision.Answers,
+            revision.Applicability,
+            cancellationToken
+        );
         return new RevisionCheck(
             options,
             RevisionValidator.Validate(
@@ -80,29 +88,5 @@ internal sealed class RevisionChecker(
                 DateAnswer.Today(dateTimeProvider.GetOffsetUtcNow())
             )
         );
-    }
-
-    /// <summary>The options of every choice question on the pages that apply.</summary>
-    private async Task<Dictionary<string, IReadOnlyList<FormOption>>> LoadOptionsAsync(
-        FormModel model,
-        LoadedRevision revision,
-        CancellationToken cancellationToken
-    )
-    {
-        Dictionary<string, IReadOnlyList<FormOption>> options = new(StringComparer.Ordinal);
-        foreach (FormPage page in model.Pages.Where(revision.Applicability.Applies))
-        {
-            var pageOptions = await loader.LoadOptionsAsync(
-                page,
-                PageAnswers.For(page, revision.Answers),
-                cancellationToken
-            );
-            foreach (var (questionId, questionOptions) in pageOptions)
-            {
-                options[questionId] = questionOptions;
-            }
-        }
-
-        return options;
     }
 }

@@ -13,6 +13,12 @@ export type InputFluidWidth =
 
 export type InputWidth = InputFixedWidth | InputFluidWidth
 
+/**
+ * The size of a field's label or legend: the standard bold body text, or bold lead text for each
+ * question on a page of several.
+ */
+export type LabelSize = 'default' | 'lead'
+
 export type InputProps = Omit<
   ComponentPropsWithoutRef<'input'>,
   'className' | 'prefix' | 'title'
@@ -23,6 +29,7 @@ export type InputProps = Omit<
   hint?: string
   inputRef?: Ref<HTMLInputElement>
   label: string | null
+  labelSize?: LabelSize
   name: string
   /**
    * Text shown in a box before the input, such as a currency symbol (e.g. '£').
@@ -65,6 +72,7 @@ export function Input({
   id,
   inputRef,
   label,
+  labelSize = 'default',
   name,
   prefix,
   style,
@@ -99,7 +107,10 @@ export function Input({
     <div className={clsx('input', error && 'input--error', className)} data-component="input">
       {title && <h2>{title}</h2>}
       {label && (
-        <label className="input__label" htmlFor={inputId}>
+        <label
+          className={clsx('input__label', labelSize === 'lead' && styles.leadLabel)}
+          htmlFor={inputId}
+        >
           {label}
         </label>
       )}

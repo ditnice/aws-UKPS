@@ -132,6 +132,16 @@ const coMarketingPage = (revealedBy: string[] = ['Yes'], answers: Record<string,
     answers: { co: null, co_name: null, ...answers },
   })
 
+const groupQuestion = question({
+  id: 'group',
+  type: 'Group',
+  label: 'Studies',
+  hint: null,
+  itemLabel: 'Study',
+  rules: [],
+  children: [question({ id: 'study_name', type: 'Text', label: 'Study name', hint: null })],
+})
+
 describe('FormPage', () => {
   describe('rendering', () => {
     it('uses the question label as the heading of a single-question page', () => {
@@ -241,6 +251,113 @@ describe('FormPage', () => {
       expect(screen.getByRole('link', { name: 'Back' }).getAttribute('href')).toBe(
         '/portal/records/5/indication',
       )
+    })
+
+    describe('label size', () => {
+      const label = (text: string) => screen.getByText(text, { selector: 'label' })
+      const legend = (text: string) => screen.getByText(text, { selector: 'legend' })
+      const other = question({ id: 'other', type: 'Text', label: 'Other', hint: null })
+
+      it('makes each question label lead text on a page with several questions', () => {
+        render(
+          <FormPage
+            page={page({
+              questions: [
+                question({}),
+                other,
+                question({ id: 'kind', type: 'Select', label: 'Kind', options: yesNo }),
+                question({ id: 'co', type: 'Radio', label: 'Co-marketed?', options: yesNo }),
+                question({ id: 'numbers', type: 'TextList', label: 'Numbers', rules: [] }),
+              ],
+              answers: {},
+            })}
+          />,
+        )
+
+        expect(
+          label('What is the indication this product is seeking a licence for?').closest(
+            '[class*="leadLabel"]',
+          ),
+        ).not.toBeNull()
+        expect(label('Other').className).toMatch(/leadLabel/)
+        expect(label('Kind').className).toMatch(/leadLabel/)
+        expect(legend('Co-marketed?').className).toMatch(/leadLegend/)
+        expect(legend('Numbers').className).toMatch(/leadLegend/)
+      })
+
+      it('keeps the standard size for the labels inside a question', () => {
+        render(
+          <FormPage
+            page={page({
+              questions: [
+                other,
+                question({ id: 'numbers', type: 'TextList', label: 'Numbers', rules: [] }),
+              ],
+              answers: {},
+            })}
+          />,
+        )
+
+        // The add another entry's own label, hidden behind the legend.
+        expect(document.querySelector('[id="numbers"] .input__label')?.className).not.toMatch(
+          /leadLabel/,
+        )
+      })
+
+      it('keeps the standard size for a question revealed beneath an option', () => {
+        const coMarketing = coMarketingPage(['Yes'], { co: 'Yes' })
+        render(
+          <FormPage
+            page={{
+              ...coMarketing,
+              questions: [...coMarketing.questions, other],
+              answers: { ...coMarketing.answers, other: null },
+            }}
+          />,
+        )
+
+        expect(legend('Is this product co-marketed?').className).toMatch(/leadLegend/)
+        expect(label('Co-marketing company name').className).not.toMatch(/leadLabel/)
+      })
+
+      it("keeps a group's heading and its items' labels at their own sizes", () => {
+        render(
+          <FormPage
+            page={page({
+              questions: [other, groupQuestion],
+              answers: { other: null, group: [] },
+            })}
+          />,
+        )
+
+        expect(screen.getByRole('heading', { level: 2, name: 'Studies' })).toBeInTheDocument()
+        expect(screen.getByText('Studies').closest('legend')?.className).not.toMatch(/leadLegend/)
+        expect(label('Study name').className).not.toMatch(/leadLabel/)
+      })
+
+      it('makes the labels of a hierarchical select lead text on a page of several', () => {
+        render(
+          <FormPage
+            page={page({
+              questions: [other, areasQuestion],
+              answers: { other: null, areas: ['13'] },
+            })}
+          />,
+        )
+
+        expect(label(areasQuestion.label).className).toMatch(/leadLabel/)
+        expect(label('Select the disease or condition (optional)').className).toMatch(/leadLabel/)
+      })
+
+      it('does not make the label lead text on a single-question page', () => {
+        render(<FormPage page={page()} />)
+
+        expect(
+          label('What is the indication this product is seeking a licence for?').closest(
+            '[class*="leadLabel"]',
+          ),
+        ).toBeNull()
+      })
     })
 
     it('fills in saved answers', () => {

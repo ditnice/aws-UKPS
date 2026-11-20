@@ -22,7 +22,7 @@ public sealed record RecordCheckAnswersDto
     public required string RevisionHash { get; init; }
 
     /// <summary>The sections with a question that applies, in form order.</summary>
-    public required IReadOnlyList<RecordCheckAnswersSectionDto> Sections { get; init; }
+    public required IReadOnlyList<RecordAnswersSectionDto> Sections { get; init; }
 
     /// <summary>
     /// The problems that would stop the record being submitted, in form order, each on a question

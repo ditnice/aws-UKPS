@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
-using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.WebApi.CustomResponses;
@@ -83,49 +82,89 @@ public class RecordController(
     }
 
     /// <summary>
-    /// Retrieves the data held on the latest revision of a record, whatever its status.
+    /// Retrieves a record's status, permitted actions and identifying details, whatever its
+    /// status, without its answers.
     /// </summary>
     /// <param name="id">The identifier of the record to retrieve.</param>
     /// <param name="recordType">The expected type of the record.</param>
     /// <param name="organisationId">The organisation the record is expected to belong to.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>The record data.</returns>
-    /// <response code="200">Returns the record data.</response>
+    /// <returns>The record's overview.</returns>
+    /// <response code="200">Returns the record's overview.</response>
     /// <response code="400">The record type or organisation is missing or invalid.</response>
     /// <response code="404">
     /// The requested record was not found in the organisation or is not accessible to the caller.
     /// </response>
-    [HttpGet("{id:int}", Name = nameof(GetRecord))]
-    [ProducesResponseType<RecordDto>(StatusCodes.Status200OK)]
+    [HttpGet("{id:int}/overview", Name = nameof(GetRecordOverview))]
+    [ProducesResponseType<RecordOverviewDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<RecordDto>> GetRecord(
+    public async Task<ActionResult<RecordOverviewDto>> GetRecordOverview(
         int id,
         [FromQuery, Required] RecordType? recordType,
         [FromQuery, Required] int? organisationId,
         CancellationToken cancellationToken
     )
     {
-        var result = await recordViewService.GetRecord(
+        var result = await recordViewService.GetRecordOverview(
             id,
             recordType!.Value,
             organisationId!.Value,
             cancellationToken
         );
 
-        // Returned directly rather than via Ok() so it serialises with its recordType.
-        return result.Match<ActionResult<RecordDto>>(
-            record => record,
-            error =>
-                error switch
-                {
-                    GetRecordError.NotAllowed
-                    or GetRecordError.NotFound
-                    or GetRecordError.RecordTypeMismatch => NotFound(),
-                    _ => throw new UnreachableException("Unhandled GetRecordError variant."),
-                }
+        return result.Match<ActionResult<RecordOverviewDto>>(
+            overview => Ok(overview),
+            error => RecordNotFound(error)
         );
     }
+
+    /// <summary>
+    /// Retrieves a record's overview and every question that applies on its latest revision with
+    /// its answer, whatever its status. The answers are not checked.
+    /// </summary>
+    /// <param name="id">The identifier of the record to retrieve.</param>
+    /// <param name="recordType">The expected type of the record.</param>
+    /// <param name="organisationId">The organisation the record is expected to belong to.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>The record's overview and answers.</returns>
+    /// <response code="200">Returns the record's overview and answers.</response>
+    /// <response code="400">The record type or organisation is missing or invalid.</response>
+    /// <response code="404">
+    /// The requested record was not found in the organisation or is not accessible to the caller.
+    /// </response>
+    [HttpGet("{id:int}", Name = nameof(GetRecordDetail))]
+    [ProducesResponseType<RecordDetailDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<RecordDetailDto>> GetRecordDetail(
+        int id,
+        [FromQuery, Required] RecordType? recordType,
+        [FromQuery, Required] int? organisationId,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await recordViewService.GetRecordDetail(
+            id,
+            recordType!.Value,
+            organisationId!.Value,
+            cancellationToken
+        );
+
+        return result.Match<ActionResult<RecordDetailDto>>(
+            detail => Ok(detail),
+            error => RecordNotFound(error)
+        );
+    }
+
+    private NotFoundResult RecordNotFound(GetRecordError error) =>
+        error switch
+        {
+            GetRecordError.NotAllowed
+            or GetRecordError.NotFound
+            or GetRecordError.RecordTypeMismatch => NotFound(),
+            _ => throw new UnreachableException("Unhandled GetRecordError variant."),
+        };
 
     /// <summary>
     /// Creates a new record.

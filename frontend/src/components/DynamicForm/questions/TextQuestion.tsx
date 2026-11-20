@@ -1,5 +1,7 @@
 import { Input } from '@/components/Input/Input'
 
+import { labelSizeFor } from '../labelStyle'
+
 import type { QuestionProps } from '../types'
 
 export function TextQuestion({
@@ -9,8 +11,9 @@ export function TextQuestion({
   onChange,
   onBlur,
   error,
-  labelAsHeading,
+  labelStyle,
 }: QuestionProps<string>) {
+  const labelAsHeading = labelStyle === 'heading'
   return (
     <>
       {labelAsHeading && (
@@ -23,6 +26,7 @@ export function TextQuestion({
         errorMessage={error}
         hint={question.hint ?? undefined}
         label={labelAsHeading ? null : question.label}
+        labelSize={labelSizeFor(labelStyle)}
         name={name}
         onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
