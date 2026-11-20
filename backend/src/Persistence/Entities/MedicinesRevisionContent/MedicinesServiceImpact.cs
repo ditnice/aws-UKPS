@@ -56,9 +56,7 @@ internal sealed class MedicinesServiceImpact
         Order = 10,
         Hint = "Select yes if the storage, handling, or preparation of this medicine introduces service readiness requirements. For example, this medicine requires aseptic facilities, trained staff, autoinjectors, fridge storage, etc."
     )]
-    [FormRequired(
-        "Select yes if there are specific requirements for handling or storing the product that may cause service issues"
-    )]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? HandlingStorageRequirements { get; set; }
 

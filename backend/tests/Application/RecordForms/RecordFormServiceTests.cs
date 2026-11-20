@@ -1071,8 +1071,7 @@ public class RecordFormServiceTests : DatabaseTestBase
         );
         errors[AtmpRecommendationDate]
             .ShouldBe("Enter the date the ATMP classification recommendation was provided");
-        errors[AtmpClassificationQuestion]
-            .ShouldBe("Select the ATMP classification of your product");
+        errors[AtmpClassificationQuestion].ShouldBe("Select an option");
     }
 
     [Fact]
@@ -1576,7 +1575,7 @@ public class RecordFormServiceTests : DatabaseTestBase
             PimAnswers("Granted", null)
         );
 
-        errors[question].ShouldBe("Select yes if you intend to submit or have submitted to EAMS");
+        errors[question].ShouldBe("Select an option");
     }
 
     [Fact]
@@ -1589,8 +1588,7 @@ public class RecordFormServiceTests : DatabaseTestBase
             PimAnswers(null, null)
         );
 
-        errors[question]
-            .ShouldBe("Select granted if your product has been awarded MHRA PIM designation");
+        errors[question].ShouldBe("Select an option");
     }
 
     // The route to the genomic pages: they apply only once these two answers are saved.

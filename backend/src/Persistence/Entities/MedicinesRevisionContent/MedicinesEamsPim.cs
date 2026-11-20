@@ -40,7 +40,7 @@ internal sealed class MedicinesEamsPim
         Hint = "Select the current status of PIM designation for the indication in scope. Granted should only be selected once formally awarded by MHRA. If application is planned or under review, select the relevant pending option."
     )]
     [FormOptions(OptionKeys.PimDesignationStatus)]
-    [FormRequired("Select granted if your product has been awarded MHRA PIM designation")]
+    [FormRequired("Select an option")]
     public DesignationStatus? PimDesignationStatus { get; set; }
 
     /// <summary>Conditional on PimDesignationStatus = Granted.</summary>
@@ -53,7 +53,7 @@ internal sealed class MedicinesEamsPim
         Hint = "Select yes if you intend to pursue EAMS. Select no if you do not. Select unknown if undecided."
     )]
     [FormShowWhen("medicines_eams_pim.pim_designation_status", DesignationStatus.Granted)]
-    [FormRequired("Select yes if you intend to submit or have submitted to EAMS")]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? WillSubmitToEams { get; set; }
 
@@ -88,7 +88,7 @@ internal sealed class MedicinesEamsPim
         FormControl.Radio,
         Order = 10
     )]
-    [FormRequired("Select a decision")]
+    [FormRequired("Select an option")]
     public EamsOpinionDecision? EamsOpinionDecision { get; set; }
 
     // Navigation

@@ -45,9 +45,7 @@ internal sealed class MedicinesPatientIdentification
         Order = 10,
         Hint = "Select yes if standard timelines for identification or treatment would create adverse patient outcomes. Select no if standard timelines are acceptable. Select unknown if this has not yet been determined."
     )]
-    [FormRequired(
-        "Select yes if urgent patient identification and treatment delivery is required for your product"
-    )]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? UrgentIdentificationRequired { get; set; }
 
