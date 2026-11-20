@@ -96,6 +96,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
   })
   return (
     <form
+      method="post"
       noValidate
       onSubmit={(event) => {
         event.preventDefault()
