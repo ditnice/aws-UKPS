@@ -144,6 +144,7 @@ export default function EnterPhoneNumber() {
         part of keeping you account secure.
       </p>
       <form
+        method="post"
         noValidate
         onSubmit={(event) => {
           event.preventDefault()

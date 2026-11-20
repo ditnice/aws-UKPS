@@ -121,6 +121,7 @@ export default function CheckYourPhone() {
       />
       <p>We have sent you a text message with a security code.</p>
       <form
+        method="post"
         noValidate
         onSubmit={(event) => {
           event.preventDefault()
