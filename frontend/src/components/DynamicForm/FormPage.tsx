@@ -28,6 +28,7 @@ import {
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 
 import styles from './DynamicForm.module.scss'
+import { FormPageContextProvider } from './FormPageContext'
 import { questionRegistry } from './questionRegistry'
 
 import type { LabelStyle } from './labelStyle'
@@ -62,6 +63,7 @@ export function FormPage({
   const [otherErrors, setOtherErrors] = useState<string[]>([])
   const schema = useMemo(() => buildZodSchema(questions), [questions])
   const layout = useMemo(() => pageLayout(questions), [questions])
+  const context = useMemo(() => ({ organisationId: page.organisationId }), [page.organisationId])
   // A page whose other questions are all revealed beneath one question reads as a
   // single-question page.
   const singleQuestion = layout.topLevel.length === 1
@@ -143,7 +145,7 @@ export function FormPage({
   )
 
   return (
-    <>
+    <FormPageContextProvider value={context}>
       <PageHeader backLink={backLink} heading={heading} preheading={preheading} />
 
       {saveState.kind === 'conflict' && (
@@ -258,6 +260,6 @@ export function FormPage({
           <Link href={exitHref}>Return to {exitLabel}</Link>
         </div>
       </form>
-    </>
+    </FormPageContextProvider>
   )
 }

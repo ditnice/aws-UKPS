@@ -9,6 +9,7 @@ import { FormPage } from './FormPage'
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   saveRecordFormPage: vi.fn(),
+  getOrganisationCompanyCodes: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
@@ -17,7 +18,11 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/client/generated', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/client/generated')>()
-  return { ...original, saveRecordFormPage: mocks.saveRecordFormPage }
+  return {
+    ...original,
+    saveRecordFormPage: mocks.saveRecordFormPage,
+    getOrganisationCompanyCodes: mocks.getOrganisationCompanyCodes,
+  }
 })
 
 const question = (overrides: Partial<RecordPageQuestionDto>): RecordPageQuestionDto => ({
@@ -55,6 +60,7 @@ const page = (overrides: Partial<RecordPageDto> = {}): RecordPageDto => ({
   formVersion: '2026.10.1',
   pageHash: 'page-hash',
   recordId: 5,
+  organisationId: 3,
   section: { id: 'product-indication', title: 'Product indication' },
   task: { id: 'indication-details', title: 'Indication details' },
   page: { id: 'indication', title: 'Indication', commercialInConfidence: false },
@@ -2020,6 +2026,97 @@ describe('FormPage names and identifiers', () => {
 
     expect(await screen.findByText('Generic names must be distinct')).toBeInTheDocument()
     expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+  })
+
+  describe('company code', () => {
+    const companyCode = question({
+      id: 'record_product_detail.company_code',
+      type: 'Text',
+      label: 'Company code',
+      hint: 'Enter the primary internal code or working name your company uses.',
+      display: 'autocomplete:company-codes',
+      rules: [{ kind: 'Required', value: null, message: 'Enter company code' }],
+    })
+
+    const companyCodePage = (overrides: Partial<RecordPageQuestionDto> = {}) =>
+      page({
+        ...namesPage(),
+        questions: [{ ...companyCode, ...overrides }, genericNames],
+        answers: { [companyCode.id]: 'ABC', [genericNames.id]: ['sofosbuvir'] },
+      })
+
+    beforeEach(() => {
+      mocks.getOrganisationCompanyCodes.mockResolvedValue({
+        data: { items: ['ABC-123', 'ABC-456'] },
+      })
+    })
+
+    it("suggests the organisation's company codes and saves the one chosen", async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={companyCodePage()} />)
+
+      const input = screen.getByRole('combobox', { name: 'Company code' })
+      expect(input).toHaveValue('ABC')
+      await user.type(input, '-4')
+      await user.click(await screen.findByRole('option', { name: 'ABC-456' }))
+      saveAndReturn()
+
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+      expect(mocks.getOrganisationCompanyCodes).toHaveBeenCalledWith(
+        expect.objectContaining({
+          path: { organisationId: 3 },
+          query: expect.objectContaining({ Search: 'ABC-4' }),
+        }),
+      )
+      expect(sentAnswers()).toEqual({
+        [companyCode.id]: 'ABC-456',
+        [genericNames.id]: ['sofosbuvir'],
+      })
+    })
+
+    it('saves a company code that is not among the suggestions', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={companyCodePage()} />)
+
+      const input = screen.getByRole('combobox', { name: 'Company code' })
+      await user.clear(input)
+      await user.type(input, 'NEW-1')
+      saveAndReturn()
+
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+      expect(sentAnswers()).toMatchObject({ [companyCode.id]: 'NEW-1' })
+    })
+
+    it('still requires a company code', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={companyCodePage()} />)
+
+      await user.clear(screen.getByRole('combobox', { name: 'Company code' }))
+      saveAndReturn()
+
+      expect(await screen.findByText('Enter company code', { selector: 'p *, p' })).toBeVisible()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('is a plain text input without the autocomplete display hint', () => {
+      render(<FormPage page={companyCodePage({ display: null })} />)
+
+      expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+      expect(screen.getByRole('textbox', { name: 'Company code' })).toHaveValue('ABC')
+    })
+
+    it('is a plain text input when the display hint names an unknown source', () => {
+      render(<FormPage page={companyCodePage({ display: 'autocomplete:unknown' })} />)
+
+      expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+      expect(screen.getByRole('textbox', { name: 'Company code' })).toHaveValue('ABC')
+    })
+
+    it('is a plain text input for the bare autocomplete hint, which names no source', () => {
+      render(<FormPage page={companyCodePage({ display: 'autocomplete' })} />)
+
+      expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+    })
   })
 
   it('shows a server error on an entry against the entry it names', async () => {

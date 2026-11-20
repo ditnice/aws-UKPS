@@ -11,6 +11,12 @@ public sealed record RecordPageDto
     /// <summary>The record the page belongs to.</summary>
     public required int RecordId { get; init; }
 
+    /// <summary>
+    /// The organisation that owns the record; used to look up suggestions such as the
+    /// organisation's existing company codes.
+    /// </summary>
+    public required int OrganisationId { get; init; }
+
     /// <summary>The section the page belongs to.</summary>
     public required RecordPageSectionDto Section { get; init; }
 

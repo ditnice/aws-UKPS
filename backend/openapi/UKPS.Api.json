@@ -2596,6 +2596,169 @@
         }
       }
     },
+    "/records/organisations/{organisationId}/company-codes": {
+      "get": {
+        "tags": [
+          "Record"
+        ],
+        "summary": "Retrieves the company codes already used on an organisation's records that contain the\nsearch text, for suggesting while a user types a company code.",
+        "operationId": "GetOrganisationCompanyCodes",
+        "parameters": [
+          {
+            "name": "organisationId",
+            "in": "path",
+            "description": "The unique identifier of the organisation.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Search",
+            "in": "query",
+            "description": "Gets or initialises the text the company codes must contain, ignoring case. A blank search\nreturns no suggestions.",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "Gets or initialises the maximum number of suggestions to return.",
+            "schema": {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the matching company codes.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCodeSuggestionsDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCodeSuggestionsDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCodeSuggestionsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The query parameters are invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not authorised to view the organisation's records.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified organisation does not exist.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/records/{id}/overview": {
       "get": {
         "tags": [
@@ -6026,6 +6189,22 @@
         },
         "description": "Contains why a record is being put on hold, resumed or archived."
       },
+      "CompanyCodeSuggestionsDto": {
+        "required": [
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets the distinct matching company codes, those starting with the search first, then\nalphabetically."
+          }
+        },
+        "description": "The company codes already used on an organisation's records, offered as suggestions while a\nuser types a company code."
+      },
       "ConditionKind": {
         "enum": [
           "AnswerIn"
@@ -7088,6 +7267,7 @@
         "required": [
           "formVersion",
           "recordId",
+          "organisationId",
           "section",
           "task",
           "page",
@@ -7106,6 +7286,11 @@
           "recordId": {
             "type": "integer",
             "description": "The record the page belongs to.",
+            "format": "int32"
+          },
+          "organisationId": {
+            "type": "integer",
+            "description": "The organisation that owns the record; used to look up suggestions such as the\norganisation's existing company codes.",
             "format": "int32"
           },
           "section": {

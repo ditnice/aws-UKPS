@@ -2,15 +2,17 @@
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
 import { useRouter } from 'next/navigation'
-import { ChangeEvent, useState } from 'react'
+import { ChangeEvent, useMemo, useState } from 'react'
 import z from 'zod'
 
 import { createRecord, CreateRecordCommand } from '@/client/generated'
 import { AddAnother } from '@/components/AddAnother/AddAnother'
+import { Autocomplete } from '@/components/Autocomplete/Autocomplete'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { Textarea } from '@/components/Textarea/Textarea'
+import { getCompanyCodeSuggestions } from '@/lib/form/companyCodeSuggestions'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { updateFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
@@ -52,6 +54,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
   const router = useRouter()
   const [error, setError] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const getSuggestions = useMemo(() => getCompanyCodeSuggestions(organisationId), [organisationId])
   const defaultValues: CreateRecordCommand = {
     organisationId,
     companyCode: '',
@@ -114,16 +117,15 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
           {(field) => {
             const errorMessage = getFieldErrorMessage(field.state.meta.errors)
             return (
-              <Input
+              <Autocomplete
                 error={Boolean(errorMessage)}
                 errorMessage={errorMessage}
+                getSuggestions={getSuggestions}
                 label="Company code"
                 hint="Enter the primary internal code or working name your company uses for this product seeking market access."
                 name={field.name}
                 onBlur={field.handleBlur}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  field.handleChange(event.target.value)
-                }
+                onChange={field.handleChange}
                 value={field.state.value}
                 width={inputWidth}
               />

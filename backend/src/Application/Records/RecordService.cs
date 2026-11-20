@@ -97,6 +97,62 @@ internal partial class RecordService(
         );
     }
 
+    public async Task<
+        Result<CompanyCodeSuggestionsDto, GetRecordsError>
+    > GetOrganisationCompanyCodes(
+        int organisationId,
+        GetCompanyCodeSuggestionsQueryDto query,
+        CancellationToken cancellationToken
+    )
+    {
+        GetRecordsError? organisationError = await ValidateOrganisationAsync(
+            organisationId,
+            Operation.Read,
+            cancellationToken
+        );
+
+        if (organisationError is not null)
+        {
+            return Result<CompanyCodeSuggestionsDto, GetRecordsError>.Err(organisationError);
+        }
+
+        string search = query.Search?.Trim() ?? string.Empty;
+
+        if (search.Length == 0)
+        {
+            return Result<CompanyCodeSuggestionsDto, GetRecordsError>.Ok(
+                new CompanyCodeSuggestionsDto { Items = [] }
+            );
+        }
+
+        string pattern = $"%{Helpers.EscapeLikePattern(search)}%";
+
+        // Discarded records are hidden by the records query filter. An organisation has one code
+        // per record, so the matches are few enough to rank in memory.
+        List<string> matches = await JoinProductDetails(GetBaseRecordProjection())
+            .Where(x =>
+                x.OrganisationId == organisationId
+                && EF.Functions.ILike(x.CompanyCode, pattern, "\\")
+            )
+            .Select(x => x.CompanyCode)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        string[] items = matches
+            .Select(code => code.Trim())
+            .Where(code => code.Length > 0)
+            .DistinctBy(code => code, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(code => code.StartsWith(search, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+            .ThenBy(code => code, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(code => code, StringComparer.Ordinal)
+            .Take(query.Limit)
+            .ToArray();
+
+        return Result<CompanyCodeSuggestionsDto, GetRecordsError>.Ok(
+            new CompanyCodeSuggestionsDto { Items = items }
+        );
+    }
+
     private async Task<GetRecordsError?> ValidateOrganisationAsync(
         int organisationId,
         Operation operation,
