@@ -65,8 +65,8 @@ $chevron-vertical-nudge-desktop: -3 * utils.rem(spacing.$x-small);
   &[aria-current='true'],
   &[aria-current='page'],
   &[aria-expanded='true'] {
-    background: colours.$fill-page-background;
-    border-bottom: utils.rem(spacing.$x-small) solid colours.$fill-page-background;
+    background: colours.$fill-white-background;
+    border-bottom: utils.rem(spacing.$x-small) solid colours.$fill-white-background;
     color: colours.$text;
 
     &:focus {
