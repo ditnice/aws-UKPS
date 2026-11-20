@@ -188,7 +188,7 @@ public class FormModelValidatorTests
         "BrokenConditionEntity [FormPageShowWhen] for page 'undeclared' names a page that BrokenConditionEntity does not declare."
     )]
     [InlineData(
-        "BrokenConditionEntity [FormPageShowWhen] for page 'first' is on the first page of task 'broken-conditions-task', which must always apply."
+        "BrokenConditionEntity [FormPageShowWhen] for page 'first' is on the first page of task 'broken-conditions-task', which must always apply unless every other page of the task has a condition too."
     )]
     [InlineData("The Vaccine form has more than one [FormPageShowWhen] for page 'second'.")]
     public void Validate_BrokenConditions_ReportsTheProblem(string expected)

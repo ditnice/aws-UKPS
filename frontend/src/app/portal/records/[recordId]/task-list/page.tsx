@@ -30,6 +30,7 @@ const taskStatuses: Record<RecordTaskStatus, TaskStatus> = {
   NotStarted: 'not-started',
   InProgress: 'in-progress',
   Completed: 'completed',
+  NotApplicable: 'not-applicable',
 }
 
 type RecordTaskListPageProps = {
@@ -76,7 +77,9 @@ const RecordTaskListPage = async ({ params, searchParams }: RecordTaskListPagePr
   const optionalSectionIds = ['service-readiness']
   const allMandatoryComplete = taskList.sections
     .filter((section) => !optionalSectionIds.includes(section.id))
-    .every((section) => section.tasks.every((task) => task.status === 'Completed'))
+    .every((section) =>
+      section.tasks.every((task) => task.status === 'Completed' || task.status === 'NotApplicable'),
+    )
 
   return (
     <>
@@ -113,7 +116,11 @@ const RecordTaskListPage = async ({ params, searchParams }: RecordTaskListPagePr
                 key={task.id}
                 id={task.id}
                 title={task.title}
-                href={`/portal/records/${recordId}/${task.firstPageId}`}
+                href={
+                  task.status === 'NotApplicable'
+                    ? undefined
+                    : `/portal/records/${recordId}/${task.firstPageId}`
+                }
                 status={taskStatuses[task.status]}
               />
             ))}

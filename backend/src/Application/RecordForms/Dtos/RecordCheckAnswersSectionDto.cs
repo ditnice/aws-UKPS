@@ -9,6 +9,12 @@ public sealed record RecordCheckAnswersSectionDto
     /// <summary>The section title.</summary>
     public required string Title { get; init; }
 
-    /// <summary>The tasks with a question that applies, in order.</summary>
+    /// <summary>
+    /// The section is optional: its tasks are marked "(optional)" and raise no errors until
+    /// something in them is answered.
+    /// </summary>
+    public required bool Optional { get; init; }
+
+    /// <summary>The section's tasks, in order, including tasks that do not apply.</summary>
     public required IReadOnlyList<RecordCheckAnswersTaskDto> Tasks { get; init; }
 }

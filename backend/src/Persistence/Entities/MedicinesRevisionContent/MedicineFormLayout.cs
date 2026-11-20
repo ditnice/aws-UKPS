@@ -394,7 +394,8 @@ internal sealed class MedicineFormLayout()
                             ),
                         ]
                     ),
-                ]
+                ],
+                Optional: true
             ),
         ]
     )

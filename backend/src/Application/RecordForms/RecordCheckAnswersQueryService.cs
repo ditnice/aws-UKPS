@@ -49,20 +49,15 @@ internal sealed class RecordCheckAnswersQueryService(
                 RecordId = form.Record.Id,
                 OrganisationId = form.Record.OrganisationId,
                 RevisionHash = revision.Hash,
-                Sections =
-                [
-                    .. form
-                        .Model.Sections.Select(summary.ToSection)
-                        .Where(static section => section.Tasks.Count > 0),
-                ],
+                Sections = [.. form.Model.Sections.Select(summary.ToSection)],
                 Errors = check.Errors,
             }
         );
     }
 
     /// <summary>
-    /// Builds the summary rows of the questions that apply, leaving out tasks and sections with
-    /// none.
+    /// Builds the summary rows of the questions that apply. A task with none is kept, flagged as
+    /// not applicable, so the page can say so.
     /// </summary>
     private sealed class SummaryBuilder(
         FormModel model,
@@ -75,22 +70,24 @@ internal sealed class RecordCheckAnswersQueryService(
             {
                 Id = section.Id,
                 Title = section.Title,
-                Tasks =
-                [
-                    .. section.Tasks.Select(ToTask).Where(static task => task.Questions.Count > 0),
-                ],
+                Optional = section.Optional,
+                Tasks = [.. section.Tasks.Select(ToTask)],
             };
 
-        private RecordCheckAnswersTaskDto ToTask(FormTask task) =>
-            new()
+        private RecordCheckAnswersTaskDto ToTask(FormTask task)
+        {
+            RecordCheckAnswersQuestionDto[] questions =
+            [
+                .. task.Questions.Where(revision.Applicability.Applies).Select(ToQuestion),
+            ];
+            return new()
             {
                 Id = task.Id,
                 Title = task.Title,
-                Questions =
-                [
-                    .. task.Questions.Where(revision.Applicability.Applies).Select(ToQuestion),
-                ],
+                Questions = questions,
+                NotApplicable = questions.Length == 0,
             };
+        }
 
         private RecordCheckAnswersQuestionDto ToQuestion(FormQuestion question)
         {

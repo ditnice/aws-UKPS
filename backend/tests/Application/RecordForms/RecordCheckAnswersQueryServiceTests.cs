@@ -373,14 +373,78 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetCheckAnswers_SectionsAndTasks_HaveOnlyThoseWithQuestionsThatApply()
+    public async Task GetCheckAnswers_Tasks_AreNotApplicableOnlyWhenNoQuestionApplies()
     {
         RecordCheckAnswersDto dto = await GetCheckAnswers();
 
         dto.Sections.ShouldNotBeEmpty();
         dto.Sections.ShouldAllBe(section =>
-            section.Tasks.Count > 0 && section.Tasks.All(task => task.Questions.Count > 0)
+            section.Tasks.Count > 0
+            && section.Tasks.All(task => task.NotApplicable == (task.Questions.Count == 0))
         );
+    }
+
+    [Fact]
+    public async Task GetCheckAnswers_Biosimilar_KeepsPimAndEamsAsANotApplicableTask()
+    {
+        await UpdateRow<MedicinesIndicationDetail>(x =>
+            x.MedicineTechnologyStatus = MedicineTechnologyStatus.Biosimilar
+        );
+
+        RecordCheckAnswersDto dto = await GetCheckAnswers();
+
+        RecordCheckAnswersTaskDto task = dto
+            .Sections.SelectMany(static s => s.Tasks)
+            .Single(static t => string.Equals(t.Id, "pim-and-eams", StringComparison.Ordinal));
+        task.NotApplicable.ShouldBeTrue();
+        task.Questions.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCheckAnswers_NotBiosimilar_ShowsPimAndEams()
+    {
+        await UpdateRow<MedicinesIndicationDetail>(x =>
+            x.MedicineTechnologyStatus = MedicineTechnologyStatus.NewIndication
+        );
+
+        RecordCheckAnswersDto dto = await GetCheckAnswers();
+
+        RecordCheckAnswersTaskDto task = dto
+            .Sections.SelectMany(static s => s.Tasks)
+            .Single(static t => string.Equals(t.Id, "pim-and-eams", StringComparison.Ordinal));
+        task.NotApplicable.ShouldBeFalse();
+        task.Questions.ShouldNotBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCheckAnswers_BiosimilarPlusAnotherStatus_StillHidesPimAndEams()
+    {
+        await UpdateRow<MedicinesIndicationDetail>(x =>
+            x.MedicineTechnologyStatus =
+                MedicineTechnologyStatus.Biosimilar | MedicineTechnologyStatus.NewIndication
+        );
+
+        RecordCheckAnswersDto dto = await GetCheckAnswers();
+
+        dto.Sections.SelectMany(static s => s.Tasks)
+            .Single(static t => string.Equals(t.Id, "pim-and-eams", StringComparison.Ordinal))
+            .NotApplicable.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task GetCheckAnswers_UntouchedOptionalTask_RaisesNoErrors()
+    {
+        // With no diagnostic test answer the laboratory testing task has nothing answered, and
+        // it is in the optional service readiness section.
+        await UpdateRow<MedicinesLaboratoryTesting>(x => x.DiagnosticTestRequired = null);
+
+        RecordCheckAnswersDto dto = await GetCheckAnswers();
+
+        dto.Errors.ShouldBeEmpty();
+        dto.Sections.Single(static s =>
+                string.Equals(s.Id, "service-readiness", StringComparison.Ordinal)
+            )
+            .Optional.ShouldBeTrue();
     }
 
     [Fact]

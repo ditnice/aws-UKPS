@@ -140,6 +140,14 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
                     ? [.. codes.IdsOf(type, answerIn.Values)]
                     : answerIn.Values,
             },
+            AnswerNotInCondition answerNotIn => new RecordPageConditionDto
+            {
+                Kind = answerNotIn.Kind,
+                QuestionId = answerNotIn.QuestionId,
+                Values = model.FindQuestion(answerNotIn.QuestionId)?.ReferenceType is { } type
+                    ? [.. codes.IdsOf(type, answerNotIn.Values)]
+                    : answerNotIn.Values,
+            },
             _ => throw new InvalidOperationException(
                 $"Unsupported condition kind {condition.Kind}."
             ),

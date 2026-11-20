@@ -877,63 +877,96 @@ internal static partial class FormModelValidator
             );
         }
 
+        HashSet<string> conditionalPageIds =
+        [
+            .. pageConditions.Select(static x => x.Condition.PageId),
+        ];
         foreach (var (entity, condition) in pageConditions)
         {
-            string where =
-                $"{entity.ClrType.Name} [FormPageShowWhen] for page '{condition.PageId}'";
-            PlacedQuestion? onPage = placed.FirstOrDefault(x =>
-                x.Entity == entity
-                && string.Equals(x.PageId, condition.PageId, StringComparison.Ordinal)
+            ValidatePageCondition(
+                entity,
+                condition,
+                placed,
+                questions,
+                conditionalPageIds,
+                problems
             );
-            if (onPage is null)
-            {
-                // A page no layout declares, or that is in another form, is reported elsewhere.
-                if (
-                    entity.Questions.Any(q =>
-                        string.Equals(q.PageId, condition.PageId, StringComparison.Ordinal)
-                    )
-                )
-                {
-                    continue;
-                }
-
-                problems.Add($"{where} names a page that {entity.ClrType.Name} does not declare.");
-                continue;
-            }
-
-            if (!questions.TryGetValue(condition.QuestionId, out var trigger))
-            {
-                problems.Add($"{where} names unknown question '{condition.QuestionId}'.");
-                continue;
-            }
-
-            ValidateNotFirstInTask(where, onPage, questions, problems);
-            if (trigger.Position.CompareTo(onPage.Position) >= 0)
-            {
-                problems.Add(
-                    $"{where} names '{condition.QuestionId}', which must be on an earlier page."
-                );
-            }
-
-            ValidateTrigger(where, trigger.Question, condition.Values, problems);
         }
     }
 
-    /// <summary>The task list links to a task's first page, so it must always apply.</summary>
+    private static void ValidatePageCondition(
+        EntityDeclaration entity,
+        FormPageShowWhenAttribute condition,
+        PlacedQuestion[] placed,
+        Dictionary<string, PlacedQuestion> questions,
+        HashSet<string> conditionalPageIds,
+        List<string> problems
+    )
+    {
+        string where = $"{entity.ClrType.Name} [FormPageShowWhen] for page '{condition.PageId}'";
+        PlacedQuestion? onPage = placed.FirstOrDefault(x =>
+            x.Entity == entity
+            && string.Equals(x.PageId, condition.PageId, StringComparison.Ordinal)
+        );
+        if (onPage is null)
+        {
+            // A page no layout declares, or that is in another form, is reported elsewhere.
+            if (
+                !entity.Questions.Any(q =>
+                    string.Equals(q.PageId, condition.PageId, StringComparison.Ordinal)
+                )
+            )
+            {
+                problems.Add($"{where} names a page that {entity.ClrType.Name} does not declare.");
+            }
+
+            return;
+        }
+
+        if (!questions.TryGetValue(condition.QuestionId, out var trigger))
+        {
+            problems.Add($"{where} names unknown question '{condition.QuestionId}'.");
+            return;
+        }
+
+        ValidateNotFirstInTask(where, onPage, questions, conditionalPageIds, problems);
+        if (trigger.Position.CompareTo(onPage.Position) >= 0)
+        {
+            problems.Add(
+                $"{where} names '{condition.QuestionId}', which must be on an earlier page."
+            );
+        }
+
+        ValidateTrigger(where, trigger.Question, condition.Values, problems);
+    }
+
+    /// <summary>
+    /// The task list links to a task's first page, so it must always apply, unless every other
+    /// page of the task has a condition too: the whole task can then be hidden, and the task list
+    /// shows it as not applicable instead of linking to it.
+    /// </summary>
     private static void ValidateNotFirstInTask(
         string where,
         PlacedQuestion onPage,
         Dictionary<string, PlacedQuestion> questions,
+        HashSet<string> conditionalPageIds,
         List<string> problems
     )
     {
-        int firstPageOrder = questions
-            .Values.Where(x => string.Equals(x.TaskId, onPage.TaskId, StringComparison.Ordinal))
-            .Min(static x => x.Placement.Page.Order);
-        if (onPage.Placement.Page.Order == firstPageOrder)
+        PlacedQuestion[] taskQuestions =
+        [
+            .. questions.Values.Where(x =>
+                string.Equals(x.TaskId, onPage.TaskId, StringComparison.Ordinal)
+            ),
+        ];
+        int firstPageOrder = taskQuestions.Min(static x => x.Placement.Page.Order);
+        bool otherPagesConditional = taskQuestions
+            .Where(x => !string.Equals(x.PageId, onPage.PageId, StringComparison.Ordinal))
+            .All(x => conditionalPageIds.Contains(x.PageId));
+        if (onPage.Placement.Page.Order == firstPageOrder && !otherPagesConditional)
         {
             problems.Add(
-                $"{where} is on the first page of task '{onPage.TaskId}', which must always apply."
+                $"{where} is on the first page of task '{onPage.TaskId}', which must always apply unless every other page of the task has a condition too."
             );
         }
     }

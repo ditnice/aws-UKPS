@@ -49,7 +49,10 @@ export const fakeBiomarkerType = (options?: Options): BiomarkerType => {
     ]);
 };
 
-export const fakeConditionKind = (): ConditionKind => 'AnswerIn';
+export const fakeConditionKind = (options?: Options): ConditionKind => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement(['AnswerIn', 'AnswerNotIn']);
+};
 
 export const fakeConfirmNewPasswordCommand = (options?: Options): ConfirmNewPasswordCommand => {
     const f = options?.faker ?? faker;
@@ -392,7 +395,7 @@ export const fakeRecordNameAndIdentifierDto = (options?: Options): RecordNameAnd
 export const fakeRecordPageConditionDto = (options?: Options): RecordPageConditionDto => {
     const f = options?.faker ?? faker;
     return {
-        kind: fakeConditionKind(),
+        kind: fakeConditionKind(options),
         questionId: f.string.uuid(),
         values: f.helpers.multiple(() => f.string.sample())
     };
@@ -496,7 +499,8 @@ export const fakeRecordTaskStatus = (options?: Options): RecordTaskStatus => {
     return f.helpers.arrayElement([
         'NotStarted',
         'InProgress',
-        'Completed'
+        'Completed',
+        'NotApplicable'
     ]);
 };
 
@@ -1305,6 +1309,7 @@ export const fakeRecordCheckAnswersSectionDto = (options?: Options): RecordCheck
     return {
         id: f.string.uuid(),
         title: f.lorem.words(),
+        optional: f.datatype.boolean(),
         tasks: f.helpers.multiple(() => fakeRecordCheckAnswersTaskDto(options))
     };
 };
@@ -1314,7 +1319,8 @@ export const fakeRecordCheckAnswersTaskDto = (options?: Options): RecordCheckAns
     return {
         id: f.string.uuid(),
         title: f.lorem.words(),
-        questions: f.helpers.multiple(() => fakeRecordCheckAnswersQuestionDto(options))
+        questions: f.helpers.multiple(() => fakeRecordCheckAnswersQuestionDto(options)),
+        notApplicable: f.datatype.boolean()
     };
 };
 

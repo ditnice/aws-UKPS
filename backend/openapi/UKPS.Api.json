@@ -5895,7 +5895,8 @@
       },
       "ConditionKind": {
         "enum": [
-          "AnswerIn"
+          "AnswerIn",
+          "AnswerNotIn"
         ],
         "type": "string",
         "description": "The kind of a condition that decides whether a question applies. Part of the HTTP API\ncontract: the member names are sent to the frontend, so never rename or remove one."
@@ -7565,6 +7566,7 @@
         "required": [
           "id",
           "title",
+          "optional",
           "tasks"
         ],
         "type": "object",
@@ -7577,12 +7579,16 @@
             "type": "string",
             "description": "The section title."
           },
+          "optional": {
+            "type": "boolean",
+            "description": "The section is optional: its tasks are marked \"(optional)\" and raise no errors until\nsomething in them is answered."
+          },
           "tasks": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/RecordCheckAnswersTaskDto"
             },
-            "description": "The tasks with a question that applies, in order."
+            "description": "The section's tasks, in order, including tasks that do not apply."
           }
         },
         "description": "A section on check your answers."
@@ -7591,7 +7597,8 @@
         "required": [
           "id",
           "title",
-          "questions"
+          "questions",
+          "notApplicable"
         ],
         "type": "object",
         "properties": {
@@ -7608,7 +7615,11 @@
             "items": {
               "$ref": "#/components/schemas/RecordCheckAnswersQuestionDto"
             },
-            "description": "The questions that apply, in page order, including optional questions with no answer."
+            "description": "The questions that apply, in page order, including optional questions with no answer.\nEmpty when bool RecordCheckAnswersTaskDto.NotApplicable."
+          },
+          "notApplicable": {
+            "type": "boolean",
+            "description": "No question in the task applies to this record, for example Promising Innovative Medicine\n(PIM) and Early Access to Medicines Scheme (EAMS) on a biosimilar. Shown as \"not possible\"."
           }
         },
         "description": "A task on check your answers."
@@ -8768,7 +8779,8 @@
         "enum": [
           "NotStarted",
           "InProgress",
-          "Completed"
+          "Completed",
+          "NotApplicable"
         ],
         "type": "string",
         "description": "Represents the status of a task in a record's task list, derived from the answers saved on the\nrecord's latest revision."

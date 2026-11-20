@@ -64,7 +64,7 @@ export type ChangeRecordStatusCommand = {
  * The kind of a condition that decides whether a question applies. Part of the HTTP API
  * contract: the member names are sent to the frontend, so never rename or remove one.
  */
-export const ConditionKind = { ANSWER_IN: 'AnswerIn' } as const;
+export const ConditionKind = { ANSWER_IN: 'AnswerIn', ANSWER_NOT_IN: 'AnswerNotIn' } as const;
 
 /**
  * The kind of a condition that decides whether a question applies. Part of the HTTP API
@@ -1050,7 +1050,12 @@ export type RecordCheckAnswersSectionDto = {
      */
     title: string;
     /**
-     * The tasks with a question that applies, in order.
+     * The section is optional: its tasks are marked "(optional)" and raise no errors until
+     * something in them is answered.
+     */
+    optional: boolean;
+    /**
+     * The section's tasks, in order, including tasks that do not apply.
      */
     tasks: Array<RecordCheckAnswersTaskDto>;
 };
@@ -1069,8 +1074,14 @@ export type RecordCheckAnswersTaskDto = {
     title: string;
     /**
      * The questions that apply, in page order, including optional questions with no answer.
+     * Empty when bool RecordCheckAnswersTaskDto.NotApplicable.
      */
     questions: Array<RecordCheckAnswersQuestionDto>;
+    /**
+     * No question in the task applies to this record, for example Promising Innovative Medicine
+     * (PIM) and Early Access to Medicines Scheme (EAMS) on a biosimilar. Shown as "not possible".
+     */
+    notApplicable: boolean;
 };
 
 /**
@@ -1701,7 +1712,8 @@ export type RecordTaskListTaskDto = {
 export const RecordTaskStatus = {
     NOT_STARTED: 'NotStarted',
     IN_PROGRESS: 'InProgress',
-    COMPLETED: 'Completed'
+    COMPLETED: 'Completed',
+    NOT_APPLICABLE: 'NotApplicable'
 } as const;
 
 /**

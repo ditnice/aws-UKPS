@@ -8,4 +8,9 @@ public enum ConditionKind
 {
     /// <summary>The trigger question's answer includes one of the condition's values.</summary>
     AnswerIn = 0,
+
+    /// <summary>
+    /// The trigger question is answered and its answer includes none of the condition's values.
+    /// </summary>
+    AnswerNotIn = 1,
 }

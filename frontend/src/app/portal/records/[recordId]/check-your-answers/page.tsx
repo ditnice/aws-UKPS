@@ -127,7 +127,11 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
           const blocks = splitTaskQuestions(task.questions)
 
           return (
-            <SummaryCard key={task.id} title={task.title}>
+            <SummaryCard
+              key={task.id}
+              title={section.optional ? `${task.title} (optional)` : task.title}
+            >
+              {task.notApplicable && <p>Not possible</p>}
               {blocks.map((block, index) =>
                 block.kind === 'group' ? (
                   <GroupItemCards

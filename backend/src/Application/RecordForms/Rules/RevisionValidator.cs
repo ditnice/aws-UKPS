@@ -25,6 +25,10 @@ internal static class RevisionValidator
         Dictionary<string, string> errors = new(StringComparer.Ordinal);
         foreach (FormPage page in model.Pages.Where(applicability.Applies))
         {
+            if (IsUntouchedOptionalTask(model, page, answers, applicability))
+            {
+                continue;
+            }
             PageAnswerValidator.Check(page, answers, options, applicability, today, errors);
         }
 
@@ -58,5 +62,30 @@ internal static class RevisionValidator
                 };
             })
             .ToArray();
+    }
+
+    /// <summary>
+    /// A task in an optional section with nothing answered raises no errors; once any question in it
+    /// is answered, its required rules apply as usual.
+    /// </summary>
+    private static bool IsUntouchedOptionalTask(
+        FormModel model,
+        FormPage page,
+        IReadOnlyDictionary<string, FormAnswer> answers,
+        Applicability applicability
+    )
+    {
+        FormSection section = model.Sections.First(s =>
+            s.Tasks.Any(t => string.Equals(t.Id, page.TaskId, StringComparison.Ordinal))
+        );
+        if (!section.Optional)
+        {
+            return false;
+        }
+
+        FormTask task = section.Tasks.First(t =>
+            string.Equals(t.Id, page.TaskId, StringComparison.Ordinal)
+        );
+        return task.Questions.Where(applicability.Applies).All(q => answers[q.Id].IsEmpty);
     }
 }

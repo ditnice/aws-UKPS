@@ -97,6 +97,11 @@ internal sealed class RecordTaskListQueryService(
     )
     {
         FormQuestion[] applying = task.Questions.Where(applicability.Applies).ToArray();
+        if (applying.Length == 0)
+        {
+            return RecordTaskStatus.NotApplicable;
+        }
+
         bool hasAnyAnswer = applying.Any(question => answered.Contains(question.Id));
         FormQuestion[] required = applying.Where(static q => q.IsRequired).ToArray();
         bool requiredAnswersComplete = required.All(question => answered.Contains(question.Id));

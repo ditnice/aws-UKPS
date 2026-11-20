@@ -21,4 +21,11 @@ public enum RecordTaskStatus
     /// completion.
     /// </summary>
     Completed = 2,
+
+    /// <summary>
+    /// No question in the task applies to this record, for example Promising Innovative Medicine
+    /// (PIM) and Early Access to Medicines Scheme (EAMS) on a biosimilar. Nothing to complete, and
+    /// the task has no page to open.
+    /// </summary>
+    NotApplicable = 3,
 }
