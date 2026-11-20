@@ -8,8 +8,8 @@ namespace UKPS.Api.Application.RecordForms.Rules;
 
 /// <summary>
 /// Checks a whole revision before it is submitted: every page rule on every page that applies, so
-/// unanswered required questions are caught, then every cross-page rule. One error per question,
-/// in form order.
+/// unanswered required questions are caught (except in an optional section, where nothing is
+/// required), then every cross-page rule. One error per question, in form order.
 /// </summary>
 internal static class RevisionValidator
 {
@@ -25,11 +25,7 @@ internal static class RevisionValidator
         Dictionary<string, string> errors = new(StringComparer.Ordinal);
         foreach (FormPage page in model.Pages.Where(applicability.Applies))
         {
-            if (IsUntouchedOptionalTask(model, page, answers, applicability))
-            {
-                continue;
-            }
-            PageAnswerValidator.Check(page, answers, options, applicability, today, errors);
+            CheckPage(model, page, answers, options, applicability, today, errors);
         }
 
         // A field with a page rule error keeps it, so it shows one message, and its value isn't
@@ -65,27 +61,44 @@ internal static class RevisionValidator
     }
 
     /// <summary>
-    /// A task in an optional section with nothing answered raises no errors; once any question in it
-    /// is answered, its required rules apply as usual.
+    /// Checks one page. Nothing in an optional section is required, even once the user has started
+    /// it, so a question there with no answer raises no error; an answer that was given is still
+    /// checked. An empty answer can only fail Required, as every other rule passes on it.
     /// </summary>
-    private static bool IsUntouchedOptionalTask(
+    private static void CheckPage(
         FormModel model,
         FormPage page,
         IReadOnlyDictionary<string, FormAnswer> answers,
-        Applicability applicability
+        IReadOnlyDictionary<string, IReadOnlyList<FormOption>> options,
+        Applicability applicability,
+        DateOnly today,
+        Dictionary<string, string> errors
     )
     {
-        FormSection section = model.Sections.First(s =>
-            s.Tasks.Any(t => string.Equals(t.Id, page.TaskId, StringComparison.Ordinal))
-        );
-        if (!section.Optional)
+        if (!IsInOptionalSection(model, page))
         {
-            return false;
+            PageAnswerValidator.Check(page, answers, options, applicability, today, errors);
+            return;
         }
 
-        FormTask task = section.Tasks.First(t =>
-            string.Equals(t.Id, page.TaskId, StringComparison.Ordinal)
-        );
-        return task.Questions.Where(applicability.Applies).All(q => answers[q.Id].IsEmpty);
+        Dictionary<string, string> found = new(StringComparer.Ordinal);
+        PageAnswerValidator.Check(page, answers, options, applicability, today, found);
+        foreach (var (key, message) in found)
+        {
+            if (!answers.TryGetValue(key, out FormAnswer? answer) || !answer.IsEmpty)
+            {
+                errors[key] = message;
+            }
+        }
     }
+
+    // TODO: service readiness becomes mandatory within 12 months of the market authorisation date
+    // (URP-738 scenarios 8-10). Until that date exists on the record, "optional" is a fixed
+    // property of the section; the rule needs it to depend on the record, and the same check
+    // is in the task list page's optionalSectionIds and the check your answers page.
+    private static bool IsInOptionalSection(FormModel model, FormPage page) =>
+        model.Sections.Any(s =>
+            s.Optional
+            && s.Tasks.Any(t => string.Equals(t.Id, page.TaskId, StringComparison.Ordinal))
+        );
 }

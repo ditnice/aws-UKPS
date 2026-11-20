@@ -233,7 +233,15 @@ invalid model stops the API starting. It holds structure only: bindings receive 
   one nested card per item, each with an
   **Edit** link to that item on the group's page (`#{questionId}-item-{index}`), then an **Add
   another** button that opens the page with `?add=group-item` and a new blank item after the saved
-  ones. Errors are not tagged per item. Return
+  ones. Errors are not tagged per item; a group's error is tagged on the group only when it has
+  items, and otherwise appears only in the summary. A task in an optional section (`Optional` on the layout
+  section, flagged on the response) is titled "(optional)" and says it becomes mandatory within 12
+  months of the market authorisation date; while nothing in it is answered it shows one "Not yet
+  provided" row with an **Edit section** link instead of a row per question. No question in an
+  optional section is required: an unanswered one raises no error and does not block submitting,
+  even once the task is started, though an answer that was given is still checked. A task with no question that applies (`notApplicable`, for example PIM and EAMS
+  on a biosimilar) shows an explanation instead of rows. The record title row is tagged **Hidden**
+  by its question ID, as the response has no visibility flag yet. Return
   to my records is always shown; Submit is shown only when there are no errors. Selecting Submit sends the form version and revision hash the page loaded, and the API
   rechecks everything. A 422 refreshes the page with the current
   errors, and a 409 shows the API's message with a link to reload. If the record can't be

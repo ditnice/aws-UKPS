@@ -13,7 +13,10 @@ type GroupItemCardsProps = {
   recordId: number
   /** A group question, whose `items` are shown one card each. */
   question: RecordCheckAnswersQuestionDto
-  /** Set when the group has a submission error, which is tagged on the group rather than an item. */
+  /**
+   * Set when the group has a submission error, which is tagged on the group rather than an item.
+   * With no items there is nothing to tag: the error is in the summary at the top of the page.
+   */
   hasError?: boolean
 }
 
@@ -21,7 +24,7 @@ type GroupItemCardsProps = {
 export function GroupItemCards({ recordId, question, hasError = false }: GroupItemCardsProps) {
   return (
     <>
-      {hasError && (
+      {hasError && (question.items?.length ?? 0) > 0 && (
         <p>
           <Tag colour="red">
             There is a problem<span className="visually-hidden"> with {question.label}</span>

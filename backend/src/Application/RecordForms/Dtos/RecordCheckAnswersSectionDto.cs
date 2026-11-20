@@ -10,8 +10,8 @@ public sealed record RecordCheckAnswersSectionDto
     public required string Title { get; init; }
 
     /// <summary>
-    /// The section is optional: its tasks are marked "(optional)" and raise no errors until
-    /// something in them is answered.
+    /// The section is optional: its tasks are marked "(optional)", and no question in it is
+    /// required, so an unanswered one raises no error and does not block submitting.
     /// </summary>
     public required bool Optional { get; init; }
 

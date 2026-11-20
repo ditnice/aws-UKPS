@@ -6,7 +6,7 @@ namespace UKPS.Api.Application.RecordForms.Model;
 /// <param name="Order">Position of the section within the form.</param>
 /// <param name="Tasks">The section's tasks, in order.</param>
 /// <param name="Optional">
-/// A task in the section raises no submission errors until something in it is answered.
+/// No question in the section is required to submit, even once the user has started a task in it.
 /// </param>
 internal sealed record FormSection(
     string Id,

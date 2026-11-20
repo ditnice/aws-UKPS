@@ -50,6 +50,15 @@ const splitTaskQuestions = (questions: RecordCheckAnswersQuestionDto[]): TaskBlo
   return blocks
 }
 
+/**
+ * Questions not visible to horizon scanners, tagged "Hidden". The endpoint has no per-question
+ * flag yet, so the one row is named here.
+ */
+const hiddenQuestionIds = new Set(['record_product_detail.record_title'])
+
+const isUnanswered = (question: RecordCheckAnswersQuestionDto) =>
+  question.values.length === 0 && !question.items?.length
+
 const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
   const { recordId: recordIdParam } = await params
   const recordId = parsePositiveInteger(recordIdParam)
@@ -124,14 +133,42 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
 
       {data.sections.flatMap((section) =>
         section.tasks.map((task) => {
-          const blocks = splitTaskQuestions(task.questions)
+          // An optional task with nothing answered is one "Not yet provided" row, not a row each.
+          const untouched =
+            section.optional && !task.notApplicable && task.questions.every(isUnanswered)
+          const blocks = untouched ? [] : splitTaskQuestions(task.questions)
 
           return (
             <SummaryCard
               key={task.id}
               title={section.optional ? `${task.title} (optional)` : task.title}
             >
-              {task.notApplicable && <p>Not possible</p>}
+              {/* TODO: once the 12-month rule exists the backend decides per record whether the section
+                  is still optional. A mandatory task drops "(optional)" and this line, and shows its
+                  errors (design: "serv readiness is mandatory"). Same TODO in the task list page. */}
+              {section.optional && (
+                <p>
+                  This task becomes mandatory within 12 months of the market authorisation date.
+                </p>
+              )}
+              {task.notApplicable && (
+                <p>
+                  Your product is a biosimilar, you do not need to complete this task. You can
+                  change technology status in indication details.
+                </p>
+              )}
+              {untouched && (
+                <SummaryList variant="wide-value">
+                  <SummaryListRow label="Not yet provided" value="">
+                    <SummaryListAction
+                      href={checkAnswersPageHref(recordId, task.questions[0].pageId)}
+                      visuallyHiddenText={task.title}
+                    >
+                      Edit section
+                    </SummaryListAction>
+                  </SummaryListRow>
+                </SummaryList>
+              )}
               {blocks.map((block, index) =>
                 block.kind === 'group' ? (
                   <GroupItemCards
@@ -148,8 +185,16 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
                         label={question.label}
                         value={formatAnswer(question)}
                         tag={
-                          errorsByQuestionId.get(question.id) && (
-                            <Tag colour="red">There is a problem</Tag>
+                          (hiddenQuestionIds.has(question.id) ||
+                            errorsByQuestionId.has(question.id)) && (
+                            <>
+                              {hiddenQuestionIds.has(question.id) && (
+                                <Tag colour="purple">Hidden</Tag>
+                              )}
+                              {errorsByQuestionId.has(question.id) && (
+                                <Tag colour="red">There is a problem</Tag>
+                              )}
+                            </>
                           )
                         }
                       >

@@ -10,7 +10,8 @@ public enum ConditionKind
     AnswerIn = 0,
 
     /// <summary>
-    /// The trigger question is answered and its answer includes none of the condition's values.
+    /// The trigger question's answer includes none of the condition's values (an unanswered
+    /// trigger therefore meets it).
     /// </summary>
     AnswerNotIn = 1,
 }

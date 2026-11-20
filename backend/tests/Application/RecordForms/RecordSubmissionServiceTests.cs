@@ -33,7 +33,6 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class RecordSubmissionServiceTests : DatabaseTestBase
 {
     private const string IndicationIsCancer = "medicines_indication_detail.indication_is_cancer";
-    private const string ScreeningDetails = "medicines_patient_identification.screening_details";
     private const string Indication = "medicines_indication_detail.indication";
     private const string UkLaunchDate = "record_hta.uk_launch_date";
     private const string UkLicenceDate = "record_mhra_date.uk_licence_date";
@@ -237,21 +236,31 @@ public class RecordSubmissionServiceTests : DatabaseTestBase
     [Fact]
     public async Task Submit_RequiredAnswersMissing_ReportsEachInFormOrderAndWritesNothing()
     {
-        // A required question left unanswered, and a required follow-up revealed but unanswered.
+        // A required question left unanswered, and required follow-ups revealed but unanswered.
         await UpdateRow<MedicinesIndicationDetail>(x => x.IndicationIsCancer = null);
-        await UpdateRow<MedicinesPatientIdentification>(x =>
-            x.ScreeningRequired = YesNoUnknown.Yes
-        );
+        await UpdateRow<RecordClinicalTrialInformation>(x => x.HasClinicalTrials = YesNo.Yes);
 
         IReadOnlyList<SubmissionErrorDto> errors = await SubmitInvalid();
 
         errors.ShouldBe([
             Error(IndicationIsCancer, Message(IndicationIsCancer)),
-            Error(ScreeningDetails, Message(ScreeningDetails)),
+            Error(ClinicalTrials, Message(ClinicalTrials)),
+            Error(RecruitingInUk, Message(RecruitingInUk)),
         ]);
         (await RevisionStatus()).ShouldBe(WorkflowStatus.Draft);
         (await Context.QaReviews.AnyAsync(Ct)).ShouldBeFalse();
         (await Context.RecordEvents.AnyAsync(Ct)).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Submit_RequiredQuestionUnansweredInAnOptionalSection_IsNotReported()
+    {
+        // Screening details is required once screening is, but it is in the optional section.
+        await UpdateRow<MedicinesPatientIdentification>(x =>
+            x.ScreeningRequired = YesNoUnknown.Yes
+        );
+
+        (await Submit(await CurrentHash())).ShouldBeSuccess();
     }
 
     [Fact]

@@ -11,9 +11,9 @@
     { "name": "multi answer unanswered", "condition": { "kind": "AnswerIn", "questionId": "a.trigger", "values": ["Other"] }, "answer": [], "met": false },
     { "name": "not-in: single answer differs", "condition": { "kind": "AnswerNotIn", "questionId": "a.trigger", "values": ["Biosimilar"] }, "answer": "NewIndication", "met": true },
     { "name": "not-in: single answer matches", "condition": { "kind": "AnswerNotIn", "questionId": "a.trigger", "values": ["Biosimilar"] }, "answer": "Biosimilar", "met": false },
-    { "name": "not-in: single answer unanswered", "condition": { "kind": "AnswerNotIn", "questionId": "a.trigger", "values": ["Biosimilar"] }, "answer": null, "met": false },
+    { "name": "not-in: single answer unanswered", "condition": { "kind": "AnswerNotIn", "questionId": "a.trigger", "values": ["Biosimilar"] }, "answer": null, "met": true },
     { "name": "not-in: multi answer includes none of the values", "condition": { "kind": "AnswerNotIn", "questionId": "a.trigger", "values": ["Biosimilar"] }, "answer": ["NewIndication", "NewFormulation"], "met": true },
     { "name": "not-in: multi answer includes one of the values", "condition": { "kind": "AnswerNotIn", "questionId": "a.trigger", "values": ["Biosimilar"] }, "answer": ["Biosimilar", "NewIndication"], "met": false },
-    { "name": "not-in: multi answer unanswered", "condition": { "kind": "AnswerNotIn", "questionId": "a.trigger", "values": ["Biosimilar"] }, "answer": [], "met": false }
+    { "name": "not-in: multi answer unanswered", "condition": { "kind": "AnswerNotIn", "questionId": "a.trigger", "values": ["Biosimilar"] }, "answer": [], "met": true }
   ]
 }

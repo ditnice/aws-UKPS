@@ -38,8 +38,8 @@ internal sealed class FormPageShowWhenAttribute(
     public IReadOnlyList<object> Values { get; } = values;
 
     /// <summary>
-    /// Inverts the condition: the page applies when the trigger is answered and its answer
-    /// includes none of <see cref="Values"/>. An unanswered trigger does not make it apply.
+    /// Inverts the condition: the page applies when the trigger's answer includes none of
+    /// <see cref="Values"/>. An unanswered trigger includes none, so the page applies.
     /// </summary>
     public bool NoneOf { get; set; }
 }

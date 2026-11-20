@@ -1050,8 +1050,8 @@ export type RecordCheckAnswersSectionDto = {
      */
     title: string;
     /**
-     * The section is optional: its tasks are marked "(optional)" and raise no errors until
-     * something in them is answered.
+     * The section is optional: its tasks are marked "(optional)", and no question in it is
+     * required, so an unanswered one raises no error and does not block submitting.
      */
     optional: boolean;
     /**
@@ -1713,7 +1713,8 @@ export const RecordTaskStatus = {
     NOT_STARTED: 'NotStarted',
     IN_PROGRESS: 'InProgress',
     COMPLETED: 'Completed',
-    NOT_APPLICABLE: 'NotApplicable'
+    NOT_APPLICABLE: 'NotApplicable',
+    CANNOT_START: 'CannotStart'
 } as const;
 
 /**

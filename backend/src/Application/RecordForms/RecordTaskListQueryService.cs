@@ -96,6 +96,13 @@ internal sealed class RecordTaskListQueryService(
         Applicability applicability
     )
     {
+        // Design (URP-737): until the technology status is answered, PIM and EAMS "cannot start
+        // yet"; once it is, they are "not applicable" for a biosimilar and startable otherwise.
+        if (task.FirstPage.ShowWhen?.TriggerQuestionIds.Any(id => !answered.Contains(id)) == true)
+        {
+            return RecordTaskStatus.CannotStart;
+        }
+
         FormQuestion[] applying = task.Questions.Where(applicability.Applies).ToArray();
         if (applying.Length == 0)
         {

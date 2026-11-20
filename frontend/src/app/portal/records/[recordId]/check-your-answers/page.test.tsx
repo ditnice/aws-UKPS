@@ -46,10 +46,12 @@ const checkAnswers = {
       {
         id: 'names',
         title: 'Names',
+        optional: false,
         tasks: [
           {
             id: 'names-and-identifiers',
             title: 'Names and identifiers',
+            notApplicable: false,
             questions: [
               {
                 id: 'company-code',
@@ -118,10 +120,12 @@ const trialsCheckAnswers = {
       {
         id: 'clinical-trials',
         title: 'Clinical trials',
+        optional: false,
         tasks: [
           {
             id: 'clinical-trials',
             title: 'Clinical trials',
+            notApplicable: false,
             questions: [
               {
                 id: 'has_clinical_trials',
@@ -154,6 +158,41 @@ const trialsCheckAnswers = {
     ],
   },
 } satisfies GetRecordCheckAnswersResult
+
+type Section = (typeof checkAnswers.data.sections)[number]
+type Question = Section['tasks'][number]['questions'][number]
+
+const textQuestion = (id: string, pageId: string, label: string, values: string[] = []) =>
+  ({
+    id,
+    pageId,
+    label,
+    type: 'Text',
+    multiple: false,
+    values,
+    selectedOptions: null,
+    itemLabel: null,
+    addAnotherLabel: null,
+    items: null,
+  }) satisfies Question
+
+const withSections = (sections: Section[]) =>
+  ({
+    ...checkAnswers,
+    data: { ...checkAnswers.data, sections },
+  }) satisfies GetRecordCheckAnswersResult
+
+const section = (
+  task: { id: string; title: string; notApplicable?: boolean; questions: Question[] },
+  optional = false,
+): Section => ({
+  id: optional ? 'service-readiness' : 'names',
+  title: 'Section',
+  optional,
+  tasks: [{ notApplicable: false, ...task }],
+})
+
+const recordTitleId = 'record_product_detail.record_title'
 
 const renderPage = async (recordId = '42') => {
   const page = await CheckAnswersPage({ params: Promise.resolve({ recordId }) })
@@ -221,7 +260,10 @@ describe('CheckAnswersPage', () => {
     await renderPage()
 
     const question = screen.getByText('Do you wish to add a clinical trial?', { selector: 'dt' })
-    const firstTrial = screen.getByRole('heading', { level: 3, name: 'Clinical trial 1' })
+    const firstTrial = screen.getByRole('heading', {
+      level: 3,
+      name: 'Clinical trial 1',
+    })
     expect(question.compareDocumentPosition(firstTrial)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 
@@ -259,8 +301,185 @@ describe('CheckAnswersPage', () => {
         element.tagName === 'SPAN',
     )
     expect(tags).toHaveLength(1)
-    const firstTrial = screen.getByRole('heading', { level: 3, name: 'Clinical trial 1' })
+    const firstTrial = screen.getByRole('heading', {
+      level: 3,
+      name: 'Clinical trial 1',
+    })
     expect(tags[0].compareDocumentPosition(firstTrial)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
+  it('marks an optional task and says when it becomes mandatory', async () => {
+    vi.mocked(getRecordCheckAnswers).mockResolvedValue(
+      withSections([
+        section(
+          {
+            id: 'laboratory-testing',
+            title: 'Laboratory testing',
+            questions: [textQuestion('diagnostic', 'diagnostic-test', 'Needs a test?', ['No'])],
+          },
+          true,
+        ),
+      ]),
+    )
+
+    await renderPage()
+
+    expect(screen.getByRole('heading', { name: 'Laboratory testing (optional)' })).toBeVisible()
+    expect(
+      screen.getByText(
+        'This task becomes mandatory within 12 months of the market authorisation date.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Change\s*Needs a test\?/ })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Edit section/ })).not.toBeInTheDocument()
+  })
+
+  it('shows an untouched optional task as one "Not yet provided" row with Edit section', async () => {
+    vi.mocked(getRecordCheckAnswers).mockResolvedValue(
+      withSections([
+        section(
+          {
+            id: 'patient-and-clinical',
+            title: 'Patient and clinical requirements',
+            questions: [
+              textQuestion('screening', 'screening-page', 'Is screening needed?'),
+              textQuestion('details', 'details-page', 'Screening details'),
+            ],
+          },
+          true,
+        ),
+      ]),
+    )
+
+    await renderPage()
+
+    expect(screen.getAllByText('Not yet provided')).toHaveLength(1)
+    expect(screen.queryByText('Is screening needed?')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Change/ })).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: /Edit section\s*Patient and clinical requirements/ }),
+    ).toHaveAttribute('href', '/portal/records/42/screening-page?returnTo=check-your-answers')
+  })
+
+  it('does not collapse an unanswered task that is not optional', async () => {
+    vi.mocked(getRecordCheckAnswers).mockResolvedValue(
+      withSections([
+        section({
+          id: 'names-and-identifiers',
+          title: 'Names and identifiers',
+          questions: [textQuestion('generic-name', 'names', 'Generic name')],
+        }),
+      ]),
+    )
+
+    await renderPage()
+
+    expect(screen.queryByRole('link', { name: /Edit section/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Change\s*Generic name/ })).toBeInTheDocument()
+  })
+
+  it('explains a task that does not apply, with no rows', async () => {
+    vi.mocked(getRecordCheckAnswers).mockResolvedValue(
+      withSections([
+        section({ id: 'pim-and-eams', title: 'PIM and EAMS', notApplicable: true, questions: [] }),
+      ]),
+    )
+
+    await renderPage()
+
+    expect(
+      screen.getByText(
+        'Your product is a biosimilar, you do not need to complete this task. You can change technology status in indication details.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Change|Edit section/ })).not.toBeInTheDocument()
+  })
+
+  it('tags the record title as hidden, and no other row', async () => {
+    vi.mocked(getRecordCheckAnswers).mockResolvedValue(
+      withSections([
+        section({
+          id: 'names-and-identifiers',
+          title: 'Names and identifiers',
+          questions: [
+            textQuestion('company-code', 'names', 'Company code', ['GC22']),
+            textQuestion(recordTitleId, 'names', 'Record title', ['A title']),
+          ],
+        }),
+      ]),
+    )
+
+    await renderPage()
+
+    expect(screen.getAllByText('Hidden')).toHaveLength(1)
+  })
+
+  it('shows both tags on a hidden row that also has an error', async () => {
+    const titleOnly = withSections([
+      section({
+        id: 'names-and-identifiers',
+        title: 'Names and identifiers',
+        questions: [textQuestion(recordTitleId, 'names', 'Record title', ['A title'])],
+      }),
+    ])
+    vi.mocked(getRecordCheckAnswers).mockResolvedValue({
+      ...titleOnly,
+      data: {
+        ...titleOnly.data,
+        errors: [
+          {
+            questionId: recordTitleId,
+            pageId: 'names',
+            taskId: 'names-and-identifiers',
+            message: 'Fix the title',
+          },
+        ],
+      },
+    })
+
+    await renderPage()
+
+    expect(screen.getByText('Hidden')).toBeInTheDocument()
+    // One in the summary heading and one on the row's tag.
+    expect(screen.getAllByText('There is a problem')).toHaveLength(2)
+  })
+
+  it('leaves a group with no items untagged, its error only in the summary', async () => {
+    const [section] = trialsCheckAnswers.data.sections
+    const [task] = section.tasks
+    vi.mocked(getRecordCheckAnswers).mockResolvedValue({
+      ...trialsCheckAnswers,
+      data: {
+        ...trialsCheckAnswers.data,
+        sections: [
+          {
+            ...section,
+            tasks: [
+              {
+                ...task,
+                questions: task.questions.map((question) =>
+                  question.id === 'record_clinical_trial' ? { ...question, items: [] } : question,
+                ),
+              },
+            ],
+          },
+        ],
+        errors: [
+          {
+            questionId: 'record_clinical_trial',
+            pageId: 'clinical-trial-details',
+            taskId: 'clinical-trials',
+            message: 'Add at least one clinical trial',
+          },
+        ],
+      },
+    })
+
+    await renderPage()
+
+    expect(screen.getByRole('link', { name: 'Add at least one clinical trial' })).toBeVisible()
+    expect(screen.queryByText(/There is a problem with/)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Add another clinical trial' })).toBeInTheDocument()
   })
 
   it('shows no error summary or problem tags when there are no errors', async () => {

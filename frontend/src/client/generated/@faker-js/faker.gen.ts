@@ -500,7 +500,8 @@ export const fakeRecordTaskStatus = (options?: Options): RecordTaskStatus => {
         'NotStarted',
         'InProgress',
         'Completed',
-        'NotApplicable'
+        'NotApplicable',
+        'CannotStart'
     ]);
 };
 

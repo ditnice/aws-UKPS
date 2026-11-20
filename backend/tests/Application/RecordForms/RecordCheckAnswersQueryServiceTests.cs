@@ -35,6 +35,7 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
     private const string BiomarkerTypeQuestion = "medicines_laboratory_testing.biomarker_type";
     private const string MhraProcedureQuestion = "record_mhra_procedure.mhra_procedure_type_id";
     private const string Trials = "record_clinical_trial";
+    private const string RecruitingInUk = "record_clinical_trial_information.recruiting_in_uk";
 
     private static readonly DateTime _now = new(2026, 10, 15, 9, 30, 0, DateTimeKind.Utc);
 
@@ -109,8 +110,9 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetCheckAnswers_QuestionRevealedByItsTrigger_IsIncludedAndReported()
+    public async Task GetCheckAnswers_QuestionRevealedByItsTrigger_IsIncludedButNotReportedWhenOptional()
     {
+        // Screening details is required once screening is, but it is in an optional section.
         await UpdateRow<MedicinesPatientIdentification>(x =>
             x.ScreeningRequired = YesNoUnknown.Yes
         );
@@ -118,7 +120,18 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
         RecordCheckAnswersDto dto = await GetCheckAnswers();
 
         Question(dto, ScreeningDetails).Values.ShouldBeEmpty();
-        dto.Errors.ShouldHaveSingleItem().QuestionId.ShouldBe(ScreeningDetails);
+        dto.Errors.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCheckAnswers_QuestionRevealedByItsTrigger_IsIncludedAndReported()
+    {
+        await UpdateRow<RecordClinicalTrialInformation>(x => x.HasClinicalTrials = YesNo.Yes);
+
+        RecordCheckAnswersDto dto = await GetCheckAnswers();
+
+        Question(dto, RecruitingInUk).Values.ShouldBeEmpty();
+        dto.Errors.Select(static e => e.QuestionId).ShouldContain(RecruitingInUk);
     }
 
     [Fact]

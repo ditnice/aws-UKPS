@@ -30,7 +30,10 @@ const taskStatuses: Record<RecordTaskStatus, TaskStatus> = {
   NotStarted: 'not-started',
   InProgress: 'in-progress',
   Completed: 'completed',
-  NotApplicable: 'not-applicable',
+  // Both read "Cannot start yet" (Byron's call, 2026-11-20), though only NotApplicable counts as
+  // complete for review and submit below.
+  NotApplicable: 'cannot-start',
+  CannotStart: 'cannot-start',
 }
 
 type RecordTaskListPageProps = {
@@ -117,7 +120,7 @@ const RecordTaskListPage = async ({ params, searchParams }: RecordTaskListPagePr
                 id={task.id}
                 title={task.title}
                 href={
-                  task.status === 'NotApplicable'
+                  task.status === 'NotApplicable' || task.status === 'CannotStart'
                     ? undefined
                     : `/portal/records/${recordId}/${task.firstPageId}`
                 }

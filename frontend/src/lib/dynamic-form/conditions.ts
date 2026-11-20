@@ -21,10 +21,10 @@ export const isConditionMet = (
       return values.some((value) => condition.values.includes(value))
     }
     case ConditionKind.ANSWER_NOT_IN: {
-      // Met only when answered: an unanswered or hidden trigger does not reveal the question.
+      // An unanswered or hidden trigger includes none of the values, so the condition is met.
       const answer = answerOf(condition.questionId)
       const values = Array.isArray(answer) ? answer : answer === null ? [] : [answer]
-      return values.length > 0 && !values.some((value) => condition.values.includes(value))
+      return !values.some((value) => condition.values.includes(value))
     }
     default:
       throw new Error(`Unsupported condition kind ${String(condition.kind)}`)

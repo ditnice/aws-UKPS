@@ -28,4 +28,10 @@ public enum RecordTaskStatus
     /// the task has no page to open.
     /// </summary>
     NotApplicable = 3,
+
+    /// <summary>
+    /// The task's first page depends on a question that has not been answered yet, for example
+    /// PIM and EAMS before the technology status is. The task has no page to open yet.
+    /// </summary>
+    CannotStart = 4,
 }

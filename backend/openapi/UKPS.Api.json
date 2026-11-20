@@ -7581,7 +7581,7 @@
           },
           "optional": {
             "type": "boolean",
-            "description": "The section is optional: its tasks are marked \"(optional)\" and raise no errors until\nsomething in them is answered."
+            "description": "The section is optional: its tasks are marked \"(optional)\", and no question in it is\nrequired, so an unanswered one raises no error and does not block submitting."
           },
           "tasks": {
             "type": "array",
@@ -8780,7 +8780,8 @@
           "NotStarted",
           "InProgress",
           "Completed",
-          "NotApplicable"
+          "NotApplicable",
+          "CannotStart"
         ],
         "type": "string",
         "description": "Represents the status of a task in a record's task list, derived from the answers saved on the\nrecord's latest revision."
