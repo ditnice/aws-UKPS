@@ -44,11 +44,16 @@
 | Name | Type |
 | ---- | ---- |
 | [aws_db_subnet_group.aurora](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_subnet_group) | resource |
+| [aws_pinpointsmsvoicev2_resource_policy.sms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/pinpointsmsvoicev2_resource_policy) | resource |
+| [aws_pinpointsmsvoicev2_sender_id.sms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/pinpointsmsvoicev2_sender_id) | resource |
 | [aws_secretsmanager_secret.frontend_payload_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret) | resource |
 | [aws_secretsmanager_secret_version.frontend_payload_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version) | resource |
+| [aws_sns_sms_preferences.sms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_sms_preferences) | resource |
+| [aws_caller_identity.sms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.backend_cognito](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.backend_cognito_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.frontend_secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.sms_sender_id](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
 ## Inputs
 
