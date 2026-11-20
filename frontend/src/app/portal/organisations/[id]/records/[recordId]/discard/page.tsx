@@ -98,10 +98,10 @@ const DiscardRecord = async ({ organisationId, recordId, recordType }: DiscardRe
       <ul>
         <li>
           the product will no longer be accessible to view by you or other users in your
-          organisation.
+          organisation
         </li>
         <li>
-          the company code, generic and brand names will remain in any other records that use them.
+          the company code, generic and brand names will remain in any other records that use them
         </li>
       </ul>
 
