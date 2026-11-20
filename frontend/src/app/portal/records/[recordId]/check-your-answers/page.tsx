@@ -151,6 +151,8 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
                   This task becomes mandatory within 12 months of the market authorisation date.
                 </p>
               )}
+              {/* The copy assumes PIM and EAMS on a biosimilar, the only task that can be wholly
+                  conditional today. A second one needs the backend to send the reason. */}
               {task.notApplicable && (
                 <p>
                   Your product is a biosimilar, you do not need to complete this task. You can

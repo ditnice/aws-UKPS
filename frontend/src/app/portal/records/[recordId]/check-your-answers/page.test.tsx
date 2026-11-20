@@ -260,10 +260,7 @@ describe('CheckAnswersPage', () => {
     await renderPage()
 
     const question = screen.getByText('Do you wish to add a clinical trial?', { selector: 'dt' })
-    const firstTrial = screen.getByRole('heading', {
-      level: 3,
-      name: 'Clinical trial 1',
-    })
+    const firstTrial = screen.getByRole('heading', { level: 3, name: 'Clinical trial 1' })
     expect(question.compareDocumentPosition(firstTrial)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 
@@ -301,10 +298,7 @@ describe('CheckAnswersPage', () => {
         element.tagName === 'SPAN',
     )
     expect(tags).toHaveLength(1)
-    const firstTrial = screen.getByRole('heading', {
-      level: 3,
-      name: 'Clinical trial 1',
-    })
+    const firstTrial = screen.getByRole('heading', { level: 3, name: 'Clinical trial 1' })
     expect(tags[0].compareDocumentPosition(firstTrial)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 

@@ -85,6 +85,8 @@ internal static class RevisionValidator
         PageAnswerValidator.Check(page, answers, options, applicability, today, found);
         foreach (var (key, message) in found)
         {
+            // Keys of list entries and group items (for example "key[0]") are not answers of their
+            // own, so they are missing from answers; they come from an answer that was given.
             if (!answers.TryGetValue(key, out FormAnswer? answer) || !answer.IsEmpty)
             {
                 errors[key] = message;
