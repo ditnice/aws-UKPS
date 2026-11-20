@@ -2,7 +2,7 @@
 
 import { startTransition, useActionState } from 'react'
 
-import { Button, ButtonGroup } from '@/components/Button/Button'
+import { Button } from '@/components/Button/Button'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 
 import { cancelPendingEmailChangeAction } from './serverActions'
@@ -31,11 +31,9 @@ const CancelPendingEmailChange = ({ userId }: Props) => {
       }}
     >
       {state?.errors?.length ? <ErrorState>{state.errors[0]}</ErrorState> : null}
-      <ButtonGroup>
-        <Button type="submit" variant="secondary" disabled={isPending}>
-          Cancel email change
-        </Button>
-      </ButtonGroup>
+      <Button type="submit" variant="secondary" disabled={isPending}>
+        Cancel email change
+      </Button>
     </form>
   )
 }

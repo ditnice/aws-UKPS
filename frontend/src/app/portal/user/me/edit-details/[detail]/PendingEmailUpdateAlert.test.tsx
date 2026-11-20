@@ -3,6 +3,14 @@ import { describe, expect, it, vi } from 'vitest'
 
 import PendingEmailUpdateAlert from './PendingEmailUpdateAlert'
 
+vi.mock('./editUserEmail/CancelPendingEmailChange', () => ({
+  default: ({ userId }: { userId: number }) => (
+    <button data-testid="cancel-verification-email-button" data-user-id={userId}>
+      Resend verification email
+    </button>
+  ),
+}))
+
 vi.mock('./ResendVerificationEmail/ResendVerificationEmailButton', () => ({
   default: ({ userId }: { userId: number }) => (
     <button data-testid="resend-verification-email-button" data-user-id={userId}>
@@ -41,10 +49,25 @@ describe('PendingEmailUpdateAlert', () => {
     )
   })
 
+  it('renders the cancel verification button with the user id when verifiedByEmail is false', async () => {
+    await renderAlert({ value: email, verifiedByEmail: false, userId })
+
+    expect(screen.getByTestId('cancel-verification-email-button')).toHaveAttribute(
+      'data-user-id',
+      String(userId),
+    )
+  })
+
   it('does not render the resend verification email button with the user id when verifiedByEmail is true', async () => {
     await renderAlert({ value: email, verifiedByEmail: true, userId })
 
     expect(screen.queryByTestId('resend-verification-email-button')).not.toBeInTheDocument()
+  })
+
+  it('does not render the cancel verification email button with the user id when verifiedByEmail is true', async () => {
+    await renderAlert({ value: email, verifiedByEmail: true, userId })
+
+    expect(screen.queryByTestId('cancel-verification-email-button')).not.toBeInTheDocument()
   })
 
   describe('when the address has not been verified', () => {
@@ -63,7 +86,7 @@ describe('PendingEmailUpdateAlert', () => {
 
       expect(screen.getByText(/this address has been verified/i)).toBeInTheDocument()
       expect(screen.queryByText(/sent a verification email to/i)).not.toBeInTheDocument()
-      expect(screen.queryByTestId('target-email-not-verified')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('cancel-verification-email-button')).not.toBeInTheDocument()
     })
   })
 })
