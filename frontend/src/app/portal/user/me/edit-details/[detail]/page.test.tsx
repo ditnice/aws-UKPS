@@ -250,13 +250,16 @@ describe('Edit user detail page', () => {
 
       const pendingWorkEmail = { ...fakePendingWorkEmailChangeDto(), verifiedByEmail: false }
       mockGetUsersMe({
-        data: { ...fakeUserInformationDto(), pendingWorkEmail },
+        data: { ...fakeUserInformationDto(), pendingWorkEmail, userId: 123 },
       })
 
       await renderPage()
 
       expect(PendingEmailUpdateAlertMock).toHaveBeenCalledTimes(1)
-      expect(PendingEmailUpdateAlertMock.mock.calls[0][0]).toEqual(pendingWorkEmail)
+      expect(PendingEmailUpdateAlertMock.mock.calls[0][0]).toEqual({
+        ...pendingWorkEmail,
+        userId: 123,
+      })
       expect(screen.getByTestId('cancel-pending-email-change')).toBeInTheDocument()
     })
 
