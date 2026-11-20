@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 
-import { getRecord, RecordType } from '@/client/generated'
+import { getRecordDetail, RecordType } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { Alert } from '@/components/Alert/Alert'
 import { BackLink } from '@/components/BackLink/BackLink'
@@ -14,7 +14,7 @@ import OrganisationPageWrapper from '../../_components/OrganisationPageWrapper'
 import { recordStatusLabels, recordStatusTagColours } from '../labels'
 
 import { ManageRecordActionBanner } from './_components/ManageRecordActionBanner'
-import { MedicineRecordDetails } from './_components/MedicineRecordDetails'
+import { RecordDetails } from './_components/RecordDetails'
 import {
   parseRecordViewAlert,
   RecordViewAlert,
@@ -79,11 +79,7 @@ type RecordViewProps = {
 }
 
 const RecordView = async ({ organisationId, recordId, recordType, alert }: RecordViewProps) => {
-  const {
-    data: record,
-    error,
-    response,
-  } = await getRecord({
+  const { data, error, response } = await getRecordDetail({
     client: await createServerApiClient(),
     path: { id: recordId },
     query: { recordType, organisationId },
@@ -97,7 +93,7 @@ const RecordView = async ({ organisationId, recordId, recordType, alert }: Recor
     <BackLink href={`/portal/organisations/${organisationId}/records`}>Back</BackLink>
   )
 
-  if (error || !record) {
+  if (error || !data) {
     return (
       <section>
         <PageHeader heading="Unable to load record" backLink={backLink} />
@@ -106,10 +102,8 @@ const RecordView = async ({ organisationId, recordId, recordType, alert }: Recor
     )
   }
 
+  const { overview: record, sections } = data
   const isOverdue = isRecordOverdue(record.nextUpdateDue)
-
-  //TODO: needs updating when we add vaccine DTOs
-  const productDetail = record.recordType === 'Medicine' ? record.recordProductDetail : undefined
 
   const statusHeadings = {
     Archived: 'Archived record details',
@@ -126,10 +120,10 @@ const RecordView = async ({ organisationId, recordId, recordType, alert }: Recor
       {isOverdue && record.recordStatus !== 'Archived' && <OverdueRecordAlert />}
 
       <PageHeader
-        heading={`Record ${record.recordId}${productDetail ? `: ${productDetail.companyCode}` : ''}`}
+        heading={`Record ${record.recordId}${record.companyCode ? `: ${record.companyCode}` : ''}`}
         lead={
           <>
-            <strong>Record title:</strong> {productDetail?.recordTitle}
+            <strong>Record title:</strong> {record.recordTitle}
           </>
         }
         metadata={[
@@ -148,10 +142,10 @@ const RecordView = async ({ organisationId, recordId, recordType, alert }: Recor
 
       <h2>{statusHeadings[record.displayStatus]}</h2>
       <Button variant="secondary">Export record to PDF</Button>
-      {record.recordType === 'Medicine' ? (
-        <MedicineRecordDetails record={record} />
+      {sections.length > 0 ? (
+        <RecordDetails sections={sections} />
       ) : (
-        <p>Viewing vaccine record details is not yet available.</p>
+        <p>Viewing the details of this type of record is not yet available.</p>
       )}
     </>
   )

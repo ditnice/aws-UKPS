@@ -7,7 +7,6 @@ using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
-using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Configurations.RecordWorkflow;
@@ -225,8 +224,8 @@ public class RecordStatusServiceTests : DatabaseTestBase
                 }
             )
             .Service;
-        RecordDto dto = (
-            await viewService.GetRecord(
+        RecordOverviewDto dto = (
+            await viewService.GetRecordOverview(
                 record.Id,
                 RecordType.Medicine,
                 _organisation.Id,

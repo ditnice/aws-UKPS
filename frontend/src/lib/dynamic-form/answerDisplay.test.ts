@@ -1,12 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import type { RecordCheckAnswersQuestionDto } from '@/client/generated'
+import type { RecordAnswersQuestionDto } from '@/client/generated'
 
 import { formatAnswer } from './answerDisplay'
 
-const question = (
-  overrides: Partial<RecordCheckAnswersQuestionDto>,
-): RecordCheckAnswersQuestionDto => ({
+const question = (overrides: Partial<RecordAnswersQuestionDto>): RecordAnswersQuestionDto => ({
   id: 'section.task.question',
   pageId: 'page',
   label: 'Question',
