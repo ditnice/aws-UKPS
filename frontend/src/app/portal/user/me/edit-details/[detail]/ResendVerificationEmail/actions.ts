@@ -1,9 +1,11 @@
 'use server'
 
-import { unstable_rethrow } from 'next/navigation'
+import { redirect, unstable_rethrow } from 'next/navigation'
 
 import { resendVerificationEmail } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
+
+import { buildUpdateUserDetailsHref } from '../navigation'
 
 export type ResendVerificationState =
   { status: 'idle' } | { status: 'success' } | { status: 'error'; message: string }
@@ -14,21 +16,18 @@ export const resendWorkEmailVerification = async (
   _formData: FormData,
 ): Promise<ResendVerificationState> => {
   try {
-    const { response, error } = await resendVerificationEmail({
+    const { response } = await resendVerificationEmail({
       path: { userId },
       client: await createServerApiClient(),
     })
 
     if (response?.ok) {
-      return { status: 'success' }
+      redirect(buildUpdateUserDetailsHref({ detail: 'email', emailLinkResent: true }))
     }
 
-    return {
-      status: 'error',
-      message: error?.title ?? 'An unexpected error occurred.',
-    }
+    redirect(buildUpdateUserDetailsHref({ detail: 'email', error: true }))
   } catch (error) {
     unstable_rethrow(error)
-    return { status: 'error', message: 'An unexpected error occurred.' }
+    redirect(buildUpdateUserDetailsHref({ detail: 'email', error: true }))
   }
 }

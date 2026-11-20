@@ -5,10 +5,11 @@ namespace UKPS.Api.Tests.Utilities.MockInternalServices;
 
 public class MockEmailService
 {
-    public IReadOnlyCollection<IEmail> Sent => _sent;
+    public IReadOnlyCollection<SendEmailCommand> SentCommands => _sent;
+    public IReadOnlyCollection<IEmail> Sent => _sent.Select(x => x.Email).ToList();
     public IEmailService Mock { get; } = Substitute.For<IEmailService>();
 
-    private readonly List<IEmail> _sent = new List<IEmail>();
+    private readonly List<SendEmailCommand> _sent = new List<SendEmailCommand>();
 
     public MockEmailService()
     {
@@ -16,7 +17,7 @@ public class MockEmailService
             .Returns(callInfo =>
             {
                 var command = callInfo.Arg<SendEmailCommand>();
-                _sent.Add(command.Email);
+                _sent.Add(command);
                 return Task.CompletedTask;
             });
     }

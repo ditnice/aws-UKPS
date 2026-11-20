@@ -35,7 +35,7 @@ const userDetailLabels: Record<UserDetail, string> = {
 }
 
 const Page = async (props: PageProps) => {
-  const { params } = await findTypedPageProps(props)
+  const { params, searchParams } = await findTypedPageProps(props)
   const { detail } = params
 
   if (!detail) {
@@ -58,7 +58,12 @@ const Page = async (props: PageProps) => {
     if (detail === 'email' && me.pendingWorkEmail) {
       return (
         <>
-          <PendingEmailUpdateAlert userId={me.userId} {...me.pendingWorkEmail} />
+          <PendingEmailUpdateAlert
+            userId={me.userId}
+            verificationEmailResent={searchParams?.verificationLinkResent}
+            error={searchParams?.error}
+            {...me.pendingWorkEmail}
+          />
         </>
       )
     }

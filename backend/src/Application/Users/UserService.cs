@@ -3,6 +3,7 @@ using System.Linq.Expressions;
 using Amazon.Runtime;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using UKPS.Api.Application.Authentication.SecurityNotification;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Communication;
@@ -894,7 +895,7 @@ internal partial class UserService(
         }
     }
 
-    private static CancelPendingEmailChangeError MapPendingEmailCancellationError(
+    private static CancelPendingEmailChangeError.NoPendingEmailToCancel MapPendingEmailCancellationError(
         User.PendingEmailCancellationError domainError
     )
     {
@@ -902,8 +903,6 @@ internal partial class UserService(
         {
             User.PendingEmailCancellationError.NoPendingEmailToCancel =>
                 new CancelPendingEmailChangeError.NoPendingEmailToCancel(),
-            User.PendingEmailCancellationError.EmailAlreadyVerified =>
-                new CancelPendingEmailChangeError.EmailAlreadyVerified(),
             _ => throw new InvalidOperationException(
                 $"The pending email cancellation error '{domainError}' is not supported."
             ),
@@ -1203,6 +1202,15 @@ internal partial class UserService(
         await identityService.UpdateUserEmail(
             user.CognitoUsername,
             emailUpdatedEvent.NewWorkEmail,
+            cancellationToken
+        );
+        await emailService.SendEmail(
+            new SendEmailCommand()
+            {
+                Email = new SecurityNotificationEmail() { ChangedValue = ChangedUserData.Email },
+                PersonIdentifier = user.CognitoUsername,
+                RecipientAddress = emailUpdatedEvent.PreviousWorkEmail,
+            },
             cancellationToken
         );
     }

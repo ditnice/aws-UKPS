@@ -351,11 +351,6 @@ internal sealed class User
             return PendingEmailCancellationError.NoPendingEmailToCancel;
         }
 
-        if (PendingEmailVerifiedAt is not null)
-        {
-            return PendingEmailCancellationError.EmailAlreadyVerified;
-        }
-
         PendingWorkEmail = null;
         PendingEmailVerifiedAt = null;
         PendingEmailVerificationToken = null;
@@ -374,7 +369,6 @@ internal sealed class User
     internal enum PendingEmailCancellationError
     {
         NoPendingEmailToCancel = 0,
-        EmailAlreadyVerified = 1,
     }
 
     internal record EmailUpdatedEvent : IUserDomainEvent

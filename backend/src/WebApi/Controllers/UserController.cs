@@ -389,7 +389,7 @@ public class UserController(IUserService userService) : ControllerBase
     /// <returns>An empty 200 response when the pending email change has been cancelled.</returns>
     /// <response code="200">The pending email change was cancelled successfully.</response>
     /// <response code="404">The specified user does not exist or is not accessible to the caller.</response>
-    /// <response code="409">The user has no pending email change, the pending email has already been verified, or a concurrent change was detected.</response>
+    /// <response code="409">The user has no pending email change or a concurrent change was detected.</response>
     [HttpDelete("{userId:int}/email/pending", Name = nameof(CancelPendingEmailChange))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -414,12 +414,6 @@ public class UserController(IUserService userService) : ControllerBase
                         Problem(
                             title: "No pending email",
                             detail: "This user has no pending email change to cancel.",
-                            statusCode: StatusCodes.Status409Conflict
-                        ),
-                    emailAlreadyVerified: () =>
-                        Problem(
-                            title: "Email already verified",
-                            detail: "The pending email address has already been verified and cannot be cancelled.",
                             statusCode: StatusCodes.Status409Conflict
                         ),
                     concurrentChangeDetected: () =>
