@@ -39,10 +39,12 @@ const taskList = {
       {
         id: 'indication-and-development',
         title: 'Provide indication and development information',
+        subText: 'Tell us about the indication.',
         tasks: [
           {
             id: 'indication-details',
             title: 'Indication details',
+            hint: 'Includes the BNF chapter and therapeutic area.',
             status: 'InProgress',
             firstPageId: 'indication',
           },
@@ -51,10 +53,12 @@ const taskList = {
       {
         id: 'service-readiness',
         title: 'Provide service readiness information (optional)',
+        subText: null,
         tasks: [
           {
             id: 'laboratory-testing',
             title: 'Laboratory testing',
+            hint: null,
             status: 'NotStarted',
             firstPageId: 'diagnostic-test-required',
           },
@@ -101,6 +105,18 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('RecordTaskListPage', () => {
+  it('shows section sub text and task hints when they are set', async () => {
+    await renderPage()
+
+    expect(screen.getByText('Tell us about the indication.')).toBeInTheDocument()
+    expect(screen.getByText('Includes the BNF chapter and therapeutic area.')).toBeInTheDocument()
+
+    const optionalSection = screen
+      .getByRole('heading', { level: 2, name: 'Provide service readiness information (optional)' })
+      .closest('section')!
+    expect(optionalSection.querySelector('p')).toBeNull()
+  })
+
   it('renders the task list and links each task to its first page', async () => {
     await renderPage()
 
@@ -131,7 +147,7 @@ describe('RecordTaskListPage', () => {
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
       'href',
-      '/portal/organisations/7/records/42',
+      '/portal/organisations/7/records',
     )
     expect(screen.getByRole('link', { name: 'Indication details' })).toHaveAttribute(
       'href',
@@ -177,6 +193,10 @@ describe('RecordTaskListPage', () => {
     expect(
       screen.getByRole('heading', { level: 3, name: 'Draft record saved' }),
     ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
+      'href',
+      '/portal/organisations/7/records',
+    )
   })
 
   it('does not show the draft saved alert without the draft-saved action', async () => {

@@ -11,9 +11,14 @@ namespace UKPS.Api.Persistence.FormAnnotations;
 /// </param>
 /// <param name="Order">Position of the section within the form. No two sections may share one.</param>
 /// <param name="Tasks">The section's tasks.</param>
+/// <param name="SubText">
+/// Optional text shown under the section heading in the record task list. A blank line starts a
+/// new paragraph. When set, must not be blank.
+/// </param>
 internal sealed record FormLayoutSection(
     string Id,
     string Title,
     int Order,
-    IReadOnlyList<FormLayoutTask> Tasks
+    IReadOnlyList<FormLayoutTask> Tasks,
+    string? SubText = null
 );

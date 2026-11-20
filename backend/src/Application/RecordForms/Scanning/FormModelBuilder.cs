@@ -245,7 +245,8 @@ internal static class FormModelBuilder
                     .Tasks.OrderBy(static t => t.Order)
                     .Select(task => BuildTask(section, task, questions, pageConditions))
                     .Where(static t => t.Pages.Count > 0)
-                    .ToArray()
+                    .ToArray(),
+                section.SubText
             ))
             .Where(static s => s.Tasks.Count > 0)
             .ToArray();
@@ -266,7 +267,8 @@ internal static class FormModelBuilder
             task.Pages.OrderBy(static p => p.Order)
                 .Select(page => BuildPage(section, task, page, questions, pageConditions))
                 .Where(static p => p.Questions.Count > 0)
-                .ToArray()
+                .ToArray(),
+            task.Hint
         );
 
     private static FormPage BuildPage(

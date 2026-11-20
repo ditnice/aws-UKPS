@@ -16,6 +16,7 @@ import { BackLink } from '@/components/BackLink/BackLink'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
+import PlainTextContent from '@/components/PlainText/PlainTextContent'
 import { Tag } from '@/components/Tag/Tag'
 import {
   TaskList,
@@ -83,7 +84,7 @@ const RecordTaskListPage = async ({ params, searchParams }: RecordTaskListPagePr
       {action === 'draft-saved' && <RecordActionAlert action="draft-saved" />}
       <PageHeader
         backLink={
-          <BackLink href={`/portal/organisations/${taskList.organisationId}/records/${recordId}`}>
+          <BackLink href={`/portal/organisations/${taskList.organisationId}/records`}>
             Back
           </BackLink>
         }
@@ -105,6 +106,7 @@ const RecordTaskListPage = async ({ params, searchParams }: RecordTaskListPagePr
           <TaskListSection
             key={section.id}
             title={section.title}
+            description={section.subText ? <PlainTextContent text={section.subText} /> : undefined}
             titleHeadingLevel={2}
             optional={optionalSectionIds.includes(section.id)}
           >
@@ -113,6 +115,7 @@ const RecordTaskListPage = async ({ params, searchParams }: RecordTaskListPagePr
                 key={task.id}
                 id={task.id}
                 title={task.title}
+                description={task.hint ? <PlainTextContent text={task.hint} /> : undefined}
                 href={`/portal/records/${recordId}/${task.firstPageId}`}
                 status={taskStatuses[task.status]}
               />

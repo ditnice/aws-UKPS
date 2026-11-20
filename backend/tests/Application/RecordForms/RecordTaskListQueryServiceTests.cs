@@ -84,6 +84,15 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task GetTaskList_LayoutDeclaresNoSubTextOrHints_LeavesThemNull()
+    {
+        RecordTaskListDto taskList = await GetTaskList();
+
+        taskList.Sections.ShouldAllBe(static s => s.SubText == null);
+        taskList.Sections.SelectMany(static s => s.Tasks).ShouldAllBe(static t => t.Hint == null);
+    }
+
+    [Fact]
     public async Task GetTaskList_NoSavedAnswers_ListsTheFormWithTheTaskNotStarted()
     {
         RecordTaskListDto taskList = await GetTaskList();
