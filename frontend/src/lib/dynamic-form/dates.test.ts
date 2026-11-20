@@ -123,7 +123,7 @@ describe('precisionDateProblem', () => {
       parts: ['day', 'year'],
     })
     expect(problem({ precision: 'EstimatedQuarter', year: '2027' })).toEqual({
-      message: 'Enter the estimated submission date',
+      message: 'Select a quarter',
       parts: ['quarter'],
     })
   })
@@ -156,7 +156,7 @@ describe('precisionDateProblem', () => {
 
   it('rejects a date on the wrong side of today, about every part', () => {
     expect(problem({ precision: 'EstimatedQuarter', quarter: '1', year: '2026' })).toEqual({
-      message: 'Estimated date of submission must be in the future',
+      message: 'Estimated date of submission must not be in the past',
       parts: ['quarter', 'year'],
     })
     expect(problem({ precision: 'ActualDate', day: '16', month: '6', year: '2026' })).toEqual({

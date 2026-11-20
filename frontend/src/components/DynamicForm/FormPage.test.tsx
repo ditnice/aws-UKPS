@@ -1137,7 +1137,7 @@ describe('FormPage', () => {
       await user.type(screen.getByRole('textbox', { name: 'Year' }), '2027')
       save()
 
-      expect(await screen.findByText('Enter the estimated submission date')).toBeInTheDocument()
+      expect(await screen.findByText('Select a quarter')).toBeInTheDocument()
       expect(invalidParts()).toEqual(['Quarter'])
     })
 
@@ -1193,7 +1193,9 @@ describe('FormPage', () => {
       await user.type(screen.getByRole('textbox', { name: 'Year' }), '2025')
       save()
 
-      const message = await screen.findByText('Estimated date of submission must be in the future')
+      const message = await screen.findByText(
+        'Estimated date of submission must not be in the past',
+      )
       expect(message.closest('[data-component="radios-conditional"]')).not.toBeNull()
       expect(container.querySelector('.radio--error')).toBeNull()
       expect(invalidParts()).toEqual(['Quarter', 'Year'])
@@ -1697,7 +1699,7 @@ describe('FormPage clinical trials', () => {
     await user.click(screen.getByRole('button', { name: 'Save and continue' }))
 
     expect(await screen.findByText('Enter the study name')).toBeInTheDocument()
-    expect(screen.getByText('ID must be 8 digits')).toBeInTheDocument()
+    expect(screen.getByText('Trial number must be 8 digits long')).toBeInTheDocument()
     expect(screen.getByText('Registry number must be different')).toBeInTheDocument()
     expect(screen.getByText('Trial number must be different')).toBeInTheDocument()
     expect(screen.getAllByLabelText('Study name')[0]).toHaveAttribute('aria-invalid', 'true')

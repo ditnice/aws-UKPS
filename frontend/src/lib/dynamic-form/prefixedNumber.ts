@@ -5,7 +5,7 @@
 export const selectIdTypeMessage = 'Select ID type'
 export const idDigitsOnlyMessage = 'ID must be a whole positive number'
 export const idOutOfRangeMessage = 'ID must not be longer than 5 digits'
-export const idDigitsMessage = (digits: number) => `ID must be ${digits} digits`
+export const idDigitsMessage = (digits: number) => `Trial number must be ${digits} digits long`
 
 const maxDigits = 5
 
@@ -52,7 +52,7 @@ export const prefixedNumberErrorParts = (error?: string) => {
   if (
     error === idDigitsOnlyMessage ||
     error === idOutOfRangeMessage ||
-    (error && /^ID must be \d+ digits$/.test(error))
+    (error && /^Trial number must be \d+ digits long$/.test(error))
   ) {
     return { prefix: false, number: true }
   }

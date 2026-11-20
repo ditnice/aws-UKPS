@@ -63,18 +63,29 @@ export function PrecisionDateQuestion({
   // Once a precision is chosen, the error sits just above its controls and only the parts it is
   // about are marked as invalid (all of them for an error from the server); until then it is on
   // the radios.
-  const reveal = (precision: DatePrecision, controls: (props: ControlsProps) => ReactNode) => {
+  const reveal = (
+    precision: DatePrecision,
+    controls: (props: ControlsProps) => ReactNode,
+    hint?: string,
+  ) => {
     const ownError = value.precision === precision ? error : undefined
     const invalid = ownError ? ((errorParts as DatePart[] | undefined) ?? partsOf[precision]) : []
+    const hintId = hint ? `${name}-${precision}-hint` : undefined
     return (
       <>
+        {hint && (
+          <p className="input__hint" id={hintId}>
+            {hint}
+          </p>
+        )}
         {ownError && (
           <p className="form-group__error-message" id={errorId}>
             <span className="visually-hidden">Error:</span> {ownError}
           </p>
         )}
         {controls({
-          'aria-describedby': ownError ? errorId : undefined,
+          'aria-describedby':
+            [hintId, ownError ? errorId : undefined].filter(Boolean).join(' ') || undefined,
           invalid,
           onChange,
           value,
@@ -117,16 +128,24 @@ export function PrecisionDateQuestion({
           value="EstimatedQuarter"
         />
         <Radio
-          conditional={reveal('EstimatedMonth', (props) => (
-            <DateParts name={`${name}-month`} parts={['month', 'year']} {...props} />
-          ))}
+          conditional={reveal(
+            'EstimatedMonth',
+            (props) => (
+              <DateParts name={`${name}-month`} parts={['month', 'year']} {...props} />
+            ),
+            'For example, 3 2027',
+          )}
           label="Estimated month"
           value="EstimatedMonth"
         />
         <Radio
-          conditional={reveal('ActualDate', (props) => (
-            <DateParts name={`${name}-actual`} parts={['day', 'month', 'year']} {...props} />
-          ))}
+          conditional={reveal(
+            'ActualDate',
+            (props) => (
+              <DateParts name={`${name}-actual`} parts={['day', 'month', 'year']} {...props} />
+            ),
+            'For example, 14 3 2027',
+          )}
           label="Actual date"
           value="ActualDate"
         />

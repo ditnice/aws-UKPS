@@ -25,7 +25,10 @@ export function SelectQuestion({
         label={labelAsHeading ? null : question.label}
         name={name}
         onBlur={onBlur}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => {
+          onChange(event.target.value)
+          onBlur()
+        }}
         value={value}
         width="one-third"
       >
