@@ -1,7 +1,7 @@
 namespace UKPS.Api.Application.RecordForms.Dtos;
 
 /// <summary>An option chosen in an answer.</summary>
-public sealed record RecordCheckAnswersOptionDto
+public sealed record RecordAnswersOptionDto
 {
     /// <summary>The answer value: an enum member name or a reference ID.</summary>
     public required string Value { get; init; }

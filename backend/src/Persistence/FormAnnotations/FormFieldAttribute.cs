@@ -35,7 +35,9 @@ internal sealed class FormFieldAttribute(string id, string label, FormControl co
 
     /// <summary>
     /// A rendering hint for the frontend, for example <c>combobox</c>. It does not change
-    /// validation, and the frontend ignores hints it does not know.
+    /// validation, and the frontend ignores hints it does not know. A text field suggests values
+    /// as the user types with <c>autocomplete:&lt;source&gt;</c>, where the source names where the
+    /// suggestions come from, for example <c>autocomplete:company-codes</c>.
     /// </summary>
     public string? Display { get; set; }
 

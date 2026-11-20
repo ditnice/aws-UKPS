@@ -4,6 +4,7 @@ import { partsOf } from '@/lib/dynamic-form/dates'
 import type { DatePart, DatePrecision, DateValue } from '@/lib/dynamic-form/dates'
 
 import styles from '../DynamicForm.module.scss'
+import { labelSizeFor } from '../labelStyle'
 
 import { DateParts } from './DateParts'
 
@@ -58,6 +59,7 @@ export function PrecisionDateQuestion({
   error,
   errorParts,
   clearError,
+  labelStyle,
 }: QuestionProps<DateValue>) {
   const errorId = `${name}-error`
   // Once a precision is chosen, the error sits just above its controls and only the parts it is
@@ -107,6 +109,7 @@ export function PrecisionDateQuestion({
         error={value.precision ? undefined : error}
         hint={question.hint ?? undefined}
         legend={question.label}
+        legendSize={labelSizeFor(labelStyle)}
         name={name}
         onChange={(precision) => {
           onChange({

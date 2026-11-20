@@ -1,5 +1,7 @@
 import { AddAnother } from '@/components/AddAnother/AddAnother'
 
+import { labelSizeFor } from '../labelStyle'
+
 import { fluidInputWidthOf } from './inputWidth'
 
 import type { QuestionProps } from '../types'
@@ -20,6 +22,7 @@ export function TextListQuestion({
   error,
   errorItems,
   clearError,
+  labelStyle,
 }: QuestionProps<string[]>) {
   const entries = value.length > 0 ? value : ['']
   const indexOf = (subfieldName: string) => Number(/\[(\d+)\]$/.exec(subfieldName)?.[1] ?? 0)
@@ -54,6 +57,7 @@ export function TextListQuestion({
       itemLabel={question.itemLabel ?? undefined}
       labelPrefix={question.label}
       legend={question.label}
+      legendSize={labelSizeFor(labelStyle)}
       removeItemLabel={question.removeLabel ?? 'Remove'}
     />
   )
