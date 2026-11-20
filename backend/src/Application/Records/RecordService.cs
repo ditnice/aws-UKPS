@@ -129,6 +129,8 @@ internal partial class RecordService(
 
         // Discarded records are hidden by the records query filter. An organisation has one code
         // per record, so the matches are few enough to rank in memory.
+        // TODO: when vaccine records are built, only suggest codes from records of the same type
+        // (medicine or vaccine) as the one being populated, still scoped to the organisation.
         List<string> matches = await JoinProductDetails(GetBaseRecordProjection())
             .Where(x =>
                 x.OrganisationId == organisationId
