@@ -31,6 +31,7 @@ async function renderAlert(props: Partial<Props>) {
     userId,
     verifiedByEmail: false,
     verificationEmailResent: undefined,
+    error: undefined,
   }
   const ui = await PendingEmailUpdateAlert({ ...defaultProps, ...props })
   return render(ui)
