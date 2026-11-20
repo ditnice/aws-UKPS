@@ -174,18 +174,25 @@ export function FormPage({
         >
           {(shownIds) => {
             const shown = new Set(shownIds.split('\n'))
-            const renderQuestion = (index: number, labelAsHeading: boolean): ReactNode => {
+            // A top-level question's label is the page heading on a single-question page, and
+            // lead text on a page of several. Questions revealed beneath an option keep theirs.
+            const renderQuestion = (index: number, topLevel: boolean): ReactNode => {
               const question = questions[index]
               if (!shown.has(question.id)) {
                 return null
               }
+              const labelAsHeading = topLevel && singleQuestion
               const Component = questionRegistry[question.type]
               const revealed = layout.nested.get(index)
               return (
                 <form.Field key={question.id} name={fieldName(index)}>
                   {(field) => (
                     <div
-                      className={clsx(styles.question, labelAsHeading && styles.labelAsHeading)}
+                      className={clsx(
+                        styles.question,
+                        labelAsHeading && styles.labelAsHeading,
+                        topLevel && !singleQuestion && styles.leadLabel,
+                      )}
                       data-question-id={question.id}
                       id={question.id}
                     >
@@ -220,7 +227,7 @@ export function FormPage({
                 </form.Field>
               )
             }
-            return layout.topLevel.map((index) => renderQuestion(index, singleQuestion))
+            return layout.topLevel.map((index) => renderQuestion(index, true))
           }}
         </form.Subscribe>
 

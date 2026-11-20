@@ -27,6 +27,25 @@
   }
 }
 
+// On a page of several questions, each question's own label or legend is bold lead text, including
+// an add another list's legend. Labels within the question keep the standard style: date parts,
+// add another entries and other inputs inside its fieldset, legends of nested fieldsets, and
+// questions revealed beneath an option.
+.leadLabel {
+  :is(:global(.form-group__legend), legend:global(.input__label)):not(
+    fieldset fieldset *,
+    [data-component='radios-conditional'] *
+  ),
+  :is(
+    [data-component='input'] > :global(.input__label),
+    [data-component='select'] > label,
+    :global(.textarea__label)
+  ):not(fieldset *, [data-component='radios-conditional'] *) {
+    @include typography.font-size(lead);
+    font-weight: bold;
+  }
+}
+
 // The shared Radio makes a label regular weight when its own option has no hint. When any option
 // in the group has a hint, the designs keep every label bold, including options without one.
 .boldLabels {

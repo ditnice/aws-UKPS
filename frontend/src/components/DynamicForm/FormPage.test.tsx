@@ -243,6 +243,34 @@ describe('FormPage', () => {
       )
     })
 
+    it('makes each question label lead text on a page with several questions', () => {
+      const { container } = render(
+        <FormPage
+          page={page({
+            questions: [
+              question({}),
+              question({ id: 'other', type: 'Text', label: 'Other' }),
+              question({ id: 'numbers', type: 'TextList', label: 'Numbers', rules: [] }),
+            ],
+            answers: {},
+          })}
+        />,
+      )
+
+      const wrapper = (id: string) => container.querySelector(`[id="${id}"]`)
+      expect(wrapper('medicines_indication_detail.indication')?.className).toMatch(/leadLabel/)
+      expect(wrapper('other')?.className).toMatch(/leadLabel/)
+      expect(wrapper('numbers')?.className).toMatch(/leadLabel/)
+    })
+
+    it('does not make the label lead text on a single-question page', () => {
+      const { container } = render(<FormPage page={page()} />)
+
+      expect(
+        container.querySelector('[id="medicines_indication_detail.indication"]')?.className,
+      ).not.toMatch(/leadLabel/)
+    })
+
     it('fills in saved answers', () => {
       render(
         <FormPage
