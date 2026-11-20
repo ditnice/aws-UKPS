@@ -151,3 +151,15 @@ describe('FormGroup', () => {
     })
   })
 })
+
+describe('FormGroup legend size', () => {
+  it('shows the legend as lead text when asked', () => {
+    render(<FormGroup legend="Dates" legendSize="lead" />)
+    expect(screen.getByText('Dates').className).toMatch(/leadLegend/)
+  })
+
+  it('keeps the standard legend by default', () => {
+    render(<FormGroup legend="Dates" />)
+    expect(screen.getByText('Dates')).toHaveClass('form-group__legend', { exact: true })
+  })
+})

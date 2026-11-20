@@ -894,7 +894,8 @@ latest example. This touches both backend and frontend.
 1. Run `pnpm generate:api`.
 2. Add a component in `components/DynamicForm/questions/` that takes `QuestionProps`:
    - `question`, `value`, `onChange`, `onBlur`, `error`, `disabled`;
-   - `labelAsHeading`.
+   - `labelStyle` (`heading`, `lead` or `default`): pass `labelSizeFor(labelStyle)` to the shared
+     field's `labelSize` or `legendSize`.
 3. Register it in `questionRegistry.tsx`.
 4. Describe its form value in `lib/dynamic-form/answers.ts` (`toFormValue` and `toAnswer`).
 5. Add rendering, error and payload tests.

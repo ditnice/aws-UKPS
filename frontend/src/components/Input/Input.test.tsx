@@ -126,3 +126,15 @@ describe('Input', () => {
     },
   )
 })
+
+describe('Input label size', () => {
+  it('shows the label as lead text when asked', () => {
+    render(<Input label="Name" labelSize="lead" name="name" />)
+    expect(screen.getByText('Name').className).toMatch(/leadLabel/)
+  })
+
+  it('keeps the standard label by default', () => {
+    render(<Input label="Name" name="name" />)
+    expect(screen.getByText('Name')).toHaveClass('input__label', { exact: true })
+  })
+})
