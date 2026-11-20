@@ -31,5 +31,5 @@ internal static class RecordFormMessages
         $"Actual date of {name} must be today or in the past";
 
     public static string EstimatedDateInPast(string name) =>
-        $"Estimated date of {name} must not be in the past";
+        $"Estimated date of {name} must be in the future";
 }

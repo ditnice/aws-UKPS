@@ -1193,9 +1193,7 @@ describe('FormPage', () => {
       await user.type(screen.getByRole('textbox', { name: 'Year' }), '2025')
       save()
 
-      const message = await screen.findByText(
-        'Estimated date of submission must not be in the past',
-      )
+      const message = await screen.findByText('Estimated date of submission must be in the future')
       expect(message.closest('[data-component="radios-conditional"]')).not.toBeNull()
       expect(container.querySelector('.radio--error')).toBeNull()
       expect(invalidParts()).toEqual(['Quarter', 'Year'])

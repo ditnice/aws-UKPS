@@ -11,7 +11,7 @@ export const dateNotRealMessage = (actual: boolean, name: string) =>
 export const actualDateInFutureMessage = (name: string) =>
   `Actual date of ${name} must be today or in the past`
 export const estimatedDateInPastMessage = (name: string) =>
-  `Estimated date of ${name} must not be in the past`
+  `Estimated date of ${name} must be in the future`
 
 // Only the page sees a blank part, as the answer it sends is then incomplete.
 export const dateBlankMessage = (actual: boolean, name: string) =>
