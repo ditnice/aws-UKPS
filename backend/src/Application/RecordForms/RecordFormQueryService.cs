@@ -96,6 +96,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             Label = question.Label,
             Hint = question.Hint,
             Display = question.Display,
+            Width = question.Width,
             Placeholder = question.Placeholder,
             ChildLabel = question.ChildLabel,
             ChildPlaceholder = question.ChildPlaceholder,

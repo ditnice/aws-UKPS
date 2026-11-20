@@ -18,7 +18,7 @@
 }
 
 .input {
-  flex: 0 1 66.6667%;
+  flex: 0 1 var(--input-basis, 66.6667%);
   min-width: 0;
 
   // TODO: replace with a specific selector once global styling rules have been reviewed

@@ -8260,6 +8260,13 @@
             ],
             "description": "A rendering hint, for example `combobox`."
           },
+          "width": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The width of a `Text` input, or of each entry of a `TextList`, overriding the\ndefault of `two-thirds`: a character count such as `20` (`Text` only) or a\nshare of the container such as `full`; null for the default. Not `required`, so\nexisting clients and fixtures are unaffected."
+          },
           "placeholder": {
             "type": [
               "null",

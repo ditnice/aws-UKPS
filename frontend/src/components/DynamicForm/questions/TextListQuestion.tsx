@@ -1,4 +1,5 @@
 import { AddAnother } from '@/components/AddAnother/AddAnother'
+import { parseInputWidth } from '@/components/Input/Input'
 
 import type { QuestionProps } from '../types'
 
@@ -48,6 +49,7 @@ export function TextListQuestion({
         })
       }}
       hint={question.hint ?? undefined}
+      inputWidth={parseInputWidth(question.width)}
       itemLabel={question.itemLabel ?? undefined}
       labelPrefix={question.label}
       legend={question.label}

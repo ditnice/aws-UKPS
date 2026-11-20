@@ -40,6 +40,16 @@ internal sealed class FormFieldAttribute(string id, string label, FormControl co
     public string? Display { get; set; }
 
     /// <summary>
+    /// The width of a <see cref="FormControl.Text"/> input, or of each entry of a
+    /// <see cref="FormControl.TextList"/>, overriding the default of <c>two-thirds</c>: a
+    /// character count (<c>2</c>, <c>3</c>, <c>4</c>, <c>5</c>, <c>10</c>, <c>20</c>, <c>30</c>) or
+    /// a share of the container (<c>full</c>, <c>three-quarters</c>, <c>two-thirds</c>,
+    /// <c>one-half</c>, <c>one-third</c>, <c>one-quarter</c>). A text list takes only a share of
+    /// the container. Only a Text or a TextList may set it.
+    /// </summary>
+    public string? Width { get; set; }
+
+    /// <summary>
     /// Position of the question on a page with several questions. No two questions on a page
     /// may share an order.
     /// </summary>

@@ -1469,6 +1469,13 @@ export type RecordPageQuestionDto = {
      */
     display: null | string;
     /**
+     * The width of a `Text` input, or of each entry of a `TextList`, overriding the
+     * default of `two-thirds`: a character count such as `20` (`Text` only) or a
+     * share of the container such as `full`; null for the default. Not `required`, so
+     * existing clients and fixtures are unaffected.
+     */
+    width?: null | string;
+    /**
      * The empty option text of a dropdown.
      */
     placeholder: null | string;

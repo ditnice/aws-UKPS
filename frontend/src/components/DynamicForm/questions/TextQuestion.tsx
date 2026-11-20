@@ -1,4 +1,4 @@
-import { Input } from '@/components/Input/Input'
+import { Input, parseInputWidth } from '@/components/Input/Input'
 
 import type { QuestionProps } from '../types'
 
@@ -27,7 +27,7 @@ export function TextQuestion({
         onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
         value={value}
-        width="two-thirds"
+        width={parseInputWidth(question.width) ?? 'two-thirds'}
       />
     </>
   )

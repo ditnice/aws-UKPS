@@ -58,6 +58,29 @@ internal static partial class FormModelValidator
         return problems;
     }
 
+    // Keep in step with InputFluidWidth and InputFixedWidth in frontend/src/components/Input/Input.tsx
+    private static readonly HashSet<string> _fluidInputWidths =
+    [
+        "full",
+        "three-quarters",
+        "two-thirds",
+        "one-half",
+        "one-third",
+        "one-quarter",
+    ];
+
+    private static readonly HashSet<string> _inputWidths =
+    [
+        "2",
+        "3",
+        "4",
+        "5",
+        "10",
+        "20",
+        "30",
+        .. _fluidInputWidths,
+    ];
+
     [GeneratedRegex("^[a-z0-9]+(-[a-z0-9]+)*$", RegexOptions.ExplicitCapture, 1000)]
     private static partial Regex SlugPattern();
 
@@ -635,6 +658,7 @@ internal static partial class FormModelValidator
     )
     {
         ValidatePrefixes(question, control, problems);
+        ValidateWidth(question, control, problems);
         string where = question.Where;
         FormFieldAttribute field = question.Field;
         bool isHierarchical = control == FormControl.HierarchicalSelect;
@@ -677,6 +701,36 @@ internal static partial class FormModelValidator
         if (isHierarchical && field.ChildLabel is null)
         {
             problems.Add($"{where} uses HierarchicalSelect, which needs a ChildLabel.");
+        }
+    }
+
+    private static void ValidateWidth(
+        QuestionDeclaration question,
+        FormControl control,
+        List<string> problems
+    )
+    {
+        string where = question.Where;
+        string? width = question.Field.Width;
+
+        if (width is null)
+        {
+            return;
+        }
+
+        if (control is not (FormControl.Text or FormControl.TextList))
+        {
+            problems.Add($"{where} sets Width, which only a Text or a TextList uses.");
+        }
+        else if (!_inputWidths.Contains(width))
+        {
+            problems.Add($"{where} sets Width to \"{width}\", which is not an input width.");
+        }
+        else if (control == FormControl.TextList && !_fluidInputWidths.Contains(width))
+        {
+            problems.Add(
+                $"{where} sets Width on a TextList, which only supports a share of the container such as \"full\"."
+            );
         }
     }
 

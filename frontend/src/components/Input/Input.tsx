@@ -55,6 +55,16 @@ export const inputWidthStyles: Record<InputWidth, CSSProperties> = {
   'one-quarter': { width: '25%' },
 }
 
+/** The width the server sent for a question, or undefined when it is missing or not a known width. */
+export function parseInputWidth(width?: string | null): InputWidth | undefined {
+  if (!width || !Object.hasOwn(inputWidthStyles, width)) {
+    return undefined
+  }
+
+  const fixed = Number(width)
+  return Number.isNaN(fixed) ? (width as InputWidth) : (fixed as InputWidth)
+}
+
 export function Input({
   'aria-describedby': describedBy,
   'aria-invalid': ariaInvalid,

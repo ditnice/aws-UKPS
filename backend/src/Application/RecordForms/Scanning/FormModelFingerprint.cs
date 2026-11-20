@@ -110,7 +110,10 @@ internal static class FormModelFingerprint
         }
     }
 
-    /// <summary>The prefixes of a prefixed number, and the item labels of a group or text list.</summary>
+    /// <summary>
+    /// The prefixes of a prefixed number, the width of a text input, and the item labels of a
+    /// group or text list.
+    /// </summary>
     private static void AppendPresentation(StringBuilder text, FormQuestion question)
     {
         if (question.Prefixes is not null)
@@ -122,6 +125,11 @@ internal static class FormModelFingerprint
                 CultureInfo.InvariantCulture,
                 $"      prefixes {string.Join(" | ", question.Prefixes)}{digits}"
             );
+        }
+
+        if (question.Width is not null)
+        {
+            text.AppendLine(CultureInfo.InvariantCulture, $"      width {question.Width}");
         }
 
         if (question.Control is FormControl.Group or FormControl.TextList)
