@@ -405,10 +405,10 @@ export const fakeRecordOverviewDto = (options?: Options): RecordOverviewDto => {
         recordType: fakeRecordType(options),
         recordStatus: fakeRecordStatus(options),
         displayStatus: fakeRecordDisplayStatus(options),
-        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null },
+        reviewedAt: f.datatype.boolean() ? f.date.recent().toISOString() : null,
         canEditContent: f.datatype.boolean(),
         actions: f.helpers.multiple(() => fakeRecordAction(options)),
-        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { nextUpdateDue: f.datatype.boolean() ? f.date.recent().toISOString() : null },
+        nextUpdateDue: f.datatype.boolean() ? f.date.recent().toISOString() : null,
         companyCode: f.datatype.boolean() ? f.string.sample() : null,
         recordTitle: f.datatype.boolean() ? f.string.sample() : null
     };

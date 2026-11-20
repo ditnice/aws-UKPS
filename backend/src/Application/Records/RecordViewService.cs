@@ -31,15 +31,17 @@ internal sealed class RecordViewService(
         CancellationToken cancellationToken
     )
     {
-        var (record, error) = await FindRecord(
+        Result<RecordHeader, GetRecordError> found = await FindRecord(
             recordId,
             recordType,
             organisationId,
             cancellationToken
         );
-        return record is null
-            ? GetRecordOverviewResult.Err(error!)
-            : GetRecordOverviewResult.Ok(await ToOverview(record, cancellationToken));
+        return await found.Match(
+            onOk: async record =>
+                GetRecordOverviewResult.Ok(await ToOverview(record, cancellationToken)),
+            onErr: static error => Task.FromResult(GetRecordOverviewResult.Err(error))
+        );
     }
 
     public async Task<GetRecordDetailResult> GetRecordDetail(
@@ -49,23 +51,22 @@ internal sealed class RecordViewService(
         CancellationToken cancellationToken
     )
     {
-        var (record, error) = await FindRecord(
+        Result<RecordHeader, GetRecordError> found = await FindRecord(
             recordId,
             recordType,
             organisationId,
             cancellationToken
         );
-        if (record is null)
-        {
-            return GetRecordDetailResult.Err(error!);
-        }
-
-        return GetRecordDetailResult.Ok(
-            new RecordDetailDto
-            {
-                Overview = await ToOverview(record, cancellationToken),
-                Sections = await GetSections(record, cancellationToken),
-            }
+        return await found.Match(
+            onOk: async record =>
+                GetRecordDetailResult.Ok(
+                    new RecordDetailDto
+                    {
+                        Overview = await ToOverview(record, cancellationToken),
+                        Sections = await GetSections(record, cancellationToken),
+                    }
+                ),
+            onErr: static error => Task.FromResult(GetRecordDetailResult.Err(error))
         );
     }
 
@@ -73,7 +74,7 @@ internal sealed class RecordViewService(
     /// Finds the record and its latest revision, checking the caller can read it and that it is of
     /// the requested type.
     /// </summary>
-    private async Task<(RecordHeader? Record, GetRecordError? Error)> FindRecord(
+    private async Task<Result<RecordHeader, GetRecordError>> FindRecord(
         int recordId,
         RecordType recordType,
         int organisationId,
@@ -91,28 +92,47 @@ internal sealed class RecordViewService(
             )
         )
         {
-            return (null, new GetRecordError.NotAllowed(recordId));
+            return Result<RecordHeader, GetRecordError>.Err(
+                new GetRecordError.NotAllowed(recordId)
+            );
         }
 
-        RecordHeader? record = await GetRecordHeader(recordId, cancellationToken);
+        RecordHeaderRow? row = await GetRecordHeaderRow(recordId, cancellationToken);
 
         // Every record is created with a revision, so a missing one only guards against bad data.
         if (
-            record is null
-            || record.OrganisationId != organisationId
-            || record.LatestRevisionId is null
-            || record.LatestRevisionStatus is null
+            row
+                is not {
+                    LatestRevisionId: int latestRevisionId,
+                    LatestRevisionStatus: WorkflowStatus latestRevisionStatus,
+                }
+            || row.OrganisationId != organisationId
         )
         {
-            return (null, new GetRecordError.NotFound(recordId));
+            return Result<RecordHeader, GetRecordError>.Err(new GetRecordError.NotFound(recordId));
         }
 
-        return record.RecordType == recordType
-            ? (record, null)
-            : (
-                null,
-                new GetRecordError.RecordTypeMismatch(recordId, recordType, record.RecordType)
+        if (row.RecordType != recordType)
+        {
+            return Result<RecordHeader, GetRecordError>.Err(
+                new GetRecordError.RecordTypeMismatch(recordId, recordType, row.RecordType)
             );
+        }
+
+        return Result<RecordHeader, GetRecordError>.Ok(
+            new RecordHeader(
+                row.Id,
+                row.OrganisationId,
+                row.RecordType,
+                row.RecordStatus,
+                row.ReviewedAt,
+                latestRevisionId,
+                row.DisplayStatus,
+                latestRevisionStatus,
+                row.HasSingleRevision,
+                row.NextUpdateDue
+            )
+        );
     }
 
     /// <summary>
@@ -132,7 +152,7 @@ internal sealed class RecordViewService(
 
         var (answers, applicability) = await formLoader.LoadAllAnswersAsync(
             model,
-            record.LatestRevisionId!.Value,
+            record.LatestRevisionId,
             cancellationToken
         );
         var options = await formLoader.LoadAllOptionsAsync(
@@ -144,7 +164,7 @@ internal sealed class RecordViewService(
         return new RecordAnswersBuilder(model, answers, applicability, options).Build();
     }
 
-    private Task<RecordHeader?> GetRecordHeader(
+    private Task<RecordHeaderRow?> GetRecordHeaderRow(
         int recordId,
         CancellationToken cancellationToken
     ) =>
@@ -152,7 +172,7 @@ internal sealed class RecordViewService(
             .Records.AsNoTracking()
             .Where(r => r.Id == recordId)
             .SelectLatestRevision()
-            .Select(x => new RecordHeader(
+            .Select(x => new RecordHeaderRow(
                 x.Record.Id,
                 x.Record.OrganisationId,
                 x.Record.RecordType,
@@ -187,7 +207,7 @@ internal sealed class RecordViewService(
             ReviewedAt = record.ReviewedAt,
             CanEditContent = CanEditContent(record),
             Actions = Record.GetPermittedActions(
-                new(record.RecordStatus, record.LatestRevisionStatus!.Value),
+                new(record.RecordStatus, record.LatestRevisionStatus),
                 record.HasSingleRevision,
                 organisationAuthoriser.CanPerformOperationOnOrganisation(
                     Operation.ChangeRecordStatus,
@@ -210,7 +230,8 @@ internal sealed class RecordViewService(
             record.OrganisationId
         );
 
-    private sealed record RecordHeader(
+    /// <summary>The record and its latest revision, as read from the database.</summary>
+    private sealed record RecordHeaderRow(
         int Id,
         int OrganisationId,
         RecordType RecordType,
@@ -219,6 +240,20 @@ internal sealed class RecordViewService(
         int? LatestRevisionId,
         RecordDisplayStatus DisplayStatus,
         WorkflowStatus? LatestRevisionStatus,
+        bool HasSingleRevision,
+        DateTime? NextUpdateDue
+    );
+
+    /// <summary>A record the caller can read, with its latest revision.</summary>
+    private sealed record RecordHeader(
+        int Id,
+        int OrganisationId,
+        RecordType RecordType,
+        RecordStatus RecordStatus,
+        DateTime? ReviewedAt,
+        int LatestRevisionId,
+        RecordDisplayStatus DisplayStatus,
+        WorkflowStatus LatestRevisionStatus,
         bool HasSingleRevision,
         DateTime? NextUpdateDue
     );

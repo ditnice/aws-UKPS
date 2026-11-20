@@ -242,9 +242,8 @@ internal sealed class RecordFormPageLoader(
     }
 
     /// <summary>
-    /// The options of every answered choice question on the pages that apply, enough to label and
-    /// check the chosen values. Saved answers are passed in so archived items already chosen stay
-    /// offered.
+    /// The options of every answered choice question that applies, enough to label and check the
+    /// chosen values. Saved answers are passed in so archived items already chosen stay offered.
     /// </summary>
     public async Task<Dictionary<string, IReadOnlyList<FormOption>>> LoadAllOptionsAsync(
         FormModel model,
@@ -256,7 +255,11 @@ internal sealed class RecordFormPageLoader(
         Dictionary<string, IReadOnlyList<FormOption>> options = new(StringComparer.Ordinal);
         foreach (FormPage page in model.Pages.Where(applicability.Applies))
         {
-            foreach (FormQuestion question in page.Questions.Where(static q => q.HasOptions))
+            foreach (
+                FormQuestion question in page.Questions.Where(q =>
+                    q.HasOptions && applicability.Applies(q)
+                )
+            )
             {
                 string[] values = [.. answers[question.Id].AllValues()];
                 if (values.Length > 0)

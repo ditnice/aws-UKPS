@@ -24,7 +24,7 @@ public sealed record RecordOverviewDto
     public required RecordDisplayStatus DisplayStatus { get; init; }
 
     /// <summary>Gets the date the record was last reviewed, when available.</summary>
-    public DateTime? ReviewedAt { get; init; }
+    public required DateTime? ReviewedAt { get; init; }
 
     /// <summary>
     /// Gets whether the record type has a content form and the caller can edit it. When true,
@@ -39,7 +39,7 @@ public sealed record RecordOverviewDto
     public required IReadOnlyCollection<RecordAction> Actions { get; init; }
 
     /// <summary>Gets the date of when the next update is due.</summary>
-    public DateTime? NextUpdateDue { get; init; }
+    public required DateTime? NextUpdateDue { get; init; }
 
     /// <summary>Gets the latest revision's company code; null when it has no product details.</summary>
     public required string? CompanyCode { get; init; }

@@ -377,8 +377,10 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             RecordType = RecordType.Medicine,
             RecordStatus = RecordStatus.Published,
             DisplayStatus = RecordDisplayStatus.Draft,
+            ReviewedAt = null,
             CanEditContent = true,
             Actions = [RecordAction.Update, RecordAction.ViewTimeline],
+            NextUpdateDue = null,
             CompanyCode = "ABC-123",
             RecordTitle = "A record",
         };
@@ -1004,7 +1006,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     [InlineData("?recordType=Medicine")]
     [InlineData("?recordType=Medicine&organisationId=")]
     [InlineData("?recordType=Medicine&organisationId=abc")]
-    public async Task GetRecord_ReturnsBadRequest_WhenRecordTypeOrOrganisationMissingOrInvalid(
+    public async Task GetRecordEndpoints_ReturnBadRequest_WhenRecordTypeOrOrganisationMissingOrInvalid(
         string query
     )
     {

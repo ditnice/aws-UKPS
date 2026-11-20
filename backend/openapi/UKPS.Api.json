@@ -6983,8 +6983,10 @@
           "recordType",
           "recordStatus",
           "displayStatus",
+          "reviewedAt",
           "canEditContent",
           "actions",
+          "nextUpdateDue",
           "companyCode",
           "recordTitle"
         ],

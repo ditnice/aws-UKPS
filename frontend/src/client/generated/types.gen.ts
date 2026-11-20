@@ -783,7 +783,7 @@ export type RecordOverviewDto = {
     /**
      * Gets the date the record was last reviewed, when available.
      */
-    reviewedAt?: null | string;
+    reviewedAt: null | string;
     /**
      * Gets whether the record type has a content form and the caller can edit it. When true,
      * Update record links to the record's task list, which edits the latest revision.
@@ -797,7 +797,7 @@ export type RecordOverviewDto = {
     /**
      * Gets the date of when the next update is due.
      */
-    nextUpdateDue?: null | string;
+    nextUpdateDue: null | string;
     /**
      * Gets the latest revision's company code; null when it has no product details.
      */
