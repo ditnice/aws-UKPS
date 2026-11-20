@@ -21,6 +21,10 @@ using UKPS.Api.Tests.Application.Records;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.WebApi;
 using UKPS.Api.WebApi.InternalServices.Authentication;
+using CompanyCodesResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Records.Dtos.CompanyCodeSuggestionsDto,
+    UKPS.Api.Application.Records.Errors.GetRecordsError
+>;
 using CreateRecordResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Records.Dtos.CreateRecordDto,
     UKPS.Api.Application.Records.Errors.CreateRecordError
@@ -33,6 +37,8 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
 {
     private const int OrganisationId = 1;
     private const string RecordsUrl = "/records/organisations";
+    private static readonly string _companyCodesUrl =
+        $"{RecordsUrl}/{OrganisationId}/company-codes";
 
     private static readonly Dictionary<
         string,
@@ -258,6 +264,101 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
+
+    [Fact]
+    public async Task GetCompanyCodes_ReturnsOk_WithTheServiceSuggestions()
+    {
+        CompanyCodeSuggestionsDto expected = new() { Items = ["ABC-123", "XABC-9"] };
+        SetUpCompanyCodes(CompanyCodesResult.Ok(expected));
+
+        var response = await GetCompanyCodes("search=abc");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<CompanyCodeSuggestionsDto>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+        content.ShouldNotBeNull();
+        content.Items.ShouldBe(expected.Items);
+    }
+
+    [Fact]
+    public async Task GetCompanyCodes_PassesRouteAndQueryValuesToService()
+    {
+        SetUpCompanyCodes(CompanyCodesResult.Ok(new CompanyCodeSuggestionsDto { Items = [] }));
+
+        await GetCompanyCodes("search=ab%25c&limit=5");
+
+        await _mockRecordService
+            .Received(1)
+            .GetOrganisationCompanyCodes(
+                OrganisationId,
+                Arg.Is<GetCompanyCodeSuggestionsQueryDto>(x => x.Search == "ab%c" && x.Limit == 5),
+                Arg.Any<CancellationToken>()
+            );
+    }
+
+    [Fact]
+    public async Task GetCompanyCodes_ReturnsNotFound_WhenOrganisationNotFound()
+    {
+        SetUpCompanyCodes(
+            CompanyCodesResult.Err(new GetRecordsError.OrganisationNotFound(OrganisationId))
+        );
+
+        var response = await GetCompanyCodes("search=abc");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetCompanyCodes_ReturnsForbidden_WhenNotAllowed()
+    {
+        SetUpCompanyCodes(CompanyCodesResult.Err(new GetRecordsError.NotAllowed(OrganisationId)));
+
+        var response = await GetCompanyCodes("search=abc");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Theory]
+    [InlineData("limit=0")]
+    [InlineData("limit=21")]
+    [InlineData("limit=-1")]
+    public async Task GetCompanyCodes_ReturnsBadRequest_WhenLimitIsOutsideAllowedRange(string limit)
+    {
+        var response = await GetCompanyCodes($"search=abc&{limit}");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        await _mockRecordService
+            .DidNotReceiveWithAnyArgs()
+            .GetOrganisationCompanyCodes(default, default!, TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task GetCompanyCodes_ReturnsBadRequest_WhenSearchIsTooLong()
+    {
+        var response = await GetCompanyCodes($"search={new string('a', 201)}");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        await _mockRecordService
+            .DidNotReceiveWithAnyArgs()
+            .GetOrganisationCompanyCodes(default, default!, TestContext.Current.CancellationToken);
+    }
+
+    private Task<HttpResponseMessage> GetCompanyCodes(string query) =>
+        _client.GetAsync(
+            new Uri($"{_companyCodesUrl}?{query}", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+    private void SetUpCompanyCodes(CompanyCodesResult result) =>
+        _mockRecordService
+            .GetOrganisationCompanyCodes(
+                Arg.Any<int>(),
+                Arg.Any<GetCompanyCodeSuggestionsQueryDto>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(result);
 
     [Fact]
     public async Task CreateRecord_ShouldPassProvidedValuesToTheService()

@@ -53,6 +53,18 @@ export type ChangeRecordStatusCommand = {
 };
 
 /**
+ * The company codes already used on an organisation's records, offered as suggestions while a
+ * user types a company code.
+ */
+export type CompanyCodeSuggestionsDto = {
+    /**
+     * Gets the distinct matching company codes, those starting with the search first, then
+     * alphabetically.
+     */
+    items: Array<string>;
+};
+
+/**
  * The kind of a condition that decides whether a question applies. Part of the HTTP API
  * contract: the member names are sent to the frontend, so never rename or remove one.
  */
@@ -839,6 +851,11 @@ export type RecordPageDto = {
      * The record the page belongs to.
      */
     recordId: number;
+    /**
+     * The organisation that owns the record; used to look up suggestions such as the
+     * organisation's existing company codes.
+     */
+    organisationId: number;
     /**
      * The section the page belongs to.
      */
@@ -2727,6 +2744,62 @@ export type GetOrganisationRecordsResponses = {
 };
 
 export type GetOrganisationRecordsResponse = GetOrganisationRecordsResponses[keyof GetOrganisationRecordsResponses];
+
+export type GetOrganisationCompanyCodesData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the organisation.
+         */
+        organisationId: number;
+    };
+    query?: {
+        /**
+         * Gets or initialises the text the company codes must contain, ignoring case. A blank search
+         * returns no suggestions.
+         */
+        Search?: string;
+        /**
+         * Gets or initialises the maximum number of suggestions to return.
+         */
+        Limit?: number;
+    };
+    url: '/records/organisations/{organisationId}/company-codes';
+};
+
+export type GetOrganisationCompanyCodesErrors = {
+    /**
+     * The query parameters are invalid.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller is not authorised to view the organisation's records.
+     */
+    403: ProblemDetails;
+    /**
+     * The specified organisation does not exist.
+     */
+    404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type GetOrganisationCompanyCodesError = GetOrganisationCompanyCodesErrors[keyof GetOrganisationCompanyCodesErrors];
+
+export type GetOrganisationCompanyCodesResponses = {
+    /**
+     * Returns the matching company codes.
+     */
+    200: CompanyCodeSuggestionsDto;
+};
+
+export type GetOrganisationCompanyCodesResponse = GetOrganisationCompanyCodesResponses[keyof GetOrganisationCompanyCodesResponses];
 
 export type GetRecordOverviewData = {
     body?: never;

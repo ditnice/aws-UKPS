@@ -26,6 +26,11 @@ export const componentDefinitions = [
     slug: 'alphabet',
   },
   {
+    description: 'Suggest matching values as users type, while still accepting any value.',
+    label: 'Autocomplete',
+    slug: 'autocomplete',
+  },
+  {
     description: 'Help users go back to the previous page in a multi-page transaction.',
     label: 'Back link',
     slug: 'back-link',

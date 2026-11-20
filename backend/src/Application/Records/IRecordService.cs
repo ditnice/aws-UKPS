@@ -27,6 +27,24 @@ public interface IRecordService
     );
 
     /// <summary>
+    /// Retrieves the distinct company codes on the latest revisions of an organisation's records
+    /// that contain the search text, ignoring case, for suggesting while a user types a company
+    /// code. Discarded records are excluded.
+    /// </summary>
+    /// <param name="organisationId">The unique identifier of the organisation.</param>
+    /// <param name="query">The search text and the maximum number of suggestions.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// The matching company codes, or a <see cref="GetRecordsError"/> when the organisation does
+    /// not exist or the caller cannot read its records.
+    /// </returns>
+    Task<Result<CompanyCodeSuggestionsDto, GetRecordsError>> GetOrganisationCompanyCodes(
+        int organisationId,
+        GetCompanyCodeSuggestionsQueryDto query,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
     /// Discards a record that has never been submitted, setting the record and its draft
     /// revision to discarded.
     /// </summary>

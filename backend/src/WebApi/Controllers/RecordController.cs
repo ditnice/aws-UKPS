@@ -82,6 +82,58 @@ public class RecordController(
     }
 
     /// <summary>
+    /// Retrieves the company codes already used on an organisation's records that contain the
+    /// search text, for suggesting while a user types a company code.
+    /// </summary>
+    /// <param name="organisationId">The unique identifier of the organisation.</param>
+    /// <param name="query">The search text and the maximum number of suggestions.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>The matching company codes.</returns>
+    /// <response code="200">Returns the matching company codes.</response>
+    /// <response code="400">The query parameters are invalid.</response>
+    /// <response code="403">The caller is not authorised to view the organisation's records.</response>
+    /// <response code="404">The specified organisation does not exist.</response>
+    [HttpGet(
+        "organisations/{organisationId:int}/company-codes",
+        Name = nameof(GetOrganisationCompanyCodes)
+    )]
+    [ProducesResponseType<CompanyCodeSuggestionsDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<CompanyCodeSuggestionsDto>> GetOrganisationCompanyCodes(
+        [FromRoute] int organisationId,
+        [FromQuery] GetCompanyCodeSuggestionsQueryDto query,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await recordService.GetOrganisationCompanyCodes(
+            organisationId,
+            query,
+            cancellationToken
+        );
+
+        return result.Match<ActionResult<CompanyCodeSuggestionsDto>>(
+            items => Ok(items),
+            error =>
+                error switch
+                {
+                    GetRecordsError.OrganisationNotFound => Problem(
+                        statusCode: StatusCodes.Status404NotFound,
+                        title: "Not Found",
+                        detail: "Organisation not found."
+                    ),
+                    GetRecordsError.NotAllowed => Problem(
+                        statusCode: StatusCodes.Status403Forbidden,
+                        title: "Forbidden",
+                        detail: "You are not authorised to view records."
+                    ),
+                    _ => throw new UnreachableException("Unhandled GetRecordsError variant."),
+                }
+        );
+    }
+
+    /// <summary>
     /// Retrieves a record's status, permitted actions and identifying details, whatever its
     /// status, without its answers.
     /// </summary>
