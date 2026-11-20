@@ -17,7 +17,7 @@ internal sealed class MedicinesIndicationDetail
         "medicines_indication_detail.indication",
         "What is the indication this product is seeking a licence for?",
         FormControl.Textarea,
-        Hint = "Describe the indication as you intend to apply for licensing in the UK. When you know them, include specific details such as line of therapy and subgroups.\n\nYou can edit these details at any time throughout product development."
+        Hint = "Describe the indication as you intend to apply for licensing in the UK. When you know them, include specific details such as line of therapy and subgroups. You can edit these details at any time throughout product development."
     )]
     [FormRequired("Enter the indication")]
     [FormMaxLength(2000, "Indication must be 2000 characters or fewer")]
