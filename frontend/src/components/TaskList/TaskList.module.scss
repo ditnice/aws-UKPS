@@ -32,6 +32,7 @@
 }
 
 .task-list__task-description {
+  color: colours.$form-group-hint;
   margin-top: spacing.$small * 1px;
 }
 

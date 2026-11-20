@@ -84,12 +84,30 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetTaskList_LayoutDeclaresNoSubTextOrHints_LeavesThemNull()
+    public async Task GetTaskList_ReturnsTheLayoutSubTextAndHints()
     {
         RecordTaskListDto taskList = await GetTaskList();
 
-        taskList.Sections.ShouldAllBe(static s => s.SubText == null);
-        taskList.Sections.SelectMany(static s => s.Tasks).ShouldAllBe(static t => t.Hint == null);
+        taskList
+            .Sections.Where(static s => s.SubText is not null)
+            .Select(static s => (s.Id, s.SubText))
+            .ShouldBe([
+                (
+                    "service-readiness",
+                    "This section is optional. It becomes mandatory within 12 months of the market authorisation date."
+                ),
+            ]);
+        taskList
+            .Sections.SelectMany(static s => s.Tasks)
+            .Where(static t => t.Hint is not null)
+            .Select(static t => t.Id)
+            .ShouldBe([
+                "development-background",
+                "pim-and-eams",
+                "laboratory-testing",
+                "patient-and-clinical-requirements",
+                "pricing-and-budget-impact",
+            ]);
     }
 
     [Fact]
