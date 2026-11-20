@@ -213,7 +213,7 @@ describe('FormPage', () => {
       cleanup()
       render(<FormPage page={page({ nextPageId: null })} />)
       expect(
-        screen.getByRole('button', { name: 'Save and return to task list' }),
+        screen.getByRole('button', { name: 'Save and continue to task list' }),
       ).toBeInTheDocument()
     })
 
@@ -222,7 +222,7 @@ describe('FormPage', () => {
 
       expect(screen.getByRole('button', { name: 'Save and continue' })).toBeInTheDocument()
       expect(
-        screen.getByRole('button', { name: 'Save and return to task list' }),
+        screen.getByRole('button', { name: 'Save and continue to task list' }),
       ).toBeInTheDocument()
     })
 
@@ -411,7 +411,7 @@ describe('FormPage', () => {
         />,
       )
 
-      fireEvent.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Save and continue to task list' }))
 
       await waitFor(() => {
         expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/task-list')
@@ -423,7 +423,7 @@ describe('FormPage', () => {
       render(<FormPage page={page()} />)
 
       await user.type(screen.getByRole('textbox'), 'Hepatitis C')
-      await user.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+      await user.click(screen.getByRole('button', { name: 'Save and continue to task list' }))
 
       await waitFor(() => {
         expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/task-list')
@@ -436,7 +436,7 @@ describe('FormPage', () => {
       const user = userEvent.setup()
       render(<FormPage page={page()} />)
 
-      await user.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+      await user.click(screen.getByRole('button', { name: 'Save and continue to task list' }))
 
       expect(await screen.findByText('Enter the indication')).toBeInTheDocument()
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
@@ -481,11 +481,11 @@ describe('FormPage', () => {
           <FormPage page={page({ answers: { 'medicines_indication_detail.indication': 'x' } })} />,
         )
 
-        await user.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+        await user.click(screen.getByRole('button', { name: 'Save and continue to task list' }))
 
         expect(await screen.findByText(message)).toBeInTheDocument()
         expect(mocks.push).not.toHaveBeenCalled()
-        expect(screen.getByRole('button', { name: 'Save and return to task list' })).toBeEnabled()
+        expect(screen.getByRole('button', { name: 'Save and continue to task list' })).toBeEnabled()
       },
     )
 
@@ -505,7 +505,7 @@ describe('FormPage', () => {
         <FormPage page={page({ answers: { 'medicines_indication_detail.indication': 'x' } })} />,
       )
 
-      const returnButton = screen.getByRole('button', { name: 'Save and return to task list' })
+      const returnButton = screen.getByRole('button', { name: 'Save and continue to task list' })
       const continueButton = screen.getByRole('button', { name: 'Save and continue' })
       await user.click(returnButton)
 
@@ -1538,7 +1538,7 @@ describe('FormPage', () => {
         screen.getByRole('button', { name: 'Save and return to check your answers' }),
       ).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: 'Save and continue' })).toBeNull()
-      expect(screen.queryByRole('button', { name: 'Save and return to task list' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Save and continue to task list' })).toBeNull()
     })
 
     it('links back to check your answers', () => {
@@ -1980,7 +1980,7 @@ describe('FormPage names and identifiers', () => {
 
   // The task has one page, so its button returns to the task list.
   const saveAndReturn = () =>
-    fireEvent.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save and continue to task list' }))
 
   const sentAnswers = () =>
     (mocks.saveRecordFormPage.mock.calls[0][0] as { body: { answers: Record<string, unknown> } })

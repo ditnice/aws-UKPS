@@ -242,7 +242,11 @@ export function FormPage({
             {(isSubmitting) => (
               <>
                 <Button disabled={isSubmitting} buttonType="submit" variant="cta">
-                  {hasNextPage ? 'Save and continue' : `Save and return to ${exitLabel}`}
+                  {hasNextPage
+                    ? 'Save and continue'
+                    : returnToCheckAnswers
+                      ? 'Save and return to check your answers'
+                      : 'Save and continue to task list'}
                 </Button>
                 {hasNextPage && (
                   <Button
@@ -251,7 +255,7 @@ export function FormPage({
                     onClick={() => void form.handleSubmit({ returnToTaskList: true })}
                     variant="primary"
                   >
-                    Save and return to task list
+                    Save and continue to task list
                   </Button>
                 )}
               </>
