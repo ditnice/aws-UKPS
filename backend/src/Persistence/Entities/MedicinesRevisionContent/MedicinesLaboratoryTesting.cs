@@ -80,9 +80,7 @@ internal sealed class MedicinesLaboratoryTesting
         FormControl.Radio,
         Hint = "Select yes if patient eligibility for this treatment, or the dose or regimen used, depends on the result of a diagnostic or biomarker test. This includes genomic tests, for example, mutation analysis, sequencing. It can also include non-genomic tests, for example, protein expression, hormone receptor status, cell counts."
     )]
-    [FormRequired(
-        "Select yes if the product requires a specific biomarker or test before prescribing"
-    )]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? DiagnosticTestRequired { get; set; }
 
@@ -96,7 +94,7 @@ internal sealed class MedicinesLaboratoryTesting
         FormControl.Radio,
         Hint = "Select the type of biomarker that determines whether a patient is eligible for this treatment, or affects how it is given."
     )]
-    [FormRequired("Select the biomarker required for this test")]
+    [FormRequired("Select an option")]
     public BiomarkerType? BiomarkerType { get; set; }
 
     /// <summary>
@@ -138,9 +136,7 @@ internal sealed class MedicinesLaboratoryTesting
         FormControl.Radio,
         Hint = "Select the option that describes the current testing status of the genomic target identified in the previous question."
     )]
-    [FormRequired(
-        "Select how this test relates to what's currently in the National Genomic Test Directory"
-    )]
+    [FormRequired("Select an option")]
     public GenomicTestNgtdRelationship? GenomicTestNgtdRelationship { get; set; }
 
     /// <summary>Free text. Conditional on BiomarkerType = GenomicBiomarker.</summary>
@@ -175,7 +171,7 @@ internal sealed class MedicinesLaboratoryTesting
         Order = 10,
         Hint = "Select when in the care pathway the test is expected to take place."
     )]
-    [FormRequired("Select the point in the patient pathway the test should be conducted")]
+    [FormRequired("Select an option")]
     public int? PatientPathwayPointId { get; set; }
 
     /// <summary>
@@ -250,7 +246,7 @@ internal sealed class MedicinesLaboratoryTesting
         FormControl.Radio,
         Order = 10
     )]
-    [FormRequired("Select if the test is mandatory before treatment can start")]
+    [FormRequired("Select an option")]
     public GenomicTestMandatoryStatus? GenomicTestMandatoryStatus { get; set; }
 
     /// <summary>
@@ -300,7 +296,7 @@ internal sealed class MedicinesLaboratoryTesting
         FormControl.Textarea,
         Hint = "Describe any tests required to monitor for treatment-related side effects or toxicity that go beyond what is currently used in routine clinical practice. Include the type of test, frequency, and the duration of monitoring required."
     )]
-    [FormRequired("Enter details of tests needed to assess the safety of the treatment")]
+    [FormRequired("Enter details")]
     public string? SafetyTestsDetails { get; set; }
 
     // Navigation

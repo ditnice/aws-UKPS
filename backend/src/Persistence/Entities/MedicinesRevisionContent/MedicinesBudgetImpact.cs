@@ -34,9 +34,7 @@ internal sealed class MedicinesBudgetImpact
         FormControl.Radio,
         Order = 10
     )]
-    [FormRequired(
-        "Select yes if UK patients will be able to access this product on a compassionate or early access basis outside of clinical trials"
-    )]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? CompassionateAccessAvailable { get; set; }
 
@@ -65,9 +63,7 @@ internal sealed class MedicinesBudgetImpact
         Order = 10,
         Hint = "This field is used by service planning teams to support early financial forecasting. You do not need to provide specific pricing details. An indication that a commercial arrangement is planned, or is likely to be planned, is sufficient."
     )]
-    [FormRequired(
-        "Select yes if a Patient Access Scheme or alternative discount arrangement is planned for this indication"
-    )]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? PatientAccessSchemePlanned { get; set; }
 
@@ -92,7 +88,7 @@ internal sealed class MedicinesBudgetImpact
         Order = 10,
         Hint = "Select yes if the medicine will have different pricing arrangements depending on indication. Select no if pricing will be uniform."
     )]
-    [FormRequired("Select yes if there are plans for indication specific pricing")]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IndicationSpecificPricingPlanned { get; set; }
 
@@ -119,7 +115,7 @@ internal sealed class MedicinesBudgetImpact
         FormControl.Radio,
         Hint = "Select the band that best describes the estimated net annual budget impact for the UK in the first 3 years of NHS use. Use your best estimate based on available information. Estimates can be updated as more information becomes available.\n\nAn annual impact of £40 million or more triggers specific planning processes within NICE's technology appraisal programme, so an early signal at this level is particularly valuable even if uncertain."
     )]
-    [FormRequired("Select the estimated net budget impact")]
+    [FormRequired("Select an option")]
     public NetUkBudgetImpactBand? NetUkBudgetImpactBand { get; set; }
 
     // Navigation

@@ -30,6 +30,7 @@ public class PrefixedNumberCasesTests
         var (value, error) = PrefixedNumberAnswer.Evaluate(
             prefixedCase.Prefixes,
             prefixedCase.Digits,
+            prefixedCase.NumberName ?? "ID",
             answer!.Value
         );
 
@@ -69,6 +70,7 @@ public class PrefixedNumberCasesTests
         string Name,
         IReadOnlyList<string> Prefixes,
         int? Digits,
+        string? NumberName,
         JsonElement Answer,
         string? Value,
         string? Error

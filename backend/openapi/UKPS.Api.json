@@ -6366,6 +6366,26 @@
         "type": "string",
         "description": "The input a record content question is rendered with. Part of the HTTP API contract: the\nmember names are sent to the frontend, so never rename or remove one."
       },
+      "FormInputWidth": {
+        "enum": [
+          "Default",
+          "Full",
+          "ThreeQuarters",
+          "TwoThirds",
+          "OneHalf",
+          "OneThird",
+          "OneQuarter",
+          "Chars2",
+          "Chars3",
+          "Chars4",
+          "Chars5",
+          "Chars10",
+          "Chars20",
+          "Chars30",
+          null
+        ],
+        "type": "string"
+      },
       "GetRecordsQuerySortValue": {
         "enum": [
           "NextUpdateDue",
@@ -7446,6 +7466,17 @@
             ],
             "description": "A rendering hint, for example `combobox`."
           },
+          "width": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The width of a `Text` input, or of each entry of a `TextList`, overriding the\ndefault of two-thirds; null for the default. Not `required`, so existing clients and\nfixtures are unaffected.",
+                "$ref": "#/components/schemas/FormInputWidth"
+              }
+            ]
+          },
           "placeholder": {
             "type": [
               "null",
@@ -7515,6 +7546,13 @@
             ],
             "description": "The exact number of digits a `PrefixedNumber` needs after its prefix, or null when up\nto 5 are allowed.",
             "format": "int32"
+          },
+          "numberName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "What a `PrefixedNumber`'s number is, as its error messages name it at the start of a\nsentence, for example `Trial number`; null for any other control. Not `required`,\nso existing clients and fixtures are unaffected."
           },
           "dateName": {
             "type": [

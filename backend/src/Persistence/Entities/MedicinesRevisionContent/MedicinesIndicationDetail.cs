@@ -17,7 +17,7 @@ internal sealed class MedicinesIndicationDetail
         "medicines_indication_detail.indication",
         "What is the indication this product is seeking a licence for?",
         FormControl.Textarea,
-        Hint = "Describe the indication as you intend to apply for licensing in the UK. When you know them, include specific details such as line of therapy and subgroups.\n\nYou can edit these details at any time throughout product development."
+        Hint = "Describe the indication as you intend to apply for licensing in the UK. When you know them, include specific details such as line of therapy and subgroups. You can edit these details at any time throughout product development."
     )]
     [FormRequired("Enter the indication")]
     [FormMaxLength(2000, "Indication must be 2000 characters or fewer")]
@@ -45,7 +45,7 @@ internal sealed class MedicinesIndicationDetail
         "Is this product intended to treat children?",
         FormControl.Radio
     )]
-    [FormRequired("Select whether this product is intended to treat children")]
+    [FormRequired("Select an option")]
     public IndicationPaediatricStatus? IndicationIsPaediatric { get; set; }
 
     [FormPage(MedicineFormLayout.Cancer)]
@@ -54,7 +54,7 @@ internal sealed class MedicinesIndicationDetail
         "Is this a product intended to treat cancer?",
         FormControl.Radio
     )]
-    [FormRequired("Select whether this product is intended to treat cancer")]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IndicationIsCancer { get; set; }
 
@@ -65,7 +65,7 @@ internal sealed class MedicinesIndicationDetail
         FormControl.Radio,
         Hint = "A disease is considered rare if fewer than 5 in 10,000 people have it. Select yes if this medicine is intended to treat a rare disease, even if you have not applied for orphan status."
     )]
-    [FormRequired("Select whether this product treats a rare disease")]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IndicationIsRareDisease { get; set; }
 
@@ -114,7 +114,7 @@ internal sealed class MedicinesIndicationDetail
         FormControl.Radio,
         Hint = "Personalised medicines are treatments chosen or adjusted to suit a person's genetic, biomarker, molecular or clinical characteristics. This can improve how well the treatment works and reduce side effects."
     )]
-    [FormRequired("Select yes if the product is a personalised medicine")]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IsPersonalisedMedicine { get; set; }
 

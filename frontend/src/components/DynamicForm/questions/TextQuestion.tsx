@@ -7,6 +7,8 @@ import { getSuggestionSource } from '@/lib/dynamic-form/suggestionSources'
 import { useFormPageContext } from '../FormPageContext'
 import { labelSizeFor } from '../labelStyle'
 
+import { inputWidthOf } from './inputWidth'
+
 import type { QuestionProps } from '../types'
 
 export function TextQuestion({
@@ -38,7 +40,7 @@ export function TextQuestion({
     name,
     onBlur,
     value,
-    width: 'two-thirds',
+    width: inputWidthOf(question.width) ?? 'two-thirds',
   } as const
 
   return (

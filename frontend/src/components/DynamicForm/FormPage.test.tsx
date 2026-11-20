@@ -1260,7 +1260,7 @@ describe('FormPage', () => {
       await user.type(screen.getByRole('textbox', { name: 'Year' }), '2027')
       save()
 
-      expect(await screen.findByText('Enter the estimated submission date')).toBeInTheDocument()
+      expect(await screen.findByText('Select a quarter')).toBeInTheDocument()
       expect(invalidParts()).toEqual(['Quarter'])
     })
 
@@ -1579,7 +1579,8 @@ describe('FormPage clinical trials', () => {
         type: 'Text',
         label: 'Study name',
         hint: 'Enter the official or commonly used study title.',
-        rules: [{ kind: 'Required', value: null, message: 'Enter the study name' }],
+        width: 'Full',
+        rules: [{ kind: 'Required', value: null, message: 'Enter study name' }],
       }),
       question({
         id: 'clinical_trials_gov_number',
@@ -1588,6 +1589,7 @@ describe('FormPage clinical trials', () => {
         hint: 'Enter the 8 digit identification number.',
         prefixes: ['NCT'],
         prefixDigits: 8,
+        numberName: 'Trial number',
         rules: [
           { kind: 'Required', value: null, message: 'Enter the trial number' },
           { kind: 'Distinct', value: null, message: 'Trial number must be different' },
@@ -1602,6 +1604,7 @@ describe('FormPage clinical trials', () => {
         addAnotherLabel: 'Add another trial number',
         itemLabel: 'Other registry number',
         removeLabel: 'Remove',
+        width: 'Full',
         rules: [{ kind: 'Distinct', value: null, message: 'Registry number must be different' }],
       }),
     ],
@@ -1640,6 +1643,17 @@ describe('FormPage clinical trials', () => {
     expect(screen.getByLabelText('Study name')).toHaveValue('')
     expect(screen.queryByRole('button', { name: /Remove clinical trial/ })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Add another trial number' })).toBeInTheDocument()
+  })
+
+  it('makes the study name and the other registry number full width', () => {
+    render(<FormPage page={trialsPage()} />)
+
+    const otherRegistryBox = screen
+      .getByLabelText('Other registry number')
+      .closest('[data-component="input"]')?.parentElement
+
+    expect(screen.getByLabelText('Study name')).toHaveStyle({ width: '100%' })
+    expect(otherRegistryBox?.style.getPropertyValue('--input-basis')).toBe('100%')
   })
 
   it('gives each trial an id that a link can scroll to', () => {
@@ -1819,8 +1833,8 @@ describe('FormPage clinical trials', () => {
 
     await user.click(screen.getByRole('button', { name: 'Save and continue' }))
 
-    expect(await screen.findByText('Enter the study name')).toBeInTheDocument()
-    expect(screen.getByText('ID must be 8 digits')).toBeInTheDocument()
+    expect(await screen.findByText('Enter study name')).toBeInTheDocument()
+    expect(screen.getByText('Trial number must be 8 digits long')).toBeInTheDocument()
     expect(screen.getByText('Registry number must be different')).toBeInTheDocument()
     expect(screen.getByText('Trial number must be different')).toBeInTheDocument()
     expect(screen.getAllByLabelText('Study name')[0]).toHaveAttribute('aria-invalid', 'true')

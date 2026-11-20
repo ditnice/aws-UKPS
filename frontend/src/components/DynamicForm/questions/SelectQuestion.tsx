@@ -29,7 +29,10 @@ export function SelectQuestion({
         labelSize={labelSizeFor(labelStyle)}
         name={name}
         onBlur={onBlur}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => {
+          onChange(event.target.value)
+          onBlur()
+        }}
         value={value}
         width="one-third"
       >

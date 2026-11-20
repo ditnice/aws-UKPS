@@ -97,6 +97,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             Label = question.Label,
             Hint = question.Hint,
             Display = question.Display,
+            Width = question.Width,
             Placeholder = question.Placeholder,
             ChildLabel = question.ChildLabel,
             ChildPlaceholder = question.ChildPlaceholder,
@@ -109,6 +110,7 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
                     : question.Children.Select(c => ToDto(c, null, model, codes)).ToArray(),
             Prefixes = question.Prefixes,
             PrefixDigits = question.PrefixDigits,
+            NumberName = question.NumberName,
             DateName = question.DateName,
             ShowWhen = question.ShowWhen is null ? null : ToDto(question.ShowWhen, model, codes),
             Rules = question
