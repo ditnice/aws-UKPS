@@ -1,4 +1,10 @@
 @use '@nice-digital/design-system/scss/base';
+@use '@/styles/colours';
+
+// Use a white page background rather than the NDS cream.
+body {
+  background: colours.$fill-white-background;
+}
 
 // Override the NDS 66ch readable-width constraint so content can use its full container width.
 h1,
