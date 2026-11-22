@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
+using UKPS.Api;
 using UKPS.Api.Application;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.InternalServices.Communication;
@@ -43,30 +44,12 @@ builder.Services.AddTransient<IDatabaseMigrator, DatabaseMigrator>();
 
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
 
-builder.Services.Configure<CognitoOptions>(
-    builder.Configuration.GetSection(CognitoOptions.SectionName)
-);
-builder.Services.Configure<DatabaseOptions>(
-    builder.Configuration.GetSection(DatabaseOptions.SectionName)
-);
-
 builder
-    .Services.AddOptions<EmailOptions>()
-    .Bind(builder.Configuration.GetSection(EmailOptions.SectionName))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
-
-builder
-    .Services.AddOptions<HostingOptions>()
-    .Bind(builder.Configuration.GetSection(HostingOptions.SectionName))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
-
-builder
-    .Services.AddOptions<UserOnboardingOptions>()
-    .Bind(builder.Configuration.GetSection(UserOnboardingOptions.SectionName))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
+    .BindAppOptions<CognitoOptions>()
+    .BindAppOptions<DatabaseOptions>()
+    .BindAppOptions<EmailOptions>()
+    .BindAppOptions<HostingOptions>()
+    .BindAppOptions<UserOnboardingOptions>();
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {

@@ -1,14 +1,16 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace UKPS.Api.Application.Authentication;
 
 /// <summary>
 /// Represents the configuration settings required to connect to Amazon Cognito.
 /// </summary>
-public sealed record CognitoOptions
+public sealed record CognitoOptions : IAppOptions
 {
     /// <summary>
     /// Gets the configuration section name used to bind Cognito settings.
     /// </summary>
-    public const string SectionName = "cognito";
+    public static string SectionName => "cognito";
 
     /// <summary>
     /// Gets an optional override for the Amazon Cognito service endpoint.
@@ -23,22 +25,26 @@ public sealed record CognitoOptions
     /// <summary>
     /// Gets the Cognito application client identifier.
     /// </summary>
+    [Required]
     public required string ClientId { get; init; }
 
     /// <summary>
     /// Gets the Cognito application client secret.
     /// This is used to authenticate confidential clients when communicating with Amazon Cognito.
     /// </summary>
+    [Required]
     public required string ClientSecret { get; init; }
 
     /// <summary>
     /// Gets the AWS region containing the Cognito user pool.
     /// </summary>
+    [Required]
     public required string Region { get; init; }
 
     /// <summary>
     /// Gets the identifier of the Cognito user pool.
     /// </summary>
+    [Required]
     public required string UserPoolId { get; init; }
 
     /// <summary>

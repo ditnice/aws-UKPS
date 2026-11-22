@@ -2,7 +2,7 @@ namespace UKPS.Api.Persistence.Data.Seeding;
 
 internal sealed record SeedingOptions
 {
-    public const string SectionName = "Seeding";
+    public static string SectionName => "Seeding";
 
     public bool ReseedOnStartup { get; init; }
 

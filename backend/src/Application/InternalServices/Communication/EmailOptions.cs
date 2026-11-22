@@ -2,9 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace UKPS.Api.Application.InternalServices.Communication;
 
-internal record EmailOptions
+internal record EmailOptions : IAppOptions
 {
-    public const string SectionName = "Email";
+    public static string SectionName => "Email";
 
     public int MaxResendSignUpLinkAttempts { get; set; } = 3;
 

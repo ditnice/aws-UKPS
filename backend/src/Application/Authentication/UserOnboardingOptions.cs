@@ -2,9 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace UKPS.Api.Application.Authentication;
 
-internal sealed record UserOnboardingOptions
+internal sealed record UserOnboardingOptions : IAppOptions
 {
-    public const string SectionName = "UserOnboarding";
+    public static string SectionName => "UserOnboarding";
 
     /// <summary>
     /// The amount of time it takes before the setup token expires. Defaults to 30 minutes.
