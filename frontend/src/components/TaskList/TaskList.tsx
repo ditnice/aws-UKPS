@@ -74,7 +74,9 @@ export function TaskList({ children, className }: TaskListProps) {
       collectTasks(section.props.children).filter((task) => task.props.status !== 'not-applicable'),
     )
   const tasks = sections.flat()
-  const completed = tasks.filter((task) => task.props.status === 'completed').length
+  // A task that cannot start yet (or does not apply) is not counted, as in the design.
+  const counted = tasks.filter((task) => task.props.status !== 'cannot-start')
+  const completed = counted.filter((task) => task.props.status === 'completed').length
   // Only the first incomplete section is searched. If none of its tasks can be started yet, the
   // skip link is hidden rather than jumping past that section to a later one.
   const firstIncomplete = sections
@@ -83,10 +85,10 @@ export function TaskList({ children, className }: TaskListProps) {
 
   return (
     <>
-      {tasks.length > 0 && (
+      {counted.length > 0 && (
         <TaskListSummary
           completed={completed}
-          total={tasks.length}
+          total={counted.length}
           firstIncompleteHref={firstIncomplete?.props.href}
         />
       )}

@@ -193,6 +193,7 @@ describe('RecordTaskListPage', () => {
       await renderPage()
 
       expect(screen.getByText('Cannot start yet')).toBeInTheDocument()
+      expect(screen.getByText('You have completed 1 of 1 mandatory tasks')).toBeInTheDocument()
       expect(screen.getByText(/Promising Innovative Medicine/)).toBeInTheDocument()
       expect(screen.queryByRole('link', { name: /Promising Innovative Medicine/ })).toBeNull()
       expect(screen.getByRole('link', { name: 'Review and submit record' })).toBeInTheDocument()
