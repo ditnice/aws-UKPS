@@ -71,11 +71,13 @@ internal sealed class RecordTaskListQueryService(
                     {
                         Id = section.Id,
                         Title = section.Title,
+                        SubText = section.SubText,
                         Tasks = section
                             .Tasks.Select(task => new RecordTaskListTaskDto
                             {
                                 Id = task.Id,
                                 Title = task.Title,
+                                Hint = task.Hint,
                                 Status = GetStatus(task, answered, applicability),
                                 FirstPageId = task.FirstPage.Id,
                             })

@@ -25,13 +25,13 @@ internal static class FormModelFingerprint
         {
             text.AppendLine(
                 CultureInfo.InvariantCulture,
-                $"section {section.Id} | {section.Title} | {section.Order}"
+                $"section {section.Id} | {section.Title} | {section.Order} | {section.SubText}"
             );
             foreach (FormTask task in section.Tasks)
             {
                 text.AppendLine(
                     CultureInfo.InvariantCulture,
-                    $"  task {task.Id} | {task.Title} | {task.Order}"
+                    $"  task {task.Id} | {task.Title} | {task.Order} | {task.Hint}"
                 );
                 foreach (FormPage page in task.Pages)
                 {

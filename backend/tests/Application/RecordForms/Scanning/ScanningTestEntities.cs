@@ -558,9 +558,11 @@ internal sealed class VaccineTestLayout()
                             new FormLayoutPage("areas", "Areas", 30),
                             new FormLayoutPage("split-vaccine", "Split vaccine", 40),
                             new FormLayoutPage("unplaced-gate", "Gate", 50),
-                        ]
+                        ],
+                        Hint: "Valid task hint"
                     ),
-                ]
+                ],
+                SubText: "Valid sub text"
             ),
             new FormLayoutSection(
                 "broken",
@@ -791,7 +793,8 @@ internal sealed class BrokenTestLayout()
                         [
                             new FormLayoutPage("Bad Page", " ", 10),
                             new FormLayoutPage("task-list", "Task list", 20),
-                        ]
+                        ],
+                        Hint: " "
                     ),
                     new FormLayoutTask(
                         "tied-task",
@@ -802,7 +805,8 @@ internal sealed class BrokenTestLayout()
                             new FormLayoutPage("tied-second", "Tied second", 10),
                         ]
                     ),
-                ]
+                ],
+                SubText: " "
             ),
             new FormLayoutSection(
                 "repeated",

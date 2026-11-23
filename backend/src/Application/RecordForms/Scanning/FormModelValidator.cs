@@ -129,6 +129,11 @@ internal static partial class FormModelValidator
                 );
             }
 
+            if (section.SubText is not null && string.IsNullOrWhiteSpace(section.SubText))
+            {
+                problems.Add($"{name} declares section '{section.Id}' with blank sub text.");
+            }
+
             if (section.Tasks.Count == 0)
             {
                 problems.Add($"{name} declares section '{section.Id}' with no tasks.");
@@ -136,13 +141,6 @@ internal static partial class FormModelValidator
 
             foreach (FormLayoutTask task in section.Tasks)
             {
-                if (!SlugPattern().IsMatch(task.Id) || string.IsNullOrWhiteSpace(task.Title))
-                {
-                    problems.Add(
-                        $"{name} declares task '{task.Id}' with a badly formed ID or a blank title."
-                    );
-                }
-
                 ValidateLayoutTask(name, task, problems);
             }
 
@@ -175,6 +173,18 @@ internal static partial class FormModelValidator
 
     private static void ValidateLayoutTask(string name, FormLayoutTask task, List<string> problems)
     {
+        if (!SlugPattern().IsMatch(task.Id) || string.IsNullOrWhiteSpace(task.Title))
+        {
+            problems.Add(
+                $"{name} declares task '{task.Id}' with a badly formed ID or a blank title."
+            );
+        }
+
+        if (task.Hint is not null && string.IsNullOrWhiteSpace(task.Hint))
+        {
+            problems.Add($"{name} declares task '{task.Id}' with a blank hint.");
+        }
+
         if (task.Pages.Count == 0)
         {
             problems.Add($"{name} declares task '{task.Id}' with no pages.");
