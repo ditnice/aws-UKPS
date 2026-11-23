@@ -2,7 +2,10 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { postAuthVerifyMfa, verifyMultiFactorAuthenticationUpdate } from '@/client/generated'
+import {
+  verifyMultiFactorAuthentication,
+  verifyMultiFactorAuthenticationUpdate,
+} from '@/client/generated'
 import { errorMessages } from '@/lib/form/errorMessages'
 
 import SetupMfaForm from './SetupMfaForm'
@@ -19,7 +22,7 @@ vi.mock('qrcode.react', () => ({
   ),
 }))
 
-const mockedPostAuthVerifyMfa = vi.mocked(postAuthVerifyMfa)
+const mockedPostAuthVerifyMfa = vi.mocked(verifyMultiFactorAuthentication)
 const mockedVerifyUpdate = vi.mocked(verifyMultiFactorAuthenticationUpdate)
 
 const SECRET = 'JBSWY3DPEHPK3PXP'

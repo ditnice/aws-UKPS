@@ -11,6 +11,7 @@
           "Authentication"
         ],
         "summary": "Authenticates a user and creates an authentication session.",
+        "operationId": "Login",
         "requestBody": {
           "description": "A token to monitor for cancellation requests.",
           "content": {
@@ -86,6 +87,7 @@
         ],
         "summary": "Refreshes the authentication tokens using the supplied refresh token.",
         "description": "The CSRF token must be supplied in the `X-CSRF-Token` request header.\nThe value of this header must match the `csrf_token` cookie sent with the request.\nRequests with a missing or invalid CSRF token are rejected with an unauthorized response.",
+        "operationId": "RefreshToken",
         "responses": {
           "200": {
             "description": "The refresh token was successfully exchanged for new authentication credentials."
@@ -139,6 +141,7 @@
           "Authentication"
         ],
         "summary": "Ends the current authentication session and clears authentication cookies.",
+        "operationId": "SignOut",
         "responses": {
           "200": {
             "description": "The user was signed out and authentication cookies were cleared."
@@ -247,6 +250,7 @@
           "Authentication"
         ],
         "summary": "Sets up SMS multi-factor authentication for a user.",
+        "operationId": "SetupSmsMfa",
         "requestBody": {
           "description": "",
           "content": {
@@ -378,6 +382,7 @@
           "Authentication"
         ],
         "summary": "Verifies the user's SMS multi-factor authentication setup by validating the provided authentication code.",
+        "operationId": "VerifySmsMultiFactorAuthentication",
         "requestBody": {
           "description": "",
           "content": {
@@ -452,6 +457,7 @@
           "Authentication"
         ],
         "summary": "Validates whether a user setup token is valid and can be used to complete the user setup process.",
+        "operationId": "ValidateSetupToken",
         "parameters": [
           {
             "name": "setupToken",
@@ -557,6 +563,7 @@
           "Authentication"
         ],
         "summary": "Reissues an expired setup token and emails a new setup link to the user's\nregistered email address.",
+        "operationId": "ResendSetupToken",
         "requestBody": {
           "description": "A token to monitor for cancellation requests.",
           "content": {
@@ -688,6 +695,7 @@
           "Authentication"
         ],
         "summary": "Completes the setup process for a user account using a valid setup token.",
+        "operationId": "SetupUser",
         "requestBody": {
           "description": "A token that can be used to cancel the asynchronous operation.",
           "content": {
@@ -839,6 +847,7 @@
           "Authentication"
         ],
         "summary": "Verifies the user's multi-factor authentication setup by validating the\nprovided authentication code.",
+        "operationId": "VerifyMultiFactorAuthentication",
         "requestBody": {
           "description": "The token used to cancel the operation.",
           "content": {

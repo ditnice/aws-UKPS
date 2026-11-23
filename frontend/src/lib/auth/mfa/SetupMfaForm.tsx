@@ -6,7 +6,10 @@ import { QRCodeSVG } from 'qrcode.react'
 import { ChangeEvent, useState } from 'react'
 import z from 'zod'
 
-import { postAuthVerifyMfa, verifyMultiFactorAuthenticationUpdate } from '@/client/generated'
+import {
+  verifyMultiFactorAuthentication,
+  verifyMultiFactorAuthenticationUpdate,
+} from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { errorMessages } from '@/lib/form/errorMessages'
@@ -61,7 +64,7 @@ const SetupMfaForm = ({
   const sendRequest = async (securityCode: string) => {
     const normalisedSecurityToken = normaliseSecurityCode(securityCode)
     if (setup.type === 'initialise') {
-      return await postAuthVerifyMfa({
+      return await verifyMultiFactorAuthentication({
         body: {
           authenticationSession: setup.authenticationSession,
           code: normalisedSecurityToken,

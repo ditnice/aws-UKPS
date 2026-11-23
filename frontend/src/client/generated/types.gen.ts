@@ -1880,7 +1880,7 @@ export type VerifySmsMultiFactorAuthenticationCommand = {
     authenticationSession: string;
 };
 
-export type PostAuthLoginData = {
+export type LoginData = {
     /**
      * A token to monitor for cancellation requests.
      */
@@ -1890,7 +1890,7 @@ export type PostAuthLoginData = {
     url: '/auth/login';
 };
 
-export type PostAuthLoginErrors = {
+export type LoginErrors = {
     /**
      * The supplied request was invalid.
      */
@@ -1901,23 +1901,23 @@ export type PostAuthLoginErrors = {
     401: AuthenticationProblemDetails;
 };
 
-export type PostAuthLoginError = PostAuthLoginErrors[keyof PostAuthLoginErrors];
+export type LoginError = LoginErrors[keyof LoginErrors];
 
-export type PostAuthLoginResponses = {
+export type LoginResponses = {
     /**
      * The user was successfully authenticated and an authentication cookie was created.
      */
     200: unknown;
 };
 
-export type PostAuthRefreshData = {
+export type RefreshTokenData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/auth/refresh';
 };
 
-export type PostAuthRefreshErrors = {
+export type RefreshTokenErrors = {
     /**
      * The refresh token request was invalid or could not be processed.
      */
@@ -1928,32 +1928,32 @@ export type PostAuthRefreshErrors = {
     401: AuthenticationProblemDetails;
 };
 
-export type PostAuthRefreshError = PostAuthRefreshErrors[keyof PostAuthRefreshErrors];
+export type RefreshTokenError = RefreshTokenErrors[keyof RefreshTokenErrors];
 
-export type PostAuthRefreshResponses = {
+export type RefreshTokenResponses = {
     /**
      * The refresh token was successfully exchanged for new authentication credentials.
      */
     200: unknown;
 };
 
-export type PostAuthSignOutData = {
+export type SignOutData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/auth/sign-out';
 };
 
-export type PostAuthSignOutErrors = {
+export type SignOutErrors = {
     /**
      * The CSRF token was missing or invalid.
      */
     401: ProblemDetails;
 };
 
-export type PostAuthSignOutError = PostAuthSignOutErrors[keyof PostAuthSignOutErrors];
+export type SignOutError = SignOutErrors[keyof SignOutErrors];
 
-export type PostAuthSignOutResponses = {
+export type SignOutResponses = {
     /**
      * The user was signed out and authentication cookies were cleared.
      */
@@ -1991,14 +1991,14 @@ export type RespondToMultiFactorAuthenticationChallengeResponses = {
     200: unknown;
 };
 
-export type PostAuthSetupSmsMfaData = {
+export type SetupSmsMfaData = {
     body: SetupSmsMfaCommand;
     path?: never;
     query?: never;
     url: '/auth/setup-sms-mfa';
 };
 
-export type PostAuthSetupSmsMfaErrors = {
+export type SetupSmsMfaErrors = {
     /**
      * Bad Request
      */
@@ -2017,25 +2017,25 @@ export type PostAuthSetupSmsMfaErrors = {
     410: ProblemDetails;
 };
 
-export type PostAuthSetupSmsMfaError = PostAuthSetupSmsMfaErrors[keyof PostAuthSetupSmsMfaErrors];
+export type SetupSmsMfaError = SetupSmsMfaErrors[keyof SetupSmsMfaErrors];
 
-export type PostAuthSetupSmsMfaResponses = {
+export type SetupSmsMfaResponses = {
     /**
      * OK
      */
     200: SmsMultiFactorAuthenticationSetupDto;
 };
 
-export type PostAuthSetupSmsMfaResponse = PostAuthSetupSmsMfaResponses[keyof PostAuthSetupSmsMfaResponses];
+export type SetupSmsMfaResponse = SetupSmsMfaResponses[keyof SetupSmsMfaResponses];
 
-export type PostAuthVerifySmsMfaData = {
+export type VerifySmsMultiFactorAuthenticationData = {
     body: VerifySmsMultiFactorAuthenticationCommand;
     path?: never;
     query?: never;
     url: '/auth/verify-sms-mfa';
 };
 
-export type PostAuthVerifySmsMfaErrors = {
+export type VerifySmsMultiFactorAuthenticationErrors = {
     /**
      * Bad Request
      */
@@ -2046,16 +2046,16 @@ export type PostAuthVerifySmsMfaErrors = {
     404: ProblemDetails;
 };
 
-export type PostAuthVerifySmsMfaError = PostAuthVerifySmsMfaErrors[keyof PostAuthVerifySmsMfaErrors];
+export type VerifySmsMultiFactorAuthenticationError = VerifySmsMultiFactorAuthenticationErrors[keyof VerifySmsMultiFactorAuthenticationErrors];
 
-export type PostAuthVerifySmsMfaResponses = {
+export type VerifySmsMultiFactorAuthenticationResponses = {
     /**
      * OK
      */
     200: unknown;
 };
 
-export type GetAuthValidateSetupTokenData = {
+export type ValidateSetupTokenData = {
     body?: never;
     path?: never;
     query: {
@@ -2067,7 +2067,7 @@ export type GetAuthValidateSetupTokenData = {
     url: '/auth/validate-setup-token';
 };
 
-export type GetAuthValidateSetupTokenErrors = {
+export type ValidateSetupTokenErrors = {
     /**
      * The setupToken query parameter was missing or was not a valid GUID.
      */
@@ -2086,16 +2086,16 @@ export type GetAuthValidateSetupTokenErrors = {
     410: ProblemDetails;
 };
 
-export type GetAuthValidateSetupTokenError = GetAuthValidateSetupTokenErrors[keyof GetAuthValidateSetupTokenErrors];
+export type ValidateSetupTokenError = ValidateSetupTokenErrors[keyof ValidateSetupTokenErrors];
 
-export type GetAuthValidateSetupTokenResponses = {
+export type ValidateSetupTokenResponses = {
     /**
      * The setup token is valid and can be used.
      */
     200: unknown;
 };
 
-export type PostAuthResendSetupTokenData = {
+export type ResendSetupTokenData = {
     /**
      * A token to monitor for cancellation requests.
      */
@@ -2105,7 +2105,7 @@ export type PostAuthResendSetupTokenData = {
     url: '/auth/resend-setup-token';
 };
 
-export type PostAuthResendSetupTokenErrors = {
+export type ResendSetupTokenErrors = {
     /**
      * The request body was missing or malformed, or did not supply exactly one of
      * a setup token or a correlation id.
@@ -2125,9 +2125,9 @@ export type PostAuthResendSetupTokenErrors = {
     409: ProblemDetails;
 };
 
-export type PostAuthResendSetupTokenError = PostAuthResendSetupTokenErrors[keyof PostAuthResendSetupTokenErrors];
+export type ResendSetupTokenError = ResendSetupTokenErrors[keyof ResendSetupTokenErrors];
 
-export type PostAuthResendSetupTokenResponses = {
+export type ResendSetupTokenResponses = {
     /**
      * A new setup link was generated and emailed to the user's registered email address.
      * The response body contains the correlation id for the new setup token.
@@ -2135,9 +2135,9 @@ export type PostAuthResendSetupTokenResponses = {
     200: ResendSetupTokenResponse;
 };
 
-export type PostAuthResendSetupTokenResponse = PostAuthResendSetupTokenResponses[keyof PostAuthResendSetupTokenResponses];
+export type ResendSetupTokenResponse2 = ResendSetupTokenResponses[keyof ResendSetupTokenResponses];
 
-export type PostAuthSetupUserData = {
+export type SetupUserData = {
     /**
      * A token that can be used to cancel the asynchronous operation.
      */
@@ -2147,7 +2147,7 @@ export type PostAuthSetupUserData = {
     url: '/auth/setup-user';
 };
 
-export type PostAuthSetupUserErrors = {
+export type SetupUserErrors = {
     /**
      * Bad Request
      */
@@ -2170,18 +2170,18 @@ export type PostAuthSetupUserErrors = {
     410: ProblemDetails;
 };
 
-export type PostAuthSetupUserError = PostAuthSetupUserErrors[keyof PostAuthSetupUserErrors];
+export type SetupUserError = SetupUserErrors[keyof SetupUserErrors];
 
-export type PostAuthSetupUserResponses = {
+export type SetupUserResponses = {
     /**
      * OK
      */
     200: MultiFactorAuthenticationSetupDto;
 };
 
-export type PostAuthSetupUserResponse = PostAuthSetupUserResponses[keyof PostAuthSetupUserResponses];
+export type SetupUserResponse = SetupUserResponses[keyof SetupUserResponses];
 
-export type PostAuthVerifyMfaData = {
+export type VerifyMultiFactorAuthenticationData = {
     /**
      * The token used to cancel the operation.
      */
@@ -2191,7 +2191,7 @@ export type PostAuthVerifyMfaData = {
     url: '/auth/verify-mfa';
 };
 
-export type PostAuthVerifyMfaErrors = {
+export type VerifyMultiFactorAuthenticationErrors = {
     /**
      * The request contained invalid data or the multi-factor authentication
      * verification could not be completed.
@@ -2203,9 +2203,9 @@ export type PostAuthVerifyMfaErrors = {
     404: ProblemDetails;
 };
 
-export type PostAuthVerifyMfaError = PostAuthVerifyMfaErrors[keyof PostAuthVerifyMfaErrors];
+export type VerifyMultiFactorAuthenticationError = VerifyMultiFactorAuthenticationErrors[keyof VerifyMultiFactorAuthenticationErrors];
 
-export type PostAuthVerifyMfaResponses = {
+export type VerifyMultiFactorAuthenticationResponses = {
     /**
      * The multi-factor authentication setup was successfully verified.
      */

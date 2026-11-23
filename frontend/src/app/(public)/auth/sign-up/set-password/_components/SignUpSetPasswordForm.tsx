@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
-import { postAuthSetupUser } from '@/client/generated/sdk.gen'
+import { setupUser } from '@/client/generated/sdk.gen'
 import { Button } from '@/components/Button/Button'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 import { errorMessages } from '@/lib/form/errorMessages'
@@ -49,7 +49,7 @@ export function SignUpSetPasswordForm({ setupToken }: SignUpSetPasswordFormProps
       setSubmitError(null)
 
       try {
-        const result = await postAuthSetupUser({
+        const result = await setupUser({
           body: {
             setupToken,
             newPassword: value.password,
