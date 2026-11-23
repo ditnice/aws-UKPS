@@ -103,7 +103,7 @@ internal sealed class MedicinesIndicationDetail
         "medicines_indication_detail.proposed_dose_regimen",
         "What is the proposed dose regimen for this product? (optional)",
         FormControl.Textarea,
-        Hint = "Enter the intended dosing schedule. You can include the dose amount, dose frequency, route and duration.\n\nIf in early stages of development, you can enter high-level or indicative information and update this later."
+        Hint = "Enter the intended dosing schedule. You can include the dose amount, dose frequency, route and duration. If in early stages of development, you can enter high-level or indicative information and update this later."
     )]
     public string? ProposedDoseRegimen { get; set; }
 
