@@ -233,8 +233,10 @@ invalid model stops the API starting. It holds structure only: bindings receive 
   one nested card per item, each with an
   **Edit** link to that item on the group's page (`#{questionId}-item-{index}`), then an **Add
   another** button that opens the page with `?add=group-item` and a new blank item after the saved
-  ones. Errors are not tagged per item; a group's error is tagged on the group only when it has
-  items, and otherwise appears only in the summary. A task in an optional section (`Optional` on the layout
+  ones. A group that applies but has no items shows one card instead, with a single
+  "Not yet provided" row and an **Edit** link to the blank first item on the group's page. Errors are
+  not tagged per item; a group's error is tagged once, above its cards, or beside **Edit** on the
+  empty card. A task in an optional section (`Optional` on the layout
   section, flagged on the response) is titled "(optional)" and says it becomes mandatory within 12
   months of the market authorisation date; while nothing in it is answered it shows one "Not yet
   provided" row with an **Edit section** link instead of a row per question. No question in an
@@ -250,7 +252,7 @@ invalid model stops the API starting. It holds structure only: bindings receive 
   and question rows as check your answers, built by the same `RecordAnswersBuilder`, but for any
   status and any caller who can read the record, and without checking the answers. The record
   details page shows an accordion per section and a card per task, with groups as one card per
-  item, and no Change, Edit or Add another links. Pages that only need the record's status,
+  item (none if it has no items), and no Change, Edit or Add another links. Pages that only need the record's status,
   actions and title, such as discard and change status, use `GET /records/{id}/overview`, which
   loads no answers.
 - **No ties.** Two sections or pages with the same `Order`, or two questions on the same page
