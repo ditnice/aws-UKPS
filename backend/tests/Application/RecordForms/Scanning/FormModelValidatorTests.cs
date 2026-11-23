@@ -46,6 +46,10 @@ public class FormModelValidatorTests
         form.FindPage("chapter")!.Questions.Single().OptionKey.ShouldBe(OptionKeys.BnfChapters);
         form.FindPage("areas")!.Questions.Single().OptionKey.ShouldBe(OptionKeys.TherapeuticAreas);
         form.FindPage("areas")!.Questions.Single().Shape.ShouldBe(AnswerShape.Multi);
+        FormQuestion areas = form.FindPage("areas")!.Questions.Single();
+        (areas.AddAnotherLabel, areas.ItemLabel, areas.RemoveLabel).ShouldBe(
+            ("Add another", "Area", "Remove area")
+        );
         form.FindPage("areas")!.Questions.Single().Entity.Includes.ShouldBe(["Areas"]);
     }
 
@@ -133,9 +137,22 @@ public class FormModelValidatorTests
     [InlineData(
         "BrokenGroupEntity.Items has ItemKey 'free_text', which must name a single-value question of the group with [FormRequired] and [FormDistinct]."
     )]
-    [InlineData("BrokenGroupEntity.Text sets ItemLabel, which only a Group or a TextList uses.")]
+    [InlineData(
+        "BrokenGroupEntity.Text sets ItemLabel, which only a multi-value HierarchicalSelect, a Group or a TextList uses."
+    )]
+    [InlineData(
+        "BrokenGroupEntity.ChapterId sets AddAnotherLabel, which only a multi-value HierarchicalSelect, a Group or a TextList uses."
+    )]
+    [InlineData(
+        "BrokenGroupEntity.ChapterId sets ItemLabel, which only a multi-value HierarchicalSelect, a Group or a TextList uses."
+    )]
+    [InlineData(
+        "BrokenGroupEntity.ChapterId sets RemoveLabel, which only a multi-value HierarchicalSelect, a Group or a TextList uses."
+    )]
     [InlineData("BrokenGroupItem.BlankLabels sets a blank ItemLabel.")]
-    [InlineData("BrokenGroupEntity.Text sets RemoveLabel, which only a Group or a TextList uses.")]
+    [InlineData(
+        "BrokenGroupEntity.Text sets RemoveLabel, which only a multi-value HierarchicalSelect, a Group or a TextList uses."
+    )]
     [InlineData(
         "BrokenGroupEntity.Text has [FormDistinct], which only a TextList or a single-value question of a group uses."
     )]
@@ -526,7 +543,7 @@ public class FormModelValidatorTests
         "BrokenListedEntity.ListLabelsOnText has [FormDistinct], which only a TextList or a single-value question of a group uses."
     )]
     [InlineData(
-        "BrokenListedEntity.ListLabelsOnText sets RemoveLabel, which only a Group or a TextList uses."
+        "BrokenListedEntity.ListLabelsOnText sets RemoveLabel, which only a multi-value HierarchicalSelect, a Group or a TextList uses."
     )]
     [InlineData(
         "BrokenListedEntity.FixedWidthList sets Width on a TextList, which only supports a share of the container such as Full."

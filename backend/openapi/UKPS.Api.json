@@ -7541,14 +7541,14 @@
               "null",
               "string"
             ],
-            "description": "The heading of each item of a group, numbered from 1, or the label of each entry of a text\nlist, numbered from 1 once there are several; null for other controls."
+            "description": "The heading of each item of a group or entry of a multi-value hierarchical select, numbered\nfrom 1, or the label of each entry of a text list, numbered from 1 once there are\nseveral; null for other controls."
           },
           "removeLabel": {
             "type": [
               "null",
               "string"
             ],
-            "description": "The button text that removes an item of a group or an entry of a text list."
+            "description": "The button text that removes an item of a group, or an entry of a text list or multi-value\nhierarchical select."
           },
           "children": {
             "type": [

@@ -63,7 +63,9 @@ public enum FormControl
     /// <see cref="FormFieldAttribute.ChildLabel"/>; may set
     /// <see cref="FormFieldAttribute.Placeholder"/> and
     /// <see cref="FormFieldAttribute.ChildPlaceholder"/>. On a junction it may also set
-    /// <see cref="FormFieldAttribute.AddAnotherLabel"/> and have
+    /// <see cref="FormFieldAttribute.AddAnotherLabel"/>,
+    /// <see cref="FormFieldAttribute.ItemLabel"/> and
+    /// <see cref="FormFieldAttribute.RemoveLabel"/>, and have
     /// <see cref="FormMaxItemsAttribute"/>, which caps the number of entries.
     /// </remarks>
     HierarchicalSelect = 5,
