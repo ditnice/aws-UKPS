@@ -986,7 +986,8 @@ internal sealed class BrokenGroupEntity
         FormControl.Text,
         Order = 10,
         ItemLabel = "Not a group",
-        RemoveLabel = "Not a list"
+        RemoveLabel = "Not a list",
+        CheckAnswersAddLabel = "Not a group"
     )]
     [FormDistinct("Not a list")]
     public string? Text { get; set; }

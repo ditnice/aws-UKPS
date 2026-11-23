@@ -201,7 +201,7 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
                   })}
                   key={question.id}
                 >
-                  {question.addAnotherLabel ?? 'Add another'}
+                  {question.checkAnswersAddLabel ?? 'Add'}
                 </Button>
               ))}
             </SummaryCard>

@@ -6923,7 +6923,7 @@
           "selectedOptions",
           "itemLabel",
           "items",
-          "addAnotherLabel"
+          "checkAnswersAddLabel"
         ],
         "type": "object",
         "properties": {
@@ -6981,12 +6981,12 @@
             },
             "description": "For a group, its items in order; null for any other question."
           },
-          "addAnotherLabel": {
+          "checkAnswersAddLabel": {
             "type": [
               "null",
               "string"
             ],
-            "description": "For a group, the label of its add-another button, such as \"Add another clinical trial\";\nnull for any other question."
+            "description": "For a group, the text of the button that adds an item from check your answers, such as\n\"Add clinical trial\"; null for any other question."
           }
         },
         "description": "A question that applies and its answer, shown as a summary row."

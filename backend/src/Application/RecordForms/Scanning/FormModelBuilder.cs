@@ -115,6 +115,7 @@ internal static class FormModelBuilder
             ChildLabel = field.ChildLabel,
             ChildPlaceholder = field.ChildPlaceholder,
             AddAnotherLabel = field.AddAnotherLabel,
+            CheckAnswersAddLabel = field.CheckAnswersAddLabel,
             ItemLabel = field.ItemLabel,
             RemoveLabel = field.RemoveLabel,
             ItemKey = field.ItemKey,

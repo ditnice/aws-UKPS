@@ -134,6 +134,7 @@ public class FormModelValidatorTests
         "BrokenGroupEntity.Items has ItemKey 'free_text', which must name a single-value question of the group with [FormRequired] and [FormDistinct]."
     )]
     [InlineData("BrokenGroupEntity.Text sets ItemLabel, which only a Group or a TextList uses.")]
+    [InlineData("BrokenGroupEntity.Text sets CheckAnswersAddLabel, which only a Group uses.")]
     [InlineData("BrokenGroupItem.BlankLabels sets a blank ItemLabel.")]
     [InlineData("BrokenGroupEntity.Text sets RemoveLabel, which only a Group or a TextList uses.")]
     [InlineData(

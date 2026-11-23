@@ -544,10 +544,10 @@ public class RecordViewServiceTests : DatabaseTestBase
             .Values.ShouldBe(["Chronic hepatitis C in adults"]);
         RecordAnswersQuestionDto genericNames = Question(dto, CreationPageFieldPaths.GenericNames);
         genericNames.Values.ShouldBe(["sofosbuvir"]);
-        // A text list has its own item and add-another labels, which are only sent for a group.
+        // A text list has its own item label, which is only sent for a group.
         genericNames.Items.ShouldBeNull();
         genericNames.ItemLabel.ShouldBeNull();
-        genericNames.AddAnotherLabel.ShouldBeNull();
+        genericNames.CheckAnswersAddLabel.ShouldBeNull();
     }
 
     [Fact]
@@ -598,7 +598,7 @@ public class RecordViewServiceTests : DatabaseTestBase
         RecordAnswersQuestionDto trials = Question(dto, ClinicalTrials);
         trials.Values.ShouldBeEmpty();
         trials.ItemLabel.ShouldBe("Clinical trial");
-        trials.AddAnotherLabel.ShouldBe("Add another clinical trial");
+        trials.CheckAnswersAddLabel.ShouldBe("Add clinical trial");
         var item = trials.Items.ShouldNotBeNull().ShouldHaveSingleItem();
         item.Questions.Select(static q => q.Id)
             .ShouldBe(["study_name", "clinical_trials_gov_number", "other_registry_numbers"]);
@@ -607,11 +607,11 @@ public class RecordViewServiceTests : DatabaseTestBase
         item.Questions[1].Values.ShouldBe(["NCT01234567"]);
         item.Questions[2].Values.ShouldBe(["ISRCTN12345678"]);
 
-        // A text list has its own item and add-another labels, which are only sent for a group.
+        // A text list has its own item label, which is only sent for a group.
         RecordAnswersQuestionDto registryNumbers = item.Questions[2];
         registryNumbers.Items.ShouldBeNull();
         registryNumbers.ItemLabel.ShouldBeNull();
-        registryNumbers.AddAnotherLabel.ShouldBeNull();
+        registryNumbers.CheckAnswersAddLabel.ShouldBeNull();
     }
 
     [Fact]

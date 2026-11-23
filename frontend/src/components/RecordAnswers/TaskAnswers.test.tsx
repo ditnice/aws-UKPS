@@ -18,7 +18,7 @@ const question = (overrides: Partial<RecordAnswersQuestionDto>): RecordAnswersQu
   selectedOptions: null,
   itemLabel: null,
   items: null,
-  addAnotherLabel: null,
+  checkAnswersAddLabel: null,
   ...overrides,
 })
 

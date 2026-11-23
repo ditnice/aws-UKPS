@@ -722,7 +722,7 @@ internal static partial class FormModelValidator
         }
     }
 
-    /// <summary>Checks the item and remove labels and item key only a group or text list uses.</summary>
+    /// <summary>Checks the item, add and remove labels and item key only a group or text list uses.</summary>
     private static void ValidateItemPresentation(
         QuestionDeclaration question,
         FormControl control,
@@ -739,6 +739,11 @@ internal static partial class FormModelValidator
         )
         {
             problems.Add($"{where} sets RemoveLabel, which only a Group or a TextList uses.");
+        }
+
+        if (field.CheckAnswersAddLabel is not null && !isGroup)
+        {
+            problems.Add($"{where} sets CheckAnswersAddLabel, which only a Group uses.");
         }
 
         if (field.ItemKey is not null && !isGroup)
