@@ -384,6 +384,7 @@ export const fakeRecordTaskListSectionDto = (options?: Options): RecordTaskListS
     return {
         id: f.string.uuid(),
         title: f.lorem.words(),
+        optional: f.datatype.boolean(),
         tasks: f.helpers.multiple(() => fakeRecordTaskListTaskDto(options))
     };
 };

@@ -435,8 +435,11 @@ Some questions and pages only apply when an earlier question has a particular an
   frontend shows the question beneath each option that reveals it, while that option is chosen;
   for other triggers it is shown as the next question.
 - **A page shown by an earlier page.** `[FormPageShowWhen(pageId, questionId, values...)]` on the
-  entity that declares the page. The trigger must be on an earlier page, and the page must not
-  be the first of its task, which the task list links to. Back and Save and continue skip the
+  entity that declares the page. The trigger must be on an earlier page. The page may be the
+  first of its task, which the task list links to, only when every other page of the task has a
+  condition too; the task list then shows a hidden task as not applicable instead of linking to
+  it. `NoneOf = true` inverts the condition (the page applies when the answer includes none of
+  the values, so also while the trigger is unanswered). Back and Save and continue skip the
   page while it does not apply.
 
 ```csharp
@@ -661,6 +664,11 @@ revision:
 | `NotStarted` | No answer has been saved for the task |
 | `InProgress` | At least one answer is saved, but one or more required questions are unanswered |
 | `Completed` | Every required question has a saved answer; unanswered optional questions do not prevent completion |
+| `NotApplicable` | No question in the task applies to the record, for example PIM and EAMS on a biosimilar. The task has no page to open |
+| `CannotStart` | The task's first page depends on a question that is not answered yet, for example PIM and EAMS before the technology status is. The task has no page to open yet |
+
+Each section also has an `optional` flag. An optional section is marked "(optional)" and does not
+count towards the tasks that must be complete before the record can be reviewed and submitted.
 
 Only questions that apply count. A question hidden by its condition, or on a page that does not
 apply, is neither an answer nor a required question still to answer, so a required follow-up does

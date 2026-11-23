@@ -17,7 +17,8 @@ public sealed record RecordAnswersTaskDto
 
     /// <summary>
     /// No question in the task applies to this record, for example Promising Innovative Medicine
-    /// (PIM) and Early Access to Medicines Scheme (EAMS) on a biosimilar. Shown as "not possible".
+    /// (PIM) and Early Access to Medicines Scheme (EAMS) on a biosimilar. Check your answers says
+    /// why; the task list shows "Cannot start yet".
     /// </summary>
     public required bool NotApplicable { get; init; }
 }

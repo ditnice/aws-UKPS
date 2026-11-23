@@ -30,8 +30,8 @@ const taskStatuses: Record<RecordTaskStatus, TaskStatus> = {
   NotStarted: 'not-started',
   InProgress: 'in-progress',
   Completed: 'completed',
-  // Both read "Cannot start yet" (Byron's call, 2026-11-20), though only NotApplicable counts as
-  // complete for review and submit below.
+  // Both read "Cannot start yet", though only NotApplicable counts as complete for review and
+  // submit below.
   NotApplicable: 'cannot-start',
   CannotStart: 'cannot-start',
 }
@@ -74,12 +74,8 @@ const RecordTaskListPage = async ({ params, searchParams }: RecordTaskListPagePr
     )
   }
 
-  // TODO: service readiness becomes mandatory within 12 months of market authorisation;
-  // that rule requires backend work, so it is marked always optional here for now. When
-  // that rule is implemented, the optional section IDs should be determined by the backend
-  const optionalSectionIds = ['service-readiness']
   const allMandatoryComplete = taskList.sections
-    .filter((section) => !optionalSectionIds.includes(section.id))
+    .filter((section) => !section.optional)
     .every((section) =>
       section.tasks.every((task) => task.status === 'Completed' || task.status === 'NotApplicable'),
     )
@@ -112,7 +108,7 @@ const RecordTaskListPage = async ({ params, searchParams }: RecordTaskListPagePr
             key={section.id}
             title={section.title}
             titleHeadingLevel={2}
-            optional={optionalSectionIds.includes(section.id)}
+            optional={section.optional}
           >
             {section.tasks.map((task) => (
               <TaskListTask

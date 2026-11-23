@@ -116,6 +116,7 @@ public class RecordTaskListControllerTests : IClassFixture<WebApplicationFactory
                 {
                     Id = "indication-details",
                     Title = "Indication details",
+                    Optional = false,
                     Tasks =
                     [
                         new RecordTaskListTaskDto

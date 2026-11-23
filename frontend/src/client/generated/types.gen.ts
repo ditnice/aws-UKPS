@@ -689,7 +689,8 @@ export type RecordAnswersTaskDto = {
     questions: Array<RecordAnswersQuestionDto>;
     /**
      * No question in the task applies to this record, for example Promising Innovative Medicine
-     * (PIM) and Early Access to Medicines Scheme (EAMS) on a biosimilar. Shown as "not possible".
+     * (PIM) and Early Access to Medicines Scheme (EAMS) on a biosimilar. Check your answers says
+     * why; the task list shows "Cannot start yet".
      */
     notApplicable: boolean;
 };
@@ -1180,6 +1181,11 @@ export type RecordTaskListSectionDto = {
      * The section title.
      */
     title: string;
+    /**
+     * The section is optional: it is marked "(optional)" and does not count towards the tasks
+     * that must be completed before the record can be reviewed and submitted.
+     */
+    optional: boolean;
     /**
      * The ordered tasks in the section.
      */

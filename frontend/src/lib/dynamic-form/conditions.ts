@@ -5,6 +5,12 @@ import { precisionOf } from './dates'
 
 import type { Answer, Condition, FormValues, Question } from './types'
 
+/** Whether the answer, or any value of a multi-value answer, is one of `values`. */
+const includesAny = (answer: Answer, values: string[]): boolean => {
+  const answered = Array.isArray(answer) ? answer : answer === null ? [] : [answer]
+  return answered.some((value) => values.includes(value))
+}
+
 /**
  * Whether a condition holds. `answerOf` returns a trigger's answer, which is unanswered when the
  * trigger itself is hidden. Mirrors the server's FormCondition; the shared fixture
@@ -15,17 +21,11 @@ export const isConditionMet = (
   answerOf: (questionId: string) => Answer,
 ): boolean => {
   switch (condition.kind) {
-    case ConditionKind.ANSWER_IN: {
-      const answer = answerOf(condition.questionId)
-      const values = Array.isArray(answer) ? answer : answer === null ? [] : [answer]
-      return values.some((value) => condition.values.includes(value))
-    }
-    case ConditionKind.ANSWER_NOT_IN: {
+    case ConditionKind.ANSWER_IN:
+      return includesAny(answerOf(condition.questionId), condition.values)
+    case ConditionKind.ANSWER_NOT_IN:
       // An unanswered or hidden trigger includes none of the values, so the condition is met.
-      const answer = answerOf(condition.questionId)
-      const values = Array.isArray(answer) ? answer : answer === null ? [] : [answer]
-      return !values.some((value) => condition.values.includes(value))
-    }
+      return !includesAny(answerOf(condition.questionId), condition.values)
     default:
       throw new Error(`Unsupported condition kind ${String(condition.kind)}`)
   }

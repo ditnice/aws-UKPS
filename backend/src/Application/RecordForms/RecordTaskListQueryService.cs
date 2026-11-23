@@ -71,6 +71,7 @@ internal sealed class RecordTaskListQueryService(
                     {
                         Id = section.Id,
                         Title = section.Title,
+                        Optional = section.Optional,
                         Tasks = section
                             .Tasks.Select(task => new RecordTaskListTaskDto
                             {
@@ -96,8 +97,9 @@ internal sealed class RecordTaskListQueryService(
         Applicability applicability
     )
     {
-        // Design (URP-737): until the technology status is answered, PIM and EAMS "cannot start
-        // yet"; once it is, they are "not applicable" for a biosimilar and startable otherwise.
+        // A task whose first page depends on an unanswered question cannot start yet (PIM and EAMS
+        // before the technology status is answered). Once it is answered, the task is either not
+        // applicable or startable.
         if (task.FirstPage.ShowWhen?.TriggerQuestionIds.Any(id => !answered.Contains(id)) == true)
         {
             return RecordTaskStatus.CannotStart;

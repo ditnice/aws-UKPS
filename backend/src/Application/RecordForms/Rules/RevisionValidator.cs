@@ -94,13 +94,12 @@ internal static class RevisionValidator
         }
     }
 
-    // TODO: service readiness becomes mandatory within 12 months of the market authorisation date
-    // (URP-738 scenarios 8-10). Until that date exists on the record, "optional" is a fixed
-    // property of the section; the rule needs it to depend on the record, and the same check
-    // is in the task list page's optionalSectionIds and the check your answers page.
+    // TODO: service readiness becomes mandatory within 12 months of the market authorisation date.
+    // Until that date exists on the record, "optional" is a fixed property of the section; the rule
+    // needs it to depend on the record. The task list and check your answers pages read it from the
+    // response (`optional` on the section).
     private static bool IsInOptionalSection(FormModel model, FormPage page) =>
         model.Sections.Any(s =>
-            s.Optional
-            && s.Tasks.Any(t => string.Equals(t.Id, page.TaskId, StringComparison.Ordinal))
+            s.Optional && string.Equals(s.Id, page.SectionId, StringComparison.Ordinal)
         );
 }

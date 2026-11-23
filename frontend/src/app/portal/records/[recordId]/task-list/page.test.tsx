@@ -39,6 +39,7 @@ const taskList = {
       {
         id: 'indication-and-development',
         title: 'Provide indication and development information',
+        optional: false,
         tasks: [
           {
             id: 'indication-details',
@@ -51,6 +52,7 @@ const taskList = {
       {
         id: 'service-readiness',
         title: 'Provide service readiness information (optional)',
+        optional: true,
         tasks: [
           {
             id: 'laboratory-testing',
@@ -173,6 +175,7 @@ describe('RecordTaskListPage', () => {
             {
               id: 'special-designation',
               title: 'Provide special designation information',
+              optional: false,
               tasks: [
                 {
                   id: 'pim-and-eams',

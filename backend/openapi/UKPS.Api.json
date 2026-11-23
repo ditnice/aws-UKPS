@@ -7048,7 +7048,7 @@
           },
           "notApplicable": {
             "type": "boolean",
-            "description": "No question in the task applies to this record, for example Promising Innovative Medicine\n(PIM) and Early Access to Medicines Scheme (EAMS) on a biosimilar. Shown as \"not possible\"."
+            "description": "No question in the task applies to this record, for example Promising Innovative Medicine\n(PIM) and Early Access to Medicines Scheme (EAMS) on a biosimilar. Check your answers says\nwhy; the task list shows \"Cannot start yet\"."
           }
         },
         "description": "A task of a record's answers."
@@ -7744,6 +7744,7 @@
         "required": [
           "id",
           "title",
+          "optional",
           "tasks"
         ],
         "type": "object",
@@ -7755,6 +7756,10 @@
           "title": {
             "type": "string",
             "description": "The section title."
+          },
+          "optional": {
+            "type": "boolean",
+            "description": "The section is optional: it is marked \"(optional)\" and does not count towards the tasks\nthat must be completed before the record can be reviewed and submitted."
           },
           "tasks": {
             "type": "array",
