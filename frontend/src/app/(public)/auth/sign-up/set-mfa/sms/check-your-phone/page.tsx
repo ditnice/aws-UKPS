@@ -37,6 +37,7 @@ export default function CheckYourPhone() {
   const router = useRouter()
   const { clearPassword } = useSignUpPassword()
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
 
   let authenticationSession = ''
   let setupToken = ''
@@ -72,6 +73,7 @@ export default function CheckYourPhone() {
         })
 
         if (!result.error) {
+          setSuccess(true)
           try {
             sessionStorage.removeItem('signUpSmsSetup')
           } catch {}
@@ -101,7 +103,7 @@ export default function CheckYourPhone() {
     },
   })
 
-  if (!hasSetup) {
+  if (!success && !hasSetup) {
     return (
       <>
         <PageHeader heading="There is a problem setting up two-factor authentication" />

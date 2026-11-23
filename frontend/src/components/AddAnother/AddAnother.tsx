@@ -1,10 +1,10 @@
 import { AnyFieldLikeMetaBase, Updater } from '@tanstack/react-form'
 import clsx from 'clsx'
-import { ChangeEvent } from 'react'
+import { ChangeEvent, CSSProperties } from 'react'
 
 import { Button } from '@/components/Button/Button'
-import { Input } from '@/components/Input/Input'
-import type { LabelSize } from '@/components/Input/Input'
+import { Input, inputWidthStyles } from '@/components/Input/Input'
+import type { InputFluidWidth, LabelSize } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { clearFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
@@ -48,6 +48,8 @@ export type AddAnotherProps<T extends string> = {
    */
   itemLabel?: string
   firstItemClassName?: string
+  /** Optional share of the row each input's box takes; defaults to two-thirds. */
+  inputWidth?: InputFluidWidth
   labelPrefix: string
   hint?: string
   field: ArrayField<T>
@@ -72,6 +74,7 @@ export type AddAnotherProps<T extends string> = {
  * @param props.removeItemLabel - Label shown on the button used to remove a list item.
  * @param props.title - Optional h2 shown once above the list.
  * @param props.legend - Optional legend that labels the list as one question.
+ * @param props.inputWidth - Optional width of each input's box, overriding the default two-thirds.
  * @param props.itemLabel - Optional visible label of each item, used instead of `labelPrefix`.
  * @param props.firstItemClassName - Optional class applied to the first item's row only.
  * @param props.labelPrefix - Prefix used for each item's visible label.
@@ -84,6 +87,7 @@ export const AddAnother = <T extends string>({
   addItemLabel,
   removeItemLabel,
   title,
+  inputWidth,
   legend,
   legendSize = 'default',
   itemLabel,
@@ -136,7 +140,14 @@ export const AddAnother = <T extends string>({
           key={i}
           ref={itemRef(i)}
         >
-          <div className={clsx(styles.input, legend && !visibleItemLabel && styles.hiddenLabel)}>
+          <div
+            className={clsx(styles.input, legend && !visibleItemLabel && styles.hiddenLabel)}
+            style={
+              inputWidth
+                ? ({ '--input-basis': inputWidthStyles[inputWidth].width } as CSSProperties)
+                : undefined
+            }
+          >
             {getSubfield(`${field.name}[${i}]`, (subfield) => {
               const errorMessage = getFieldErrorMessage(subfield.state.meta.errors)
               return (

@@ -20,9 +20,7 @@ internal sealed class MedicinesPatientIdentification
         Order = 10,
         Hint = "Select yes if identifying patients requires proactive screening, testing, or surveillance beyond usual care. Select no if patients are typically identified through existing clinical pathways. Select unknown if this is not yet clear."
     )]
-    [FormRequired(
-        "Select yes if a screening or surveillance programme is required to identify eligible patients"
-    )]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? ScreeningRequired { get; set; }
 
@@ -47,9 +45,7 @@ internal sealed class MedicinesPatientIdentification
         Order = 10,
         Hint = "Select yes if standard timelines for identification or treatment would create adverse patient outcomes. Select no if standard timelines are acceptable. Select unknown if this has not yet been determined."
     )]
-    [FormRequired(
-        "Select yes if urgent patient identification and treatment delivery is required for your product"
-    )]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? UrgentIdentificationRequired { get; set; }
 

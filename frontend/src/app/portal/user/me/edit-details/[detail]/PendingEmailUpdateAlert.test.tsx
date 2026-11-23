@@ -25,8 +25,15 @@ const userId = 123
 type Props = Parameters<typeof PendingEmailUpdateAlert>[0]
 
 // Resolve the async component, then render the JSX it returns
-async function renderAlert(props: Props) {
-  const ui = await PendingEmailUpdateAlert(props)
+async function renderAlert(props: Partial<Props>) {
+  const defaultProps: Props = {
+    value: email,
+    userId,
+    verifiedByEmail: false,
+    verificationEmailResent: undefined,
+    error: undefined,
+  }
+  const ui = await PendingEmailUpdateAlert({ ...defaultProps, ...props })
   return render(ui)
 }
 
@@ -64,10 +71,13 @@ describe('PendingEmailUpdateAlert', () => {
     expect(screen.queryByTestId('resend-verification-email-button')).not.toBeInTheDocument()
   })
 
-  it('does not render the cancel verification email button with the user id when verifiedByEmail is true', async () => {
+  it('renders the cancel verification email button with the user id when verifiedByEmail is true', async () => {
     await renderAlert({ value: email, verifiedByEmail: true, userId })
 
-    expect(screen.queryByTestId('cancel-verification-email-button')).not.toBeInTheDocument()
+    expect(screen.getByTestId('cancel-verification-email-button')).toHaveAttribute(
+      'data-user-id',
+      String(userId),
+    )
   })
 
   describe('when the address has not been verified', () => {
@@ -86,7 +96,6 @@ describe('PendingEmailUpdateAlert', () => {
 
       expect(screen.getByText(/this address has been verified/i)).toBeInTheDocument()
       expect(screen.queryByText(/sent a verification email to/i)).not.toBeInTheDocument()
-      expect(screen.queryByTestId('cancel-verification-email-button')).not.toBeInTheDocument()
     })
   })
 })

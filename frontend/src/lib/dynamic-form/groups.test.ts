@@ -43,6 +43,7 @@ const group: RecordPageQuestionDto = {
       type: 'PrefixedNumber',
       prefixes: ['NCT'],
       prefixDigits: 8,
+      numberName: 'Trial number',
       rules: [{ kind: 'Distinct', value: null, message: 'Repeated code' }],
     },
     numbers,
@@ -105,7 +106,7 @@ describe('groups', () => {
         '0.name': 'Enter a name',
         '0.numbers.1': 'Repeated number',
         '1.code': 'Repeated code',
-        '2.code': 'ID must be 8 digits',
+        '2.code': 'Trial number must be 8 digits long',
       },
     })
   })

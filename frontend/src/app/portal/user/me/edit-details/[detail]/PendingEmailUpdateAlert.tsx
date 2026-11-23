@@ -2,17 +2,24 @@
 
 import { PendingWorkEmailChangeDto } from '@/client/generated'
 import { Alert } from '@/components/Alert/Alert'
+import { ErrorState } from '@/components/Placeholder/ErrorState'
 
 import CancelPendingEmailChange from './editUserEmail/CancelPendingEmailChange'
 import styles from './PendingEmailUpdateAlert.module.scss'
 import ResendVerificationEmailButton from './ResendVerificationEmail/ResendVerificationEmailButton'
 
-export type PendingEmailUpdateAlertProps = PendingWorkEmailChangeDto & { userId: number }
+export type PendingEmailUpdateAlertProps = PendingWorkEmailChangeDto & {
+  verificationEmailResent: true | undefined
+  error: true | undefined
+  userId: number
+}
 
 const PendingEmailUpdateAlert = async ({
   value,
   verifiedByEmail,
   userId,
+  verificationEmailResent,
+  error,
 }: PendingEmailUpdateAlertProps) => {
   return (
     <Alert type="caution" title="Email update pending">
@@ -22,10 +29,15 @@ const PendingEmailUpdateAlert = async ({
         <strong data-testid="target-email">{value}</strong>. This change has not been completed yet.
       </p>
       {verifiedByEmail ? (
-        <p>
-          This address has been verified. To complete the change, log in using your new email
-          address.
-        </p>
+        <>
+          <p>
+            This address has been verified. To complete the change, log in using your new email
+            address.
+          </p>
+          <div className={styles.buttons}>
+            <CancelPendingEmailChange userId={userId} />
+          </div>
+        </>
       ) : (
         <>
           <p>
@@ -38,6 +50,10 @@ const PendingEmailUpdateAlert = async ({
             <ResendVerificationEmailButton userId={userId} />
             <CancelPendingEmailChange userId={userId} />
           </div>
+          {verificationEmailResent ? (
+            <p role="status">Verification email sent. Check your inbox.</p>
+          ) : undefined}
+          {error ? <ErrorState>An unexpected error occurred.</ErrorState> : undefined}
         </>
       )}
     </Alert>

@@ -27,6 +27,13 @@ public sealed record RecordPageQuestionDto
     /// <summary>A rendering hint, for example <c>combobox</c>.</summary>
     public required string? Display { get; init; }
 
+    /// <summary>
+    /// The width of a <c>Text</c> input, or of each entry of a <c>TextList</c>, overriding the
+    /// default of two-thirds; null for the default. Not <c>required</c>, so existing clients and
+    /// fixtures are unaffected.
+    /// </summary>
+    public FormInputWidth? Width { get; init; }
+
     /// <summary>The empty option text of a dropdown.</summary>
     public required string? Placeholder { get; init; }
 
@@ -70,6 +77,13 @@ public sealed record RecordPageQuestionDto
     /// to 5 are allowed.
     /// </summary>
     public int? PrefixDigits { get; init; }
+
+    /// <summary>
+    /// What a <c>PrefixedNumber</c>'s number is, as its error messages name it at the start of a
+    /// sentence, for example <c>Trial number</c>; null for any other control. Not <c>required</c>,
+    /// so existing clients and fixtures are unaffected.
+    /// </summary>
+    public string? NumberName { get; init; }
 
     /// <summary>
     /// What a <see cref="FormControl.PrecisionDate"/> question's date is of, for its error

@@ -266,7 +266,8 @@ const comparableValue = (question: Question, value: FormValue | undefined) => {
     return null
   }
   return question.prefixes
-    ? evaluatePrefixedNumber(question.prefixes, answer, question.prefixDigits).value
+    ? evaluatePrefixedNumber(question.prefixes, answer, question.prefixDigits, question.numberName)
+        .value
     : answer
 }
 
@@ -342,6 +343,7 @@ export const questionError = (
       question.prefixes,
       answer,
       question.prefixDigits,
+      question.numberName,
     )
     const prefixMessage = firstFailure(question.rules, saved) ?? error
     return prefixMessage ? { message: prefixMessage } : undefined

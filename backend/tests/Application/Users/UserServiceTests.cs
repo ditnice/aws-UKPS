@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Shouldly;
+using UKPS.Api.Application.Authentication.SecurityNotification;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Hosting;
@@ -1489,30 +1490,6 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task CancelPendingEmailChange_WhenPendingEmailIsVerified_ShouldReturnEmailAlreadyVerified()
-    {
-        User currentUser = await CreateExistingCurrentUser();
-        var token = await RequestEmailUpdate(currentUser);
-        (
-            await Service.VerifyPendingEmailAddress(
-                currentUser.Id,
-                new VerifyPendingEmailAddressCommand { VerificationToken = token },
-                TestContext.Current.CancellationToken
-            )
-        ).ShouldBeSuccess();
-
-        var result = await Service.CancelPendingEmailChange(
-            currentUser.Id,
-            TestContext.Current.CancellationToken
-        );
-
-        result.ShouldBeError().ShouldBeOfType<CancelPendingEmailChangeError.EmailAlreadyVerified>();
-
-        var userInformation = await Service.GetCurrentUser(TestContext.Current.CancellationToken);
-        userInformation.PendingWorkEmail.ShouldNotBeNull().VerifiedByEmail.ShouldBeTrue();
-    }
-
-    [Fact]
     public async Task CancelPendingEmailChange_WhenUserDoesNotExist_ShouldReturnUserDoesNotExistError()
     {
         _ = await CreateExistingCurrentUser();
@@ -1592,6 +1569,33 @@ public class UserServiceTests : DatabaseTestBase
         );
 
         result.ShouldBeSuccess();
+
+        MockUser? user = _harness.Cognito.GetUserByEmail(updateEmail);
+        user.ShouldNotBeNull().EmailVerified.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task UpdateEmailToCompletePendingEmailChange_ShouldNotifyOldEmailAddress()
+    {
+        const string updateEmail = "testupdate@email.com";
+        User currentUser = await CreateExistingCurrentUser();
+        await RequestAndVerifyEmailUpdate(currentUser, updateEmail);
+
+        var result = await Service.UpdateEmailToCompletePendingEmailChange(
+            currentUser.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        var emailCommand = _harness
+            .Emails.SentCommands.Where(x => x.Email is SecurityNotificationEmail)
+            .ShouldHaveSingleItem();
+
+        emailCommand.RecipientAddress.ShouldBe(currentUser.WorkEmail);
+        (emailCommand.Email as SecurityNotificationEmail)!.ChangedValue.ShouldBe(
+            ChangedUserData.Email
+        );
 
         MockUser? user = _harness.Cognito.GetUserByEmail(updateEmail);
         user.ShouldNotBeNull().EmailVerified.ShouldBeTrue();

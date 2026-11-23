@@ -200,6 +200,25 @@ export const FormControl = {
  */
 export type FormControl = typeof FormControl[keyof typeof FormControl];
 
+export const FormInputWidth = {
+    DEFAULT: 'Default',
+    FULL: 'Full',
+    THREE_QUARTERS: 'ThreeQuarters',
+    TWO_THIRDS: 'TwoThirds',
+    ONE_HALF: 'OneHalf',
+    ONE_THIRD: 'OneThird',
+    ONE_QUARTER: 'OneQuarter',
+    CHARS2: 'Chars2',
+    CHARS3: 'Chars3',
+    CHARS4: 'Chars4',
+    CHARS5: 'Chars5',
+    CHARS10: 'Chars10',
+    CHARS20: 'Chars20',
+    CHARS30: 'Chars30'
+} as const;
+
+export type FormInputWidth = typeof FormInputWidth[keyof typeof FormInputWidth];
+
 /**
  * Specifies the fields by which records can be sorted.
  */
@@ -966,6 +985,7 @@ export type RecordPageQuestionDto = {
      * A rendering hint, for example `combobox`.
      */
     display: null | string;
+    width?: null | FormInputWidth;
     /**
      * The empty option text of a dropdown.
      */
@@ -1009,6 +1029,12 @@ export type RecordPageQuestionDto = {
      * to 5 are allowed.
      */
     prefixDigits?: null | number;
+    /**
+     * What a `PrefixedNumber`'s number is, as its error messages name it at the start of a
+     * sentence, for example `Trial number`; null for any other control. Not `required`,
+     * so existing clients and fixtures are unaffected.
+     */
+    numberName?: null | string;
     /**
      * What a FormControl.PrecisionDate question's date is of, for its error
      * messages, for example `submission`; null for other questions.
@@ -3773,7 +3799,7 @@ export type CancelPendingEmailChangeErrors = {
      */
     404: ProblemDetails;
     /**
-     * The user has no pending email change, the pending email has already been verified, or a concurrent change was detected.
+     * The user has no pending email change or a concurrent change was detected.
      */
     409: AuthenticationProblemDetails;
 };

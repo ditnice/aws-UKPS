@@ -45,7 +45,7 @@ internal sealed class MedicinesIntlRecognition
         FormControl.Radio,
         Order = 20
     )]
-    [FormRequired("Select intended route")]
+    [FormRequired("Select an option")]
     public int? IrpRouteId { get; set; }
 
     [FormPage(MedicineFormLayout.InternationalSubmissionDate)]
@@ -76,7 +76,7 @@ internal sealed class MedicinesIntlRecognition
         "Is international conditional approval anticipated for this product?",
         FormControl.Radio
     )]
-    [FormRequired("Select whether international conditional approval is anticipated")]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? IntlConditionalApprovalAnticipated { get; set; }
 

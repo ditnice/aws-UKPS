@@ -1,5 +1,5 @@
 {
-  "description": "Shared prefixed-number cases run by both the backend (PrefixedNumberCasesTests) and the frontend (lib/dynamic-form). digits, when given, is the exact number of digits needed; answer is the wire answer before normalisation; value is what the server saves (a prefix with no digits is saved as blank); error is the message, or null.",
+  "description": "Shared prefixed-number cases run by both the backend (PrefixedNumberCasesTests) and the frontend (lib/dynamic-form). digits, when given, is the exact number of digits needed; numberName, when given, is what the messages call the number (ID when not given); answer is the wire answer before normalisation; value is what the server saves (a prefix with no digits is saved as blank); error is the message, or null.",
   "cases": [
     {
       "name": "null answer",
@@ -152,6 +152,7 @@
       "name": "exact digits met",
       "prefixes": ["NCT"],
       "digits": 8,
+      "numberName": "Trial number",
       "answer": "NCT12345678",
       "value": "NCT12345678",
       "error": null
@@ -160,22 +161,25 @@
       "name": "exact digits too few",
       "prefixes": ["NCT"],
       "digits": 8,
+      "numberName": "Trial number",
       "answer": "NCT1234567",
       "value": "NCT1234567",
-      "error": "ID must be 8 digits"
+      "error": "Trial number must be 8 digits long"
     },
     {
       "name": "exact digits too many",
       "prefixes": ["NCT"],
       "digits": 8,
+      "numberName": "Trial number",
       "answer": "NCT123456789",
       "value": "NCT123456789",
-      "error": "ID must be 8 digits"
+      "error": "Trial number must be 8 digits long"
     },
     {
       "name": "exact digits may exceed five",
       "prefixes": ["NCT"],
       "digits": 8,
+      "numberName": "Trial number",
       "answer": "NCT06123456",
       "value": "NCT06123456",
       "error": null
@@ -184,6 +188,7 @@
       "name": "exact digits prefix only is saved as blank",
       "prefixes": ["NCT"],
       "digits": 8,
+      "numberName": "Trial number",
       "answer": "NCT",
       "value": null,
       "error": null
@@ -192,9 +197,18 @@
       "name": "exact digits not a number",
       "prefixes": ["NCT"],
       "digits": 8,
+      "numberName": "Trial number",
       "answer": "NCT1234567A",
       "value": "NCT1234567A",
-      "error": "ID must be a whole positive number"
+      "error": "Trial number must be a whole positive number"
+    },
+    {
+      "name": "exact digits with the default name",
+      "prefixes": ["NCT"],
+      "digits": 8,
+      "answer": "NCT123",
+      "value": "NCT123",
+      "error": "ID must be 8 digits long"
     }
   ]
 }

@@ -22,9 +22,7 @@ internal sealed class MedicinesEuStatus
         Hint = "Orphan designation applies to medicines intended for rare diseases and provides regulatory incentives in the EU."
     )]
     [FormOptions(OptionKeys.EuOrphanStatus)]
-    [FormRequired(
-        "Select yes, orphan status granted if your product has been granted an orphan medicine status in the EU"
-    )]
+    [FormRequired("Select an option")]
     public DesignationStatus? EuOrphanStatus { get; set; }
 
     /// <summary>Conditional on EuOrphanStatus = Granted.</summary>
@@ -64,7 +62,7 @@ internal sealed class MedicinesEuStatus
         Hint = "ATMP classification applies to gene therapies, cell therapies, and tissue-engineered products."
     )]
     [FormOptions(OptionKeys.EuAtmpClassificationStatus)]
-    [FormRequired("Select yes if this medicine is classified as an ATMP in the EU")]
+    [FormRequired("Select an option")]
     public DesignationStatus? EuAtmpClassificationStatus { get; set; }
 
     /// <summary>
@@ -95,7 +93,7 @@ internal sealed class MedicinesEuStatus
         Order = 30
     )]
     [FormShowWhen("medicines_eu_status.eu_atmp_classification_status", DesignationStatus.Granted)]
-    [FormRequired("Select the ATMP classification of your product")]
+    [FormRequired("Select an option")]
     public int? AtmpClassificationId { get; set; }
 
     // Navigation
