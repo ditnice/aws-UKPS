@@ -25,10 +25,12 @@ const sections: RecordAnswersSectionDto[] = [
   {
     id: 'product-record-details',
     title: 'Product record details',
+    optional: false,
     tasks: [
       {
         id: 'names-and-identifiers',
         title: 'Names and identifiers',
+        notApplicable: false,
         questions: [question({ id: 'company_code', label: 'Company code', values: ['ABC-123'] })],
       },
     ],
@@ -36,10 +38,12 @@ const sections: RecordAnswersSectionDto[] = [
   {
     id: 'clinical-trials',
     title: 'Clinical trials',
+    optional: false,
     tasks: [
       {
         id: 'clinical-trials',
         title: 'Clinical trial details',
+        notApplicable: false,
         questions: [
           question({
             id: 'record_clinical_trial',

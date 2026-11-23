@@ -25,7 +25,7 @@ internal static class FormModelFingerprint
         {
             text.AppendLine(
                 CultureInfo.InvariantCulture,
-                $"section {section.Id} | {section.Title} | {section.Order} | {section.SubText}"
+                $"section {section.Id} | {section.Title} | {section.Order} | optional {section.Optional} | {section.SubText}"
             );
             foreach (FormTask task in section.Tasks)
             {

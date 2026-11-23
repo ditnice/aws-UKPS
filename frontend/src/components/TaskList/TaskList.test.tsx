@@ -91,7 +91,7 @@ describe('TaskList', () => {
       </TaskList>,
     )
 
-    expect(screen.getByText('You have completed 1 of 3 mandatory tasks')).toBeInTheDocument()
+    expect(screen.getByText('You have completed 1 of 2 mandatory tasks')).toBeInTheDocument()
     expect(
       screen.queryByRole('link', { name: 'Skip to first incomplete task' }),
     ).not.toBeInTheDocument()
@@ -146,7 +146,7 @@ describe('TaskList', () => {
       </TaskList>,
     )
 
-    expect(screen.getByText('You have completed 2 of 5 mandatory tasks')).toBeInTheDocument()
+    expect(screen.getByText('You have completed 2 of 4 mandatory tasks')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Skip to first incomplete task' })).toHaveAttribute(
       'href',
       '/first-incomplete-task',

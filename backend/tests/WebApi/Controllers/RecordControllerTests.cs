@@ -498,12 +498,14 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
                 {
                     Id = "section",
                     Title = "Section",
+                    Optional = false,
                     Tasks =
                     [
                         new RecordAnswersTaskDto
                         {
                             Id = "task",
                             Title = "Task",
+                            NotApplicable = false,
                             Questions =
                             [
                                 new RecordAnswersQuestionDto

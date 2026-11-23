@@ -6207,7 +6207,8 @@
       },
       "ConditionKind": {
         "enum": [
-          "AnswerIn"
+          "AnswerIn",
+          "AnswerNotIn"
         ],
         "type": "string",
         "description": "The kind of a condition that decides whether a question applies. Part of the HTTP API\ncontract: the member names are sent to the frontend, so never rename or remove one."
@@ -6994,6 +6995,7 @@
         "required": [
           "id",
           "title",
+          "optional",
           "tasks"
         ],
         "type": "object",
@@ -7006,12 +7008,16 @@
             "type": "string",
             "description": "The section title."
           },
+          "optional": {
+            "type": "boolean",
+            "description": "The section is optional: its tasks are marked \"(optional)\", and no question in it is\nrequired, so an unanswered one raises no error and does not block submitting."
+          },
           "tasks": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/RecordAnswersTaskDto"
             },
-            "description": "The tasks with a question that applies, in order."
+            "description": "The section's tasks, in order. Check your answers also keeps tasks that do not apply;\nviewing a record leaves them out."
           }
         },
         "description": "A section of a record's answers."
@@ -7020,7 +7026,8 @@
         "required": [
           "id",
           "title",
-          "questions"
+          "questions",
+          "notApplicable"
         ],
         "type": "object",
         "properties": {
@@ -7037,7 +7044,11 @@
             "items": {
               "$ref": "#/components/schemas/RecordAnswersQuestionDto"
             },
-            "description": "The questions that apply, in page order, including optional questions with no answer."
+            "description": "The questions that apply, in page order, including optional questions with no answer.\nEmpty when bool RecordAnswersTaskDto.NotApplicable."
+          },
+          "notApplicable": {
+            "type": "boolean",
+            "description": "No question in the task applies to this record, for example Promising Innovative Medicine\n(PIM) and Early Access to Medicines Scheme (EAMS) on a biosimilar. Check your answers says\nwhy; the task list shows \"Cannot start yet\"."
           }
         },
         "description": "A task of a record's answers."
@@ -7733,6 +7744,7 @@
         "required": [
           "id",
           "title",
+          "optional",
           "subText",
           "tasks"
         ],
@@ -7745,6 +7757,10 @@
           "title": {
             "type": "string",
             "description": "The section title."
+          },
+          "optional": {
+            "type": "boolean",
+            "description": "The section is optional: it is marked \"(optional)\" and does not count towards the tasks\nthat must be completed before the record can be reviewed and submitted."
           },
           "subText": {
             "type": [
@@ -7803,7 +7819,9 @@
         "enum": [
           "NotStarted",
           "InProgress",
-          "Completed"
+          "Completed",
+          "NotApplicable",
+          "CannotStart"
         ],
         "type": "string",
         "description": "Represents the status of a task in a record's task list, derived from the answers saved on the\nrecord's latest revision."

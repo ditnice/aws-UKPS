@@ -65,6 +65,7 @@ public class RecordFormServiceTests : DatabaseTestBase
 
     private static readonly DateTime _now = new(2026, 10, 15, 9, 30, 0, DateTimeKind.Utc);
 
+    private static readonly string[] _biosimilar = ["Biosimilar"];
     private static readonly string[] _biosimilarAndNewIndication = ["Biosimilar", "NewIndication"];
     private static readonly string[] _niceAndSmc = ["Nice", "Smc"];
     private static readonly string[] _smcOnly = ["Smc"];
@@ -1589,6 +1590,36 @@ public class RecordFormServiceTests : DatabaseTestBase
         );
 
         errors[question].ShouldBe("Select an option");
+    }
+
+    [Fact]
+    public async Task SavePage_TechnologyStatusBiosimilar_ClearsTheSavedPimAndEamsAnswers()
+    {
+        await AddEntity(
+            new MedicinesEamsPim
+            {
+                RevisionId = _revision.Id,
+                PimDesignationStatus = DesignationStatus.Granted,
+                WillSubmitToEams = YesNoUnknown.Yes,
+            },
+            Ct
+        );
+
+        await SaveOk("technology-status", Answer(TechnologyStatus, _biosimilar));
+
+        MedicinesEamsPim row = await EamsPimRow();
+        row.PimDesignationStatus.ShouldBeNull();
+        row.WillSubmitToEams.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task GetPage_PimPageOnABiosimilar_IsNotFound()
+    {
+        await SaveOk("technology-status", Answer(TechnologyStatus, _biosimilar));
+
+        (await _queryHarness.Service.GetPage(_record.Id, "pim-designation", Ct))
+            .ShouldBeError()
+            .ShouldBeOfType<GetRecordPageError.NotFound>();
     }
 
     // The route to the genomic pages: they apply only once these two answers are saved.

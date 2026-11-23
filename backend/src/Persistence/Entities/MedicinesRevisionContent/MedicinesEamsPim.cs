@@ -9,6 +9,12 @@ namespace UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 /// </summary>
 [FormEntity]
 [FormPageShowWhen(
+    MedicineFormLayout.PimDesignation,
+    "medicines_indication_detail.medicine_technology_status",
+    MedicineTechnologyStatus.Biosimilar,
+    NoneOf = true
+)]
+[FormPageShowWhen(
     MedicineFormLayout.EamsSubmissionDate,
     "medicines_eams_pim.will_submit_to_eams",
     YesNoUnknown.Yes

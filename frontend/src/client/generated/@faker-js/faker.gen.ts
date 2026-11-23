@@ -47,7 +47,10 @@ export const fakeCompanyCodeSuggestionsDto = (options?: Options): CompanyCodeSug
     };
 };
 
-export const fakeConditionKind = (): ConditionKind => 'AnswerIn';
+export const fakeConditionKind = (options?: Options): ConditionKind => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement(['AnswerIn', 'AnswerNotIn']);
+};
 
 export const fakeConfirmNewPasswordCommand = (options?: Options): ConfirmNewPasswordCommand => {
     const f = options?.faker ?? faker;
@@ -281,7 +284,7 @@ export const fakeRecordDisplayStatus = (options?: Options): RecordDisplayStatus 
 export const fakeRecordPageConditionDto = (options?: Options): RecordPageConditionDto => {
     const f = options?.faker ?? faker;
     return {
-        kind: fakeConditionKind(),
+        kind: fakeConditionKind(options),
         questionId: f.string.uuid(),
         values: f.helpers.multiple(() => f.string.sample())
     };
@@ -360,7 +363,9 @@ export const fakeRecordTaskStatus = (options?: Options): RecordTaskStatus => {
     return f.helpers.arrayElement([
         'NotStarted',
         'InProgress',
-        'Completed'
+        'Completed',
+        'NotApplicable',
+        'CannotStart'
     ]);
 };
 
@@ -380,6 +385,7 @@ export const fakeRecordTaskListSectionDto = (options?: Options): RecordTaskListS
     return {
         id: f.string.uuid(),
         title: f.lorem.words(),
+        optional: f.datatype.boolean(),
         subText: f.datatype.boolean() ? f.string.sample() : null,
         tasks: f.helpers.multiple(() => fakeRecordTaskListTaskDto(options))
     };
@@ -924,6 +930,7 @@ export const fakeRecordAnswersSectionDto = (options?: Options): RecordAnswersSec
     return {
         id: f.string.uuid(),
         title: f.lorem.words(),
+        optional: f.datatype.boolean(),
         tasks: f.helpers.multiple(() => fakeRecordAnswersTaskDto(options))
     };
 };
@@ -933,7 +940,8 @@ export const fakeRecordAnswersTaskDto = (options?: Options): RecordAnswersTaskDt
     return {
         id: f.string.uuid(),
         title: f.lorem.words(),
-        questions: f.helpers.multiple(() => fakeRecordAnswersQuestionDto(options))
+        questions: f.helpers.multiple(() => fakeRecordAnswersQuestionDto(options)),
+        notApplicable: f.datatype.boolean()
     };
 };
 
