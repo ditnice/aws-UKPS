@@ -143,7 +143,10 @@ What each role can do, and so which roles a test should run as:
 
 | Capability                        | Super   | Champion                  | Standard      |
 | --------------------------------- | ------- | ------------------------- | ------------- |
-| Own organisation's records        | ✓       | ✓                         | ✓             |
+| View records                      | any org | own org                   | own org       |
+| Create, edit and discard records  | ✗       | own org                   | own org       |
+| Confirm a record or its status    | ✗       | own org                   | own org       |
+| Change a record's status          | ✗       | own org                   | own org       |
 | "Manage my organisation" link     | ✓       | ✓                         | hidden        |
 | Organisation details and users    | any org | own org                   | not permitted |
 | Edit organisation details         | any org | own org                   | not permitted |

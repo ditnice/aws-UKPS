@@ -44,10 +44,57 @@ public class OrganisationAuthoriserTests
         CanPerform(role, Operation.ChangeRecordStatus, organisationId).ShouldBe(expected);
     }
 
+    [Theory]
+    [InlineData(UserRole.Standard, OwnOrganisationId, true)]
+    [InlineData(UserRole.Standard, OtherOrganisationId, false)]
+    [InlineData(UserRole.Champion, OwnOrganisationId, true)]
+    [InlineData(UserRole.Champion, OtherOrganisationId, false)]
+    [InlineData(UserRole.Super, OwnOrganisationId, false)]
+    [InlineData(UserRole.Super, OtherOrganisationId, false)]
+    public void CreateRecord_IsOnlyAllowedForStandardAndChampionUsersInTheirOrganisation(
+        UserRole role,
+        int organisationId,
+        bool expected
+    )
+    {
+        CanPerform(role, Operation.CreateRecord, organisationId).ShouldBe(expected);
+    }
+
+    [Theory]
+    [InlineData(UserRole.Standard, OwnOrganisationId, true)]
+    [InlineData(UserRole.Standard, OtherOrganisationId, false)]
+    [InlineData(UserRole.Champion, OwnOrganisationId, true)]
+    [InlineData(UserRole.Champion, OtherOrganisationId, false)]
+    [InlineData(UserRole.Super, OwnOrganisationId, false)]
+    [InlineData(UserRole.Super, OtherOrganisationId, false)]
+    public void DiscardRecord_IsOnlyAllowedForStandardAndChampionUsersInTheirOrganisation(
+        UserRole role,
+        int organisationId,
+        bool expected
+    )
+    {
+        CanPerform(role, Operation.DiscardRecord, organisationId).ShouldBe(expected);
+    }
+
+    [Theory]
+    [InlineData(UserRole.Standard, OwnOrganisationId, true)]
+    [InlineData(UserRole.Standard, OtherOrganisationId, false)]
+    [InlineData(UserRole.Champion, OwnOrganisationId, true)]
+    [InlineData(UserRole.Champion, OtherOrganisationId, false)]
+    [InlineData(UserRole.Super, OwnOrganisationId, false)]
+    [InlineData(UserRole.Super, OtherOrganisationId, false)]
+    public void ConfirmRecord_IsOnlyAllowedForStandardAndChampionUsersInTheirOrganisation(
+        UserRole role,
+        int organisationId,
+        bool expected
+    )
+    {
+        CanPerform(role, Operation.ConfirmRecord, organisationId).ShouldBe(expected);
+    }
+
     // Operation is internal, so the cases pass its value; xUnit test methods must be public.
     [Theory]
     [InlineData((int)Operation.Read)]
-    [InlineData((int)Operation.Create)]
     [InlineData((int)Operation.Update)]
     public void SuperUser_KeepsEveryOtherOperationOnAnyOrganisation(int operation)
     {

@@ -3,7 +3,13 @@ namespace UKPS.Api.Application.InternalServices.Authorisation;
 internal enum Operation
 {
     Read = 0,
-    Create = 1,
+
+    /// <summary>
+    /// Creating a record. Granted to standard and champion users for their own organisation. Not
+    /// granted to super users.
+    /// </summary>
+    CreateRecord = 1,
+
     Update = 2,
     Delete = 3,
     SignUpUser = 4,
@@ -25,4 +31,16 @@ internal enum Operation
     /// users for their own organisation. Not granted to super users.
     /// </summary>
     ChangeRecordStatus = 7,
+
+    /// <summary>
+    /// Discarding a record that has never been submitted. Granted to standard and champion users
+    /// for their own organisation. Not granted to super users.
+    /// </summary>
+    DiscardRecord = 8,
+
+    /// <summary>
+    /// Confirming that a record's information or hold is current. Granted to standard and champion
+    /// users for their own organisation. Not granted to super users.
+    /// </summary>
+    ConfirmRecord = 9,
 }
