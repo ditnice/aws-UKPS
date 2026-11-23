@@ -51,7 +51,7 @@ internal sealed class RecordHta
         "Select the submission bodies you intend to submit to for a HTA",
         FormControl.Checkbox,
         Order = 20,
-        Hint = "Access information on the different routes of assessment for HTA bodies."
+        Hint = "Access information on the different [routes of assessment for HTA bodies](https://example.com)."
     )]
     [FormShowWhen("record_hta.medicine_hta_submission_intended", YesNoUnknown.Yes)]
     [FormRequired("Select if you will submit to NICE, the SMC, or AWMSG for a HTA")]
