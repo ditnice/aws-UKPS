@@ -15,9 +15,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.20.9";
+    private const string ExpectedVersion = "2026.11.23.3";
     private const string ExpectedFingerprint =
-        "c5b20a9a37af23baa745f95b4c2a56b7134a03612b7a33824e93057f4e084b37";
+        "f4b18eb9544d75ad0348351a278898fe2f417e5b4201ac77095180d6d386eb7d";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -256,6 +256,7 @@ public class MedicineFormModelTests
                 "international-conditional-approval",
                 "nice-aligned-pathway",
                 "nice-ta-id",
+                "pim-designation",
                 "eams-submission-date",
                 "eams-opinion-date",
                 "eams-opinion-decision",
@@ -484,6 +485,7 @@ public class MedicineFormModelTests
                 typeof(RecordMhraProcedure),
                 typeof(RecordHta),
                 typeof(MedicinesEuStatus),
+                typeof(MedicinesIndicationDetail),
                 typeof(MedicinesEamsPim),
                 typeof(MedicinesLaboratoryTesting),
                 typeof(MedicinesPatientIdentification),

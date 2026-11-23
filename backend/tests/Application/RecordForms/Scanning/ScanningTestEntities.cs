@@ -333,6 +333,11 @@ internal sealed class BrokenConditionEntity
     [FormShowWhen("broken_condition_entity.trigger", YesNoUnknown.Yes)]
     public string? OtherPage { get; set; }
 
+    // The only page of the task without a condition, so the conditional first page is reported.
+    [FormPage("third")]
+    [FormField("broken_condition_entity.third", "Third", FormControl.Text, Order = 10)]
+    public string? Third { get; set; }
+
     public RecordRevision? Revision { get; set; }
 }
 
@@ -625,6 +630,7 @@ internal sealed class VaccineTestLayout()
                         [
                             new FormLayoutPage("first", "First", 10),
                             new FormLayoutPage("second", "Second", 20),
+                            new FormLayoutPage("third", "Third", 30),
                         ]
                     ),
                 ]

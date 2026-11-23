@@ -68,7 +68,7 @@ export type CompanyCodeSuggestionsDto = {
  * The kind of a condition that decides whether a question applies. Part of the HTTP API
  * contract: the member names are sent to the frontend, so never rename or remove one.
  */
-export const ConditionKind = { ANSWER_IN: 'AnswerIn' } as const;
+export const ConditionKind = { ANSWER_IN: 'AnswerIn', ANSWER_NOT_IN: 'AnswerNotIn' } as const;
 
 /**
  * The kind of a condition that decides whether a question applies. Part of the HTTP API
@@ -659,7 +659,13 @@ export type RecordAnswersSectionDto = {
      */
     title: string;
     /**
-     * The tasks with a question that applies, in order.
+     * The section is optional: its tasks are marked "(optional)", and no question in it is
+     * required, so an unanswered one raises no error and does not block submitting.
+     */
+    optional: boolean;
+    /**
+     * The section's tasks, in order. Check your answers also keeps tasks that do not apply;
+     * viewing a record leaves them out.
      */
     tasks: Array<RecordAnswersTaskDto>;
 };
@@ -678,8 +684,15 @@ export type RecordAnswersTaskDto = {
     title: string;
     /**
      * The questions that apply, in page order, including optional questions with no answer.
+     * Empty when bool RecordAnswersTaskDto.NotApplicable.
      */
     questions: Array<RecordAnswersQuestionDto>;
+    /**
+     * No question in the task applies to this record, for example Promising Innovative Medicine
+     * (PIM) and Early Access to Medicines Scheme (EAMS) on a biosimilar. Check your answers says
+     * why; the task list shows "Cannot start yet".
+     */
+    notApplicable: boolean;
 };
 
 /**
@@ -1169,6 +1182,11 @@ export type RecordTaskListSectionDto = {
      */
     title: string;
     /**
+     * The section is optional: it is marked "(optional)" and does not count towards the tasks
+     * that must be completed before the record can be reviewed and submitted.
+     */
+    optional: boolean;
+    /**
      * Text shown under the section heading, or null for none. A blank line starts a new
      * paragraph.
      */
@@ -1212,7 +1230,9 @@ export type RecordTaskListTaskDto = {
 export const RecordTaskStatus = {
     NOT_STARTED: 'NotStarted',
     IN_PROGRESS: 'InProgress',
-    COMPLETED: 'Completed'
+    COMPLETED: 'Completed',
+    NOT_APPLICABLE: 'NotApplicable',
+    CANNOT_START: 'CannotStart'
 } as const;
 
 /**

@@ -6,14 +6,16 @@ using UKPS.Api.Application.RecordForms.Options;
 namespace UKPS.Api.Application.RecordForms;
 
 /// <summary>
-/// Builds the summary rows of the questions that apply on a revision, leaving out tasks and
-/// sections with none. Shared by check your answers and viewing a record.
+/// Builds the summary rows of the questions that apply on a revision. A task with none is left
+/// out, or kept and flagged not applicable when <paramref name="keepNotApplicableTasks"/> is set
+/// (check your answers). Shared by check your answers and viewing a record.
 /// </summary>
 internal sealed class RecordAnswersBuilder(
     FormModel model,
     IReadOnlyDictionary<string, FormAnswer> answers,
     Applicability applicability,
-    IReadOnlyDictionary<string, IReadOnlyList<FormOption>> options
+    IReadOnlyDictionary<string, IReadOnlyList<FormOption>> options,
+    bool keepNotApplicableTasks = false
 )
 {
     public IReadOnlyList<RecordAnswersSectionDto> Build() =>
@@ -24,31 +26,38 @@ internal sealed class RecordAnswersBuilder(
         {
             Id = section.Id,
             Title = section.Title,
+            Optional = section.Optional,
             Tasks =
             [
-                .. section.Tasks.Select(ToTask).Where(static task => task.Questions.Count > 0),
+                .. section
+                    .Tasks.Select(ToTask)
+                    .Where(task => keepNotApplicableTasks || !task.NotApplicable),
             ],
         };
 
-    private RecordAnswersTaskDto ToTask(FormTask task) =>
-        new()
+    private RecordAnswersTaskDto ToTask(FormTask task)
+    {
+        RecordAnswersQuestionDto[] questions =
+        [
+            .. task
+                .Questions.Where(applicability.Applies)
+                .Select(question =>
+                    ToQuestion(
+                        question,
+                        model.PageOf(question),
+                        answers[question.Id],
+                        options.GetValueOrDefault(question.Id)
+                    )
+                ),
+        ];
+        return new()
         {
             Id = task.Id,
             Title = task.Title,
-            Questions =
-            [
-                .. task
-                    .Questions.Where(applicability.Applies)
-                    .Select(question =>
-                        ToQuestion(
-                            question,
-                            model.PageOf(question),
-                            answers[question.Id],
-                            options.GetValueOrDefault(question.Id)
-                        )
-                    ),
-            ],
+            Questions = questions,
+            NotApplicable = questions.Length == 0,
         };
+    }
 
     private RecordAnswersQuestionDto ToQuestion(
         FormQuestion question,

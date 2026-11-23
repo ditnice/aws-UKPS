@@ -137,15 +137,19 @@ internal static class FormModelBuilder
     /// <summary>
     /// A condition on enum values, stored as their member names, or on reference data codes.
     /// </summary>
-    private static AnswerInCondition Condition(string questionId, IReadOnlyList<object> values) =>
-        new(
-            questionId,
-            values
-                .Select(static v =>
-                    v is Enum member ? Enum.GetName(v.GetType(), member)! : (string)v
-                )
-                .ToArray()
-        );
+    private static FormCondition Condition(
+        string questionId,
+        IReadOnlyList<object> values,
+        bool noneOf = false
+    )
+    {
+        string[] names = values
+            .Select(static v => v is Enum member ? Enum.GetName(v.GetType(), member)! : (string)v)
+            .ToArray();
+        return noneOf
+            ? new AnswerNotInCondition(questionId, names)
+            : new AnswerInCondition(questionId, names);
+    }
 
     /// <summary>
     /// The key named by <c>[FormOptions]</c>, or else the only provider of the expected kind and
@@ -246,6 +250,7 @@ internal static class FormModelBuilder
                     .Select(task => BuildTask(section, task, questions, pageConditions))
                     .Where(static t => t.Pages.Count > 0)
                     .ToArray(),
+                section.Optional,
                 section.SubText
             ))
             .Where(static s => s.Tasks.Count > 0)
@@ -295,7 +300,7 @@ internal static class FormModelBuilder
         )
         {
             ShowWhen = pageConditions.TryGetValue(page.Id, out var condition)
-                ? Condition(condition.QuestionId, condition.Values)
+                ? Condition(condition.QuestionId, condition.Values, condition.NoneOf)
                 : null,
         };
 

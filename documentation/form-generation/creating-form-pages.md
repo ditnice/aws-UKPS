@@ -780,6 +780,21 @@ internal sealed class MedicinesDevelopmentBackground { ... }
 
 (Illustrative; the current design reveals the originator name on the same page.)
 
+Set `NoneOf = true` to invert it: the page applies when the trigger's answer includes **none** of
+the values. An unanswered trigger includes none, so the page applies until the trigger is
+answered. For example, PIM and EAMS apply unless the technology status includes `Biosimilar`:
+
+```csharp
+[FormPageShowWhen(
+    MedicineFormLayout.PimDesignation,
+    "medicines_indication_detail.medicine_technology_status",
+    MedicineTechnologyStatus.Biosimilar,
+    NoneOf = true
+)]
+```
+
+`NoneOf` is available on page conditions only, not on `[FormShowWhen]`.
+
 ### What happens to answers
 
 - An answer that no longer applies is **cleared when the trigger's page is saved**, including
@@ -804,7 +819,11 @@ internal sealed class MedicinesDevelopmentBackground { ... }
 - A `[FormShowWhen]` trigger is an earlier question on the **same page** (a lower
   `FormField.Order`).
 - A `[FormPageShowWhen]` trigger is on an **earlier page** in form order (section, task, then
-  page). The first page of a task can never be conditional, because the task list links to it.
+  page). The first page of a task can only be conditional when every other page of the task is
+  conditional too, so that the whole task can be hidden. The task list then shows it as not
+  applicable instead of linking to it. The validator does not check that the other pages depend on
+  the first page's trigger, so make sure the task cannot be left with a hidden first page while a
+  later page still applies, or the task list links to a page that returns 404.
 - Conditions may chain: a question revealed by a question that is itself hidden is also hidden.
 
 ## Step 7: Bump the form version
@@ -842,7 +861,7 @@ reports every problem in one exception.
 | Options      | A choice control has no provider registered for its type, or several and no `[FormOptions]`. A text control has `[FormOptions]`. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId`                                                                                                                                                                                                                                                                                                  |
 | Rules        | A rule is on a control it does not apply to (including `[FormDistinct]` on anything but a `TextList`), or a rule kind appears twice                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | Rows         | The entity has no `int RevisionId` FK to `RecordRevision`. `RowSource = FirstSave` on an entity with other non-nullable columns                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Conditions   | The trigger question is unknown, is not earlier on the same page (`[FormShowWhen]`) or on an earlier page (`[FormPageShowWhen]`), or is not a `Radio`, `Select` or `Checkbox` on an enum or on reference data with a `string Code`, or a `PrecisionDate`. A value is not a member of the trigger's enum (or `DatePrecision`), is not a non-blank code, is repeated, or there are none. A `[FormShowWhen]` question is on a non-nullable column. A `[FormPageShowWhen]` names a page its entity does not declare or the first page of a task, or a page has more than one. `[FormPageShowWhen]` on a class without `[FormEntity]`                               |
+| Conditions   | The trigger question is unknown, is not earlier on the same page (`[FormShowWhen]`) or on an earlier page (`[FormPageShowWhen]`), or is not a `Radio`, `Select` or `Checkbox` on an enum or on reference data with a `string Code`, or a `PrecisionDate`. A value is not a member of the trigger's enum (or `DatePrecision`), is not a non-blank code, is repeated, or there are none. A `[FormShowWhen]` question is on a non-nullable column. A `[FormPageShowWhen]` names a page its entity does not declare, or the first page of a task unless every other page of that task has a condition too, or a page has more than one. `[FormPageShowWhen]` on a class without `[FormEntity]`                               |
 
 ## Step 8: Test
 

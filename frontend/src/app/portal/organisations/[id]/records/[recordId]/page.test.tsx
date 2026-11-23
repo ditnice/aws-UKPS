@@ -107,8 +107,8 @@ const medicineRecord: RecordDetailDto = {
     recordTitle: 'Early rheumatoid arthritis in adults',
   },
   sections: [
-    { id: 'product-record-details', title: 'Product record details', tasks: [] },
-    { id: 'clinical-trials', title: 'Clinical trials', tasks: [] },
+    { id: 'product-record-details', title: 'Product record details', optional: false, tasks: [] },
+    { id: 'clinical-trials', title: 'Clinical trials', optional: false, tasks: [] },
   ],
 }
 

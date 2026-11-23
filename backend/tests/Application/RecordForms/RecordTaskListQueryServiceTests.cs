@@ -183,7 +183,7 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
                     "pim-and-eams",
                     "Promising Innovative Medicine (PIM) and Early Access to Medicines Scheme (EAMS)",
                     "pim-designation",
-                    RecordTaskStatus.NotStarted
+                    RecordTaskStatus.CannotStart
                 ),
                 (
                     "laboratory-testing",
@@ -376,6 +376,41 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
         (await GetStatus()).ShouldBe(RecordTaskStatus.NotStarted);
     }
 
+    [Fact]
+    public async Task GetTaskList_TechnologyStatusNotAnswered_PimAndEamsCannotStart()
+    {
+        (await GetPimStatus()).ShouldBe(RecordTaskStatus.CannotStart);
+    }
+
+    [Fact]
+    public async Task GetTaskList_Biosimilar_PimAndEamsAreNotApplicable()
+    {
+        await AddIndicationRow(CompleteRow());
+
+        (await GetPimStatus()).ShouldBe(RecordTaskStatus.NotApplicable);
+    }
+
+    [Fact]
+    public async Task GetTaskList_BiosimilarPlusAnotherStatus_PimAndEamsAreNotApplicable()
+    {
+        MedicinesIndicationDetail row = CompleteRow();
+        row.MedicineTechnologyStatus =
+            MedicineTechnologyStatus.Biosimilar | MedicineTechnologyStatus.NewIndication;
+        await AddIndicationRow(row);
+
+        (await GetPimStatus()).ShouldBe(RecordTaskStatus.NotApplicable);
+    }
+
+    [Fact]
+    public async Task GetTaskList_NotBiosimilar_PimAndEamsAreNotStarted()
+    {
+        MedicinesIndicationDetail row = CompleteRow();
+        row.MedicineTechnologyStatus = MedicineTechnologyStatus.NewIndication;
+        await AddIndicationRow(row);
+
+        (await GetPimStatus()).ShouldBe(RecordTaskStatus.NotStarted);
+    }
+
     private MedicinesLaboratoryTesting CompleteLaboratoryTestingRow() =>
         new()
         {
@@ -541,6 +576,12 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
         (
             await CreateHarness(_organisation.Id).Service.GetTaskList(_record.Id, Ct)
         ).ShouldBeSuccess();
+
+    private async Task<RecordTaskStatus> GetPimStatus() =>
+        (await GetTaskList())
+            .Sections.SelectMany(static s => s.Tasks)
+            .Single(static t => string.Equals(t.Id, "pim-and-eams", StringComparison.Ordinal))
+            .Status;
 
     private async Task<RecordTaskStatus> GetStatus() =>
         (await GetTaskList())

@@ -400,6 +400,9 @@ internal sealed class MedicineFormLayout()
                         Hint: "Enter anticipated costs, funding arrangements, and pricing flexibility."
                     ),
                 ],
+                // TODO: becomes mandatory within 12 months of the market authorisation date, so this
+                // flag will need to depend on the record (see RevisionValidator.IsInOptionalSection).
+                Optional: true,
                 SubText: "This section is optional. It becomes mandatory within 12 months of the market authorisation date."
             ),
         ]

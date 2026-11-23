@@ -35,6 +35,7 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
     private const string BiomarkerTypeQuestion = "medicines_laboratory_testing.biomarker_type";
     private const string MhraProcedureQuestion = "record_mhra_procedure.mhra_procedure_type_id";
     private const string Trials = "record_clinical_trial";
+    private const string RecruitingInUk = "record_clinical_trial_information.recruiting_in_uk";
 
     private static readonly DateTime _now = new(2026, 10, 15, 9, 30, 0, DateTimeKind.Utc);
 
@@ -109,8 +110,9 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetCheckAnswers_QuestionRevealedByItsTrigger_IsIncludedAndReported()
+    public async Task GetCheckAnswers_QuestionRevealedByItsTrigger_IsIncludedButNotReportedWhenOptional()
     {
+        // Screening details is required once screening is, but it is in an optional section.
         await UpdateRow<MedicinesPatientIdentification>(x =>
             x.ScreeningRequired = YesNoUnknown.Yes
         );
@@ -118,7 +120,18 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
         RecordCheckAnswersDto dto = await GetCheckAnswers();
 
         Question(dto, ScreeningDetails).Values.ShouldBeEmpty();
-        dto.Errors.ShouldHaveSingleItem().QuestionId.ShouldBe(ScreeningDetails);
+        dto.Errors.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCheckAnswers_QuestionRevealedByItsTrigger_IsIncludedAndReported()
+    {
+        await UpdateRow<RecordClinicalTrialInformation>(x => x.HasClinicalTrials = YesNo.Yes);
+
+        RecordCheckAnswersDto dto = await GetCheckAnswers();
+
+        Question(dto, RecruitingInUk).Values.ShouldBeEmpty();
+        dto.Errors.Select(static e => e.QuestionId).ShouldContain(RecruitingInUk);
     }
 
     [Fact]
@@ -367,14 +380,78 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetCheckAnswers_SectionsAndTasks_HaveOnlyThoseWithQuestionsThatApply()
+    public async Task GetCheckAnswers_Tasks_AreNotApplicableOnlyWhenNoQuestionApplies()
     {
         RecordCheckAnswersDto dto = await GetCheckAnswers();
 
         dto.Sections.ShouldNotBeEmpty();
         dto.Sections.ShouldAllBe(section =>
-            section.Tasks.Count > 0 && section.Tasks.All(task => task.Questions.Count > 0)
+            section.Tasks.Count > 0
+            && section.Tasks.All(task => task.NotApplicable == (task.Questions.Count == 0))
         );
+    }
+
+    [Fact]
+    public async Task GetCheckAnswers_Biosimilar_KeepsPimAndEamsAsANotApplicableTask()
+    {
+        await UpdateRow<MedicinesIndicationDetail>(x =>
+            x.MedicineTechnologyStatus = MedicineTechnologyStatus.Biosimilar
+        );
+
+        RecordCheckAnswersDto dto = await GetCheckAnswers();
+
+        RecordAnswersTaskDto task = dto
+            .Sections.SelectMany(static s => s.Tasks)
+            .Single(static t => string.Equals(t.Id, "pim-and-eams", StringComparison.Ordinal));
+        task.NotApplicable.ShouldBeTrue();
+        task.Questions.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCheckAnswers_NotBiosimilar_ShowsPimAndEams()
+    {
+        await UpdateRow<MedicinesIndicationDetail>(x =>
+            x.MedicineTechnologyStatus = MedicineTechnologyStatus.NewIndication
+        );
+
+        RecordCheckAnswersDto dto = await GetCheckAnswers();
+
+        RecordAnswersTaskDto task = dto
+            .Sections.SelectMany(static s => s.Tasks)
+            .Single(static t => string.Equals(t.Id, "pim-and-eams", StringComparison.Ordinal));
+        task.NotApplicable.ShouldBeFalse();
+        task.Questions.ShouldNotBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCheckAnswers_BiosimilarPlusAnotherStatus_StillHidesPimAndEams()
+    {
+        await UpdateRow<MedicinesIndicationDetail>(x =>
+            x.MedicineTechnologyStatus =
+                MedicineTechnologyStatus.Biosimilar | MedicineTechnologyStatus.NewIndication
+        );
+
+        RecordCheckAnswersDto dto = await GetCheckAnswers();
+
+        dto.Sections.SelectMany(static s => s.Tasks)
+            .Single(static t => string.Equals(t.Id, "pim-and-eams", StringComparison.Ordinal))
+            .NotApplicable.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task GetCheckAnswers_UntouchedOptionalTask_RaisesNoErrors()
+    {
+        // With no diagnostic test answer the laboratory testing task has nothing answered, and
+        // it is in the optional service readiness section.
+        await UpdateRow<MedicinesLaboratoryTesting>(x => x.DiagnosticTestRequired = null);
+
+        RecordCheckAnswersDto dto = await GetCheckAnswers();
+
+        dto.Errors.ShouldBeEmpty();
+        dto.Sections.Single(static s =>
+                string.Equals(s.Id, "service-readiness", StringComparison.Ordinal)
+            )
+            .Optional.ShouldBeTrue();
     }
 
     [Fact]
