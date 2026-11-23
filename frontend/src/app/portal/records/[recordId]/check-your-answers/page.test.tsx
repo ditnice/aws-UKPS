@@ -2,7 +2,11 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getRecordCheckAnswers } from '@/client/generated'
-import type { RecordAnswersGroupItemDto } from '@/client/generated'
+import type {
+  RecordAnswersGroupItemDto,
+  RecordAnswersQuestionDto,
+  RecordAnswersSectionDto,
+} from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 
 import CheckAnswersPage from './page'
@@ -159,8 +163,8 @@ const trialsCheckAnswers = {
   },
 } satisfies GetRecordCheckAnswersResult
 
-type Section = (typeof checkAnswers.data.sections)[number]
-type Question = Section['tasks'][number]['questions'][number]
+type Section = RecordAnswersSectionDto
+type Question = RecordAnswersQuestionDto
 
 const textQuestion = (id: string, pageId: string, label: string, values: string[] = []) =>
   ({
