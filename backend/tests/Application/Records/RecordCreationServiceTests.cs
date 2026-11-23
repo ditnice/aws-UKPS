@@ -297,6 +297,7 @@ public class RecordCreationServiceTests : DatabaseTestBase
     [Fact]
     public async Task CreateRecord_WhenSpecifiedOrganisationDoesNotExist_ShouldReturnInvalidOrganisationError()
     {
+        _harness.UpdateCurrentUser(x => x with { OrganisationId = 999 });
         var nonExistentOrganisationCommand = _validCommand with { OrganisationId = 999 };
         CreateRecordResult result = await _harness.Service.CreateRecord(
             nonExistentOrganisationCommand,

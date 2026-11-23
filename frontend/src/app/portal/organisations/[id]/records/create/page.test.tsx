@@ -83,6 +83,16 @@ describe('CreateMedicineRecordPage (direct invocation)', () => {
     expect(
       screen.getByRole('heading', { name: 'User is not permitted to view this page' }),
     ).toBeVisible()
+    expect(screen.queryByText(/contact your champion user/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('form')).not.toBeInTheDocument()
+  })
+
+  it('shows an error when the current user cannot be loaded', async () => {
+    vi.mocked(getUsersMe).mockResolvedValue({ data: undefined, error: {} } as never)
+
+    render(await CreateMedicineRecordPage({ params }))
+
+    expect(screen.getByRole('heading', { name: 'Unable to load current user' })).toBeVisible()
     expect(screen.queryByRole('form')).not.toBeInTheDocument()
   })
 })

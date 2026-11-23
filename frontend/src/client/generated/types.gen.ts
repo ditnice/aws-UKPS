@@ -2991,6 +2991,10 @@ export type DiscardRecordErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
+     * The caller can read the record but cannot discard it.
+     */
+    403: ProblemDetails;
+    /**
      * The record was not found, has already been discarded, or is not accessible to the caller.
      */
     404: ProblemDetails;

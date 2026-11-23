@@ -768,7 +768,7 @@ User 7 archives the record because development has been discontinued.
 
 ## Stage 13: Discard a draft record
 
-A record can be discarded only while it has a single revision that is still in `draft`, which means it has never been submitted or published. Any user in the organisation can discard it. Discarding sets both the revision and the record to `discarded`. Nothing is deleted.
+A record can be discarded only while it has a single revision that is still in `draft`, which means it has never been submitted or published. Any standard or champion user in the organisation can discard it. Super users can't. Discarding sets both the revision and the record to `discarded`. Nothing is deleted.
 
 This stage follows a second record (2). User 7 created it on 2026-03-02 with revision 4, as in [stage 1](#stage-1-first-save-and-continue-on-a-brand-new-record) (`record_events` 13, `record_status_histories` 5), and never submitted it. They now discard it.
 
