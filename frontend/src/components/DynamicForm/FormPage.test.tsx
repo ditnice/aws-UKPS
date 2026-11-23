@@ -1056,6 +1056,83 @@ describe('FormPage', () => {
       expect(screen.getAllByRole('combobox')).toHaveLength(1)
     })
 
+    it('names every select of a multi-value hierarchical select after its entry', () => {
+      render(
+        <FormPage page={page({ questions: [areasQuestion], answers: { areas: ['13', '11'] } })} />,
+      )
+
+      for (const entry of ['Therapeutic area 1', 'Therapeutic area 2']) {
+        expect(screen.getByRole('group', { name: entry })).toBeInTheDocument()
+        expect(screen.getByRole('combobox', { name: entry })).toBeInTheDocument()
+        expect(
+          screen.getByRole('combobox', {
+            name: `Select the disease or condition (optional), ${entry}`,
+          }),
+        ).toBeInTheDocument()
+      }
+    })
+
+    it('adds an entry of a hierarchical select, focusing its parent select', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={page({ questions: [areasQuestion], answers: { areas: ['2'] } })} />)
+
+      expect(screen.queryByRole('button', { name: /Remove/ })).not.toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Add another therapy area' }))
+
+      expect(screen.getByRole('combobox', { name: 'Therapeutic area 2' })).toHaveFocus()
+    })
+
+    it('removes the first entry of a hierarchical select and focuses the new first heading', async () => {
+      const user = userEvent.setup()
+      render(
+        <FormPage page={page({ questions: [areasQuestion], answers: { areas: ['13', '2'] } })} />,
+      )
+
+      await user.click(
+        screen.getByRole('button', { name: 'Remove therapeutic area Therapeutic area 1' }),
+      )
+
+      expect(screen.getAllByRole('combobox')).toHaveLength(1)
+      expect(screen.getByRole('combobox', { name: 'Therapeutic area 1' })).toHaveValue('2')
+      expect(
+        screen.getByRole('heading', { name: 'Therapeutic area 1' }).closest('legend'),
+      ).toHaveFocus()
+      expect(screen.queryByRole('button', { name: /Remove/ })).not.toBeInTheDocument()
+    })
+
+    it('shows the error of a multi-value hierarchical select once, and clears it on removal', async () => {
+      const user = userEvent.setup()
+      render(
+        <FormPage page={page({ questions: [areasQuestion], answers: { areas: ['13', '13'] } })} />,
+      )
+
+      save()
+
+      // findBy fails if the message is shown more than once.
+      const message = await screen.findByText('You have selected the same option more than once')
+      expect(message.closest('fieldset')?.getAttribute('aria-describedby')?.split(' ')).toContain(
+        message.id,
+      )
+      const selects = screen.getAllByRole('combobox')
+      expect(selects).toHaveLength(4)
+      for (const select of selects) {
+        expect(select).toBeInvalid()
+        expect(select.getAttribute('aria-describedby')?.split(' ')).toContain(message.id)
+      }
+
+      await user.click(
+        screen.getByRole('button', { name: 'Remove therapeutic area Therapeutic area 2' }),
+      )
+
+      expect(
+        screen.queryByText('You have selected the same option more than once'),
+      ).not.toBeInTheDocument()
+      for (const select of screen.getAllByRole('combobox')) {
+        expect(select).toBeValid()
+        expect(select).not.toHaveAttribute('aria-describedby')
+      }
+    })
+
     it('reports the same area chosen twice', async () => {
       render(
         <FormPage page={page({ questions: [areasQuestion], answers: { areas: ['2', '2'] } })} />,

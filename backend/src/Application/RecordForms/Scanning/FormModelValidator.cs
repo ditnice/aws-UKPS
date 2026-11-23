@@ -677,11 +677,7 @@ internal static partial class FormModelValidator
             );
         }
 
-        if (
-            field.AddAnotherLabel is not null
-            && !(isHierarchical && question.Shape == AnswerShape.Multi)
-            && control is not (FormControl.Group or FormControl.TextList)
-        )
+        if (field.AddAnotherLabel is not null && !HasRepeatedItems(question, control))
         {
             problems.Add(
                 $"{where} sets AddAnotherLabel, which only a multi-value HierarchicalSelect, a Group or a TextList uses."
@@ -695,6 +691,11 @@ internal static partial class FormModelValidator
             problems.Add($"{where} uses HierarchicalSelect, which needs a ChildLabel.");
         }
     }
+
+    /// <summary>Whether the question repeats, so has buttons and labels for its items.</summary>
+    private static bool HasRepeatedItems(QuestionDeclaration question, FormControl control) =>
+        control is FormControl.Group or FormControl.TextList
+        || (control == FormControl.HierarchicalSelect && question.Shape == AnswerShape.Multi);
 
     private static void ValidateWidth(
         QuestionDeclaration question,
@@ -723,8 +724,8 @@ internal static partial class FormModelValidator
     }
 
     /// <summary>
-    /// Checks the item and remove labels (used by a group, text list or hierarchical select) and
-    /// the item key (used only by a group).
+    /// Checks the item and remove labels (used by a group, text list or multi-value hierarchical
+    /// select) and the item key (used only by a group).
     /// </summary>
     private static void ValidateItemPresentation(
         QuestionDeclaration question,
@@ -736,14 +737,10 @@ internal static partial class FormModelValidator
         FormFieldAttribute field = question.Field;
         bool isGroup = control == FormControl.Group;
 
-        if (
-            field.RemoveLabel is not null
-            && control
-                is not (FormControl.Group or FormControl.TextList or FormControl.HierarchicalSelect)
-        )
+        if (field.RemoveLabel is not null && !HasRepeatedItems(question, control))
         {
             problems.Add(
-                $"{where} sets RemoveLabel, which only a Group, a TextList or a HierarchicalSelect uses."
+                $"{where} sets RemoveLabel, which only a multi-value HierarchicalSelect, a Group or a TextList uses."
             );
         }
 
@@ -753,14 +750,10 @@ internal static partial class FormModelValidator
         }
 
         bool itemLabelIsBlank = string.IsNullOrWhiteSpace(field.ItemLabel);
-        if (
-            field.ItemLabel is not null
-            && control
-                is not (FormControl.Group or FormControl.TextList or FormControl.HierarchicalSelect)
-        )
+        if (field.ItemLabel is not null && !HasRepeatedItems(question, control))
         {
             problems.Add(
-                $"{where} sets ItemLabel, which only a Group, a TextList or a HierarchicalSelect uses."
+                $"{where} sets ItemLabel, which only a multi-value HierarchicalSelect, a Group or a TextList uses."
             );
         }
         else if (isGroup && itemLabelIsBlank)

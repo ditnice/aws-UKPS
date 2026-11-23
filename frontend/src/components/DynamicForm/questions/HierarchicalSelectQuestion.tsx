@@ -23,6 +23,8 @@ type EntryProps = {
   error?: string
   /** The ID of the question's hint, which every select is described by. */
   hintId?: string
+  /** The entry's heading in a group, such as "Therapeutic area 2"; not set when there is no group. */
+  entryLabel?: string
   labelStyle: LabelStyle
 }
 
@@ -36,33 +38,33 @@ function HierarchicalEntrySelects({
   onBlur,
   error,
   hintId,
+  entryLabel,
   labelStyle,
 }: EntryProps) {
   const parentId = `${name}-${index}-parent`
   const childId = `${name}-${index}-child`
   const children = question.options?.find((o) => o.value === entry.parent)?.children ?? []
-  // A multi-value question's entries sit in a group whose legend, hint and error name and describe
-  // them, and each entry's heading names the entry, so the parent label is hidden.
-  const inGroup = Boolean(question.multiple)
+  // A multi-value question's entries sit in a group that shows the question's label, hint and
+  // error. Each entry's visible heading names its parent select, so that label is hidden.
+  const inGroup = entryLabel !== undefined
   const showParentLabel = !inGroup && labelStyle !== 'heading'
   // On a page of several questions each question's label is lead text, and the child's label
   // matches it rather than standing out above it.
   const labelClass = labelStyle === 'lead' ? styles.leadLabel : styles.childLabel
-  // Otherwise the question's error is shown above the select; every select is styled as invalid
-  // and described by that one message (the select adds it itself).
-  // Every select is also described by the question's hint.
-  const ownsError = Boolean(error) && !inGroup
-  const errorId = error && !inGroup ? `${name}-0-parent-error` : undefined
+  // The question's error is shown once: by the group, or otherwise above the parent select (which
+  // then describes itself by it). Every select is styled as invalid and described by that message.
+  const sharedErrorId = inGroup ? `${name}-error` : `${parentId}-error`
+  const errorId = error ? sharedErrorId : undefined
 
   return (
     <div className={styles.entry}>
       <label className={showParentLabel ? labelClass : 'visually-hidden'} htmlFor={parentId}>
-        {question.label}
+        {entryLabel ?? question.label}
       </label>
       <Select
-        aria-describedby={describedBy([hintId, ownsError ? undefined : errorId])}
+        aria-describedby={describedBy([hintId, inGroup ? errorId : undefined])}
         error={Boolean(error)}
-        errorMessage={ownsError ? error : undefined}
+        errorMessage={inGroup ? undefined : error}
         id={parentId}
         label={null}
         name={`${name}[${index}].parent`}
@@ -88,6 +90,7 @@ function HierarchicalEntrySelects({
         <>
           <label className={labelClass} htmlFor={childId}>
             {question.childLabel}
+            {inGroup && <span className="visually-hidden">, {entryLabel}</span>}
           </label>
           <Select
             aria-describedby={describedBy([hintId, errorId])}
@@ -134,9 +137,11 @@ export function HierarchicalSelectQuestion({
   const update = (next: HierarchicalEntry[]) => onChange(question.multiple ? next : next[0])
   const replace = (index: number, entry: HierarchicalEntry) =>
     update(entries.map((current, i) => (i === index ? entry : current)))
+  const entryLabel = (index: number) => `${question.itemLabel ?? 'Item'} ${index + 1}`
   const renderEntry = (index: number, hintId?: string) => (
     <HierarchicalEntrySelects
       entry={entries[index]}
+      entryLabel={question.multiple ? entryLabel(index) : undefined}
       error={error}
       hintId={hintId}
       index={index}
@@ -178,7 +183,7 @@ export function HierarchicalSelectQuestion({
       <AddAnotherGroup
         addItemLabel={question.addAnotherLabel ?? 'Add another'}
         count={entries.length}
-        itemHeading={(index) => `${question.itemLabel ?? 'Item'} ${index + 1}`}
+        itemHeading={entryLabel}
         itemHeadingLevel={labelAsHeading ? 2 : 3}
         maxItems={maxItems ?? undefined}
         onAdd={() => update([...entries, emptyEntry])}
