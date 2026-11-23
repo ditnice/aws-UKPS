@@ -37,7 +37,7 @@
     <PackageReference Include="AWSSDK.SimpleEmailV2" Version="4.1.1" />
     <PackageReference Include="Bogus" Version="35.6.5" />
     <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
-    <PackageReference Include="libphonenumber-csharp" Version="9.0.43" />
+    <PackageReference Include="libphonenumber-csharp" Version="9.0.44" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.15" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.15" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.15" />
@@ -60,7 +60,7 @@
     <!-- TODO URP 300: This overrides the dependency (marked as vulnerable) from the Microsoft.AspNetCore.OpenApi.
     Once this package is updated to not have a vulnerable dependency this can be removed. -->
     <PackageReference Include="Microsoft.OpenApi" Version="2.13.1" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.4" />
     <PackageReference Include="NSubstitute" Version="6.2.0" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.21.0" />
   </ItemGroup>
