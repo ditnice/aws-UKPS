@@ -21,18 +21,14 @@ const ResetPasswordForm = ({ email, buttonContentOverride, onSuccess }: ResetPas
   const boundAction = resetPasswordAction.bind(null, !email)
   const [state, action, isPending] = useActionState(boundAction, initialFormState)
 
-  const hasHandledSuccess = useRef(false)
+  // Each action response is a new state object, so tracking the last handled one
+  // fires onSuccess exactly once per successful submission (even if the effect re-runs).
+  const lastHandledState = useRef<typeof state | null>(null)
 
   useEffect(() => {
-    const isSuccessful = 'success' in state
-
-    if (isSuccessful && !hasHandledSuccess.current) {
-      hasHandledSuccess.current = true
+    if ('success' in state && lastHandledState.current !== state) {
+      lastHandledState.current = state
       onSuccess?.()
-    }
-
-    if (!isSuccessful) {
-      hasHandledSuccess.current = false
     }
   }, [state, onSuccess])
 
@@ -54,6 +50,12 @@ const ResetPasswordForm = ({ email, buttonContentOverride, onSuccess }: ResetPas
         }),
       [state],
     ),
+    onSubmitMeta: {} as { formData: FormData },
+    onSubmit: ({ meta }) => {
+      startTransition(() => {
+        action(meta.formData)
+      })
+    },
   })
 
   return (
@@ -61,7 +63,7 @@ const ResetPasswordForm = ({ email, buttonContentOverride, onSuccess }: ResetPas
       action={action as never}
       onSubmit={(e) => {
         e.preventDefault()
-        void form.handleSubmit()
+        void form.handleSubmit({ formData: new FormData(e.currentTarget) })
       }}
     >
       <FormLevelErrors errors={state.errors} />
