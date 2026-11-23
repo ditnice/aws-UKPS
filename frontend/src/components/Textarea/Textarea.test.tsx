@@ -71,3 +71,15 @@ describe('Textarea', () => {
     },
   )
 })
+
+describe('Textarea label size', () => {
+  it('shows the label as lead text when asked', () => {
+    render(<Textarea label="Details" labelSize="lead" name="details" />)
+    expect(screen.getByText('Details').closest('[class*="leadLabel"]')).not.toBeNull()
+  })
+
+  it('keeps the standard label by default', () => {
+    render(<Textarea label="Details" name="details" />)
+    expect(screen.getByText('Details').closest('[class*="leadLabel"]')).toBeNull()
+  })
+})

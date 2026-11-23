@@ -9,4 +9,9 @@ public enum ChangedUserData
     /// The user's password was changed.
     /// </summary>
     Password = 0,
+
+    /// <summary>
+    /// The user's email was changed.
+    /// </summary>
+    Email = 1,
 }

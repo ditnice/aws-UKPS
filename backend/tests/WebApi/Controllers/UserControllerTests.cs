@@ -740,6 +740,84 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async Task CancelPendingEmailChange_OnSuccess_ShouldReturn200()
+    {
+        MockCancelPendingEmailChange(Result<CancelPendingEmailChangeError>.Ok());
+        var response = await SendCancelPendingEmailChangeRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task CancelPendingEmailChange_ShouldPassArgumentsToTheServiceMethod()
+    {
+        int userId = 43;
+        MockCancelPendingEmailChange(Result<CancelPendingEmailChangeError>.Ok());
+
+        _ = await SendCancelPendingEmailChangeRequest(userId);
+
+        await _mockUserService
+            .Received(1)
+            .CancelPendingEmailChange(userId, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CancelPendingEmailChange_OnUnauthorisedError_ShouldReturnNotFound()
+    {
+        MockCancelPendingEmailChange(
+            Result<CancelPendingEmailChangeError>.Err(
+                new CancelPendingEmailChangeError.Unauthorised()
+            )
+        );
+
+        var response = await SendCancelPendingEmailChangeRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task CancelPendingEmailChange_OnUserDoesNotExist_ShouldReturnNotFound()
+    {
+        MockCancelPendingEmailChange(
+            Result<CancelPendingEmailChangeError>.Err(
+                new CancelPendingEmailChangeError.UserDoesNotExist()
+            )
+        );
+
+        var response = await SendCancelPendingEmailChangeRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task CancelPendingEmailChange_WhenNoPendingEmailToCancel_ShouldReturnConflict()
+    {
+        MockCancelPendingEmailChange(
+            Result<CancelPendingEmailChangeError>.Err(
+                new CancelPendingEmailChangeError.NoPendingEmailToCancel()
+            )
+        );
+
+        var response = await SendCancelPendingEmailChangeRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task CancelPendingEmailChange_WhenConcurrentChangeDetected_ShouldReturnConflict()
+    {
+        MockCancelPendingEmailChange(
+            Result<CancelPendingEmailChangeError>.Err(
+                new CancelPendingEmailChangeError.ConcurrentChangeDetected()
+            )
+        );
+
+        var response = await SendCancelPendingEmailChangeRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
     public async Task RemoveUser_WhenValidRequest_ShouldReturnOk()
     {
         var url = new Uri($"{UsersUrl}/{1}", UriKind.Relative);
@@ -1009,6 +1087,19 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                 Arg.Any<UpdateUserEmailCommand>(),
                 Arg.Any<CancellationToken>()
             )
+            .Returns(result);
+    }
+
+    private async Task<HttpResponseMessage> SendCancelPendingEmailChangeRequest(int userId = 1)
+    {
+        var url = new Uri($"{UsersUrl}/{userId}/email/pending", UriKind.Relative);
+        return await _client.DeleteAsync(url, TestContext.Current.CancellationToken);
+    }
+
+    private void MockCancelPendingEmailChange(Result<CancelPendingEmailChangeError> result)
+    {
+        _mockUserService
+            .CancelPendingEmailChange(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(result);
     }
 

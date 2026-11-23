@@ -1,5 +1,6 @@
 import type { FormValue, Question } from '@/lib/dynamic-form/types'
 
+import type { LabelStyle } from './labelStyle'
 import type { ReactNode } from 'react'
 
 /** The props every question component takes. */
@@ -23,8 +24,8 @@ export type QuestionProps<TValue extends FormValue = FormValue> = {
   errorItems?: Record<string, string>
   /** Removes the question's error until it is next validated, such as when the user starts over. */
   clearError: () => void
-  /** True on a single-question page, where the label is already the page heading. */
-  labelAsHeading: boolean
+  /** How the question shows its own label or legend; see `LabelStyle`. */
+  labelStyle: LabelStyle
   /**
    * Questions revealed by an option, keyed by option value. Radio controls show them beneath the
    * option while it is chosen.

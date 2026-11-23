@@ -35,9 +35,18 @@ internal sealed class FormFieldAttribute(string id, string label, FormControl co
 
     /// <summary>
     /// A rendering hint for the frontend, for example <c>combobox</c>. It does not change
-    /// validation, and the frontend ignores hints it does not know.
+    /// validation, and the frontend ignores hints it does not know. A text field suggests values
+    /// as the user types with <c>autocomplete:&lt;source&gt;</c>, where the source names where the
+    /// suggestions come from, for example <c>autocomplete:company-codes</c>.
     /// </summary>
     public string? Display { get; set; }
+
+    /// <summary>
+    /// The width of a <see cref="FormControl.Text"/> input, or of each entry of a
+    /// <see cref="FormControl.TextList"/>, overriding the default of two-thirds. A text list takes
+    /// only a share of the container, not a character count. Only a Text or a TextList may set it.
+    /// </summary>
+    public FormInputWidth Width { get; set; }
 
     /// <summary>
     /// Position of the question on a page with several questions. No two questions on a page

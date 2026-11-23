@@ -1,4 +1,5 @@
 @use '@/styles/spacing';
+@use '@/styles/typography';
 @use '@/styles/utils';
 @use '@/styles/visibility';
 
@@ -18,7 +19,7 @@
 }
 
 .input {
-  flex: 0 1 66.6667%;
+  flex: 0 1 var(--input-basis, 66.6667%);
   min-width: 0;
 
   // TODO: replace with a specific selector once global styling rules have been reviewed
@@ -42,6 +43,10 @@
   &:focus {
     outline-offset: utils.rem(spacing.$x_small);
   }
+}
+
+.legend.leadLegend {
+  @include typography.lead-label;
 }
 
 // Each input keeps its own label for screen readers; the legend is the visible one.

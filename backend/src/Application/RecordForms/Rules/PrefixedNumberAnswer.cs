@@ -14,10 +14,12 @@ internal static class PrefixedNumberAnswer
     /// </summary>
     /// <param name="prefixes">The prefixes offered.</param>
     /// <param name="digits">The exact number of digits needed, or null for up to 5.</param>
+    /// <param name="name">What the number is, as the messages name it, for example <c>ID</c>.</param>
     /// <param name="value">The answer.</param>
     public static (string? Value, string? Error) Evaluate(
         IReadOnlyList<string> prefixes,
         int? digits,
+        string name,
         string? value
     )
     {
@@ -42,14 +44,17 @@ internal static class PrefixedNumberAnswer
 
         if (!number.All(char.IsAsciiDigit) || number.All(c => c == '0'))
         {
-            return (value, RecordFormMessages.IdDigitsOnly);
+            return (value, RecordFormMessages.IdDigitsOnly(name));
         }
 
         if (digits is { } exact)
         {
-            return (value, number.Length != exact ? RecordFormMessages.IdDigits(exact) : null);
+            return (
+                value,
+                number.Length != exact ? RecordFormMessages.IdDigits(name, exact) : null
+            );
         }
 
-        return (value, number.Length > MaxDigits ? RecordFormMessages.IdOutOfRange : null);
+        return (value, number.Length > MaxDigits ? RecordFormMessages.IdOutOfRange(name) : null);
     }
 }

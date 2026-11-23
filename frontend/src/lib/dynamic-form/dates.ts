@@ -16,6 +16,8 @@ export const estimatedDateInPastMessage = (name: string) =>
 // Only the page sees a blank part, as the answer it sends is then incomplete.
 export const dateBlankMessage = (actual: boolean, name: string) =>
   `Enter the ${actual ? 'actual' : 'estimated'} ${name} date`
+export const quarterBlankMessage = 'Select a quarter'
+export const yearBlankMessage = 'Enter a year'
 
 export type DatePrecision = 'EstimatedQuarter' | 'EstimatedMonth' | 'ActualDate' | 'ActualMonth'
 
@@ -237,6 +239,12 @@ export const precisionDateProblem = (
   const parts = partsOf[precision]
   const actual = precision === 'ActualDate'
   const blank = parts.filter((part) => value[part].trim() === '')
+  if (blank.length === 1 && precision === 'EstimatedQuarter') {
+    return {
+      message: blank[0] === 'quarter' ? quarterBlankMessage : yearBlankMessage,
+      parts: blank,
+    }
+  }
   if (blank.length > 0) {
     return { message: dateBlankMessage(actual, dateName ?? ''), parts: blank }
   }

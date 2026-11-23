@@ -1,5 +1,7 @@
 import { Select, SelectOption } from '@/components/Select/Select'
 
+import { labelSizeFor } from '../labelStyle'
+
 import type { QuestionProps } from '../types'
 
 export function SelectQuestion({
@@ -9,8 +11,9 @@ export function SelectQuestion({
   onChange,
   onBlur,
   error,
-  labelAsHeading,
+  labelStyle,
 }: QuestionProps<string>) {
+  const labelAsHeading = labelStyle === 'heading'
   return (
     <>
       {labelAsHeading && (
@@ -23,9 +26,13 @@ export function SelectQuestion({
         errorMessage={error}
         hint={question.hint ?? undefined}
         label={labelAsHeading ? null : question.label}
+        labelSize={labelSizeFor(labelStyle)}
         name={name}
         onBlur={onBlur}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => {
+          onChange(event.target.value)
+          onBlur()
+        }}
         value={value}
         width="one-third"
       >

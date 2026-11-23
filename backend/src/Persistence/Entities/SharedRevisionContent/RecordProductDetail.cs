@@ -29,6 +29,7 @@ internal sealed class RecordProductDetail
         "Company code",
         FormControl.Text,
         Hint = "Enter the primary internal code or working name your company uses for this product seeking market access.",
+        Display = "autocomplete:company-codes",
         Order = 10
     )]
     [FormRequired("Enter company code")]

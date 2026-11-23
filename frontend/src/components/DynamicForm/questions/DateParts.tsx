@@ -5,10 +5,10 @@ import styles from '../DynamicForm.module.scss'
 
 type Part = Exclude<DatePart, 'quarter'>
 
-const partInputs: Record<Part, { label: string; width: 2 | 5 }> = {
+const partInputs: Record<Part, { label: string; width: 2 | 4 }> = {
   day: { label: 'Day', width: 2 },
   month: { label: 'Month', width: 2 },
-  year: { label: 'Year', width: 5 },
+  year: { label: 'Year', width: 4 },
 }
 
 export type DatePartsProps = {

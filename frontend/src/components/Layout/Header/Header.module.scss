@@ -11,7 +11,7 @@
 @use 'header-settings';
 
 .header {
-  background: colours.$fill-page-background;
+  background: colours.$fill-white-background;
   border-bottom: utils.rem(spacing.$xx-small) solid variables.$white;
   box-sizing: border-box;
   font-family: typography.get-font-family(sans);
@@ -126,7 +126,7 @@
 
 @include media-queries.mq($from: md) {
   .header {
-    border-bottom: utils.rem(spacing.$x-small) solid colours.$fill-page-background;
+    border-bottom: utils.rem(spacing.$x-small) solid colours.$fill-white-background;
   }
 
   .container {

@@ -260,6 +260,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
         {
             FormVersion = "2026.10.4",
             RecordId = 5,
+            OrganisationId = 3,
             Section = new RecordPageSectionDto
             {
                 Id = "indication-details",

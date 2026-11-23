@@ -9,3 +9,8 @@
   font-weight: bold;
   margin: 0 0 utils.rem(spacing.$medium);
 }
+
+// Qualified by the NDS class so it wins over the NDS legend size whatever the stylesheet order.
+:global(.form-group__legend).leadLegend {
+  @include typography.lead-label;
+}

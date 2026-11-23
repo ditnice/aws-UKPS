@@ -123,8 +123,23 @@ describe('precisionDateProblem', () => {
       parts: ['day', 'year'],
     })
     expect(problem({ precision: 'EstimatedQuarter', year: '2027' })).toEqual({
-      message: 'Enter the estimated submission date',
+      message: 'Select a quarter',
       parts: ['quarter'],
+    })
+    expect(problem({ precision: 'EstimatedQuarter', quarter: '3' })).toEqual({
+      message: 'Enter a year',
+      parts: ['year'],
+    })
+  })
+
+  it('keeps the general message when more than the quarter or year is blank', () => {
+    expect(problem({ precision: 'EstimatedQuarter' })).toEqual({
+      message: 'Enter the estimated submission date',
+      parts: ['quarter', 'year'],
+    })
+    expect(problem({ precision: 'EstimatedMonth', year: '2027' })).toEqual({
+      message: 'Enter the estimated submission date',
+      parts: ['month'],
     })
   })
 

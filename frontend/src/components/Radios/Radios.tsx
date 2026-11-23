@@ -56,6 +56,8 @@ export type RadiosProps = {
    */
   inline?: boolean
   legend: string
+  /** The size of the legend, when it is not a heading. */
+  legendSize?: FormGroupProps['legendSize']
   name: string
   onBlur?: FocusEventHandler<HTMLInputElement>
   onChange?: (value: string) => void
@@ -79,6 +81,7 @@ export function Radios({
   identifier,
   inline = false,
   legend,
+  legendSize,
   name,
   onBlur,
   onChange,
@@ -115,6 +118,7 @@ export function Radios({
           identifier={identifier}
           inline={inline}
           legend={legend}
+          legendSize={legendSize}
         >
           {children}
         </FormGroup>

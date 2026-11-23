@@ -3,6 +3,7 @@ using System.Linq.Expressions;
 using Amazon.Runtime;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using UKPS.Api.Application.Authentication.SecurityNotification;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Communication;
@@ -850,6 +851,64 @@ internal partial class UserService(
         };
     }
 
+    public async Task<Result<CancelPendingEmailChangeError>> CancelPendingEmailChange(
+        int userId,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
+
+            if (user is null)
+            {
+                return Result<CancelPendingEmailChangeError>.Err(
+                    new CancelPendingEmailChangeError.UserDoesNotExist()
+                );
+            }
+
+            if (!currentUserInfoService.IsCurrentUser(user))
+            {
+                return Result<CancelPendingEmailChangeError>.Err(
+                    new CancelPendingEmailChangeError.Unauthorised()
+                );
+            }
+
+            User.PendingEmailCancellationError? domainError = user.TryCancelPendingEmailChange(
+                timeProvider.GetUtcNow()
+            );
+            if (domainError is not null)
+            {
+                return Result<CancelPendingEmailChangeError>.Err(
+                    MapPendingEmailCancellationError(domainError.Value)
+                );
+            }
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return Result<CancelPendingEmailChangeError>.Ok();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result<CancelPendingEmailChangeError>.Err(
+                new CancelPendingEmailChangeError.ConcurrentChangeDetected()
+            );
+        }
+    }
+
+    private static CancelPendingEmailChangeError.NoPendingEmailToCancel MapPendingEmailCancellationError(
+        User.PendingEmailCancellationError domainError
+    )
+    {
+        return domainError switch
+        {
+            User.PendingEmailCancellationError.NoPendingEmailToCancel =>
+                new CancelPendingEmailChangeError.NoPendingEmailToCancel(),
+            _ => throw new InvalidOperationException(
+                $"The pending email cancellation error '{domainError}' is not supported."
+            ),
+        };
+    }
+
     private VerifyPendingEmailAddressError? ValidatePendingEmailVerificationPermitted(User? user)
     {
         if (user is null)
@@ -1143,6 +1202,15 @@ internal partial class UserService(
         await identityService.UpdateUserEmail(
             user.CognitoUsername,
             emailUpdatedEvent.NewWorkEmail,
+            cancellationToken
+        );
+        await emailService.SendEmail(
+            new SendEmailCommand()
+            {
+                Email = new SecurityNotificationEmail() { ChangedValue = ChangedUserData.Email },
+                PersonIdentifier = user.CognitoUsername,
+                RecipientAddress = emailUpdatedEvent.PreviousWorkEmail,
+            },
             cancellationToken
         );
     }

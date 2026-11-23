@@ -3,6 +3,14 @@ import { describe, expect, it, vi } from 'vitest'
 
 import PendingEmailUpdateAlert from './PendingEmailUpdateAlert'
 
+vi.mock('./editUserEmail/CancelPendingEmailChange', () => ({
+  default: ({ userId }: { userId: number }) => (
+    <button data-testid="cancel-verification-email-button" data-user-id={userId}>
+      Resend verification email
+    </button>
+  ),
+}))
+
 vi.mock('./ResendVerificationEmail/ResendVerificationEmailButton', () => ({
   default: ({ userId }: { userId: number }) => (
     <button data-testid="resend-verification-email-button" data-user-id={userId}>
@@ -17,8 +25,15 @@ const userId = 123
 type Props = Parameters<typeof PendingEmailUpdateAlert>[0]
 
 // Resolve the async component, then render the JSX it returns
-async function renderAlert(props: Props) {
-  const ui = await PendingEmailUpdateAlert(props)
+async function renderAlert(props: Partial<Props>) {
+  const defaultProps: Props = {
+    value: email,
+    userId,
+    verifiedByEmail: false,
+    verificationEmailResent: undefined,
+    error: undefined,
+  }
+  const ui = await PendingEmailUpdateAlert({ ...defaultProps, ...props })
   return render(ui)
 }
 
@@ -41,10 +56,28 @@ describe('PendingEmailUpdateAlert', () => {
     )
   })
 
+  it('renders the cancel verification button with the user id when verifiedByEmail is false', async () => {
+    await renderAlert({ value: email, verifiedByEmail: false, userId })
+
+    expect(screen.getByTestId('cancel-verification-email-button')).toHaveAttribute(
+      'data-user-id',
+      String(userId),
+    )
+  })
+
   it('does not render the resend verification email button with the user id when verifiedByEmail is true', async () => {
     await renderAlert({ value: email, verifiedByEmail: true, userId })
 
     expect(screen.queryByTestId('resend-verification-email-button')).not.toBeInTheDocument()
+  })
+
+  it('renders the cancel verification email button with the user id when verifiedByEmail is true', async () => {
+    await renderAlert({ value: email, verifiedByEmail: true, userId })
+
+    expect(screen.getByTestId('cancel-verification-email-button')).toHaveAttribute(
+      'data-user-id',
+      String(userId),
+    )
   })
 
   describe('when the address has not been verified', () => {
@@ -63,7 +96,6 @@ describe('PendingEmailUpdateAlert', () => {
 
       expect(screen.getByText(/this address has been verified/i)).toBeInTheDocument()
       expect(screen.queryByText(/sent a verification email to/i)).not.toBeInTheDocument()
-      expect(screen.queryByTestId('target-email-not-verified')).not.toBeInTheDocument()
     })
   })
 })

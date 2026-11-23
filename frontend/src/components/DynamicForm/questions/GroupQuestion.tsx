@@ -32,8 +32,9 @@ export function GroupQuestion({
   error,
   errorItems,
   clearError,
-  labelAsHeading,
+  labelStyle,
 }: QuestionProps<GroupItemValue[]>) {
+  const labelAsHeading = labelStyle === 'heading'
   const items = value.length > 0 ? value : [emptyGroupItem(question)]
   const children = question.children ?? []
   const maxItems = question.rules.find((rule) => rule.kind === RuleKind.MAX_ITEMS)?.value
@@ -47,7 +48,8 @@ export function GroupQuestion({
 
   return (
     // On a single-question page the label is the page heading, so the legend is hidden visually
-    // (see DynamicForm.module.scss) and is not a heading itself; the items are then h2s.
+    // (see DynamicForm.module.scss) and is not a heading itself; the items are then h2s. Otherwise
+    // the legend is an h2 of its own, so it keeps its heading style rather than taking lead text.
     <FormGroup
       error={error || undefined}
       headingLevel={labelAsHeading ? undefined : 2}
@@ -79,7 +81,7 @@ export function GroupQuestion({
                   clearError={clearError}
                   error={errorItems?.[`${index}.${child.id}`]}
                   errorItems={childErrors(errorItems, `${index}.${child.id}.`)}
-                  labelAsHeading={false}
+                  labelStyle="default"
                   name={childName}
                   onBlur={onBlur}
                   onChange={(next: FormValue) => update(index, child.id, next)}
