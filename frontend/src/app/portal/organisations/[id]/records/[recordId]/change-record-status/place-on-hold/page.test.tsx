@@ -1,11 +1,8 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getRecord, RecordDto } from '@/client/generated'
-import {
-  fakeRecordDtoMedicineRecordDto,
-  fakeRecordProductDetailDto,
-} from '@/client/generated/@faker-js/faker.gen'
+import { getRecordOverview, RecordOverviewDto } from '@/client/generated'
+import { fakeRecordOverviewDto } from '@/client/generated/@faker-js/faker.gen'
 import { createServerApiClient } from '@/client/server-api'
 
 import PlaceOnHoldPage from './page'
@@ -19,7 +16,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/client/generated', async () => ({
-  getRecord: vi.fn(),
+  getRecordOverview: vi.fn(),
   RecordType: (
     await vi.importActual<typeof import('@/client/generated/types.gen')>(
       '@/client/generated/types.gen',
@@ -88,22 +85,22 @@ vi.mock('../_components/StatusChangeReasonForm', () => ({
   ),
 }))
 
-type GetRecordResult = Awaited<ReturnType<typeof getRecord>>
+type GetRecordResult = Awaited<ReturnType<typeof getRecordOverview>>
 
 const publishedRecord = {
-  ...fakeRecordDtoMedicineRecordDto(),
+  ...fakeRecordOverviewDto(),
   recordType: 'Medicine',
   recordStatus: 'Published',
   displayStatus: 'Published',
   actions: ['Update', 'ChangeStatus', 'ConfirmCurrent', 'ViewTimeline'],
-  recordProductDetail: fakeRecordProductDetailDto(),
-} satisfies RecordDto
+  recordTitle: 'Early rheumatoid arthritis in adults',
+} satisfies RecordOverviewDto
 
 const organisationId = String(publishedRecord.organisationId)
 const recordId = String(publishedRecord.recordId)
 
 const mockRecord = (result: Partial<GetRecordResult>) =>
-  vi.mocked(getRecord).mockResolvedValue(result as GetRecordResult)
+  vi.mocked(getRecordOverview).mockResolvedValue(result as GetRecordResult)
 
 const renderPage = async (recordType: string = publishedRecord.recordType) => {
   const page = await PlaceOnHoldPage({
@@ -130,7 +127,7 @@ describe('PlaceOnHoldPage', () => {
 
     await renderPage()
 
-    expect(getRecord).toHaveBeenCalledWith(
+    expect(getRecordOverview).toHaveBeenCalledWith(
       expect.objectContaining({
         path: { id: publishedRecord.recordId },
         query: {
@@ -142,9 +139,7 @@ describe('PlaceOnHoldPage', () => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
       'Reason for putting the record on hold',
     )
-    expect(screen.getByTestId('preheading').textContent).toBe(
-      publishedRecord.recordProductDetail.recordTitle,
-    )
+    expect(screen.getByTestId('preheading').textContent).toBe(publishedRecord.recordTitle)
     expect(
       screen.getByText(
         'Select the option that best describes the reason development has paused. This information helps horizon scanners understand the nature and likely duration of the pause.',
@@ -166,7 +161,7 @@ describe('PlaceOnHoldPage', () => {
 
   it('asks about a vaccine for a vaccine record', async () => {
     mockRecord({
-      data: { ...publishedRecord, recordType: 'Vaccine' } as unknown as RecordDto,
+      data: { ...publishedRecord, recordType: 'Vaccine' } satisfies RecordOverviewDto,
       error: undefined,
       response: new Response(),
     })

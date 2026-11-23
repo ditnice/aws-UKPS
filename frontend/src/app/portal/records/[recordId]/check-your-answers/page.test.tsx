@@ -2,7 +2,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getRecordCheckAnswers } from '@/client/generated'
-import type { RecordCheckAnswersGroupItemDto } from '@/client/generated'
+import type { RecordAnswersGroupItemDto } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 
 import CheckAnswersPage from './page'
@@ -95,7 +95,7 @@ const genericNameError = {
   message: 'Enter a generic name',
 }
 
-const trialItem = (studyName: string): RecordCheckAnswersGroupItemDto => ({
+const trialItem = (studyName: string): RecordAnswersGroupItemDto => ({
   questions: [
     {
       id: 'study_name',

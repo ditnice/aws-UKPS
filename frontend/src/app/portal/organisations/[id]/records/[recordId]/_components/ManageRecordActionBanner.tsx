@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import type { RecordDto } from '@/client/generated'
+import type { RecordOverviewDto } from '@/client/generated'
 import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 
@@ -8,7 +8,7 @@ import { buildRecordHref } from '../_lib/recordLinks'
 
 type ManageRecordActionBannerProps = {
   record: Pick<
-    RecordDto,
+    RecordOverviewDto,
     'organisationId' | 'recordId' | 'recordType' | 'actions' | 'recordStatus' | 'displayStatus'
   >
   /**

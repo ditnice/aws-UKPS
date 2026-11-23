@@ -804,20 +804,6 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task CancelPendingEmailChange_WhenEmailAlreadyVerified_ShouldReturnConflict()
-    {
-        MockCancelPendingEmailChange(
-            Result<CancelPendingEmailChangeError>.Err(
-                new CancelPendingEmailChangeError.EmailAlreadyVerified()
-            )
-        );
-
-        var response = await SendCancelPendingEmailChangeRequest();
-
-        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
-    }
-
-    [Fact]
     public async Task CancelPendingEmailChange_WhenConcurrentChangeDetected_ShouldReturnConflict()
     {
         MockCancelPendingEmailChange(

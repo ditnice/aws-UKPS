@@ -1,17 +1,15 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import {
-  getRecordCheckAnswers,
-  ProblemDetails,
-  type RecordCheckAnswersQuestionDto,
-} from '@/client/generated'
+import { getRecordCheckAnswers, ProblemDetails } from '@/client/generated'
+import type { RecordAnswersQuestionDto } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { Alert } from '@/components/Alert/Alert'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
+import { TaskAnswers } from '@/components/RecordAnswers/TaskAnswers'
 import { SummaryCard } from '@/components/SummaryCard/SummaryCard'
 import {
   SummaryList,
@@ -19,35 +17,13 @@ import {
   SummaryListRow,
 } from '@/components/SummaryList/SummaryList'
 import { Tag } from '@/components/Tag/Tag'
-import { formatAnswer } from '@/lib/dynamic-form/answerDisplay'
 import { checkAnswersPageHref, groupItemAnchor, taskListHref } from '@/lib/dynamic-form/links'
 import { parsePositiveInteger } from '@/lib/valueParsing'
 
 import { CheckAnswersActions } from './_components/CheckAnswersActions'
-import { GroupItemCards } from './_components/GroupItemCards'
 
 type CheckAnswersPageProps = {
   params: Promise<{ recordId: string }>
-}
-
-type TaskBlock =
-  | { kind: 'rows'; questions: RecordCheckAnswersQuestionDto[] }
-  | { kind: 'group'; question: RecordCheckAnswersQuestionDto }
-
-/** Splits a task's questions, in form order, into runs of plain rows and the group questions between them. */
-const splitTaskQuestions = (questions: RecordCheckAnswersQuestionDto[]): TaskBlock[] => {
-  const blocks: TaskBlock[] = []
-  for (const question of questions) {
-    const last = blocks.at(-1)
-    if (question.items) {
-      blocks.push({ kind: 'group', question })
-    } else if (last?.kind === 'rows') {
-      last.questions.push(question)
-    } else {
-      blocks.push({ kind: 'rows', questions: [question] })
-    }
-  }
-  return blocks
 }
 
 /**
@@ -56,7 +32,7 @@ const splitTaskQuestions = (questions: RecordCheckAnswersQuestionDto[]): TaskBlo
  */
 const hiddenQuestionIds = new Set(['record_product_detail.record_title'])
 
-const isUnanswered = (question: RecordCheckAnswersQuestionDto) =>
+const isUnanswered = (question: RecordAnswersQuestionDto) =>
   question.values.length === 0 && !question.items?.length
 
 const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
@@ -136,7 +112,7 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
           // An optional task with nothing answered is one "Not yet provided" row, not a row each.
           const untouched =
             section.optional && !task.notApplicable && task.questions.every(isUnanswered)
-          const blocks = untouched ? [] : splitTaskQuestions(task.questions)
+          const groups = untouched ? [] : task.questions.filter((question) => question.items)
 
           return (
             <SummaryCard
@@ -159,7 +135,7 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
                   change technology status in indication details.
                 </p>
               )}
-              {untouched && (
+              {untouched ? (
                 <SummaryList variant="wide-value">
                   <SummaryListRow label="Not yet provided" value="">
                     <SummaryListAction
@@ -170,65 +146,64 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
                     </SummaryListAction>
                   </SummaryListRow>
                 </SummaryList>
-              )}
-              {blocks.map((block, index) =>
-                block.kind === 'group' ? (
-                  <GroupItemCards
-                    hasError={errorsByQuestionId.has(block.question.id)}
-                    key={block.question.id}
-                    question={block.question}
-                    recordId={recordId}
-                  />
-                ) : (
-                  <SummaryList key={`rows-${index}`} variant="wide-value">
-                    {block.questions.map((question) => (
-                      <SummaryListRow
-                        key={question.id}
-                        label={question.label}
-                        value={formatAnswer(question)}
-                        tag={
-                          (hiddenQuestionIds.has(question.id) ||
-                            errorsByQuestionId.has(question.id)) && (
-                            <>
-                              {hiddenQuestionIds.has(question.id) && (
-                                <Tag colour="purple">Hidden</Tag>
-                              )}
-                              {errorsByQuestionId.has(question.id) && (
-                                <Tag colour="red">There is a problem</Tag>
-                              )}
-                            </>
-                          )
-                        }
-                      >
-                        <SummaryListAction
-                          href={checkAnswersPageHref(recordId, question.pageId)}
-                          visuallyHiddenText={question.label}
-                        >
-                          Change
-                        </SummaryListAction>
-                      </SummaryListRow>
-                    ))}
-                  </SummaryList>
-                ),
-              )}
-              {blocks.map(
-                (block) =>
-                  block.kind === 'group' && (
-                    <Button
-                      elementType={Link}
-                      href={checkAnswersPageHref(recordId, block.question.pageId, {
-                        addGroupItem: true,
-                        anchor: groupItemAnchor(
-                          block.question.id,
-                          block.question.items?.length ?? 0,
-                        ),
-                      })}
-                      key={block.question.id}
+              ) : (
+                <TaskAnswers
+                  questions={task.questions}
+                  groupItemHeadingLevel={3}
+                  rowTag={(question) => {
+                    const hidden = hiddenQuestionIds.has(question.id)
+                    const problem = errorsByQuestionId.has(question.id)
+                    return (
+                      (hidden || problem) && (
+                        <>
+                          {hidden && <Tag colour="purple">Hidden</Tag>}
+                          {problem && <Tag colour="red">There is a problem</Tag>}
+                        </>
+                      )
+                    )
+                  }}
+                  // With no items there is nothing to tag: the error is in the summary at the top.
+                  groupTag={(question) =>
+                    errorsByQuestionId.has(question.id) &&
+                    (question.items?.length ?? 0) > 0 && (
+                      <Tag colour="red">
+                        There is a problem
+                        <span className="visually-hidden"> with {question.label}</span>
+                      </Tag>
+                    )
+                  }
+                  rowAction={(question) => (
+                    <SummaryListAction
+                      href={checkAnswersPageHref(recordId, question.pageId)}
+                      visuallyHiddenText={question.label}
                     >
-                      {block.question.addAnotherLabel ?? 'Add another'}
-                    </Button>
-                  ),
+                      Change
+                    </SummaryListAction>
+                  )}
+                  groupItemAction={(question, index, title) => (
+                    <SummaryListAction
+                      href={checkAnswersPageHref(recordId, question.pageId, {
+                        anchor: groupItemAnchor(question.id, index),
+                      })}
+                      visuallyHiddenText={title}
+                    >
+                      Edit
+                    </SummaryListAction>
+                  )}
+                />
               )}
+              {groups.map((question) => (
+                <Button
+                  elementType={Link}
+                  href={checkAnswersPageHref(recordId, question.pageId, {
+                    addGroupItem: true,
+                    anchor: groupItemAnchor(question.id, question.items?.length ?? 0),
+                  })}
+                  key={question.id}
+                >
+                  {question.addAnotherLabel ?? 'Add another'}
+                </Button>
+              ))}
             </SummaryCard>
           )
         }),

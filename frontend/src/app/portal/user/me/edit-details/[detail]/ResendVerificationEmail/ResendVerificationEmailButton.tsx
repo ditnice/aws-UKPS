@@ -20,9 +20,6 @@ const ResendVerificationEmailButton = ({ userId }: ResendVerificationEmailButton
       </Button>
 
       {state.status === 'error' && <ErrorState>{state.message}</ErrorState>}
-      {state.status === 'success' && (
-        <p role="status">Verification email sent. Check your inbox.</p>
-      )}
     </form>
   )
 }

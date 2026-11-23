@@ -166,7 +166,7 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
 
         RecordCheckAnswersDto dto = await GetCheckAnswers();
 
-        RecordCheckAnswersQuestionDto question = Question(dto, MhraProcedureQuestion);
+        RecordAnswersQuestionDto question = Question(dto, MhraProcedureQuestion);
         question.Values.ShouldBe([$"{vaccineOnly.Id}"]);
         question.SelectedOptions.ShouldNotBeNull().ShouldBeEmpty();
         dto.Errors.ShouldContain(e =>
@@ -177,7 +177,7 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
     [Fact]
     public async Task GetCheckAnswers_OptionalQuestionNotAnswered_IsIncluded()
     {
-        RecordCheckAnswersQuestionDto question = Question(await GetCheckAnswers(), Presentation);
+        RecordAnswersQuestionDto question = Question(await GetCheckAnswers(), Presentation);
 
         question.PageId.ShouldBe("presentation");
         question.Values.ShouldBeEmpty();
@@ -187,13 +187,10 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
     [Fact]
     public async Task GetCheckAnswers_ChoiceQuestion_HasTheChosenOptionsLabel()
     {
-        RecordCheckAnswersQuestionDto question = Question(
-            await GetCheckAnswers(),
-            IndicationIsCancer
-        );
+        RecordAnswersQuestionDto question = Question(await GetCheckAnswers(), IndicationIsCancer);
 
         question.Values.ShouldBe([nameof(YesNoUnknown.No)]);
-        RecordCheckAnswersOptionDto option = question.SelectedOptions.ShouldHaveSingleItem();
+        RecordAnswersOptionDto option = question.SelectedOptions.ShouldHaveSingleItem();
         option.Value.ShouldBe(nameof(YesNoUnknown.No));
         option.Label.ShouldBe("No");
         option.ParentLabel.ShouldBeNull();
@@ -222,10 +219,10 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
 
         RecordCheckAnswersDto dto = await GetCheckAnswers();
 
-        RecordCheckAnswersQuestionDto trials = Question(dto, Trials);
+        RecordAnswersQuestionDto trials = Question(dto, Trials);
         trials.ItemLabel.ShouldBe("Clinical trial");
         trials.AddAnotherLabel.ShouldBe("Add another clinical trial");
-        IReadOnlyList<RecordCheckAnswersGroupItemDto> items = trials.Items.ShouldNotBeNull();
+        IReadOnlyList<RecordAnswersGroupItemDto> items = trials.Items.ShouldNotBeNull();
 
         trials.Values.ShouldBeEmpty();
         items.Count.ShouldBe(2);
@@ -235,7 +232,7 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
         Child(items[1], "study_name").Values.ShouldBe(["SURVEYOR-2"]);
 
         // A child row carries what the frontend needs to format it.
-        RecordCheckAnswersQuestionDto studyName = Child(items[0], "study_name");
+        RecordAnswersQuestionDto studyName = Child(items[0], "study_name");
         studyName.Label.ShouldBe("Study name");
         studyName.Type.ShouldBe(FormControl.Text);
 
@@ -264,7 +261,7 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
 
         RecordCheckAnswersDto dto = await GetCheckAnswers();
 
-        RecordCheckAnswersOptionDto option = Question(dto, BnfChapter)
+        RecordAnswersOptionDto option = Question(dto, BnfChapter)
             .SelectedOptions.ShouldHaveSingleItem();
         option.Value.ShouldBe($"{section.Id}");
         option.Label.ShouldBe("5.1: Antibacterial drugs");
@@ -298,10 +295,7 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
         );
         await Context.SaveChangesAsync(Ct);
 
-        RecordCheckAnswersQuestionDto question = Question(
-            await GetCheckAnswers(),
-            TherapeuticAreas
-        );
+        RecordAnswersQuestionDto question = Question(await GetCheckAnswers(), TherapeuticAreas);
 
         question.Multiple.ShouldBeTrue();
         question.Values.ShouldBe([$"{stored[0].Id}", $"{stored[1].Id}"]);
@@ -406,7 +400,7 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
 
         RecordCheckAnswersDto dto = await GetCheckAnswers();
 
-        RecordCheckAnswersTaskDto task = dto
+        RecordAnswersTaskDto task = dto
             .Sections.SelectMany(static s => s.Tasks)
             .Single(static t => string.Equals(t.Id, "pim-and-eams", StringComparison.Ordinal));
         task.NotApplicable.ShouldBeTrue();
@@ -422,7 +416,7 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
 
         RecordCheckAnswersDto dto = await GetCheckAnswers();
 
-        RecordCheckAnswersTaskDto task = dto
+        RecordAnswersTaskDto task = dto
             .Sections.SelectMany(static s => s.Tasks)
             .Single(static t => string.Equals(t.Id, "pim-and-eams", StringComparison.Ordinal));
         task.NotApplicable.ShouldBeFalse();
@@ -495,7 +489,7 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
             .SelectMany(static t => t.Questions)
             .Select(static q => q.Id);
 
-    private static RecordCheckAnswersQuestionDto Question(
+    private static RecordAnswersQuestionDto Question(
         RecordCheckAnswersDto dto,
         string questionId
     ) =>
@@ -504,8 +498,8 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
             .SelectMany(static t => t.Questions)
             .Single(q => string.Equals(q.Id, questionId, StringComparison.Ordinal));
 
-    private static RecordCheckAnswersQuestionDto Child(
-        RecordCheckAnswersGroupItemDto item,
+    private static RecordAnswersQuestionDto Child(
+        RecordAnswersGroupItemDto item,
         string questionId
     ) => item.Questions.Single(q => string.Equals(q.Id, questionId, StringComparison.Ordinal));
 

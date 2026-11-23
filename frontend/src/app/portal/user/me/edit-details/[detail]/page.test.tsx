@@ -105,7 +105,10 @@ const mockGetUsersMe = (result: { data?: unknown; error?: unknown }) => {
  * component function and render the React element it resolves to.
  */
 const renderPage = async () => {
-  const ui = await Page({} as Parameters<typeof Page>[0])
+  const ui = await Page({
+    params: Promise.resolve({ detail: 'email' }),
+    searchParams: Promise.resolve({}),
+  })
   return render(ui)
 }
 

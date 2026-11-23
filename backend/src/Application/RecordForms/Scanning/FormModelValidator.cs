@@ -608,6 +608,11 @@ internal static partial class FormModelValidator
             );
         }
 
+        if (string.IsNullOrWhiteSpace(question.Prefixes.Name))
+        {
+            problems.Add($"{where} has a blank Name in [FormValuePrefixes].");
+        }
+
         if (prefixes.Distinct(StringComparer.Ordinal).Count() != prefixes.Count)
         {
             problems.Add($"{where} repeats a prefix in [FormValuePrefixes].");
@@ -635,6 +640,7 @@ internal static partial class FormModelValidator
     )
     {
         ValidatePrefixes(question, control, problems);
+        ValidateWidth(question, control, problems);
         string where = question.Where;
         FormFieldAttribute field = question.Field;
         bool isHierarchical = control == FormControl.HierarchicalSelect;
@@ -677,6 +683,32 @@ internal static partial class FormModelValidator
         if (isHierarchical && field.ChildLabel is null)
         {
             problems.Add($"{where} uses HierarchicalSelect, which needs a ChildLabel.");
+        }
+    }
+
+    private static void ValidateWidth(
+        QuestionDeclaration question,
+        FormControl control,
+        List<string> problems
+    )
+    {
+        string where = question.Where;
+        FormInputWidth width = question.Field.Width;
+
+        if (width == FormInputWidth.Default)
+        {
+            return;
+        }
+
+        if (control is not (FormControl.Text or FormControl.TextList))
+        {
+            problems.Add($"{where} sets Width, which only a Text or a TextList uses.");
+        }
+        else if (control == FormControl.TextList && width >= FormInputWidth.Chars2)
+        {
+            problems.Add(
+                $"{where} sets Width on a TextList, which only supports a share of the container such as Full."
+            );
         }
     }
 

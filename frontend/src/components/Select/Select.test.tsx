@@ -236,3 +236,15 @@ describe('Select', () => {
     },
   )
 })
+
+describe('Select label size', () => {
+  it('shows the label as lead text when asked', () => {
+    render(<Select label="Kind" labelSize="lead" name="kind" />)
+    expect(screen.getByText('Kind').className).toMatch(/leadLabel/)
+  })
+
+  it('keeps the standard label by default', () => {
+    render(<Select label="Kind" name="kind" />)
+    expect(screen.getByText('Kind').className).not.toMatch(/leadLabel/)
+  })
+})

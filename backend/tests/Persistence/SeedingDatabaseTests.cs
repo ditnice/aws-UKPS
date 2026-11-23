@@ -5,7 +5,6 @@ using Shouldly;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
-using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence.Configurations.RecordWorkflow;
 using UKPS.Api.Persistence.Data.Seeding;
@@ -169,7 +168,7 @@ public sealed class SeedingDatabaseTests : DatabaseTestBase
     {
         foreach (Record record in records)
         {
-            Result<RecordDto, GetRecordError> result = await service.GetRecord(
+            Result<RecordDetailDto, GetRecordError> result = await service.GetRecordDetail(
                 record.Id,
                 RecordType.Medicine,
                 record.OrganisationId,
@@ -188,16 +187,26 @@ public sealed class SeedingDatabaseTests : DatabaseTestBase
     {
         foreach (Record record in records)
         {
-            Result<RecordDto, GetRecordError> result = await service.GetRecord(
+            Result<RecordDetailDto, GetRecordError> result = await service.GetRecordDetail(
                 record.Id,
                 RecordType.Medicine,
                 record.OrganisationId,
                 ct
             );
 
-            var dto = result.ShouldBeSuccess().ShouldBeOfType<MedicineRecordDto>();
-            dto.RecordProductDetail.ShouldNotBeNull();
-            dto.MedicinesIndicationDetail.ShouldNotBeNull().TherapeuticAreas.ShouldNotBeEmpty();
+            RecordDetailDto dto = result.ShouldBeSuccess();
+            dto.Overview.RecordTitle.ShouldNotBeNull();
+            dto.Sections.SelectMany(static s => s.Tasks)
+                .SelectMany(static t => t.Questions)
+                .Single(static q =>
+                    string.Equals(
+                        q.Id,
+                        "medicines_indication_detail_therapeutic_area",
+                        StringComparison.Ordinal
+                    )
+                )
+                .SelectedOptions.ShouldNotBeNull()
+                .ShouldNotBeEmpty();
         }
     }
 }

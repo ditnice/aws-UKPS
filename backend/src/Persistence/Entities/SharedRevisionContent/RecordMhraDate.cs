@@ -42,7 +42,7 @@ internal sealed class RecordMhraDate
         FormControl.Radio,
         Hint = "Select yes if you anticipate conditional approval based on current plans."
     )]
-    [FormRequired("Select whether conditional approval is anticipated in the UK")]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? UkConditionalApprovalAnticipated { get; set; }
 

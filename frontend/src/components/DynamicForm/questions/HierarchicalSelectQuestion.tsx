@@ -5,6 +5,7 @@ import type { HierarchicalEntry, Question } from '@/lib/dynamic-form/types'
 
 import styles from '../DynamicForm.module.scss'
 
+import type { LabelStyle } from '../labelStyle'
 import type { QuestionProps } from '../types'
 
 const emptyEntry: HierarchicalEntry = { parent: '', child: '' }
@@ -21,7 +22,7 @@ type EntryProps = {
   error?: string
   /** The ID of the question's hint, which every select is described by. */
   hintId?: string
-  labelAsHeading: boolean
+  labelStyle: LabelStyle
 }
 
 /** One parent dropdown and, once a parent with children is chosen, its child dropdown. */
@@ -34,14 +35,17 @@ function HierarchicalEntrySelects({
   onBlur,
   error,
   hintId,
-  labelAsHeading,
+  labelStyle,
 }: EntryProps) {
   const parentId = `${name}-${index}-parent`
   const childId = `${name}-${index}-child`
   const children = question.options?.find((o) => o.value === entry.parent)?.children ?? []
   // Repeated entries need distinct accessible names.
   const entrySuffix = question.multiple && index > 0 ? ` (${index + 1})` : ''
-  const showParentLabel = !labelAsHeading || entrySuffix !== ''
+  const showParentLabel = labelStyle !== 'heading' || entrySuffix !== ''
+  // On a page of several questions each question's label is lead text, and the child's label
+  // matches it rather than standing out above it.
+  const labelClass = labelStyle === 'lead' ? styles.leadLabel : styles.childLabel
   // The question's error is shown once, above the first parent select; every select is styled
   // as invalid and described by that one message (the first parent select adds it itself).
   // Every select is also described by the question's hint.
@@ -50,7 +54,7 @@ function HierarchicalEntrySelects({
 
   return (
     <div className={styles.entry}>
-      <label className={showParentLabel ? styles.childLabel : 'visually-hidden'} htmlFor={parentId}>
+      <label className={showParentLabel ? labelClass : 'visually-hidden'} htmlFor={parentId}>
         {question.label}
         {entrySuffix}
       </label>
@@ -81,7 +85,7 @@ function HierarchicalEntrySelects({
 
       {children.length > 0 && (
         <>
-          <label className={styles.childLabel} htmlFor={childId}>
+          <label className={labelClass} htmlFor={childId}>
             {question.childLabel}
             {entrySuffix && <span className="visually-hidden">{entrySuffix}</span>}
           </label>
@@ -120,7 +124,7 @@ export function HierarchicalSelectQuestion({
   onChange,
   onBlur,
   error,
-  labelAsHeading,
+  labelStyle,
 }: QuestionProps<HierarchicalEntry | HierarchicalEntry[]>) {
   const entries = Array.isArray(value) ? value : [value]
   const hintId = question.hint ? `${name}-hint` : undefined
@@ -147,7 +151,7 @@ export function HierarchicalSelectQuestion({
             error={error}
             hintId={hintId}
             index={index}
-            labelAsHeading={labelAsHeading}
+            labelStyle={labelStyle}
             name={name}
             onBlur={onBlur}
             onChange={(next) => replace(index, next)}

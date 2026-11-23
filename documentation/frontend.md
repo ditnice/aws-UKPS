@@ -85,7 +85,7 @@ updated PNGs before committing.
 Results are written to `e2e-results/` (git-ignored):
 
 - `playwright-report/` – HTML report (`pnpm --dir frontend exec playwright show-report
-  ../e2e-results/playwright-report` from the repository root)
+../e2e-results/playwright-report` from the repository root)
 - `test-results/` – traces and screenshots
 - `junit.xml` – when `CI` is set
 - `stack.log` – Postgres, backend and frontend logs, when the run fails
@@ -187,6 +187,7 @@ YES: my-api/organisations/[orgId]/users/[userId]/details
 NO:  my-api/organisation/[orgId]/user/[userId]/requests
 
 YES: my-api/organisations/[orgId]/users/[userId]/requests
+
 ```
 
 #### Loading States

@@ -1,11 +1,15 @@
 /**
  * Server messages for a prefixed number; mirror RecordFormMessages.SelectIdType, IdDigitsOnly,
- * IdOutOfRange and IdDigits.
+ * IdOutOfRange and IdDigits. All but the first name the number (the question's `numberName`).
  */
 export const selectIdTypeMessage = 'Select ID type'
-export const idDigitsOnlyMessage = 'ID must be a whole positive number'
-export const idOutOfRangeMessage = 'ID must not be longer than 5 digits'
-export const idDigitsMessage = (digits: number) => `ID must be ${digits} digits`
+export const idDigitsOnlyMessage = (name: string) => `${name} must be a whole positive number`
+export const idOutOfRangeMessage = (name: string) => `${name} must not be longer than 5 digits`
+export const idDigitsMessage = (name: string, digits: number) =>
+  `${name} must be ${digits} digits long`
+
+/** What the messages call the number when the server does not say; FormValuePrefixesAttribute.Name's default. */
+const defaultNumberName = 'ID'
 
 const maxDigits = 5
 
@@ -18,13 +22,16 @@ export const splitPrefixedNumber = (prefixes: string[], value: string) => {
 /**
  * The value the server would save and the message it would reject it with. A prefix with no
  * digits is saved as blank, so it is never an error. `digits` is the exact number of digits
- * needed, or up to 5 when not given. Mirrors PrefixedNumberAnswer.Evaluate.
+ * needed, or up to 5 when not given; `name` is what the messages call the number. Mirrors
+ * PrefixedNumberAnswer.Evaluate.
  */
 export const evaluatePrefixedNumber = (
   prefixes: string[],
   value: string | null,
   digits?: number | null,
+  name?: string | null,
 ): { value: string | null; error: string | null } => {
+  const numberName = name || defaultNumberName
   if (value === null) {
     return { value: null, error: null }
   }
@@ -36,23 +43,27 @@ export const evaluatePrefixedNumber = (
     return { value: null, error: null }
   }
   if (!/^[0-9]+$/.test(number) || /^0+$/.test(number)) {
-    return { value, error: idDigitsOnlyMessage }
+    return { value, error: idDigitsOnlyMessage(numberName) }
   }
   if (digits) {
-    return { value, error: number.length !== digits ? idDigitsMessage(digits) : null }
+    return { value, error: number.length !== digits ? idDigitsMessage(numberName, digits) : null }
   }
-  return { value, error: number.length > maxDigits ? idOutOfRangeMessage : null }
+  return { value, error: number.length > maxDigits ? idOutOfRangeMessage(numberName) : null }
 }
 
-/** Which boxes an error is about: the type for "Select ID type", the number for digit and length errors, both for anything else. */
-export const prefixedNumberErrorParts = (error?: string) => {
+/**
+ * Which boxes an error is about: the type for "Select ID type", the number for digit and length
+ * errors, both for anything else. `name` is the question's `numberName`.
+ */
+export const prefixedNumberErrorParts = (error?: string, name?: string | null) => {
+  const numberName = name || defaultNumberName
   if (error === selectIdTypeMessage) {
     return { prefix: true, number: false }
   }
   if (
-    error === idDigitsOnlyMessage ||
-    error === idOutOfRangeMessage ||
-    (error && /^ID must be \d+ digits$/.test(error))
+    error === idDigitsOnlyMessage(numberName) ||
+    error === idOutOfRangeMessage(numberName) ||
+    (error?.startsWith(`${numberName} must be `) && error.endsWith(' digits long'))
   ) {
     return { prefix: false, number: true }
   }

@@ -17,6 +17,16 @@ describe('getFieldErrorMessage', () => {
     )
   })
 
+  it('returns undefined for an error that is only about items', () => {
+    expect(getFieldErrorMessage([{ message: '', params: { itemsOnly: true } }])).toBeUndefined()
+  })
+
+  it('returns the message of an error that also has items', () => {
+    expect(getFieldErrorMessage([{ message: 'Enter a value', params: { itemsOnly: false } }])).toBe(
+      'Enter a value',
+    )
+  })
+
   it('returns undefined for unsupported error shapes', () => {
     expect(getFieldErrorMessage([{ error: 'Enter a value' }])).toBeUndefined()
     expect(getFieldErrorMessage([123])).toBeUndefined()

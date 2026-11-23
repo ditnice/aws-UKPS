@@ -65,3 +65,8 @@
     white-space: nowrap;
   }
 }
+
+// Qualified by the NDS class so it wins over the NDS label size whatever the stylesheet order.
+:global(.input__label).leadLabel {
+  @include typography.lead-label;
+}

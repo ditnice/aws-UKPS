@@ -12,6 +12,7 @@ internal sealed record FormQuestion
     public required string Label { get; init; }
     public string? Hint { get; init; }
     public string? Display { get; init; }
+    public FormInputWidth? Width { get; init; }
     public int Order { get; init; }
     public string? Placeholder { get; init; }
     public string? ChildLabel { get; init; }
@@ -44,6 +45,12 @@ internal sealed record FormQuestion
     /// prefix, or null when up to 5 are allowed.
     /// </summary>
     public int? PrefixDigits { get; init; }
+
+    /// <summary>
+    /// What a <see cref="FormControl.PrefixedNumber"/>'s number is, as its error messages name it;
+    /// set whenever <see cref="Prefixes"/> is.
+    /// </summary>
+    public string? NumberName { get; init; }
 
     /// <summary>What a date question's date is of, as its error messages name it.</summary>
     public string? DateName { get; init; }

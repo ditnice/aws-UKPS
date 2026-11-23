@@ -79,10 +79,10 @@ model, telling it which column or junction table holds the answer.
 | Controls | `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect` (a parent dropdown, then an optional child dropdown; on a junction it repeats with "add another"), dates, `PrefixedNumber`, `Group` (repeating items of several questions) and `TextList` (repeating text boxes) |
 | Rules | `Required`, `MaxLength`, `MaxItems`, `Distinct` |
 | Bindings | Column (string, enum, reference ID), flags enum, junction table, regulatory date, group, text list |
-| Entry points | The record task list is the root of the journey. Record creation redirects to it, and **Update record** on the record details page opens it. Both show only when `canEditContent`, returned by `POST /records` and `GET /records/{id}`, is true: the record type has a form and the user can edit it |
+| Entry points | The record task list is the root of the journey. Record creation redirects to it, and **Update record** on the record details page opens it. Both show only when `canEditContent`, returned by `POST /records` and the record overview (`GET /records/{id}/overview`, and `overview` in `GET /records/{id}`), is true: the record type has a form and the user can edit it |
 | Audit | One event per save, one row per changed answer |
 | Conditions | Questions revealed by an answer on the same page, and pages shown by an answer on an earlier page (see [Conditional questions and pages](#conditional-questions-and-pages)) |
-| Later | Nested groups beyond a text list, choice questions inside groups, vaccine forms, searchable combobox, hiding answers that do not apply on View record |
+| Later | Nested groups beyond a text list, choice questions inside groups, vaccine forms, searchable combobox |
 
 ## Architecture
 
@@ -246,6 +246,13 @@ invalid model stops the API starting. It holds structure only: bindings receive 
   rechecks everything. A 422 refreshes the page with the current
   errors, and a 409 shows the API's message with a link to reload. If the record can't be
   submitted (403 or 409 when loading the page), the page says so instead of showing the answers.
+- **View record.** `GET /records/{id}` returns the record's overview and the same sections, tasks
+  and question rows as check your answers, built by the same `RecordAnswersBuilder`, but for any
+  status and any caller who can read the record, and without checking the answers. The record
+  details page shows an accordion per section and a card per task, with groups as one card per
+  item, and no Change, Edit or Add another links. Pages that only need the record's status,
+  actions and title, such as discard and change status, use `GET /records/{id}/overview`, which
+  loads no answers.
 - **No ties.** Two sections or pages with the same `Order`, or two questions on the same page
   with the same `Order`, fail startup. Attribute order in source is never relied on.
 
@@ -564,7 +571,7 @@ sequenceDiagram
 ```
 
 The record details page (`/portal/organisations/{id}/records/{recordId}`) links its **Update
-record** button to the same URL, when `canEditContent` from `GET /records/{id}` is true. This
+record** button to the same URL, when `overview.canEditContent` from `GET /records/{id}` is true. This
 lets users return to a record and change their answers.
 
 ### Loading a page
@@ -908,9 +915,6 @@ loaded by the synthetic data seeder; see [Reference data](reference-data.md).
 
 ## Not in the first delivery
 
-- **Hiding answers that do not apply on View record and check your answers.** Run
-  `FormApplicability.Evaluate` over the record's answers in `RecordViewService`, return the IDs
-  of questions that do not apply, and hide those rows.
 - **Conditional requiredness**, such as Service readiness becoming mandatory 12 months before the
   marketing authorisation date. A `FormRequiredWhen` can reuse `FormCondition`. A date condition
   kind would give the evaluator today's date. It probably belongs to section completeness

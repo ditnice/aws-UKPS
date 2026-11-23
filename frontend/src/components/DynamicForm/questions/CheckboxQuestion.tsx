@@ -1,5 +1,7 @@
 import { Checkbox, Checkboxes } from '@/components/Checkboxes/Checkboxes'
 
+import { labelSizeFor } from '../labelStyle'
+
 import type { QuestionProps } from '../types'
 
 export function CheckboxQuestion({
@@ -9,12 +11,14 @@ export function CheckboxQuestion({
   onChange,
   onBlur,
   error,
+  labelStyle,
 }: QuestionProps<string[]>) {
   return (
     <Checkboxes
       error={error}
       hint={question.hint ?? undefined}
       legend={question.label}
+      legendSize={labelSizeFor(labelStyle)}
       name={name}
       value={value}
       // Revalidate on every tick, not only on blur, so an error clears as soon as one is ticked.

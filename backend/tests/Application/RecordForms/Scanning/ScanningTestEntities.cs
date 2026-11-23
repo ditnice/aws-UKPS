@@ -167,6 +167,26 @@ internal sealed class BrokenEntity
     [FormValuePrefixes("NCT", Digits = -1)]
     public string? NegativeDigits { get; set; }
 
+    [FormPage("broken-prefixes")]
+    [FormField(
+        "broken_entity.width_on_textarea",
+        "Width on textarea",
+        FormControl.Textarea,
+        Width = FormInputWidth.Full,
+        Order = 7
+    )]
+    public string? WidthOnTextarea { get; set; }
+
+    [FormPage("broken-prefixes")]
+    [FormField(
+        "broken_entity.blank_number_name",
+        "Blank number name",
+        FormControl.PrefixedNumber,
+        Order = 8
+    )]
+    [FormValuePrefixes("NCT", Name = " ")]
+    public string? BlankNumberName { get; set; }
+
     public RecordRevision? Revision { get; set; }
 }
 
@@ -1104,6 +1124,17 @@ internal sealed class BrokenListedEntity
     )]
     [FormDistinct("Already entered")]
     public string? ListLabelsOnText { get; set; }
+
+    [FormPage("broken-listed")]
+    [FormField(
+        "broken_listed_entity.fixed_width_list",
+        "Fixed width list",
+        FormControl.TextList,
+        Width = FormInputWidth.Chars20,
+        Order = 60
+    )]
+    [FormListSource<ListedNameKind>(nameof(Names), ListedNameKind.Second)]
+    public IEnumerable<string> FixedWidthList => Names.Select(static n => n.Name);
 }
 
 [SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]

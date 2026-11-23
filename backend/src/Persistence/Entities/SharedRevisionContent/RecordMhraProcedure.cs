@@ -20,7 +20,7 @@ internal sealed class RecordMhraProcedure
         Order = 10,
         Hint = "Select unknown at this stage if the route has not been confirmed."
     )]
-    [FormRequired("Select the procedure you currently expect to use for UK authorisation")]
+    [FormRequired("Select an option")]
     public int? MhraProcedureTypeId { get; set; }
 
     /// <summary>
@@ -33,7 +33,7 @@ internal sealed class RecordMhraProcedure
         FormControl.Radio,
         Order = 10
     )]
-    [FormRequired("Select a reference regulator")]
+    [FormRequired("Select an option")]
     public int? IrpReferenceRegulatorId { get; set; }
 
     [FormPage(MedicineFormLayout.UkMarketAuthorisation)]
