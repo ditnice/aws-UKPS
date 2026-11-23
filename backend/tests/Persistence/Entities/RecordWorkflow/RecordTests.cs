@@ -125,10 +125,25 @@ public sealed class RecordTests
         IReadOnlyCollection<RecordAction> actions = Record.GetPermittedActions(
             new(recordStatus, latestRevisionStatus),
             hasSingleRevision,
-            canChangeStatus: true
+            canChangeStatus: true,
+            canDiscard: true
         );
 
         actions.ShouldBe(expected);
+    }
+
+    [Fact]
+    public void GetPermittedActions_WhenUserCannotDiscard_OmitsDiscard()
+    {
+        IReadOnlyCollection<RecordAction> actions = Record.GetPermittedActions(
+            new(RecordStatus.Unpublished, WorkflowStatus.Draft),
+            hasSingleRevision: true,
+            canChangeStatus: true,
+            canDiscard: false
+        );
+
+        actions.ShouldNotContain(RecordAction.Discard);
+        actions.ShouldContain(RecordAction.Update);
     }
 
     [Theory]
@@ -142,7 +157,8 @@ public sealed class RecordTests
         IReadOnlyCollection<RecordAction> actions = Record.GetPermittedActions(
             new(recordStatus, latestRevisionStatus),
             hasSingleRevision: false,
-            canChangeStatus: false
+            canChangeStatus: false,
+            canDiscard: true
         );
 
         actions.ShouldNotContain(RecordAction.ChangeStatus);

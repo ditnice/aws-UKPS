@@ -212,6 +212,11 @@ internal sealed class RecordViewService(
                 organisationAuthoriser.CanPerformOperationOnOrganisation(
                     Operation.ChangeRecordStatus,
                     record.OrganisationId
+                ),
+                // Discarding is authorised as Operation.Create, the same as in RecordService.
+                organisationAuthoriser.CanPerformOperationOnOrganisation(
+                    Operation.Create,
+                    record.OrganisationId
                 )
             ),
             NextUpdateDue = record.NextUpdateDue,

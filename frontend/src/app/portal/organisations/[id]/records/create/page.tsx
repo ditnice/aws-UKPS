@@ -1,3 +1,7 @@
+import { getUsersMe, UserRole } from '@/client/generated'
+import { createServerApiClient } from '@/client/server-api'
+
+import { NotPermitted } from '../../_components/NotPermitted'
 import OrganisationPageWrapper from '../../_components/OrganisationPageWrapper'
 
 import CreateMedicineRecordForm from './CreateMedicineRecordForm'
@@ -8,6 +12,13 @@ type CreateMedicineRecordPageProps = {
 }
 const CreateMedicineRecordPage = async ({ params }: CreateMedicineRecordPageProps) => {
   const { id: organisationId } = await params
+
+  const apiClient = await createServerApiClient()
+  const { data: currentUser } = await getUsersMe({ client: apiClient })
+
+  if (currentUser?.userRole === UserRole.SUPER) {
+    return <NotPermitted />
+  }
 
   return (
     <OrganisationPageWrapper organisationId={organisationId}>
