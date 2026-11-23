@@ -189,6 +189,31 @@ NO:  my-api/organisation/[orgId]/user/[userId]/requests
 YES: my-api/organisations/[orgId]/users/[userId]/requests
 ```
 
+#### Forms
+
+- Any `<form>` that collects sensitive data (for example passwords, security codes, phone numbers,
+  email addresses or other personal details) **must** set `method="post"`.
+
+```tsx
+<form
+  method="post"
+  noValidate
+  onSubmit={(event) => {
+    event.preventDefault()
+    // ...
+  }}
+>
+```
+
+Without a `method`, a form defaults to `GET`. If the form is submitted before JavaScript has loaded,
+or if JavaScript fails, the browser falls back to a native submission and puts every field in the
+URL query string (e.g. `?email=...&password=...`). The URL can then end up in browser history, server
+and proxy logs, and `Referer` headers. With `method="post"`, a native submission sends the fields in
+the request body instead.
+
+This applies even when the form's `onSubmit` calls `event.preventDefault()` and handles submission
+in JavaScript, because that handler only runs once the page has hydrated.
+
 #### Loading States
 
 - We should **NOT** show a loading state for data modification actions (POST, PUT, PATCH) in the browser, and there is no requirement to show a browser-native loading state. This is a requirement specified by GDS.
