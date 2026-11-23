@@ -133,9 +133,13 @@ public class FormModelValidatorTests
     [InlineData(
         "BrokenGroupEntity.Items has ItemKey 'free_text', which must name a single-value question of the group with [FormRequired] and [FormDistinct]."
     )]
-    [InlineData("BrokenGroupEntity.Text sets ItemLabel, which only a Group or a TextList uses.")]
+    [InlineData(
+        "BrokenGroupEntity.Text sets ItemLabel, which only a Group, a TextList or a HierarchicalSelect uses."
+    )]
     [InlineData("BrokenGroupItem.BlankLabels sets a blank ItemLabel.")]
-    [InlineData("BrokenGroupEntity.Text sets RemoveLabel, which only a Group or a TextList uses.")]
+    [InlineData(
+        "BrokenGroupEntity.Text sets RemoveLabel, which only a Group, a TextList or a HierarchicalSelect uses."
+    )]
     [InlineData(
         "BrokenGroupEntity.Text has [FormDistinct], which only a TextList or a single-value question of a group uses."
     )]
@@ -526,7 +530,7 @@ public class FormModelValidatorTests
         "BrokenListedEntity.ListLabelsOnText has [FormDistinct], which only a TextList or a single-value question of a group uses."
     )]
     [InlineData(
-        "BrokenListedEntity.ListLabelsOnText sets RemoveLabel, which only a Group or a TextList uses."
+        "BrokenListedEntity.ListLabelsOnText sets RemoveLabel, which only a Group, a TextList or a HierarchicalSelect uses."
     )]
     [InlineData(
         "BrokenListedEntity.FixedWidthList sets Width on a TextList, which only supports a share of the container such as Full."

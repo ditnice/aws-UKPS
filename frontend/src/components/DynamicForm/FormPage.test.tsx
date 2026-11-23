@@ -80,6 +80,8 @@ const areasQuestion = question({
   childLabel: 'Select the disease or condition (optional)',
   childPlaceholder: 'Choose a disease or condition',
   addAnotherLabel: 'Add another therapy area',
+  itemLabel: 'Therapeutic area',
+  removeLabel: 'Remove therapeutic area',
   rules: [{ kind: 'MaxItems', value: 2, message: 'Select up to 2 therapeutic areas' }],
   options: tree,
 })
@@ -351,7 +353,10 @@ describe('FormPage', () => {
           />,
         )
 
-        expect(label(areasQuestion.label).className).toMatch(/leadLabel/)
+        // The question label is the group's own heading; each entry's parent label is hidden.
+        expect(
+          screen.getByRole('heading', { level: 2, name: areasQuestion.label }),
+        ).toBeInTheDocument()
         expect(label('Select the disease or condition (optional)').className).toMatch(/leadLabel/)
       })
 
@@ -967,7 +972,7 @@ describe('FormPage', () => {
       expect(child.className).not.toMatch(/fieldError/)
     })
 
-    it('describes every hierarchical select with the question hint', () => {
+    it('describes the group of hierarchical selects with the question hint', () => {
       render(
         <FormPage
           page={page({
@@ -978,9 +983,9 @@ describe('FormPage', () => {
       )
 
       const hint = screen.getByText('Select up to 2 therapeutic areas.')
-      for (const select of screen.getAllByRole('combobox')) {
-        expect(select.getAttribute('aria-describedby')?.split(' ')).toContain(hint.id)
-      }
+      expect(hint.closest('fieldset')?.getAttribute('aria-describedby')?.split(' ')).toContain(
+        hint.id,
+      )
     })
 
     it('loads a saved child into its parent and child selects', () => {
@@ -1016,7 +1021,9 @@ describe('FormPage', () => {
         areas: ['2', '11'],
       })
 
-      fireEvent.click(screen.getByRole('button', { name: /^Remove\s*entry 2$/ }))
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Remove therapeutic area Therapeutic area 2' }),
+      )
       expect(screen.getAllByRole('combobox')).toHaveLength(1)
     })
 

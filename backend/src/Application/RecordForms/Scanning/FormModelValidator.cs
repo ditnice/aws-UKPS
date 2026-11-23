@@ -722,7 +722,10 @@ internal static partial class FormModelValidator
         }
     }
 
-    /// <summary>Checks the item and remove labels and item key only a group or text list uses.</summary>
+    /// <summary>
+    /// Checks the item and remove labels (used by a group, text list or hierarchical select) and
+    /// the item key (used only by a group).
+    /// </summary>
     private static void ValidateItemPresentation(
         QuestionDeclaration question,
         FormControl control,
@@ -735,10 +738,13 @@ internal static partial class FormModelValidator
 
         if (
             field.RemoveLabel is not null
-            && control is not (FormControl.Group or FormControl.TextList)
+            && control
+                is not (FormControl.Group or FormControl.TextList or FormControl.HierarchicalSelect)
         )
         {
-            problems.Add($"{where} sets RemoveLabel, which only a Group or a TextList uses.");
+            problems.Add(
+                $"{where} sets RemoveLabel, which only a Group, a TextList or a HierarchicalSelect uses."
+            );
         }
 
         if (field.ItemKey is not null && !isGroup)
@@ -749,10 +755,13 @@ internal static partial class FormModelValidator
         bool itemLabelIsBlank = string.IsNullOrWhiteSpace(field.ItemLabel);
         if (
             field.ItemLabel is not null
-            && control is not (FormControl.Group or FormControl.TextList)
+            && control
+                is not (FormControl.Group or FormControl.TextList or FormControl.HierarchicalSelect)
         )
         {
-            problems.Add($"{where} sets ItemLabel, which only a Group or a TextList uses.");
+            problems.Add(
+                $"{where} sets ItemLabel, which only a Group, a TextList or a HierarchicalSelect uses."
+            );
         }
         else if (isGroup && itemLabelIsBlank)
         {
