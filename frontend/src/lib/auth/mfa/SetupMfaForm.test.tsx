@@ -11,7 +11,7 @@ import { errorMessages } from '@/lib/form/errorMessages'
 import SetupMfaForm from './SetupMfaForm'
 
 vi.mock('@/client/generated', () => ({
-  postAuthVerifyMfa: vi.fn(),
+  verifyMultiFactorAuthentication: vi.fn(),
   verifyMultiFactorAuthenticationUpdate: vi.fn(),
 }))
 
