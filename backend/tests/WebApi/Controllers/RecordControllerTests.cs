@@ -710,6 +710,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         {
             { new DiscardRecordError.RecordNotFound(), HttpStatusCode.NotFound },
             { new DiscardRecordError.NotAllowed(), HttpStatusCode.NotFound },
+            { new DiscardRecordError.CannotDiscard(), HttpStatusCode.Forbidden },
             { new DiscardRecordError.InvalidDiscard(), HttpStatusCode.BadRequest },
             { new DiscardRecordError.ConcurrencyError(), HttpStatusCode.Conflict },
         };

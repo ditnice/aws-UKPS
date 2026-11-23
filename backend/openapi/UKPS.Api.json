@@ -3227,6 +3227,26 @@
               }
             }
           },
+          "403": {
+            "description": "The caller can read the record but cannot discard it.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "The record was not found, has already been discarded, or is not accessible to the caller.",
             "content": {

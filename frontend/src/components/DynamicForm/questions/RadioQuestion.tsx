@@ -1,6 +1,7 @@
 import { Radio, Radios } from '@/components/Radios/Radios'
 
 import styles from '../DynamicForm.module.scss'
+import { HintText } from '../HintText'
 import { labelSizeFor } from '../labelStyle'
 
 import type { QuestionProps } from '../types'
@@ -22,7 +23,7 @@ export function RadioQuestion({
     <Radios
       className={hasOptionHints ? styles.boldLabels : undefined}
       error={error}
-      hint={question.hint ?? undefined}
+      hint={question.hint ? <HintText text={question.hint} /> : undefined}
       legend={question.label}
       legendSize={labelSizeFor(labelStyle)}
       name={name}

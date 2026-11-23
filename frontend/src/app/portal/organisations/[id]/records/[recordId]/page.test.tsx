@@ -131,6 +131,35 @@ const renderPage = async (
 }
 
 describe('RecordPage', () => {
+  it.each([
+    { canEditContent: true, actions: ['ViewTimeline'], shown: true },
+    { canEditContent: false, actions: ['ConfirmCurrent', 'ViewTimeline'], shown: true },
+    { canEditContent: false, actions: ['ConfirmOnHold', 'ViewTimeline'], shown: true },
+    { canEditContent: false, actions: ['ViewTimeline'], shown: false },
+  ] as const)(
+    'only says an overdue record can be edited or confirmed to a user who can ($canEditContent, $actions)',
+    async ({ canEditContent, actions, shown }) => {
+      mockRecord({
+        data: {
+          ...medicineRecord,
+          overview: {
+            ...medicineRecord.overview,
+            canEditContent,
+            actions: [...actions],
+            nextUpdateDue: '2020-01-01T00:00:00Z',
+          },
+        },
+        error: undefined,
+        response: new Response(),
+      })
+
+      await renderPage()
+
+      expect(screen.getByText(/This record needs to be reviewed for any updates\./)).toBeDefined()
+      expect(screen.queryAllByText(/You can edit the record/)).toHaveLength(shown ? 1 : 0)
+    },
+  )
+
   it('renders the record header, manage banner and the sections in the response', async () => {
     mockRecord({ data: medicineRecord, error: undefined, response: new Response() })
 

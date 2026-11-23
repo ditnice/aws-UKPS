@@ -36,12 +36,13 @@ const isRecordOverdue = (nextUpdateDue?: string | null) => {
   return dueDate.getTime() < Date.now()
 }
 
-const OverdueRecordAlert = () => (
+const OverdueRecordAlert = ({ canEditOrConfirm }: { canEditOrConfirm: boolean }) => (
   <Alert type="info">
     <h3>Record update overdue</h3>
     <p>
-      This record needs to be reviewed for any updates. You can edit the record to update published
-      record information or confirm the information is up to date.
+      This record needs to be reviewed for any updates.
+      {canEditOrConfirm &&
+        ' You can edit the record to update published record information or confirm the information is up to date.'}
     </p>
   </Alert>
 )
@@ -105,6 +106,12 @@ const RecordView = async ({ organisationId, recordId, recordType, alert }: Recor
   const { overview: record, sections } = data
   const isOverdue = isRecordOverdue(record.nextUpdateDue)
 
+  // Based on what the user is permitted to do, so it is never true for a super user.
+  const canEditOrConfirm =
+    record.canEditContent ||
+    record.actions.includes('ConfirmCurrent') ||
+    record.actions.includes('ConfirmOnHold')
+
   const statusHeadings = {
     Archived: 'Archived record details',
     OnHold: 'Published record details',
@@ -117,7 +124,9 @@ const RecordView = async ({ organisationId, recordId, recordType, alert }: Recor
     <>
       {alert && <RecordViewAlert action={alert} />}
       {backLink}
-      {isOverdue && record.recordStatus !== 'Archived' && <OverdueRecordAlert />}
+      {isOverdue && record.recordStatus !== 'Archived' && (
+        <OverdueRecordAlert canEditOrConfirm={canEditOrConfirm} />
+      )}
 
       <PageHeader
         heading={`Record ${record.recordId}${record.companyCode ? `: ${record.companyCode}` : ''}`}

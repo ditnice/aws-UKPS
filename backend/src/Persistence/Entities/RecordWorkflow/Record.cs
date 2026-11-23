@@ -44,12 +44,18 @@ internal sealed class Record
     /// </summary>
     /// <param name="state">The record's status and its latest revision's workflow status.</param>
     /// <param name="hasSingleRevision">Whether the record has only one revision.</param>
+    /// <param name="canUpdate">Whether the user may edit the record's content.</param>
     /// <param name="canChangeStatus">Whether the user may put the record on hold, resume it or archive it.</param>
+    /// <param name="canConfirm">Whether the user may confirm the record's information or hold is current.</param>
+    /// <param name="canDiscard">Whether the user may discard the record's draft.</param>
     /// <returns>The permitted actions.</returns>
     internal static IReadOnlyCollection<RecordAction> GetPermittedActions(
         RecordLifecycleState state,
         bool hasSingleRevision,
-        bool canChangeStatus
+        bool canUpdate,
+        bool canChangeStatus,
+        bool canConfirm,
+        bool canDiscard
     )
     {
         return new RecordLifecycleStateMachine(state)
@@ -57,7 +63,12 @@ internal sealed class Record
             .Where(x => x != RecordLifecycleStateMachine.Command.Discard || hasSingleRevision)
             .Select(x => ConvertCommandToAction(x, state.RecordStatus))
             .OfType<RecordAction>()
+            .Where(x => canUpdate || x != RecordAction.Update)
             .Where(x => canChangeStatus || x != RecordAction.ChangeStatus)
+            .Where(x =>
+                canConfirm || x is not (RecordAction.ConfirmCurrent or RecordAction.ConfirmOnHold)
+            )
+            .Where(x => canDiscard || x != RecordAction.Discard)
             .Append(RecordAction.ViewTimeline)
             .Distinct()
             .Order()
