@@ -211,7 +211,7 @@ internal sealed class OrganisationMembershipService(
     // Users must not be able to change their own role or deactivate themselves, regardless of
     // the permissions their role would otherwise grant them over the organisation.
     private bool IsCurrentUsersOwnMembership(UserOrgMembership membership) =>
-        currentUserInfoService.IsCurrentUser(membership.User!.WorkEmail);
+        currentUserInfoService.IsCurrentUser(membership.User!);
 
     // Preserve an existing enabled champion; inactive champions are still contactable.
     private async Task<bool> WouldRemoveLastChampion(

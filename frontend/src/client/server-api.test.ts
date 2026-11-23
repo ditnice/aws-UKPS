@@ -55,6 +55,30 @@ describe('createServerApiClient', () => {
     })
   })
 
+  it.each([
+    ['DEV', { Cookie: 'ukps_dev_role=Champion' }],
+    ['COGNITO', undefined],
+  ])(
+    'forwards the dev role cookie only in DEV mode (AUTHENTICATION_MODE=%s)',
+    async (mode, expectedHeaders) => {
+      vi.stubEnv('BACKEND_API_BASE_URL', 'https://api.example.test')
+      vi.stubEnv('AUTHENTICATION_MODE', mode)
+      mocks.cookies.mockResolvedValue({
+        get: vi.fn((name: string) =>
+          name === 'ukps_dev_role' ? { value: 'Champion' } : undefined,
+        ),
+      })
+      mocks.headers.mockResolvedValue({ get: vi.fn(() => null) })
+
+      await createServerApiClient()
+
+      expect(mocks.createClient).toHaveBeenCalledWith(
+        expect.objectContaining({ headers: expectedHeaders }),
+      )
+      vi.unstubAllEnvs()
+    },
+  )
+
   it('redirects server API requests to sign in when the backend returns 401', async () => {
     vi.stubEnv('BACKEND_API_BASE_URL', 'https://api.example.test')
     mocks.cookies.mockResolvedValue({ get: vi.fn(() => undefined) })

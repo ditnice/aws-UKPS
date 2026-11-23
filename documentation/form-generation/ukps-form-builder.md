@@ -12,8 +12,11 @@
 >   draft-only edits and ADR-004 concealment.
 > - **Replaced:** the fluent `Form.For(...)` builder (§4 "Sketch") and per-form definition
 >   classes, by annotated entities, a startup scanner and named option providers.
-> - **Not yet designed for the attribute approach:** conditions and stale-answer clearing,
->   add-another groups, precision dates and cross-field rules.
+> - **Not yet designed for the attribute approach:** cross-field rules. Conditions, stale-answer
+>   clearing, precision dates and add-another groups (`Group` and `TextList`, see
+>   [Groups and text lists](creating-form-pages.md#groups-and-text-lists)) have since been built.
+>   Groups differ from this brief: items are matched by their `ItemKey` answer (or by position), not by `itemId`, and a group is
+>   audited as one row keyed by its `ItemKey` rather than one row per child field.
 >
 > Current documentation: [high-level design](high-level-design.md),
 > [creating form pages](creating-form-pages.md),
@@ -87,7 +90,7 @@ Monorepo: `backend/` (.NET 10, EF Core, Postgres), `frontend/` (Next.js 16, Payl
 - Components: `frontend/src/components/` (`Input`, `Textarea`, `Select`, `Button`, `PageHeader`, `Placeholder/ErrorState`); NDS radio/checkbox via `@nice-digital/nds-radio` / `nds-checkbox` (see `app/portal/components/(examples)/`).
 - API client is generated: `pnpm generate:api` → `src/client/generated/`. Server-side calls via `src/client/server-api.ts`.
 - Error helpers: `src/lib/form/` (`errorMessages.ts`, `formErrorHandling.ts`, `getFieldErrorMessage.ts`), `src/lib/responses/typeGuards.ts`.
-- Tests: `pnpm test:unit` (Vitest, `*.spec.tsx` beside source), `pnpm test:e2e` (Playwright). Lint/format: `pnpm lint:check`.
+- Tests: `pnpm test:unit` (Vitest, `*.test.tsx` beside source), `pnpm test:e2e` (Playwright). Lint/format: `pnpm lint:check`.
 - Existing record UI lives under `/portal/organisations/[id]/records` (list only). There is **no record detail page** yet.
 
 ### Prerequisites (not yet in the code)

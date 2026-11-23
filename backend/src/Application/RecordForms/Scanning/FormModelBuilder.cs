@@ -1,4 +1,5 @@
 using UKPS.Api.Application.RecordForms.Bindings;
+using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Persistence.Enums;
@@ -10,20 +11,23 @@ namespace UKPS.Api.Application.RecordForms.Scanning;
 internal static class FormModelBuilder
 {
     public static Dictionary<RecordType, FormModel> Build(
-        IReadOnlyList<EntityDeclaration> entities,
+        FormDeclarations declarations,
         OptionProviderRegistry options
     )
     {
-        Dictionary<EntityDeclaration, FormQuestion[]> questions = entities.ToDictionary(
-            static e => e,
-            e => BuildQuestions(e, options)
-        );
+        Dictionary<QuestionDeclaration, FormQuestion> built = declarations
+            .Entities.SelectMany(e => e.Questions.Zip(BuildQuestions(e, options)))
+            .ToDictionary(static x => x.First, static x => x.Second);
+        BuiltQuestion[] questions = declarations
+            .Placed.Select(p => new BuiltQuestion(p, built[p.Question]))
+            .ToArray();
 
-        return entities
-            .SelectMany(static e => e.Sections)
-            .Select(static s => s.RecordType)
-            .Distinct()
-            .ToDictionary(static t => t, t => BuildForm(t, entities, questions));
+        return declarations
+            .Layouts.Where(layout => questions.Any(q => q.Placed.RecordType == layout.RecordType))
+            .ToDictionary(
+                static layout => layout.RecordType,
+                layout => BuildForm(layout, questions)
+            );
     }
 
     private static FormQuestion[] BuildQuestions(
@@ -31,28 +35,39 @@ internal static class FormModelBuilder
         OptionProviderRegistry options
     )
     {
-        // Every section of an entity shares its row source; validation rejects disagreement only
-        // where it matters (FirstSave with required columns), so take the strictest.
-        FormRowSource rowSource = entity.Sections.Any(static s =>
-            s.RowSource == FormRowSource.RecordCreation
-        )
-            ? FormRowSource.RecordCreation
-            : FormRowSource.FirstSave;
-
+        // Junction, regulatory date, group and text list questions read their answers through a
+        // navigation, which text lists sharing a collection share; a group's text lists through a
+        // navigation of each child row.
         string[] includes = entity
-            .Questions.Where(static q => q.Binding.Kind == BindingKind.Junction)
-            .Select(static q => q.Property.Name)
+            .Questions.SelectMany(static q => Includes(q))
+            .Distinct(StringComparer.Ordinal)
             .ToArray();
 
         FormEntity formEntity = new(
             entity.ClrType,
-            rowSource,
+            entity.RowSource,
             entity.ClrType.GetProperty("RevisionId")!,
             includes
         );
 
         return entity.Questions.Select(q => BuildQuestion(q, formEntity, options)).ToArray();
     }
+
+    private static IEnumerable<string> Includes(QuestionDeclaration question) =>
+        question.Binding.Kind switch
+        {
+            BindingKind.Junction => [question.Property.Name],
+            BindingKind.TextList => [question.Binding.ChildNavigation!.Name],
+            BindingKind.RegulatoryDate => [question.Binding.DateNavigation!.Name],
+            BindingKind.Group =>
+            [
+                question.Property.Name,
+                .. question
+                    .Children.SelectMany(static c => Includes(c))
+                    .Select(include => $"{question.Property.Name}.{include}"),
+            ],
+            _ => [],
+        };
 
     private static FormQuestion BuildQuestion(
         QuestionDeclaration question,
@@ -77,6 +92,16 @@ internal static class FormModelBuilder
             rules.Add(new FormRule(RuleKind.MaxItems, maxItems.Max, maxItems.Message));
         }
 
+        if (question.Distinct is { } distinct)
+        {
+            rules.Add(new FormRule(RuleKind.Distinct, null, distinct.Message));
+        }
+
+        FormQuestion[] children = question
+            .Children.Select(c => BuildQuestion(c, entity, options))
+            .OrderBy(static c => c.Order)
+            .ToArray();
+
         return new FormQuestion
         {
             Id = field.Id,
@@ -84,17 +109,43 @@ internal static class FormModelBuilder
             Label = field.Label,
             Hint = field.Hint,
             Display = field.Display,
+            Width = field.Width == FormInputWidth.Default ? null : field.Width,
             Order = field.Order,
             Placeholder = field.Placeholder,
             ChildLabel = field.ChildLabel,
             ChildPlaceholder = field.ChildPlaceholder,
             AddAnotherLabel = field.AddAnotherLabel,
+            ItemLabel = field.ItemLabel,
+            RemoveLabel = field.RemoveLabel,
+            ItemKey = field.ItemKey,
+            Children = children,
+            Prefixes = question.Prefixes?.Prefixes,
+            PrefixDigits = question.Prefixes is { Digits: > 0 } prefixes ? prefixes.Digits : null,
+            NumberName = question.Prefixes?.Name,
+            DateName = question.DateEvent?.Name,
             Rules = [.. rules.OrderBy(static r => r.Kind)],
+            ShowWhen = question.ShowWhen is { } showWhen
+                ? Condition(showWhen.QuestionId, showWhen.Values)
+                : null,
             OptionKey = OptionKey(question, options),
+            ReferenceType = question.Binding.ReferenceType,
             Entity = entity,
-            Binding = BuildBinding(question),
+            Binding = BuildBinding(question, entity, children),
         };
     }
+
+    /// <summary>
+    /// A condition on enum values, stored as their member names, or on reference data codes.
+    /// </summary>
+    private static AnswerInCondition Condition(string questionId, IReadOnlyList<object> values) =>
+        new(
+            questionId,
+            values
+                .Select(static v =>
+                    v is Enum member ? Enum.GetName(v.GetType(), member)! : (string)v
+                )
+                .ToArray()
+        );
 
     /// <summary>
     /// The key named by <c>[FormOptions]</c>, or else the only provider of the expected kind and
@@ -120,7 +171,11 @@ internal static class FormModelBuilder
         return options.FindBySource(kind, source!).Single().Key;
     }
 
-    private static IFormBinding BuildBinding(QuestionDeclaration question) =>
+    private static IFormBinding BuildBinding(
+        QuestionDeclaration question,
+        FormEntity entity,
+        IReadOnlyList<FormQuestion> children
+    ) =>
         question.Binding.Kind switch
         {
             BindingKind.Text => new ColumnBinding(question.Property, ColumnValueKind.Text),
@@ -135,67 +190,113 @@ internal static class FormModelBuilder
                 question.Binding.JunctionType!,
                 question.Binding.JunctionReferenceIdProperty!
             ),
+            BindingKind.RegulatoryDate => new RegulatoryDateBinding(
+                question.Property,
+                question.Binding.DateNavigation!,
+                entity.RevisionIdProperty,
+                question.DateEvent!.DateEvent,
+                question.Control
+            ),
+            BindingKind.TextList => new TextListBinding(
+                ChildCollection(question),
+                question.Binding.ChildValueProperty!
+            ),
+            BindingKind.Group => new GroupBinding(
+                ChildCollection(question),
+                children,
+                question.Field.ItemKey
+            ),
             _ => throw new InvalidOperationException(
                 $"Unsupported binding kind {question.Binding.Kind}."
             ),
         };
 
-    private static FormModel BuildForm(
-        RecordType recordType,
-        IReadOnlyList<EntityDeclaration> entities,
-        Dictionary<EntityDeclaration, FormQuestion[]> questions
-    )
+    private static ChildCollection ChildCollection(QuestionDeclaration question) =>
+        new(
+            question.Binding.ChildNavigation ?? question.Property,
+            question.Binding.ChildType!,
+            question.Binding.ChildIdProperty!,
+            question.Binding.ChildDisplayOrderProperty,
+            question.Binding.ChildKindProperty,
+            question.Binding.ChildKind
+        );
+
+    private static FormModel BuildForm(FormLayout layout, BuiltQuestion[] allQuestions)
     {
-        var declared = entities
-            .SelectMany(e =>
-                e.Sections.Where(s => s.RecordType == recordType)
-                    .Select(s => (Section: s, Questions: e.Questions.Zip(questions[e])))
-            )
+        BuiltQuestion[] questions = allQuestions
+            .Where(q => q.Placed.RecordType == layout.RecordType)
             .ToArray();
 
-        FormSection[] sections = declared
-            .GroupBy(static x => x.Section.Id, StringComparer.Ordinal)
-            .Select(group =>
-            {
-                FormSectionAttribute section = group.First().Section;
-                FormTask[] tasks = group
-                    .SelectMany(static x => x.Questions)
-                    .GroupBy(static x => x.First.Task.Id, StringComparer.Ordinal)
-                    .Select(task =>
-                    {
-                        FormTaskAttribute taskAttribute = task.First().First.Task;
-                        FormPage[] pages = task.GroupBy(
-                                static x => x.First.Page.Id,
-                                StringComparer.Ordinal
-                            )
-                            .Select(page => new FormPage(
-                                page.Key,
-                                page.First().First.Page.Title,
-                                page.First().First.Page.Order,
-                                section.Id,
-                                section.Title,
-                                taskAttribute.Id,
-                                taskAttribute.Title,
-                                page.Select(static x => x.Second)
-                                    .OrderBy(static q => q.Order)
-                                    .ToArray()
-                            ))
-                            .OrderBy(static p => p.Order)
-                            .ToArray();
-                        return new FormTask(
-                            taskAttribute.Id,
-                            taskAttribute.Title,
-                            taskAttribute.Order,
-                            pages
-                        );
-                    })
-                    .OrderBy(static t => t.Order)
-                    .ToArray();
-                return new FormSection(section.Id, section.Title, section.Order, tasks);
-            })
-            .OrderBy(static s => s.Order)
+        Dictionary<string, FormPageShowWhenAttribute> pageConditions = questions
+            .Select(static q => q.Placed.Entity)
+            .Distinct()
+            .SelectMany(static e => e.PageConditions)
+            .ToDictionary(static c => c.PageId, StringComparer.Ordinal);
+
+        // Pages with no questions yet, and tasks and sections with no such pages, are left out of
+        // the form.
+        FormSection[] sections = layout
+            .Sections.OrderBy(static s => s.Order)
+            .Select(section => new FormSection(
+                section.Id,
+                section.Title,
+                section.Order,
+                section
+                    .Tasks.OrderBy(static t => t.Order)
+                    .Select(task => BuildTask(section, task, questions, pageConditions))
+                    .Where(static t => t.Pages.Count > 0)
+                    .ToArray()
+            ))
+            .Where(static s => s.Tasks.Count > 0)
             .ToArray();
 
-        return new FormModel(recordType, FormVersions.For(recordType)!, sections);
+        return new FormModel(layout.RecordType, FormVersions.For(layout.RecordType)!, sections);
     }
+
+    private static FormTask BuildTask(
+        FormLayoutSection section,
+        FormLayoutTask task,
+        BuiltQuestion[] questions,
+        Dictionary<string, FormPageShowWhenAttribute> pageConditions
+    ) =>
+        new(
+            task.Id,
+            task.Title,
+            task.Order,
+            task.Pages.OrderBy(static p => p.Order)
+                .Select(page => BuildPage(section, task, page, questions, pageConditions))
+                .Where(static p => p.Questions.Count > 0)
+                .ToArray()
+        );
+
+    private static FormPage BuildPage(
+        FormLayoutSection section,
+        FormLayoutTask task,
+        FormLayoutPage page,
+        BuiltQuestion[] questions,
+        Dictionary<string, FormPageShowWhenAttribute> pageConditions
+    ) =>
+        new(
+            page.Id,
+            page.Title,
+            page.Order,
+            section.Id,
+            section.Title,
+            task.Id,
+            task.Title,
+            questions
+                .Where(q => string.Equals(q.Placed.PageId, page.Id, StringComparison.Ordinal))
+                .Select(static q => q.Question)
+                .OrderBy(static q => q.Order)
+                .ToArray(),
+            CommercialInConfidence: page.CommercialInConfidence
+        )
+        {
+            ShowWhen = pageConditions.TryGetValue(page.Id, out var condition)
+                ? Condition(condition.QuestionId, condition.Values)
+                : null,
+        };
+
+    /// <summary>A placed question declaration with the question built from it.</summary>
+    private sealed record BuiltQuestion(PlacedQuestion Placed, FormQuestion Question);
 }

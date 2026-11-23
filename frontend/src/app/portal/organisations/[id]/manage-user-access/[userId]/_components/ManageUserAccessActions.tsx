@@ -3,11 +3,11 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-import { FormGroup } from '@nice-digital/nds-form-group'
-import { Radio } from '@nice-digital/nds-radio'
-
 import type { UserMembershipAction, UserOrgStatus, UserRole } from '@/client/generated/types.gen'
 import { Button } from '@/components/Button/Button'
+import { Radio, Radios } from '@/components/Radios/Radios'
+
+import type { SubmitEvent } from 'react'
 
 interface Props {
   organisationId: number
@@ -47,6 +47,12 @@ const actionOptions: {
     hint: "Permanently remove the user's access to the system",
     path: 'remove',
   },
+  {
+    action: 'ManageUserDetails',
+    label: 'Manage user details and sign in method',
+    hint: 'Update user details or sign in method',
+    path: 'manage-details',
+  },
 ]
 
 export default function ManageUserAccessActions({
@@ -76,6 +82,8 @@ export default function ManageUserAccessActions({
           currentUserRole === 'Super' &&
           (isActive || status === 'AwaitingSetup' || status === 'Deactivated')
         )
+      case 'ManageUserDetails':
+        return isActive
       default:
         return false
     }
@@ -85,7 +93,7 @@ export default function ManageUserAccessActions({
     return <p>No actions are available for this user.</p>
   }
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
     const option = availableActions.find((option) => option.action === selectedAction)
     if (!option) {
@@ -94,7 +102,9 @@ export default function ManageUserAccessActions({
     }
 
     const route =
-      option.action === 'EditUserRole' || option.action === 'RemoveUser'
+      option.action === 'EditUserRole' ||
+      option.action === 'RemoveUser' ||
+      option.action === 'ManageUserDetails'
         ? 'manage-user-access'
         : 'users'
     router.push(`/portal/organisations/${organisationId}/${route}/${selectedUserId}/${option.path}`)
@@ -102,9 +112,19 @@ export default function ManageUserAccessActions({
 
   return (
     <form onSubmit={handleSubmit}>
-      <FormGroup
-        name="manage user's access"
-        groupError={radioError ? 'Select an option - No answer provided' : undefined}
+      <Radios
+        headingLevel={2}
+        legend="What would you like to do with this user's access?"
+        name="action"
+        error={radioError ? 'Select an option - No answer provided' : undefined}
+        value={selectedAction ?? null}
+        onChange={(value) => {
+          const option = availableActions.find((option) => option.action === value)
+          if (option) {
+            setSelectedAction(option.action)
+            setRadioError(false)
+          }
+        }}
       >
         {availableActions.map((option) => (
           <Radio
@@ -112,14 +132,9 @@ export default function ManageUserAccessActions({
             label={option.label}
             value={option.action}
             hint={option.hint}
-            name="action"
-            onChange={() => {
-              setSelectedAction(option.action)
-              setRadioError(false)
-            }}
           />
         ))}
-      </FormGroup>
+      </Radios>
       <Button type="submit" variant="cta">
         Continue
       </Button>

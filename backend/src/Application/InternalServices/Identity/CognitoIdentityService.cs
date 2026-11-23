@@ -134,7 +134,11 @@ internal sealed partial class CognitoIdentityService : IIdentityService
             {
                 UserPoolId = _options.Value.UserPoolId,
                 Username = cognitoUsername.Value,
-                UserAttributes = [new AttributeType { Name = "email", Value = updatedEmail }],
+                UserAttributes =
+                [
+                    new AttributeType { Name = "email", Value = updatedEmail },
+                    new AttributeType { Name = "email_verified", Value = "true" },
+                ],
             },
             cancellationToken
         );
@@ -226,12 +230,16 @@ internal sealed partial class CognitoIdentityService : IIdentityService
     }
 
     public async Task<AssociateSoftwareTokenResult> AssociateSoftwareToken(
-        string authenticationSessionId,
+        SessionIdentifier sessionIdentifier,
         CancellationToken cancellationToken
     )
     {
+        var request = sessionIdentifier.Match(
+            onSession: static x => new AssociateSoftwareTokenRequest { Session = x.Value },
+            onToken: static x => new AssociateSoftwareTokenRequest { AccessToken = x.Value }
+        );
         var associateResponse = await _cognito.AssociateSoftwareTokenAsync(
-            new AssociateSoftwareTokenRequest { Session = authenticationSessionId },
+            request,
             cancellationToken
         );
 
@@ -242,15 +250,30 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         };
     }
 
-    public async Task<AuthenticationCredentialsDto> VerifySoftwareToken(
-        CognitoUsername cognitoUsername,
-        string authenticationSessionId,
+    public async Task VerifySoftwareTokenWithAccessToken(
+        string accessToken,
         string code,
         CancellationToken cancellationToken
     )
     {
         VerifySoftwareTokenResponse verifyResponse = await _cognito.VerifySoftwareTokenAsync(
-            new VerifySoftwareTokenRequest { Session = authenticationSessionId, UserCode = code },
+            new VerifySoftwareTokenRequest { AccessToken = accessToken, UserCode = code },
+            cancellationToken
+        );
+
+        if (verifyResponse.Status != VerifySoftwareTokenResponseType.SUCCESS)
+            throw new CodeMismatchException("Invalid verification code.");
+    }
+
+    public async Task<AuthenticationCredentialsDto> VerifySoftwareTokenWithSession(
+        CognitoUsername cognitoUsername,
+        string authenticationSession,
+        string code,
+        CancellationToken cancellationToken
+    )
+    {
+        VerifySoftwareTokenResponse verifyResponse = await _cognito.VerifySoftwareTokenAsync(
+            new VerifySoftwareTokenRequest { Session = authenticationSession, UserCode = code },
             cancellationToken
         );
         AdminRespondToAuthChallengeResponse challengeResponse =
@@ -311,6 +334,13 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         CancellationToken cancellationToken
     )
     {
+        UserMfaDetails? details = await GetUserMfaDetails(cognitoUsername, cancellationToken);
+        bool useSms = details?.MfaMethod.Equals("Sms", StringComparison.Ordinal) ?? false;
+        ChallengeNameType challengeName = useSms
+            ? ChallengeNameType.SMS_MFA
+            : ChallengeNameType.SOFTWARE_TOKEN_MFA;
+        string codeKey = useSms ? "SMS_MFA_CODE" : "SOFTWARE_TOKEN_MFA_CODE";
+
         try
         {
             return await SendCognitoAuthRequest(async () =>
@@ -320,12 +350,12 @@ internal sealed partial class CognitoIdentityService : IIdentityService
                     {
                         UserPoolId = _options.Value.UserPoolId,
                         ClientId = _options.Value.ClientId,
-                        ChallengeName = ChallengeNameType.SOFTWARE_TOKEN_MFA,
+                        ChallengeName = challengeName,
                         Session = authenticationSession,
                         ChallengeResponses = new Dictionary<string, string>(StringComparer.Ordinal)
                         {
                             ["USERNAME"] = cognitoUsername.Value,
-                            ["SOFTWARE_TOKEN_MFA_CODE"] = code,
+                            [codeKey] = code,
                             ["SECRET_HASH"] = GenerateSecretHash(
                                 cognitoUsername,
                                 _options.Value.ClientId,
@@ -357,6 +387,256 @@ internal sealed partial class CognitoIdentityService : IIdentityService
                 new InitiateAuthenticationError.Unauthorised()
             );
         }
+        catch (NotAuthorizedException)
+        {
+            return InitiatedAuthenticationResult.Err(
+                new InitiateAuthenticationError.Unauthorised()
+            );
+        }
+    }
+
+    public async Task<AuthenticationCredentialsDto> RespondToSmsMultiFactorAuthenticationChallenge(
+        CognitoUsername cognitoUsername,
+        string authenticationSession,
+        string code,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            AdminRespondToAuthChallengeResponse challengeResponse =
+                await _cognito.AdminRespondToAuthChallengeAsync(
+                    new AdminRespondToAuthChallengeRequest
+                    {
+                        UserPoolId = _options.Value.UserPoolId,
+                        ClientId = _options.Value.ClientId,
+                        ChallengeName = ChallengeNameType.SMS_MFA,
+                        Session = authenticationSession,
+                        ChallengeResponses = new Dictionary<string, string>(StringComparer.Ordinal)
+                        {
+                            ["USERNAME"] = cognitoUsername.Value,
+                            ["SMS_MFA_CODE"] = code,
+                            ["SECRET_HASH"] = GenerateSecretHash(
+                                cognitoUsername,
+                                _options.Value.ClientId,
+                                _options.Value.ClientSecret
+                            ),
+                        },
+                    },
+                    cancellationToken
+                );
+
+            AuthenticationResultType auth =
+                challengeResponse.AuthenticationResult
+                ?? throw new NotAuthorizedException(
+                    "Cognito SMS MFA challenge did not return authentication credentials."
+                );
+
+            return new AuthenticationCredentialsDto
+            {
+                AccessToken = auth.AccessToken,
+                RefreshToken = auth.RefreshToken,
+            };
+        }
+        catch (CodeMismatchException)
+        {
+            throw new CodeMismatchException("Cognito SMS MFA code did not match.");
+        }
+        catch (NotAuthorizedException)
+        {
+            throw;
+        }
+    }
+
+    public async Task<bool> SendForgottenPasswordCommand(
+        CognitoUsername username,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await _cognito.ForgotPasswordAsync(
+                new ForgotPasswordRequest()
+                {
+                    ClientId = _options.Value.ClientId,
+                    Username = username.Value,
+                    SecretHash = GenerateSecretHash(
+                        username,
+                        _options.Value.ClientId,
+                        _options.Value.ClientSecret
+                    ),
+                },
+                cancellationToken
+            );
+        }
+        catch (LimitExceededException)
+        {
+            return false;
+        }
+        catch (TooManyRequestsException)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    public async Task<ConfirmNewPasswordResult> ConfirmNewPassword(
+        CognitoUsername username,
+        string confirmationCode,
+        string newPassword,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await _cognito.ConfirmForgotPasswordAsync(
+                new ConfirmForgotPasswordRequest()
+                {
+                    ClientId = _options.Value.ClientId,
+                    Username = username.Value,
+                    ConfirmationCode = confirmationCode,
+                    Password = newPassword,
+                    SecretHash = GenerateSecretHash(
+                        username,
+                        _options.Value.ClientId,
+                        _options.Value.ClientSecret
+                    ),
+                },
+                cancellationToken
+            );
+        }
+        catch (CodeMismatchException)
+        {
+            return ConfirmNewPasswordResult.Err(new ConfirmNewPasswordError.CodeMismatch());
+        }
+        catch (InvalidPasswordException)
+        {
+            return ConfirmNewPasswordResult.Err(new ConfirmNewPasswordError.InvalidPassword());
+        }
+        catch (LimitExceededException)
+        {
+            return ConfirmNewPasswordResult.Err(new ConfirmNewPasswordError.TooManyRequests());
+        }
+        catch (TooManyRequestsException)
+        {
+            return ConfirmNewPasswordResult.Err(new ConfirmNewPasswordError.TooManyRequests());
+        }
+        catch (TooManyFailedAttemptsException)
+        {
+            return ConfirmNewPasswordResult.Err(
+                new ConfirmNewPasswordError.TooManyFailedAttempts()
+            );
+        }
+        catch (ExpiredCodeException)
+        {
+            return ConfirmNewPasswordResult.Err(new ConfirmNewPasswordError.CodeExpired());
+        }
+        catch (PasswordHistoryPolicyViolationException)
+        {
+            return ConfirmNewPasswordResult.Err(
+                new ConfirmNewPasswordError.HistoryPolicyViolation()
+            );
+        }
+        return ConfirmNewPasswordResult.Ok();
+    }
+
+    public async Task SetUserPhoneNumber(
+        CognitoUsername cognitoUsername,
+        string phoneNumber,
+        CancellationToken cancellationToken
+    )
+    {
+        await _cognito.AdminUpdateUserAttributesAsync(
+            new AdminUpdateUserAttributesRequest
+            {
+                UserPoolId = _options.Value.UserPoolId,
+                Username = cognitoUsername.Value,
+                UserAttributes =
+                [
+                    new AttributeType { Name = "phone_number", Value = phoneNumber },
+                    new AttributeType { Name = "phone_number_verified", Value = "true" },
+                ],
+            },
+            cancellationToken
+        );
+    }
+
+    public async Task<UserMfaDetails?> GetUserMfaDetails(
+        CognitoUsername cognitoUsername,
+        CancellationToken cancellationToken
+    )
+    {
+        var response = await _cognito.AdminGetUserAsync(
+            new AdminGetUserRequest
+            {
+                UserPoolId = _options.Value.UserPoolId,
+                Username = cognitoUsername.Value,
+            },
+            cancellationToken
+        );
+
+        var enabledMfas = response.UserMFASettingList ?? [];
+        if (enabledMfas.Count == 0)
+        {
+            return null;
+        }
+
+        bool smsEnabled = enabledMfas.Contains("SMS_MFA", StringComparer.Ordinal);
+        bool totpPreferred = string.Equals(
+            response.PreferredMfaSetting,
+            "SOFTWARE_TOKEN_MFA",
+            StringComparison.Ordinal
+        );
+        string method = smsEnabled && !totpPreferred ? "Sms" : "AuthenticatorApp";
+
+        string phoneNumber = string.Empty;
+        if (method.Equals("Sms", StringComparison.Ordinal))
+        {
+            var phoneNumberAttribute = response.UserAttributes.FirstOrDefault(attr =>
+                attr.Name.Equals("phone_number", StringComparison.Ordinal)
+            );
+            phoneNumber = ObfuscatePhoneNumber(phoneNumberAttribute?.Value ?? string.Empty);
+        }
+
+        return new UserMfaDetails { MfaMethod = method, MfaPhoneNumber = phoneNumber };
+    }
+
+    public async Task SetUserMfaPreference(
+        CognitoUsername cognitoUsername,
+        bool smsEnabled,
+        bool smsPreferred,
+        CancellationToken cancellationToken,
+        bool softwareTokenEnabled = true
+    )
+    {
+        await _cognito.AdminSetUserMFAPreferenceAsync(
+            new AdminSetUserMFAPreferenceRequest
+            {
+                UserPoolId = _options.Value.UserPoolId,
+                Username = cognitoUsername.Value,
+                SMSMfaSettings = new SMSMfaSettingsType
+                {
+                    Enabled = smsEnabled,
+                    PreferredMfa = smsPreferred,
+                },
+                SoftwareTokenMfaSettings = new SoftwareTokenMfaSettingsType
+                {
+                    Enabled = softwareTokenEnabled,
+                    PreferredMfa = softwareTokenEnabled && !smsPreferred,
+                },
+            },
+            cancellationToken
+        );
+    }
+
+    private static string ObfuscatePhoneNumber(string phoneNumber)
+    {
+        if (string.IsNullOrWhiteSpace(phoneNumber) || phoneNumber.Length < 4)
+        {
+            return string.Empty;
+        }
+
+        return phoneNumber[..2] + "**" + " " + "***" + phoneNumber[^2..];
     }
 
     private async Task<InitiatedAuthenticationResult> SendCognitoAuthRequest(
@@ -416,6 +696,10 @@ internal sealed partial class CognitoIdentityService : IIdentityService
                 session
             ),
             [ChallengeNameType.SOFTWARE_TOKEN_MFA] = new InitiateAuthenticationError.Challenge(
+                UkpsChallengeType.MultiFactorAuthenticationRequired,
+                session
+            ),
+            [ChallengeNameType.SMS_MFA] = new InitiateAuthenticationError.Challenge(
                 UkpsChallengeType.MultiFactorAuthenticationRequired,
                 session
             ),

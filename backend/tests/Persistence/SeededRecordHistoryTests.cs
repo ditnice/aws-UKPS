@@ -10,6 +10,7 @@ using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.WebApi.InternalServices.Authentication;
 using Record = UKPS.Api.Persistence.Entities.RecordWorkflow.Record;
 
 namespace UKPS.Api.Tests.Persistence;
@@ -65,7 +66,12 @@ public sealed class SeededRecordHistoryTests
     public void Users_ShouldMatchTheirOrganisationTypeAndHaveUniqueEmails()
     {
         Payload.Users.Select(u => u.WorkEmail).ShouldBeUnique(StringComparer.OrdinalIgnoreCase);
-        foreach (UserOrgMembership membership in Payload.Memberships.SkipLast(1))
+        // The dev Super user is an IT admin in whichever organisation it's seeded into.
+        foreach (
+            UserOrgMembership membership in Payload.Memberships.Where(m =>
+                m.User!.CognitoUsername != DevAuthenticationClaims.DefaultUserCognitoUsername
+            )
+        )
         {
             UserType expected = membership.Organisation!.OrganisationType switch
             {
@@ -311,11 +317,18 @@ public sealed class SeededRecordHistoryTests
             {
                 [CreationPageFieldPaths.CompanyCode] = productDetail.CompanyCode,
                 [CreationPageFieldPaths.RecordTitle] = productDetail.RecordTitle,
-                [CreationPageFieldPaths.NamesAndIdentifiers] = FieldAuditJson.NamesAndIdentifiers(
-                    NamesOfType(NameAndIdentifierType.GenericName),
-                    NamesOfType(NameAndIdentifierType.OtherIdentifier)
+                [CreationPageFieldPaths.GenericNames] = FieldAuditJson.TextList(
+                    NamesOfType(NameAndIdentifierType.GenericName)
                 ),
             };
+            if (
+                FieldAuditJson.TextList(NamesOfType(NameAndIdentifierType.OtherIdentifier)) is
+                { } other
+            )
+            {
+                expected[CreationPageFieldPaths.OtherIdentifiers] = other;
+            }
+
             if (productDetail.BrandedName is not null)
             {
                 expected[CreationPageFieldPaths.BrandedName] = productDetail.BrandedName;

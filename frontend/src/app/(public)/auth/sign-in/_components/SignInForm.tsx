@@ -1,6 +1,7 @@
 'use client'
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { type ChangeEvent } from 'react'
 import { z } from 'zod'
@@ -10,9 +11,13 @@ import { Button } from '@/components/Button/Button'
 import { Details } from '@/components/Details/Details'
 import { Input } from '@/components/Input/Input'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
+import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { buildSelectOrganisationHref } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
-import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
+import { getFieldErrorMessage, getFormErrorMessage } from '@/lib/form/getFieldErrorMessage'
+
+import EmailVerificationRequiredAlert from '../../EmailVerificationRequiredAlert'
+import { createResetPasswordHref } from '../../reset-password/navigation'
 
 const signInSchema = z.object({
   email: z
@@ -58,6 +63,16 @@ export function SignInForm({ returnTo }: SignInFormProps) {
         return
       }
 
+      if (result.error?.code === 'PendingEmailRequiredVerification') {
+        formApi.setErrorMap({
+          onSubmit: {
+            form: 'PendingEmailRequiredVerification',
+            fields: {},
+          },
+        })
+        return
+      }
+
       if (result.error.challengeType === 'MultiFactorAuthenticationRequired') {
         const { authenticationSession } = result.error
 
@@ -89,80 +104,94 @@ export function SignInForm({ returnTo }: SignInFormProps) {
   })
 
   return (
-    <form
-      noValidate
-      onSubmit={(event) => {
-        event.preventDefault()
-        event.stopPropagation()
+    <>
+      <form
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
 
-        // Browser autofill can set an input's DOM value without firing the input
-        // event React relies on to keep field state in sync, leaving the field
-        // looking filled in while the form still thinks it's empty. Re-sync from
-        // the DOM immediately before validating so a submit right after autofill
-        // (with no manual edit) still picks up the filled-in values.
-        const formData = new FormData(event.currentTarget)
-        form.setFieldValue('email', String(formData.get('email') ?? ''))
-        form.setFieldValue('password', String(formData.get('password') ?? ''))
+          // Browser autofill can set an input's DOM value without firing the input
+          // event React relies on to keep field state in sync, leaving the field
+          // looking filled in while the form still thinks it's empty. Re-sync from
+          // the DOM immediately before validating so a submit right after autofill
+          // (with no manual edit) still picks up the filled-in values.
+          const formData = new FormData(event.currentTarget)
+          form.setFieldValue('email', String(formData.get('email') ?? ''))
+          form.setFieldValue('password', String(formData.get('password') ?? ''))
 
-        form.handleSubmit()
-      }}
-    >
-      <form.Field name="email">
-        {(field) => {
-          const errorMessage = getFieldErrorMessage(field.state.meta.errors)
-
-          return (
-            <Input
-              autoComplete="email"
-              error={Boolean(errorMessage)}
-              errorMessage={errorMessage}
-              label="Email address"
-              name={field.name}
-              onBlur={field.handleBlur}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                field.handleChange(event.target.value)
-              }
-              type="email"
-              value={field.state.value}
-              width="one-third"
-            />
-          )
+          form.handleSubmit()
         }}
-      </form.Field>
+      >
+        <form.Subscribe selector={(state) => getFormErrorMessage(state.errorMap.onSubmit)}>
+          {(formError) => {
+            if (!formError) return null
+            if (formError === 'PendingEmailRequiredVerification')
+              return <EmailVerificationRequiredAlert />
+            return <ErrorState>{formError}</ErrorState>
+          }}
+        </form.Subscribe>
+        <form.Field name="email">
+          {(field) => {
+            const errorMessage = getFieldErrorMessage(field.state.meta.errors)
 
-      <form.Field name="password">
-        {(field) => {
-          const errorMessage = getFieldErrorMessage(field.state.meta.errors)
+            return (
+              <Input
+                autoComplete="email"
+                error={Boolean(errorMessage)}
+                errorMessage={errorMessage}
+                label="Email address"
+                name={field.name}
+                onBlur={field.handleBlur}
+                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                  field.handleChange(event.target.value)
+                }
+                type="email"
+                value={field.state.value}
+                width="one-third"
+              />
+            )
+          }}
+        </form.Field>
 
-          return (
-            <PasswordInput
-              error={Boolean(errorMessage)}
-              errorMessage={errorMessage}
-              label="Password"
-              name={field.name}
-              onBlur={field.handleBlur}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                field.handleChange(event.target.value)
-              }
-              value={field.state.value}
-              width="one-third"
-            />
-          )
-        }}
-      </form.Field>
+        <form.Field name="password">
+          {(field) => {
+            const errorMessage = getFieldErrorMessage(field.state.meta.errors)
 
-      <Details summary="Forgotten your password?">
-        If you have forgotten your password visit the{' '}
-        {/* TODO - Update this to point to the correct page once built */}
-        <a href="#" target="_blank">
-          account recovery (opens in a new tab)
-        </a>{' '}
-        page.
-      </Details>
+            return (
+              <PasswordInput
+                error={Boolean(errorMessage)}
+                errorMessage={errorMessage}
+                label="Password"
+                name={field.name}
+                onBlur={field.handleBlur}
+                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                  field.handleChange(event.target.value)
+                }
+                value={field.state.value}
+                width="one-third"
+              />
+            )
+          }}
+        </form.Field>
 
-      <Button type="submit" variant="cta">
-        Continue
-      </Button>
-    </form>
+        <Details summary="Forgotten your password?">
+          If you have forgotten your password, you can{' '}
+          <a href={createResetPasswordHref()}>reset your password</a>.
+        </Details>
+
+        <Details summary="I cannot access my account">
+          If you cannot access your account, visit the{' '}
+          <Link href="/auth/account-recovery" target="_blank" rel="noopener noreferrer">
+            account recovery (opens in a new tab)
+          </Link>{' '}
+          page.
+        </Details>
+
+        <Button type="submit" variant="cta">
+          Continue
+        </Button>
+      </form>
+    </>
   )
 }

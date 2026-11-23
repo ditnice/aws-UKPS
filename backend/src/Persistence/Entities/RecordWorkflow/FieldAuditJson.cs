@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -22,19 +23,35 @@ internal static class FieldAuditJson
     public static string Serialize<T>(T value) => JsonSerializer.Serialize(value, _options);
 
     /// <summary>
-    /// The audit value of a revision's names and identifiers: one JSON object keyed by
-    /// <see cref="NameAndIdentifierType"/> member name in a fixed order, each type's names in
-    /// display order, so the same collection always serialises the same way.
+    /// The audit value of a text list, such as a product's generic names: its entries in order as
+    /// a JSON array, or null when it has none, as a form page save stores it.
     /// </summary>
-    public static string NamesAndIdentifiers(
-        IEnumerable<string> genericNames,
-        IEnumerable<string> otherIdentifiers
-    ) => Serialize(new NamesAndIdentifiersValue([.. genericNames], [.. otherIdentifiers]));
+    public static string? TextList(IEnumerable<string> values)
+    {
+        string[] entries = [.. values];
+        return entries.Length == 0 ? null : Serialize(entries);
+    }
 
-    private sealed record NamesAndIdentifiersValue(
-        [property: JsonPropertyName(nameof(NameAndIdentifierType.GenericName))]
-            string[] GenericName,
-        [property: JsonPropertyName(nameof(NameAndIdentifierType.OtherIdentifier))]
-            string[] OtherIdentifier
+    /// <summary>
+    /// The audit value of a regulatory date: its precision, value and confidentiality, for example
+    /// <c>{"date_precision":"EstimatedQuarter","date_value":"2027-04-01","is_confidential":true}</c>.
+    /// </summary>
+    public static string RegulatoryDate(
+        DatePrecision precision,
+        DateOnly value,
+        bool isConfidential
+    ) =>
+        Serialize(
+            new RegulatoryDateValue(
+                precision.ToString(),
+                value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                isConfidential
+            )
+        );
+
+    private sealed record RegulatoryDateValue(
+        [property: JsonPropertyName("date_precision")] string DatePrecision,
+        [property: JsonPropertyName("date_value")] string DateValue,
+        [property: JsonPropertyName("is_confidential")] bool IsConfidential
     );
 }

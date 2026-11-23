@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -23,28 +24,35 @@ internal static partial class FormModelValidator
     private const string TaskListRoute = "task-list";
 
     public static IReadOnlyList<string> Validate(
-        IReadOnlyList<EntityDeclaration> entities,
+        FormDeclarations declarations,
         OptionProviderRegistry options
     )
     {
         List<string> problems = [];
+        ValidateLayouts(declarations.Layouts, problems);
 
-        foreach (EntityDeclaration entity in entities)
+        foreach (EntityDeclaration entity in declarations.Entities)
         {
-            ValidateEntity(entity, problems);
+            ValidateEntity(entity, declarations, problems);
             foreach (QuestionDeclaration question in entity.Questions)
             {
                 ValidateQuestion(question, options, problems);
+                if (declarations.Place(question) is null)
+                {
+                    problems.Add(
+                        $"{question.Where} declares page '{question.PageId}', which no FormLayout declares."
+                    );
+                }
             }
         }
 
-        IEnumerable<RecordType> recordTypes = entities
-            .SelectMany(static e => e.Sections)
-            .Select(static s => s.RecordType)
-            .Distinct();
-        foreach (RecordType recordType in recordTypes)
+        foreach (
+            IGrouping<RecordType, PlacedQuestion> form in declarations.Placed.GroupBy(static q =>
+                q.RecordType
+            )
+        )
         {
-            ValidateForm(recordType, entities, problems);
+            ValidateForm(form.Key, [.. form], problems);
         }
 
         return problems;
@@ -56,7 +64,153 @@ internal static partial class FormModelValidator
     [GeneratedRegex(@"^[a-z0-9_]+(\.[a-z0-9_]+)?$", RegexOptions.ExplicitCapture, 1000)]
     private static partial Regex QuestionIdPattern();
 
-    private static void ValidateEntity(EntityDeclaration entity, List<string> problems)
+    [GeneratedRegex("^[a-z0-9_]+$", RegexOptions.ExplicitCapture, 1000)]
+    private static partial Regex ChildIdPattern();
+
+    private static void ValidateLayouts(IReadOnlyList<FormLayout> layouts, List<string> problems)
+    {
+        foreach (
+            IGrouping<RecordType, FormLayout> duplicate in layouts
+                .GroupBy(static l => l.RecordType)
+                .Where(static g => g.Count() > 1)
+        )
+        {
+            string names = string.Join(", ", duplicate.Select(static l => l.GetType().Name));
+            problems.Add($"More than one FormLayout declares the {duplicate.Key} form ({names}).");
+        }
+
+        foreach (
+            IGrouping<string, FormLayoutTask> duplicate in layouts
+                .SelectMany(static l => l.Sections)
+                .SelectMany(static s => s.Tasks)
+                .GroupBy(static t => t.Id, StringComparer.Ordinal)
+                .Where(static g => g.Count() > 1)
+        )
+        {
+            problems.Add(
+                $"Task ID '{duplicate.Key}' is declared more than once in the form layouts."
+            );
+        }
+
+        foreach (
+            IGrouping<string, FormLayoutPage> duplicate in layouts
+                .SelectMany(static l => l.Sections)
+                .SelectMany(static s => s.Tasks)
+                .SelectMany(static t => t.Pages)
+                .GroupBy(static p => p.Id, StringComparer.Ordinal)
+                .Where(static g => g.Count() > 1)
+        )
+        {
+            problems.Add(
+                $"Page ID '{duplicate.Key}' is declared more than once in the form layouts."
+            );
+        }
+
+        foreach (FormLayout layout in layouts)
+        {
+            ValidateLayout(layout, problems);
+        }
+    }
+
+    private static void ValidateLayout(FormLayout layout, List<string> problems)
+    {
+        string name = layout.GetType().Name;
+        if (layout.Sections.Count == 0)
+        {
+            problems.Add($"{name} declares no sections.");
+        }
+
+        foreach (FormLayoutSection section in layout.Sections)
+        {
+            if (!SlugPattern().IsMatch(section.Id) || string.IsNullOrWhiteSpace(section.Title))
+            {
+                problems.Add(
+                    $"{name} declares section '{section.Id}' with a badly formed ID or a blank title."
+                );
+            }
+
+            if (section.Tasks.Count == 0)
+            {
+                problems.Add($"{name} declares section '{section.Id}' with no tasks.");
+            }
+
+            foreach (FormLayoutTask task in section.Tasks)
+            {
+                if (!SlugPattern().IsMatch(task.Id) || string.IsNullOrWhiteSpace(task.Title))
+                {
+                    problems.Add(
+                        $"{name} declares task '{task.Id}' with a badly formed ID or a blank title."
+                    );
+                }
+
+                ValidateLayoutTask(name, task, problems);
+            }
+
+            ReportTies(
+                section.Tasks,
+                static t => t.Order,
+                static t => $"task '{t.Id}'",
+                $"{name}, section '{section.Id}',",
+                problems
+            );
+        }
+
+        foreach (
+            IGrouping<string, FormLayoutSection> duplicate in layout
+                .Sections.GroupBy(static s => s.Id, StringComparer.Ordinal)
+                .Where(static g => g.Count() > 1)
+        )
+        {
+            problems.Add($"{name} declares section '{duplicate.Key}' more than once.");
+        }
+
+        ReportTies(
+            layout.Sections,
+            static s => s.Order,
+            static s => $"section '{s.Id}'",
+            name,
+            problems
+        );
+    }
+
+    private static void ValidateLayoutTask(string name, FormLayoutTask task, List<string> problems)
+    {
+        if (task.Pages.Count == 0)
+        {
+            problems.Add($"{name} declares task '{task.Id}' with no pages.");
+        }
+
+        foreach (FormLayoutPage page in task.Pages)
+        {
+            if (!SlugPattern().IsMatch(page.Id) || string.IsNullOrWhiteSpace(page.Title))
+            {
+                problems.Add(
+                    $"{name} declares page '{page.Id}' with a badly formed ID or a blank title."
+                );
+            }
+
+            if (string.Equals(page.Id, TaskListRoute, StringComparison.Ordinal))
+            {
+                problems.Add(
+                    $"{name} declares page '{TaskListRoute}', which is reserved for the task list."
+                );
+            }
+        }
+
+        ReportTies(
+            task.Pages,
+            static p => p.Order,
+            static p => $"page '{p.Id}'",
+            $"{name}, task '{task.Id}',",
+            problems
+        );
+    }
+
+    private static void ValidateEntity(
+        EntityDeclaration entity,
+        FormDeclarations declarations,
+        List<string> problems
+    )
     {
         string name = entity.ClrType.Name;
 
@@ -72,7 +226,7 @@ internal static partial class FormModelValidator
             problems.Add($"{name} has no int RevisionId foreign key to RecordRevision.");
         }
 
-        if (entity.Sections.Any(static s => s.RowSource == FormRowSource.FirstSave))
+        if (entity.RowSource == FormRowSource.FirstSave)
         {
             string[] required = entity
                 .EntityType.GetProperties()
@@ -93,28 +247,17 @@ internal static partial class FormModelValidator
             }
         }
 
-        foreach (
-            IGrouping<RecordType, FormSectionAttribute> duplicate in entity
-                .Sections.GroupBy(static s => s.RecordType)
-                .Where(static g => g.Count() > 1)
-        )
+        RecordType[] forms = declarations.RecordTypesOf(entity);
+        if (forms.Length > 1)
         {
-            problems.Add($"{name} declares more than one [FormSection] for {duplicate.Key}.");
-        }
-
-        foreach (FormSectionAttribute section in entity.Sections)
-        {
-            if (!SlugPattern().IsMatch(section.Id) || string.IsNullOrWhiteSpace(section.Title))
-            {
-                problems.Add(
-                    $"{name} declares section '{section.Id}' with a badly formed ID or a blank title."
-                );
-            }
+            problems.Add(
+                $"{name} has pages in more than one form ({string.Join(", ", forms)}); an entity belongs to one form."
+            );
         }
 
         if (entity.Questions.Count == 0)
         {
-            problems.Add($"{name} declares [FormSection] but has no questions.");
+            problems.Add($"{name} declares [FormEntity] but has no questions.");
         }
     }
 
@@ -127,37 +270,7 @@ internal static partial class FormModelValidator
         string where = question.Where;
         FormFieldAttribute field = question.Field;
 
-        if (!QuestionIdPattern().IsMatch(field.Id))
-        {
-            problems.Add($"{where} has a badly formed question ID '{field.Id}'.");
-        }
-
-        if (
-            !SlugPattern().IsMatch(question.Task.Id)
-            || string.IsNullOrWhiteSpace(question.Task.Title)
-        )
-        {
-            problems.Add(
-                $"{where} declares task '{question.Task.Id}' with a badly formed ID or a blank title."
-            );
-        }
-
-        if (
-            !SlugPattern().IsMatch(question.Page.Id)
-            || string.IsNullOrWhiteSpace(question.Page.Title)
-        )
-        {
-            problems.Add(
-                $"{where} declares page '{question.Page.Id}' with a badly formed ID or a blank title."
-            );
-        }
-
-        if (string.Equals(question.Page.Id, TaskListRoute, StringComparison.Ordinal))
-        {
-            problems.Add(
-                $"{where} declares page '{TaskListRoute}', which is reserved for the task list."
-            );
-        }
+        ValidateIds(question, problems);
 
         if (string.IsNullOrWhiteSpace(field.Label))
         {
@@ -178,9 +291,135 @@ internal static partial class FormModelValidator
             problems.Add($"{where} is bound to a non-nullable column, so it needs [FormRequired].");
         }
 
+        ValidateDateEvent(question, control, problems);
         ValidateOptions(question, control, options, problems);
         ValidateRules(question, control, problems);
         ValidatePresentation(question, control, problems);
+        if (control == FormControl.Group)
+        {
+            ValidateGroup(question, options, problems);
+        }
+    }
+
+    /// <summary>
+    /// Checks a group's child questions: each is a valid question that suits a group, with an ID
+    /// local to the group, and the item key names a required, distinct child.
+    /// </summary>
+    private static void ValidateGroup(
+        QuestionDeclaration group,
+        OptionProviderRegistry options,
+        List<string> problems
+    )
+    {
+        string where = group.Where;
+        foreach (QuestionDeclaration child in group.Children)
+        {
+            string childWhere = child.Where;
+            if (!ChildIdPattern().IsMatch(child.Field.Id))
+            {
+                problems.Add(
+                    $"{childWhere} is a question of group {where}, so its ID '{child.Field.Id}' must be lowercase words joined by underscores, with no dotted prefix."
+                );
+            }
+
+            if (!ControlRules.IsAllowedInGroup(child.Control))
+            {
+                problems.Add(
+                    $"{childWhere} uses control {child.Control}, which a group's question cannot use; use Text, Textarea, PrefixedNumber or TextList."
+                );
+                continue;
+            }
+
+            if (child.ShowWhen is not null)
+            {
+                problems.Add(
+                    $"{childWhere} has [FormShowWhen], which a group's question cannot have."
+                );
+            }
+
+            ValidateQuestion(child, options, problems);
+        }
+
+        ReportDuplicates(
+            group.Children.Select(static c => c.Field.Id),
+            id => $"{where} has more than one question with ID '{id}'.",
+            problems
+        );
+        ReportDuplicates(
+            group.Children.Select(static c => c.Field.Order.ToString(CultureInfo.InvariantCulture)),
+            order => $"{where} has more than one question with Order {order}.",
+            problems
+        );
+
+        if (group.Field.ItemKey is { } itemKey)
+        {
+            QuestionDeclaration? key = group.Children.FirstOrDefault(c =>
+                string.Equals(c.Field.Id, itemKey, StringComparison.Ordinal)
+            );
+            if (
+                key is null
+                || key.Shape != AnswerShape.Single
+                || key.Required is null
+                || key.Distinct is null
+            )
+            {
+                problems.Add(
+                    $"{where} has ItemKey '{itemKey}', which must name a single-value question of the group with [FormRequired] and [FormDistinct]."
+                );
+            }
+        }
+    }
+
+    private static void ReportDuplicates(
+        IEnumerable<string> ids,
+        Func<string, string> message,
+        List<string> problems
+    )
+    {
+        problems.AddRange(
+            ids.GroupBy(static id => id, StringComparer.Ordinal)
+                .Where(static g => g.Count() > 1)
+                .Select(g => message(g.Key))
+        );
+    }
+
+    private static void ValidateIds(QuestionDeclaration question, List<string> problems)
+    {
+        string where = question.Where;
+        FormFieldAttribute field = question.Field;
+
+        if (!QuestionIdPattern().IsMatch(field.Id))
+        {
+            problems.Add($"{where} has a badly formed question ID '{field.Id}'.");
+        }
+    }
+
+    private static void ValidateDateEvent(
+        QuestionDeclaration question,
+        FormControl control,
+        List<string> problems
+    )
+    {
+        bool isDate = question.Binding.Kind == BindingKind.RegulatoryDate;
+        if (isDate && question.DateEvent is null)
+        {
+            problems.Add($"{question.Where} uses control {control}, which needs [FormDateEvent].");
+        }
+        else if (!isDate && question.DateEvent is not null)
+        {
+            problems.Add(
+                $"{question.Where} has [FormDateEvent], which only a PrecisionDate, ActualMonth or ActualDate uses."
+            );
+        }
+        else if (
+            control is FormControl.PrecisionDate or FormControl.ActualDate
+            && string.IsNullOrWhiteSpace(question.DateEvent?.Name)
+        )
+        {
+            problems.Add(
+                $"{question.Where} uses control {control}, whose [FormDateEvent] needs a Name for its error messages."
+            );
+        }
     }
 
     private static void ValidateOptions(
@@ -309,11 +548,87 @@ internal static partial class FormModelValidator
 
         if (
             question.MaxItems is { } maxItems
-            && (question.Shape != AnswerShape.Multi || maxItems.Max <= 0)
+            && (question.Shape == AnswerShape.Single || maxItems.Max <= 0)
         )
         {
             problems.Add(
-                $"{where} has [FormMaxItems], which needs a multi-value question and a positive maximum."
+                $"{where} has [FormMaxItems], which needs a multi-value, text list or group question and a positive maximum."
+            );
+        }
+
+        bool distinctApplies =
+            control == FormControl.TextList
+            || (question.IsGroupChild && question.Shape == AnswerShape.Single);
+        if (question.Distinct is not null && !distinctApplies)
+        {
+            problems.Add(
+                $"{where} has [FormDistinct], which only a TextList or a single-value question of a group uses."
+            );
+        }
+    }
+
+    private static void ValidatePrefixes(
+        QuestionDeclaration question,
+        FormControl control,
+        List<string> problems
+    )
+    {
+        string where = question.Where;
+        IReadOnlyList<string>? prefixes = question.Prefixes?.Prefixes;
+
+        if (control != FormControl.PrefixedNumber)
+        {
+            if (prefixes is not null)
+            {
+                problems.Add($"{where} has [FormValuePrefixes], which only a PrefixedNumber uses.");
+            }
+
+            return;
+        }
+
+        if (prefixes is null or { Count: 0 })
+        {
+            problems.Add(
+                $"{where} uses PrefixedNumber, which needs [FormValuePrefixes] with at least one prefix."
+            );
+            return;
+        }
+
+        if (prefixes.Any(static p => string.IsNullOrWhiteSpace(p) || char.IsAsciiDigit(p[^1])))
+        {
+            problems.Add(
+                $"{where} has a blank prefix, or one ending in a digit, which would make the number ambiguous."
+            );
+        }
+
+        if (question.Prefixes!.Digits < 0)
+        {
+            problems.Add(
+                $"{where} has a negative Digits in [FormValuePrefixes]; use 0 for up to 5 digits."
+            );
+        }
+
+        if (string.IsNullOrWhiteSpace(question.Prefixes.Name))
+        {
+            problems.Add($"{where} has a blank Name in [FormValuePrefixes].");
+        }
+
+        if (prefixes.Distinct(StringComparer.Ordinal).Count() != prefixes.Count)
+        {
+            problems.Add($"{where} repeats a prefix in [FormValuePrefixes].");
+        }
+
+        if (
+            prefixes.Any(a =>
+                prefixes.Any(b =>
+                    !string.Equals(a, b, StringComparison.Ordinal)
+                    && b.StartsWith(a, StringComparison.Ordinal)
+                )
+            )
+        )
+        {
+            problems.Add(
+                $"{where} has a prefix that starts another, which makes the split ambiguous."
             );
         }
     }
@@ -324,17 +639,24 @@ internal static partial class FormModelValidator
         List<string> problems
     )
     {
+        ValidatePrefixes(question, control, problems);
+        ValidateWidth(question, control, problems);
         string where = question.Where;
         FormFieldAttribute field = question.Field;
         bool isHierarchical = control == FormControl.HierarchicalSelect;
 
         if (
             field.Placeholder is not null
-            && control is not (FormControl.Select or FormControl.HierarchicalSelect)
+            && control
+                is not (
+                    FormControl.Select
+                    or FormControl.HierarchicalSelect
+                    or FormControl.PrefixedNumber
+                )
         )
         {
             problems.Add(
-                $"{where} sets Placeholder, which only a Select or HierarchicalSelect uses."
+                $"{where} sets Placeholder, which only a Select or HierarchicalSelect or PrefixedNumber uses."
             );
         }
 
@@ -348,12 +670,15 @@ internal static partial class FormModelValidator
         if (
             field.AddAnotherLabel is not null
             && !(isHierarchical && question.Shape == AnswerShape.Multi)
+            && control is not (FormControl.Group or FormControl.TextList)
         )
         {
             problems.Add(
-                $"{where} sets AddAnotherLabel, which only a multi-value HierarchicalSelect uses."
+                $"{where} sets AddAnotherLabel, which only a multi-value HierarchicalSelect, a Group or a TextList uses."
             );
         }
+
+        ValidateItemPresentation(question, control, problems);
 
         if (isHierarchical && field.ChildLabel is null)
         {
@@ -361,9 +686,77 @@ internal static partial class FormModelValidator
         }
     }
 
+    private static void ValidateWidth(
+        QuestionDeclaration question,
+        FormControl control,
+        List<string> problems
+    )
+    {
+        string where = question.Where;
+        FormInputWidth width = question.Field.Width;
+
+        if (width == FormInputWidth.Default)
+        {
+            return;
+        }
+
+        if (control is not (FormControl.Text or FormControl.TextList))
+        {
+            problems.Add($"{where} sets Width, which only a Text or a TextList uses.");
+        }
+        else if (control == FormControl.TextList && width >= FormInputWidth.Chars2)
+        {
+            problems.Add(
+                $"{where} sets Width on a TextList, which only supports a share of the container such as Full."
+            );
+        }
+    }
+
+    /// <summary>Checks the item and remove labels and item key only a group or text list uses.</summary>
+    private static void ValidateItemPresentation(
+        QuestionDeclaration question,
+        FormControl control,
+        List<string> problems
+    )
+    {
+        string where = question.Where;
+        FormFieldAttribute field = question.Field;
+        bool isGroup = control == FormControl.Group;
+
+        if (
+            field.RemoveLabel is not null
+            && control is not (FormControl.Group or FormControl.TextList)
+        )
+        {
+            problems.Add($"{where} sets RemoveLabel, which only a Group or a TextList uses.");
+        }
+
+        if (field.ItemKey is not null && !isGroup)
+        {
+            problems.Add($"{where} sets ItemKey, which only a Group uses.");
+        }
+
+        bool itemLabelIsBlank = string.IsNullOrWhiteSpace(field.ItemLabel);
+        if (
+            field.ItemLabel is not null
+            && control is not (FormControl.Group or FormControl.TextList)
+        )
+        {
+            problems.Add($"{where} sets ItemLabel, which only a Group or a TextList uses.");
+        }
+        else if (isGroup && itemLabelIsBlank)
+        {
+            problems.Add($"{where} uses Group, which needs an ItemLabel.");
+        }
+        else if (field.ItemLabel is not null && itemLabelIsBlank)
+        {
+            problems.Add($"{where} sets a blank ItemLabel.");
+        }
+    }
+
     private static void ValidateForm(
         RecordType recordType,
-        IReadOnlyList<EntityDeclaration> entities,
+        PlacedQuestion[] questions,
         List<string> problems
     )
     {
@@ -373,37 +766,8 @@ internal static partial class FormModelValidator
             problems.Add($"{form} has no entry in FormVersions.");
         }
 
-        var sections = entities
-            .SelectMany(e =>
-                e.Sections.Where(s => s.RecordType == recordType)
-                    .Select(s => (Entity: e, Section: s))
-            )
-            .ToArray();
-
-        foreach (var group in sections.GroupBy(static x => x.Section.Id, StringComparer.Ordinal))
-        {
-            if (group.Select(static x => (x.Section.Title, x.Section.Order)).Distinct().Count() > 1)
-            {
-                problems.Add(
-                    $"{form} declares section '{group.Key}' with different titles or orders."
-                );
-            }
-        }
-
-        ReportTies(
-            sections.DistinctBy(static x => x.Section.Id, StringComparer.Ordinal),
-            static x => x.Section.Order,
-            static x => $"section '{x.Section.Id}'",
-            form,
-            problems
-        );
-
-        var questions = sections
-            .SelectMany(static x =>
-                x.Entity.Questions.Select(q => (Question: q, SectionId: x.Section.Id))
-            )
-            .ToArray();
-        ValidateTasks(form, questions, problems);
+        ValidatePages(form, questions, problems);
+        ValidateConditions(form, questions, problems);
 
         foreach (
             var duplicate in questions
@@ -413,119 +777,273 @@ internal static partial class FormModelValidator
         {
             problems.Add($"{form} uses question ID '{duplicate.Key}' more than once.");
         }
+
+        ValidateDateEvents(form, questions, problems);
     }
 
-    private static void ValidateTasks(
+    /// <summary>
+    /// A revision holds one regulatory date per event and precision, so two date questions in a
+    /// form with the same event would overwrite each other's row or break its unique index.
+    /// </summary>
+    private static void ValidateDateEvents(
         string form,
-        (QuestionDeclaration Question, string SectionId)[] questions,
+        PlacedQuestion[] questions,
         List<string> problems
     )
     {
-        var tasks = questions
-            .GroupBy(static x => x.Question.Task.Id, StringComparer.Ordinal)
-            .ToArray();
-        ValidateTaskMetadata(form, tasks, problems);
-        ValidatePages(form, questions, problems);
-    }
-
-    private static void ValidateTaskMetadata(
-        string form,
-        IGrouping<string, (QuestionDeclaration Question, string SectionId)>[] tasks,
-        List<string> problems
-    )
-    {
-        foreach (var task in tasks)
-        {
-            if (
-                task.Select(static x => (x.Question.Task.Title, x.Question.Task.Order, x.SectionId))
-                    .Distinct()
-                    .Count() > 1
-            )
-            {
-                problems.Add(
-                    $"{form} declares task '{task.Key}' with different titles, orders or sections."
-                );
-            }
-        }
-
         foreach (
-            var section in tasks
-                .Select(static task => task.First())
-                .GroupBy(static x => x.SectionId, StringComparer.Ordinal)
+            var duplicate in questions
+                .Where(static x => x.Question.Binding.Kind == BindingKind.RegulatoryDate)
+                .Where(static x => x.Question.DateEvent is not null)
+                .GroupBy(static x => x.Question.DateEvent!.DateEvent)
+                .Where(static g => g.Count() > 1)
         )
         {
-            ReportTies(
-                section,
-                static x => x.Question.Task.Order,
-                static x => $"task '{x.Question.Task.Id}'",
-                $"{form}, section '{section.Key}',",
-                problems
+            string ids = string.Join(
+                ", ",
+                duplicate.Select(static x => $"'{x.Question.Field.Id}'")
+            );
+            problems.Add(
+                $"{form} uses date event {duplicate.Key} on more than one question: {ids}."
             );
         }
     }
 
     private static void ValidatePages(
         string form,
-        (QuestionDeclaration Question, string SectionId)[] questions,
+        PlacedQuestion[] questions,
         List<string> problems
     )
     {
-        var pages = questions
-            .GroupBy(
-                static x => (x.SectionId, TaskId: x.Question.Task.Id, x.Question.Page.Id),
-                EqualityComparer<(string SectionId, string TaskId, string Id)>.Default
-            )
-            .ToArray();
-        foreach (var page in pages)
+        foreach (var page in questions.GroupBy(static x => x.PageId, StringComparer.Ordinal))
         {
-            if (
-                page.Select(static x => (x.Question.Page.Title, x.Question.Page.Order))
-                    .Distinct()
-                    .Count() > 1
-            )
-            {
-                problems.Add(
-                    $"{form} declares page '{page.Key.Id}' with different titles or orders."
-                );
-            }
-
             ReportTies(
                 page,
                 static x => x.Question.Field.Order,
                 static x => $"question '{x.Question.Field.Id}'",
-                $"{form}, page '{page.Key.Id}',",
+                $"{form}, page '{page.Key}',",
                 problems
             );
         }
+    }
 
-        // Grouping by task ID alone is safe: ValidateTaskMetadata reports a task ID declared in more
-        // than one section, so within a valid form each task ID names exactly one task.
+    /// <summary>
+    /// Checks every question and page condition: the trigger exists, comes earlier, and is a
+    /// trigger the values suit (see <see cref="ValidateTrigger"/>).
+    /// </summary>
+    private static void ValidateConditions(
+        string form,
+        PlacedQuestion[] placed,
+        List<string> problems
+    )
+    {
+        Dictionary<string, PlacedQuestion> questions = placed
+            .DistinctBy(static x => x.Question.Field.Id, StringComparer.Ordinal)
+            .ToDictionary(static x => x.Question.Field.Id, StringComparer.Ordinal);
+
+        ValidateQuestionConditions(questions, problems);
+        ValidatePageConditions(form, placed, questions, problems);
+    }
+
+    private static void ValidateQuestionConditions(
+        Dictionary<string, PlacedQuestion> questions,
+        List<string> problems
+    )
+    {
+        foreach (QuestionDeclaration question in questions.Values.Select(static x => x.Question))
+        {
+            if (question.ShowWhen is not { } showWhen)
+            {
+                continue;
+            }
+
+            string where = $"{question.Where} [FormShowWhen]";
+            if (!question.Binding.IsNullable)
+            {
+                problems.Add(
+                    $"{where} is on a non-nullable column, which cannot be cleared when the question does not apply."
+                );
+            }
+
+            if (!questions.TryGetValue(showWhen.QuestionId, out var trigger))
+            {
+                problems.Add($"{where} names unknown question '{showWhen.QuestionId}'.");
+                continue;
+            }
+
+            if (
+                !string.Equals(trigger.PageId, question.PageId, StringComparison.Ordinal)
+                || trigger.Question.Field.Order >= question.Field.Order
+            )
+            {
+                problems.Add(
+                    $"{where} names '{showWhen.QuestionId}', which must be an earlier question on the same page."
+                );
+            }
+
+            ValidateTrigger(where, trigger.Question, showWhen.Values, problems);
+        }
+    }
+
+    private static void ValidatePageConditions(
+        string form,
+        PlacedQuestion[] placed,
+        Dictionary<string, PlacedQuestion> questions,
+        List<string> problems
+    )
+    {
+        var pageConditions = placed
+            .Select(static x => x.Entity)
+            .Distinct()
+            .SelectMany(static e => e.PageConditions.Select(c => (Entity: e, Condition: c)))
+            .ToArray();
+
         foreach (
-            var task in pages
-                .Select(static p => p.First())
-                .GroupBy(static x => x.Question.Task.Id, StringComparer.Ordinal)
+            var duplicate in pageConditions
+                .GroupBy(static x => x.Condition.PageId, StringComparer.Ordinal)
+                .Where(static g => g.Count() > 1)
         )
         {
-            ReportTies(
-                task,
-                static x => x.Question.Page.Order,
-                static x => $"page '{x.Question.Page.Id}'",
-                $"{form}, task '{task.Key}',",
-                problems
+            problems.Add(
+                $"{form} has more than one [FormPageShowWhen] for page '{duplicate.Key}'."
             );
         }
 
-        foreach (
-            var page in questions
-                .GroupBy(static x => x.Question.Page.Id, StringComparer.Ordinal)
-                .Where(static page =>
-                    page.Select(x => x.Question.Task.Id).Distinct(StringComparer.Ordinal).Count()
-                    > 1
+        foreach (var (entity, condition) in pageConditions)
+        {
+            string where =
+                $"{entity.ClrType.Name} [FormPageShowWhen] for page '{condition.PageId}'";
+            PlacedQuestion? onPage = placed.FirstOrDefault(x =>
+                x.Entity == entity
+                && string.Equals(x.PageId, condition.PageId, StringComparison.Ordinal)
+            );
+            if (onPage is null)
+            {
+                // A page no layout declares, or that is in another form, is reported elsewhere.
+                if (
+                    entity.Questions.Any(q =>
+                        string.Equals(q.PageId, condition.PageId, StringComparison.Ordinal)
+                    )
                 )
+                {
+                    continue;
+                }
+
+                problems.Add($"{where} names a page that {entity.ClrType.Name} does not declare.");
+                continue;
+            }
+
+            if (!questions.TryGetValue(condition.QuestionId, out var trigger))
+            {
+                problems.Add($"{where} names unknown question '{condition.QuestionId}'.");
+                continue;
+            }
+
+            ValidateNotFirstInTask(where, onPage, questions, problems);
+            if (trigger.Position.CompareTo(onPage.Position) >= 0)
+            {
+                problems.Add(
+                    $"{where} names '{condition.QuestionId}', which must be on an earlier page."
+                );
+            }
+
+            ValidateTrigger(where, trigger.Question, condition.Values, problems);
+        }
+    }
+
+    /// <summary>The task list links to a task's first page, so it must always apply.</summary>
+    private static void ValidateNotFirstInTask(
+        string where,
+        PlacedQuestion onPage,
+        Dictionary<string, PlacedQuestion> questions,
+        List<string> problems
+    )
+    {
+        int firstPageOrder = questions
+            .Values.Where(x => string.Equals(x.TaskId, onPage.TaskId, StringComparison.Ordinal))
+            .Min(static x => x.Placement.Page.Order);
+        if (onPage.Placement.Page.Order == firstPageOrder)
+        {
+            problems.Add(
+                $"{where} is on the first page of task '{onPage.TaskId}', which must always apply."
+            );
+        }
+    }
+
+    /// <summary>
+    /// A trigger is a choice on an enum (values are its members), a choice on reference data with
+    /// a <c>string Code</c> (values are codes), or a date (values are <see cref="DatePrecision"/>
+    /// members).
+    /// </summary>
+    private static void ValidateTrigger(
+        string where,
+        QuestionDeclaration trigger,
+        IReadOnlyList<object> values,
+        List<string> problems
+    )
+    {
+        Type? valueType = TriggerValueType(trigger);
+        if (valueType is null)
+        {
+            problems.Add(
+                $"{where} names '{trigger.Field.Id}', which must be a Radio, Select or Checkbox on an enum or on reference data with a string Code, or a PrecisionDate."
+            );
+            return;
+        }
+
+        if (values.Count == 0)
+        {
+            problems.Add($"{where} needs at least one value.");
+        }
+
+        foreach (object value in values)
+        {
+            if (valueType == typeof(string))
+            {
+                if (value is not string code || string.IsNullOrWhiteSpace(code))
+                {
+                    problems.Add(
+                        $"{where} has value '{value}', which is not a {trigger.Binding.ReferenceType!.Name} code."
+                    );
+                }
+            }
+            else if (value.GetType() != valueType || !Enum.IsDefined(valueType, value))
+            {
+                problems.Add(
+                    $"{where} has value '{value}', which is not a {valueType.Name} member."
+                );
+            }
+        }
+
+        if (values.Distinct().Count() != values.Count)
+        {
+            problems.Add($"{where} repeats a value.");
+        }
+    }
+
+    /// <summary>The type of the values a condition on the trigger names, or null if it cannot be a trigger.</summary>
+    private static Type? TriggerValueType(QuestionDeclaration trigger)
+    {
+        if (trigger.Control == FormControl.PrecisionDate)
+        {
+            return typeof(DatePrecision);
+        }
+
+        if (
+            trigger.Control is not (FormControl.Radio or FormControl.Select or FormControl.Checkbox)
         )
         {
-            problems.Add($"{form} has page '{page.Key}' in more than one task.");
+            return null;
         }
+
+        if (trigger.Binding.EnumType is { } enumType)
+        {
+            return enumType;
+        }
+
+        return trigger.Binding.ReferenceType?.GetProperty("Code")?.PropertyType == typeof(string)
+            ? typeof(string)
+            : null;
     }
 
     private static void ReportTies<T>(

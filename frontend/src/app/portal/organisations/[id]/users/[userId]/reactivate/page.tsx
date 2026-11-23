@@ -37,10 +37,16 @@ const PageContent = async ({
   userId: number
 }) => {
   const client = await createServerApiClient()
-  const { data: user, error } = await getUserDetailsWithinOrganisation({
+  const {
+    data: user,
+    error,
+    response,
+  } = await getUserDetailsWithinOrganisation({
     client,
     path: { organisationId, userId },
   })
+
+  if (response?.status === 404) notFound()
 
   if (!user || error)
     return <ErrorState>An error occurred when trying to retrieve the user.</ErrorState>

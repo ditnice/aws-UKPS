@@ -42,4 +42,25 @@ describe('SignIn (direct invocation)', () => {
 
     expect(screen.getByText('Sign in form returnTo: none')).toBeInTheDocument()
   })
+
+  it('shows the email verified alert when emailVerified is true', async () => {
+    render(
+      await SignIn({
+        searchParams: Promise.resolve({ emailVerified: 'true' }),
+      }),
+    )
+
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'New email address verified' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/sign in using your new email address/i)).toBeInTheDocument()
+  })
+
+  it('does not show the email verified alert otherwise', async () => {
+    render(await SignIn({ searchParams: Promise.resolve({}) }))
+
+    expect(
+      screen.queryByRole('heading', { level: 2, name: 'New email address verified' }),
+    ).not.toBeInTheDocument()
+  })
 })

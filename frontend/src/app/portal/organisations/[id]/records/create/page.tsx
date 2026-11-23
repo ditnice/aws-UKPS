@@ -1,9 +1,7 @@
-import { BackLinkBrowser } from '@/components/BackLinkBrowser/BackLinkBrowser'
-import { PageHeader } from '@/components/PageHeader/PageHeader'
-
 import OrganisationPageWrapper from '../../_components/OrganisationPageWrapper'
 
 import CreateMedicineRecordForm from './CreateMedicineRecordForm'
+import { CreateRecordPageHeader } from './CreateRecordPageHeader'
 
 type CreateMedicineRecordPageProps = {
   params: Promise<{ id: string }>
@@ -15,16 +13,12 @@ const CreateMedicineRecordPage = async ({ params }: CreateMedicineRecordPageProp
     <OrganisationPageWrapper organisationId={organisationId}>
       {(organisation) => (
         <>
-          <PageHeader
-            heading="Add medicine and associated product details"
-            preheading="Medicine and associated product details"
-            backLink={<BackLinkBrowser />}
-          />
+          <CreateRecordPageHeader backHref={`/portal/organisations/${organisation.id}/records`} />
           <CreateMedicineRecordForm organisationId={organisation.id} />
         </>
       )}
     </OrganisationPageWrapper>
   )
 }
-
+// TODO: Check that the user has the correct AllowedPharmaceuticalEntity to be on this page
 export default CreateMedicineRecordPage

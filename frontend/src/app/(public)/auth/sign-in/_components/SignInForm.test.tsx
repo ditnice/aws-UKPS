@@ -14,6 +14,10 @@ vi.mock('@/client/generated', () => ({
   postAuthLogin: vi.fn(),
 }))
 
+vi.mock('../../EmailVerificationRequiredAlert', () => ({
+  default: () => <div data-testid="email-verification-required-alert" />,
+}))
+
 let user: ReturnType<typeof userEvent.setup>
 const assign = vi.fn()
 
@@ -35,6 +39,14 @@ describe('SignInForm', () => {
     expect(screen.getByLabelText('Email address')).toBeInTheDocument()
     expect(screen.getByLabelText('Password')).toBeInTheDocument()
     expect(screen.getByText('Forgotten your password?')).toBeInTheDocument()
+    expect(screen.getByText('I cannot access my account')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'reset your password' })).toHaveAttribute(
+      'href',
+      '/auth/reset-password',
+    )
+    expect(
+      screen.getByRole('link', { name: 'account recovery (opens in a new tab)' }),
+    ).toHaveAttribute('href', '/auth/account-recovery')
     expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
   })
 
@@ -251,5 +263,34 @@ describe('SignInForm', () => {
         '/auth/sign-in/mfa?username=name%40example.com&session=test-authentication-session&returnTo=%2Fportal%2Forganisations%2F1%3Ftab%3Dusers',
       )
     })
+  })
+
+  it('shows the email verification required alert if the email is pending verification', async () => {
+    vi.mocked(postAuthLogin).mockResolvedValue({
+      error: {
+        code: 'PendingEmailRequiredVerification',
+      },
+      data: undefined,
+    })
+
+    render(<SignInForm />)
+
+    await fillInput(user, screen.getByLabelText('Email address'), 'name@example.com')
+    await fillInput(user, screen.getByLabelText('Password'), 'secure-password')
+
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    await waitFor(() => {
+      expect(postAuthLogin).toHaveBeenCalledWith({
+        body: {
+          username: 'name@example.com',
+          password: 'secure-password',
+        },
+        credentials: 'include',
+      })
+    })
+
+    expect(await screen.findByTestId('email-verification-required-alert')).toBeInTheDocument()
+    expect(router.push).not.toHaveBeenCalled()
   })
 })

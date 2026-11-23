@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 
-import { getRecord, RecordType } from '@/client/generated'
+import { getRecordOverview, RecordType } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { Alert } from '@/components/Alert/Alert'
 import { BackLink } from '@/components/BackLink/BackLink'
@@ -52,7 +52,7 @@ const DiscardRecord = async ({ organisationId, recordId, recordType }: DiscardRe
     data: record,
     error,
     response,
-  } = await getRecord({
+  } = await getRecordOverview({
     client: await createServerApiClient(),
     path: { id: recordId },
     query: { recordType, organisationId },
@@ -78,9 +78,6 @@ const DiscardRecord = async ({ organisationId, recordId, recordType }: DiscardRe
     )
   }
 
-  //TODO: needs updating when we add vaccine DTOs
-  const productDetail = record.recordType === 'Medicine' ? record.recordProductDetail : undefined
-
   return (
     <>
       <Alert type="caution">
@@ -94,17 +91,17 @@ const DiscardRecord = async ({ organisationId, recordId, recordType }: DiscardRe
       <PageHeader
         backLink={backLink}
         heading="Confirm decision to discard record"
-        preheading={productDetail?.recordTitle}
+        preheading={record.recordTitle}
       />
 
       <p>What happens when this record is discarded:</p>
       <ul>
         <li>
           the product will no longer be accessible to view by you or other users in your
-          organisation.
+          organisation
         </li>
         <li>
-          the company code, generic and brand names will remain in any other records that use them.
+          the company code, generic and brand names will remain in any other records that use them
         </li>
       </ul>
 

@@ -5,7 +5,8 @@
 #   just stack-up     # run the stack only, on http://localhost:3000
 #
 # Authentication uses the dev bypass (frontend AUTHENTICATION_MODE=DEV and backend
-# DevAuthentication): every request acts as the seeded Super user in organisation 1.
+# DevAuthentication): every request acts as the seeded Super user in organisation 1, unless a
+# ukps_dev_role cookie names another role (Champion or Standard), as the E2E role projects set.
 # The backend's Cognito and SQS calls go to Floci, a local AWS emulator, so no AWS access is
 # needed and none of this configuration is secret.
 
@@ -34,7 +35,7 @@ services:
   floci:
     # Local AWS emulator for the backend's Cognito and SQS calls. The -compat variant includes the
     # AWS CLI, which the init script and healthcheck use. Pinned by digest.
-    image: floci/floci:2.4.0-compat@sha256:954ea3f472c85c569569ab81d8e79a28dd15a769c10ab8374c106537aa45fc1d
+    image: floci/floci:2.5.0-compat@sha256:e84b1be922a9406852d88d5c7cdf9f76cdf83045bcf21a39d35b80473e433f39
     environment:
       FLOCI_DEFAULT_REGION: eu-west-2
       # Service URLs Floci returns (such as queue URLs) use this host, so other containers can reach them.

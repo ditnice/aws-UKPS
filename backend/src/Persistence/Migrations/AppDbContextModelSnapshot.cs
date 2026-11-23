@@ -19,7 +19,7 @@ namespace UKPS.Api.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("ukps")
-                .HasAnnotation("ProductVersion", "10.0.14")
+                .HasAnnotation("ProductVersion", "10.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -311,6 +311,31 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("timestamptz")
                         .HasColumnName("last_active");
 
+                    b.Property<string>("NormalisedPendingWorkEmail")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("text")
+                        .HasColumnName("normalised_pending_work_email")
+                        .HasComputedColumnSql("ukps.normalise_email(pending_work_email)", true);
+
+                    b.Property<string>("NormalisedWorkEmail")
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("text")
+                        .HasColumnName("normalised_work_email")
+                        .HasComputedColumnSql("ukps.normalise_email(work_email)", true);
+
+                    b.Property<string>("PendingEmailVerificationToken")
+                        .HasColumnType("text")
+                        .HasColumnName("pending_email_verification_token");
+
+                    b.Property<DateTime?>("PendingEmailVerifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("pending_email_verified_at");
+
+                    b.Property<string>("PendingWorkEmail")
+                        .HasColumnType("text")
+                        .HasColumnName("pending_work_email");
+
                     b.Property<string>("Title")
                         .HasColumnType("text")
                         .HasColumnName("title");
@@ -322,6 +347,12 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Property<int>("UserType")
                         .HasColumnType("integer")
                         .HasColumnName("user_type");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.Property<string>("WorkEmail")
                         .IsRequired()
@@ -335,9 +366,14 @@ namespace UKPS.Api.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_app_user");
 
-                    b.HasIndex("WorkEmail")
+                    b.HasIndex("NormalisedPendingWorkEmail")
                         .IsUnique()
-                        .HasDatabaseName("ix_app_user_work_email");
+                        .HasDatabaseName("ix_app_user_normalised_pending_work_email")
+                        .HasFilter("normalised_pending_work_email IS NOT NULL");
+
+                    b.HasIndex("NormalisedWorkEmail")
+                        .IsUnique()
+                        .HasDatabaseName("ix_app_user_normalised_work_email");
 
                     b.ToTable("app_user", "ukps");
                 });
@@ -422,6 +458,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("created_by_user_id");
 
+                    b.Property<DateTime?>("LastSmsSetupAttemptAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_sms_setup_attempt_at");
+
                     b.Property<int>("OnboardingFlow")
                         .HasColumnType("integer")
                         .HasColumnName("onboarding_flow");
@@ -433,6 +473,10 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Property<int>("ResultingUserId")
                         .HasColumnType("integer")
                         .HasColumnName("resulting_user_id");
+
+                    b.Property<int>("SmsSetupAttemptCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("sms_setup_attempt_count");
 
                     b.HasKey("SetupToken")
                         .HasName("pk_user_onboarding_records");
@@ -1167,7 +1211,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnName("estimated_duration_of_treatment");
 
                     b.Property<string>("ProposedPlaceInTherapy")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("proposed_place_in_therapy");
 
@@ -1641,6 +1684,11 @@ namespace UKPS.Api.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("code");
+
                     b.Property<bool>("IsArchived")
                         .HasColumnType("boolean")
                         .HasColumnName("is_archived");
@@ -1657,6 +1705,10 @@ namespace UKPS.Api.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_mhra_procedure_type");
 
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_mhra_procedure_type_code");
+
                     b.ToTable("mhra_procedure_type", "ukps");
                 });
 
@@ -1669,6 +1721,11 @@ namespace UKPS.Api.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("code");
+
                     b.Property<bool>("IsArchived")
                         .HasColumnType("boolean")
                         .HasColumnName("is_archived");
@@ -1680,6 +1737,10 @@ namespace UKPS.Api.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_patient_pathway_point");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_patient_pathway_point_code");
 
                     b.ToTable("patient_pathway_point", "ukps");
                 });
@@ -2006,6 +2067,10 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("clinical_trials_gov_number");
 
+                    b.Property<int?>("DisplayOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("display_order");
+
                     b.Property<int>("RevisionId")
                         .HasColumnType("integer")
                         .HasColumnName("revision_id");
@@ -2037,6 +2102,10 @@ namespace UKPS.Api.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("HasClinicalTrials")
+                        .HasColumnType("integer")
+                        .HasColumnName("has_clinical_trials");
+
                     b.Property<int?>("RecruitingInUk")
                         .HasColumnType("integer")
                         .HasColumnName("recruiting_in_uk");
@@ -2048,9 +2117,8 @@ namespace UKPS.Api.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_record_clinical_trial_information");
 
-                    b.HasIndex("RevisionId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_record_clinical_trial_information_revision_id");
+                    b.HasAlternateKey("RevisionId")
+                        .HasName("ak_record_clinical_trial_information_revision_id");
 
                     b.ToTable("record_clinical_trial_information", "ukps");
                 });
@@ -2220,8 +2288,11 @@ namespace UKPS.Api.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_record_names_and_identifiers");
 
-                    b.HasIndex("RecordProductDetailId")
-                        .HasDatabaseName("ix_record_name_and_identifier_product_detail_id");
+                    b.HasIndex("RecordProductDetailId", "NameType", "DisplayOrder")
+                        .IsUnique()
+                        .HasDatabaseName("ix_record_name_and_identifier_product_detail_type_display_order");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("RecordProductDetailId", "NameType", "DisplayOrder"), false);
 
                     b.ToTable("record_names_and_identifiers", "ukps");
                 });
@@ -3254,6 +3325,14 @@ namespace UKPS.Api.Persistence.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_record_clinical_trials_record_revisions_revision_id");
 
+                    b.HasOne("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordClinicalTrialInformation", null)
+                        .WithMany("ClinicalTrials")
+                        .HasForeignKey("RevisionId")
+                        .HasPrincipalKey("RevisionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_record_clinical_trials_record_clinical_trial_information_re");
+
                     b.Navigation("Revision");
                 });
 
@@ -3601,6 +3680,11 @@ namespace UKPS.Api.Persistence.Migrations
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordClinicalTrial", b =>
                 {
                     b.Navigation("OtherClinicalTrialNumbers");
+                });
+
+            modelBuilder.Entity("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordClinicalTrialInformation", b =>
+                {
+                    b.Navigation("ClinicalTrials");
                 });
 
             modelBuilder.Entity("UKPS.Api.Persistence.Entities.SharedRevisionContent.RecordProductDetail", b =>

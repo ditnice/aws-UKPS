@@ -34,7 +34,7 @@ The form is declared **on the EF content entities, with attributes**, and built 
 in-memory form model at startup.
 
 - **Attributes** (`Persistence/FormAnnotations/`, pure metadata):
-  - `[FormSection]` on the class;
+  - `[FormEntity]` on the class;
   - `[FormPage]`, `[FormField]`, `[FormRequired]`, `[FormMaxLength]`, `[FormMaxItems]`,
     `[FormOptions]` and `[FormIgnore]` on properties.
 - **Explicit question IDs.** The ID is written out in `[FormField]` and is never derived from
@@ -47,10 +47,14 @@ in-memory form model at startup.
   because attributes cannot hold queries or tuples. A question with no `[FormOptions]` uses the
   only provider registered for its enum or referenced entity, so the key is needed only to
   choose between several providers of one type.
-- **Coverage is enforced.** In a `[FormSection]` entity, every mapped scalar property must carry
+- **Sections, tasks and pages are declared once per record type**, in a `FormLayout` subclass
+  (`MedicineFormLayout`) holding each section, task and page's ID, title and order. `[FormPage]`
+  names its page by ID (a constant on the layout), and the layout decides the page's task,
+  section and form. Startup rejects a page no layout declares.
+- **Coverage is enforced.** In a `[FormEntity]` entity, every mapped scalar property must carry
   `[FormField]` or `[FormIgnore(reason)]`.
 - **Pages may span entities.** The same `[FormPage]` ID on properties of different entities
-  produces one merged page. Metadata must agree.
+  produces one merged page, whose metadata the layout declares once.
 - **Fail fast.** A scanner builds one form model per record type from the attributes and EF
   `IModel`, and a validator reports every problem at once. An invalid model stops the API
   starting.
@@ -83,12 +87,10 @@ concealment.
   questions in order) for review.
 - **Negative: layering.** Persistence entities now carry presentation text (labels, hints,
   messages). The attributes are kept free of Application types; option keys are plain strings.
-- **Negative: one section per entity.** By default, an entity's pages all fall in its section for
-  a given record type. A per-page section override may be needed for entities that span design
-  sections.
-- **Negative: shared entity wording.** Attributes apply to every record type the entity takes
-  part in. If Medicine and Vaccine need different labels for a shared column, the attributes will
-  need a record-type qualifier.
+- **Negative: one form per entity.** A page's task belongs to one form, so an entity's pages are
+  all in one record type's form. Shared content entities such as `RecordHta` and
+  `RecordMhraProcedure` cannot yet be on the Medicine and Vaccine forms at once; that will need per-form page declarations, which would also
+  allow per-form wording.
 - **Attribute order is not reliable** in .NET, so rule evaluation uses a fixed order by kind,
   and pages and questions are ordered only by explicit `Order` values.
 - **Not yet designed for the attribute approach:** conditional pages and questions, add-another

@@ -67,17 +67,23 @@ internal sealed class RecordContentFactory
         RecordRevision revision
     )
     {
-        if (section.RecruitingInUk is not null)
+        // Trials hang off their revision's information row, so it is needed whenever there are
+        // trials, as well as for the recruiting answer.
+        bool hasTrials = section.ClinicalTrials.Count > 0;
+        if (section.RecruitingInUk is not null || hasTrials)
         {
             yield return new RecordClinicalTrialInformation
             {
                 Revision = revision,
+                HasClinicalTrials = hasTrials ? YesNo.Yes : null,
                 RecruitingInUk = section.RecruitingInUk,
             };
         }
-        foreach (SyntheticClinicalTrial trial in section.ClinicalTrials)
+        foreach (
+            var (trial, index) in section.ClinicalTrials.Select((trial, index) => (trial, index))
+        )
         {
-            yield return ClinicalTrial(trial, revision);
+            yield return ClinicalTrial(trial, revision, index + 1);
         }
     }
 
@@ -204,11 +210,13 @@ internal sealed class RecordContentFactory
 
     private static RecordClinicalTrial ClinicalTrial(
         SyntheticClinicalTrial trial,
-        RecordRevision revision
+        RecordRevision revision,
+        int displayOrder
     ) =>
         new()
         {
             Revision = revision,
+            DisplayOrder = displayOrder,
             StudyName = trial.StudyName,
             ClinicalTrialsGovNumber = trial.ClinicalTrialsGovNumber,
             TrialPhase = trial.TrialPhase,

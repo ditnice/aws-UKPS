@@ -12,12 +12,14 @@ internal sealed class MockAmazonCognitoIdentityProvider
     public string ValidMfaCode { get; } = "123456";
     public string ValidAuthenticationSession { get; } = "valid-auth-session";
     public string InvalidPassword { get; } = "invalid-password";
+    public string ValidForgotPasswordCode { get; } = "123456";
     public MockUser TestUser { get; } =
         new MockUser()
         {
             Username = "test-user",
             Password = "test-user-password-123",
             Email = "example@email.com",
+            EmailVerified = true,
             SubjectId = "b7f3c5f9-8b2d-4a71-9e6c-3d4f0a8c1e52",
         };
 
@@ -25,10 +27,13 @@ internal sealed class MockAmazonCognitoIdentityProvider
 
     public IAmazonCognitoIdentityProvider Mock { get; init; } =
         Substitute.For<IAmazonCognitoIdentityProvider>();
+    public IReadOnlyList<ResetPasswordCommand> ResetPasswordCommands => _resetPasswordCommands;
 
     private List<MockUser> _users;
+    private List<ResetPasswordCommand> _resetPasswordCommands = new();
 
     private readonly HashSet<string> _mfaSessions = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> _phoneNumbers = new(StringComparer.Ordinal);
     private readonly HashSet<string> _revokedRefreshTokens = new(StringComparer.Ordinal);
 
     public MockAmazonCognitoIdentityProvider()
@@ -51,11 +56,20 @@ internal sealed class MockAmazonCognitoIdentityProvider
                             "Expecting email attribute to be set."
                         );
 
+                    var emailVerified =
+                        request
+                            .UserAttributes.FirstOrDefault(x =>
+                                string.Equals(x.Name, "email_verified", StringComparison.Ordinal)
+                            )
+                            ?.Value.Equals($"{true}", StringComparison.OrdinalIgnoreCase)
+                        ?? false;
+
                     var newUser = new MockUser()
                     {
                         Username = request.Username,
                         SubjectId = subjectId,
                         Email = email,
+                        EmailVerified = emailVerified,
                     };
                     _users.Add(newUser);
 
@@ -164,6 +178,20 @@ internal sealed class MockAmazonCognitoIdentityProvider
                     throw new UserNotFoundException($"User '{username}' not found.");
                 }
 
+                if (_phoneNumbers.ContainsKey(username))
+                {
+                    var session = Guid.NewGuid().ToString();
+                    _mfaSessions.Add(session);
+
+                    return Task.FromResult(
+                        new AdminInitiateAuthResponse
+                        {
+                            ChallengeName = ChallengeNameType.SMS_MFA,
+                            Session = session,
+                        }
+                    );
+                }
+
                 if (!user.MfaSetup)
                 {
                     var session = Guid.NewGuid().ToString();
@@ -199,7 +227,7 @@ internal sealed class MockAmazonCognitoIdentityProvider
             {
                 var request = callInfo.Arg<AssociateSoftwareTokenRequest>();
 
-                if (!IsSessionIdValid(request.Session))
+                if (request.AccessToken is null && !IsSessionIdValid(request.Session))
                 {
                     throw new NotAuthorizedException("Invalid authentication session.");
                 }
@@ -258,17 +286,79 @@ internal sealed class MockAmazonCognitoIdentityProvider
                         string.Equals(x.Name, "email", StringComparison.Ordinal)
                     )
                     ?.Value;
+                var emailVerified =
+                    request
+                        .UserAttributes.FirstOrDefault(x =>
+                            string.Equals(x.Name, "email_verified", StringComparison.Ordinal)
+                        )
+                        ?.Value.Equals($"{true}", StringComparison.OrdinalIgnoreCase)
+                    ?? null;
+                var newPhoneNumberValue = request
+                    .UserAttributes.FirstOrDefault(x =>
+                        string.Equals(x.Name, "phone_number", StringComparison.Ordinal)
+                    )
+                    ?.Value;
+                if (!string.IsNullOrWhiteSpace(newPhoneNumberValue))
+                {
+                    _phoneNumbers[request.Username] = newPhoneNumberValue;
+                }
                 _users = _users
                     .Select(u =>
                         string.Equals(u.Username, request.Username, StringComparison.Ordinal)
                             ? u with
                             {
                                 Email = newEmailValue ?? u.Email,
+                                EmailVerified = emailVerified ?? u.EmailVerified,
                             }
                             : u
                     )
                     .ToList();
                 return Task.FromResult(new AdminUpdateUserAttributesResponse());
+            });
+
+        Mock.AdminGetUserAsync(Arg.Any<AdminGetUserRequest>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var request = callInfo.Arg<AdminGetUserRequest>();
+                var user = _users.SingleOrDefault(x =>
+                    string.Equals(x.Username, request.Username, StringComparison.Ordinal)
+                );
+
+                if (user is null)
+                {
+                    throw new UserNotFoundException($"User '{request.Username}' not found.");
+                }
+
+                List<AttributeType> attributes = [new() { Name = "email", Value = user.Email }];
+                List<string> mfaSettings;
+                string? preferredMfa;
+
+                if (_phoneNumbers.TryGetValue(user.Username, out string? phoneNumber))
+                {
+                    attributes.Add(new() { Name = "phone_number", Value = phoneNumber });
+                    mfaSettings = ["SMS_MFA"];
+                    preferredMfa = "SMS_MFA";
+                }
+                else if (user.MfaSetup)
+                {
+                    mfaSettings = ["SOFTWARE_TOKEN_MFA"];
+                    preferredMfa = "SOFTWARE_TOKEN_MFA";
+                }
+                else
+                {
+                    mfaSettings = [];
+                    preferredMfa = null;
+                }
+
+                return Task.FromResult(
+                    new AdminGetUserResponse
+                    {
+                        Username = user.Username,
+                        UserAttributes = attributes,
+                        UserMFASettingList = mfaSettings,
+                        PreferredMfaSetting = preferredMfa,
+                    }
+                );
             });
 
         Mock.AdminRespondToAuthChallengeAsync(
@@ -294,7 +384,12 @@ internal sealed class MockAmazonCognitoIdentityProvider
                     throw new UserNotFoundException($"User '{username}' not found.");
                 }
 
-                var mfaCode = request.ChallengeResponses["SOFTWARE_TOKEN_MFA_CODE"];
+                string mfaCode = request.ChallengeResponses.TryGetValue(
+                    "SMS_MFA_CODE",
+                    out string? smsCode
+                )
+                    ? smsCode
+                    : request.ChallengeResponses["SOFTWARE_TOKEN_MFA_CODE"];
                 if (!IsValidMfaToken(mfaCode))
                 {
                     throw new CodeMismatchException("Invalid MFA code.");
@@ -313,6 +408,54 @@ internal sealed class MockAmazonCognitoIdentityProvider
                         },
                     }
                 );
+            });
+
+        Mock.ForgotPasswordAsync(Arg.Any<ForgotPasswordRequest>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var request = callInfo.Arg<ForgotPasswordRequest>();
+
+                _resetPasswordCommands.Add(new() { Username = request.Username });
+
+                return Task.FromResult(new ForgotPasswordResponse());
+            });
+
+        Mock.ConfirmForgotPasswordAsync(
+                Arg.Any<ConfirmForgotPasswordRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(callInfo =>
+            {
+                var request = callInfo.Arg<ConfirmForgotPasswordRequest>();
+
+                _resetPasswordCommands = _resetPasswordCommands
+                    .Select(x =>
+                        string.Equals(x.Username, request.Username, StringComparison.Ordinal)
+                            ? x with
+                            {
+                                UpdatedPassword = request.Password,
+                            }
+                            : x
+                    )
+                    .ToList();
+
+                if (
+                    !string.Equals(
+                        request.ConfirmationCode,
+                        ValidForgotPasswordCode,
+                        StringComparison.Ordinal
+                    )
+                )
+                {
+                    throw new CodeMismatchException("Invalid confirmation code.");
+                }
+
+                if (string.Equals(request.Password, InvalidPassword, StringComparison.Ordinal))
+                {
+                    throw new InvalidPasswordException();
+                }
+
+                return Task.FromResult(new ConfirmForgotPasswordResponse());
             });
     }
 
@@ -358,4 +501,10 @@ internal sealed class MockAmazonCognitoIdentityProvider
             RuleFor(x => x.SubjectId, f => f.Random.Guid().ToString());
         }
     }
+
+    public sealed record ResetPasswordCommand
+    {
+        public required string Username { get; init; }
+        public string? UpdatedPassword { get; init; }
+    };
 }

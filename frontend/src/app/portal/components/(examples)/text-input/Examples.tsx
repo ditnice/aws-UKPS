@@ -1,7 +1,6 @@
 'use client'
 
-import { FormGroup } from '@nice-digital/nds-form-group'
-
+import { FormGroup } from '@/components/FormGroup/FormGroup'
 import { Input } from '@/components/Input/Input'
 
 import { Example } from '../../_components/Example'
@@ -43,6 +42,19 @@ export function Examples() {
           error
           required
           errorMessage="Please enter your surname"
+        />
+      </Example>
+      <Example title="Example: input with a prefix">
+        <Input label="Cost, in pounds" name="cost" prefix="£" width={5} />
+      </Example>
+      <Example title="Example: input with a prefix and error">
+        <Input
+          error
+          errorMessage="Enter a cost"
+          label="Cost, in pounds"
+          name="cost-error"
+          prefix="£"
+          width={5}
         />
       </Example>
       <Example title="Example: fixed width">

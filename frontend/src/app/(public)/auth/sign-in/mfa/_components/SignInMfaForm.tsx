@@ -4,12 +4,15 @@ import { revalidateLogic, useForm } from '@tanstack/react-form'
 import Link from 'next/link'
 import { z } from 'zod'
 
-import { postAuthMfa } from '@/client/generated'
+import { respondToMultiFactorAuthenticationChallenge } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
+import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { buildSelectOrganisationHref } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
-import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
+import { getFieldErrorMessage, getFormErrorMessage } from '@/lib/form/getFieldErrorMessage'
+
+import EmailVerificationRequiredAlert from '../../../EmailVerificationRequiredAlert'
 
 import styles from './SignInMfaForm.module.scss'
 
@@ -51,7 +54,7 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
     },
     onSubmit: async ({ value, formApi }) => {
       const { securityCode } = signInMfaSchema.parse(value)
-      const response = await postAuthMfa({
+      const response = await respondToMultiFactorAuthenticationChallenge({
         body: {
           username,
           code: normaliseSecurityCode(securityCode),
@@ -62,9 +65,19 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
       if (!response.error) {
         globalThis.location.assign(buildSelectOrganisationHref(returnTo))
       }
+      if (response.error?.code === 'PendingEmailRequiredVerification') {
+        formApi.setErrorMap({
+          onSubmit: {
+            form: 'PendingEmailRequiredVerification',
+            fields: {},
+          },
+        })
+        return
+      }
       if (response.error?.status === 401) {
         formApi.setErrorMap({
           onSubmit: {
+            form: '',
             fields: {
               securityCode: errorMessages.incorrectMfaCode,
             },
@@ -83,6 +96,14 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
         void form.handleSubmit()
       }}
     >
+      <form.Subscribe selector={(state) => getFormErrorMessage(state.errorMap.onSubmit)}>
+        {(formError) => {
+          if (!formError) return null
+          if (formError === 'PendingEmailRequiredVerification')
+            return <EmailVerificationRequiredAlert />
+          return <ErrorState>{formError}</ErrorState>
+        }}
+      </form.Subscribe>
       <form.Field name="securityCode">
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
@@ -92,7 +113,7 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
               autoComplete="one-time-code"
               error={Boolean(errorMessage)}
               errorMessage={errorMessage}
-              hint={`Enter the 6-digit authentication code shown in the app.`}
+              hint={`Enter the 6-digit authentication code.`}
               inputMode="numeric"
               label="Security code"
               name={field.name}
@@ -114,7 +135,7 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
 
       {/* TODO 620 - link this up when the page is created */}
       <p className={styles.helpLink}>
-        <Link href="/">I do not have access to my authenticator device</Link>
+        <Link href="/">I do not have access to my authenticator</Link>
       </p>
     </form>
   )

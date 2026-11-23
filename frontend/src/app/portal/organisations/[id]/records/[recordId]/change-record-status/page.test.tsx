@@ -1,11 +1,8 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getRecord, RecordDto } from '@/client/generated'
-import {
-  fakeRecordDtoMedicineRecordDto,
-  fakeRecordProductDetailDto,
-} from '@/client/generated/@faker-js/faker.gen'
+import { getRecordOverview, RecordOverviewDto } from '@/client/generated'
+import { fakeRecordOverviewDto } from '@/client/generated/@faker-js/faker.gen'
 import { createServerApiClient } from '@/client/server-api'
 
 import ChangeRecordStatusPage from './page'
@@ -19,7 +16,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/client/generated', async () => ({
-  getRecord: vi.fn(),
+  getRecordOverview: vi.fn(),
   RecordType: (
     await vi.importActual<typeof import('@/client/generated/types.gen')>(
       '@/client/generated/types.gen',
@@ -57,8 +54,8 @@ vi.mock('@nice-digital/nds-page-header', () => ({
   ),
 }))
 
-vi.mock('./_components/ChangeRecordStatusActions', () => ({
-  ChangeRecordStatusActions: ({
+vi.mock('./_components/StatusChangeActionForm', () => ({
+  StatusChangeActionForm: ({
     organisationId,
     recordId,
     recordStatus,
@@ -76,22 +73,22 @@ vi.mock('./_components/ChangeRecordStatusActions', () => ({
   ),
 }))
 
-type GetRecordResult = Awaited<ReturnType<typeof getRecord>>
+type GetRecordResult = Awaited<ReturnType<typeof getRecordOverview>>
 
 const medicineRecord = {
-  ...fakeRecordDtoMedicineRecordDto(),
+  ...fakeRecordOverviewDto(),
   recordType: 'Medicine',
   recordStatus: 'Published',
   displayStatus: 'Published',
   actions: ['Update', 'ChangeStatus', 'ConfirmCurrent', 'ViewTimeline'],
-  recordProductDetail: fakeRecordProductDetailDto(),
-} satisfies RecordDto
+  recordTitle: 'Early rheumatoid arthritis in adults',
+} satisfies RecordOverviewDto
 
 const organisationId = String(medicineRecord.organisationId)
 const recordId = String(medicineRecord.recordId)
 
 const mockRecord = (result: Partial<GetRecordResult>) =>
-  vi.mocked(getRecord).mockResolvedValue(result as GetRecordResult)
+  vi.mocked(getRecordOverview).mockResolvedValue(result as GetRecordResult)
 
 const renderPage = async (recordType: string = medicineRecord.recordType) => {
   const page = await ChangeRecordStatusPage({
@@ -118,7 +115,7 @@ describe('ChangeRecordStatusPage', () => {
 
     await renderPage()
 
-    expect(getRecord).toHaveBeenCalledWith(
+    expect(getRecordOverview).toHaveBeenCalledWith(
       expect.objectContaining({
         path: { id: medicineRecord.recordId },
         query: {
@@ -127,12 +124,8 @@ describe('ChangeRecordStatusPage', () => {
         },
       }),
     )
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
-      'What would you like to do with this record?',
-    )
-    expect(screen.getByTestId('preheading').textContent).toBe(
-      medicineRecord.recordProductDetail.recordTitle,
-    )
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Change record status')
+    expect(screen.getByTestId('preheading').textContent).toBe(medicineRecord.recordTitle)
     const actions = screen.getByTestId('change-record-status-actions')
     expect(actions.getAttribute('data-organisation-id')).toBe(organisationId)
     expect(actions.getAttribute('data-record-id')).toBe(recordId)
@@ -140,8 +133,16 @@ describe('ChangeRecordStatusPage', () => {
   })
 
   it.each([
-    ['Published', 'Published', 'If development has paused, you should place the record on hold.'],
-    ['OnHold', 'OnHold', 'If development has restarted, you should remove the record hold.'],
+    [
+      'Published',
+      'Published',
+      'If development has paused and may restart in the future, you should place the record on hold. Update requests for records on hold will be reduced to every 6 months.',
+    ],
+    [
+      'OnHold',
+      'OnHold',
+      'Removing a record from hold means development has restarted and the information in this record may now need updating.',
+    ],
   ] as const)('explains the options for a %s record', async (displayStatus, recordStatus, text) => {
     mockRecord({
       data: { ...medicineRecord, displayStatus, recordStatus },
@@ -168,7 +169,7 @@ describe('ChangeRecordStatusPage', () => {
 
     expect(
       screen.getByText(
-        `If development has permanently discontinued or you no longer own the rights to the ${noun} then you should archive the record.`,
+        `If development has ended and will not restart or you no longer own the rights to the ${noun} then you should archive the record. The record cannot be updated once it has been archived.`,
       ),
     ).toBeInTheDocument()
   })

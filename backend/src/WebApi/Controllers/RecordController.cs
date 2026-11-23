@@ -5,25 +5,27 @@ using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
-using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.WebApi.CustomResponses;
 
 namespace UKPS.Api.WebApi.Controllers;
 
 /// <summary>
-/// Provides endpoints for retrieving and creating records.
+/// Provides endpoints for retrieving, creating and changing the status of records.
 /// </summary>
 /// <param name="recordService">Service used to search and filter records.</param>
 /// <param name="recordViewService">Service used to retrieve record data for viewing.</param>
 /// <param name="recordCreationService">Service used to create records.</param>
+/// <param name="recordStatusService">Service used to change the status of records.</param>
 [Authorize]
 [ApiController]
 [Route("records")]
 public class RecordController(
     IRecordService recordService,
     IRecordViewService recordViewService,
-    IRecordCreationService recordCreationService
+    IRecordCreationService recordCreationService,
+    IRecordStatusService recordStatusService
 ) : ControllerBase
 {
     /// <summary>
@@ -80,49 +82,141 @@ public class RecordController(
     }
 
     /// <summary>
-    /// Retrieves the data held on the latest revision of a record, whatever its status.
+    /// Retrieves the company codes already used on an organisation's records that contain the
+    /// search text, for suggesting while a user types a company code.
+    /// </summary>
+    /// <param name="organisationId">The unique identifier of the organisation.</param>
+    /// <param name="query">The search text and the maximum number of suggestions.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>The matching company codes.</returns>
+    /// <response code="200">Returns the matching company codes.</response>
+    /// <response code="400">The query parameters are invalid.</response>
+    /// <response code="403">The caller is not authorised to view the organisation's records.</response>
+    /// <response code="404">The specified organisation does not exist.</response>
+    [HttpGet(
+        "organisations/{organisationId:int}/company-codes",
+        Name = nameof(GetOrganisationCompanyCodes)
+    )]
+    [ProducesResponseType<CompanyCodeSuggestionsDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<CompanyCodeSuggestionsDto>> GetOrganisationCompanyCodes(
+        [FromRoute] int organisationId,
+        [FromQuery] GetCompanyCodeSuggestionsQueryDto query,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await recordService.GetOrganisationCompanyCodes(
+            organisationId,
+            query,
+            cancellationToken
+        );
+
+        return result.Match<ActionResult<CompanyCodeSuggestionsDto>>(
+            items => Ok(items),
+            error =>
+                error switch
+                {
+                    GetRecordsError.OrganisationNotFound => Problem(
+                        statusCode: StatusCodes.Status404NotFound,
+                        title: "Not Found",
+                        detail: "Organisation not found."
+                    ),
+                    GetRecordsError.NotAllowed => Problem(
+                        statusCode: StatusCodes.Status403Forbidden,
+                        title: "Forbidden",
+                        detail: "You are not authorised to view records."
+                    ),
+                    _ => throw new UnreachableException("Unhandled GetRecordsError variant."),
+                }
+        );
+    }
+
+    /// <summary>
+    /// Retrieves a record's status, permitted actions and identifying details, whatever its
+    /// status, without its answers.
     /// </summary>
     /// <param name="id">The identifier of the record to retrieve.</param>
     /// <param name="recordType">The expected type of the record.</param>
     /// <param name="organisationId">The organisation the record is expected to belong to.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>The record data.</returns>
-    /// <response code="200">Returns the record data.</response>
+    /// <returns>The record's overview.</returns>
+    /// <response code="200">Returns the record's overview.</response>
     /// <response code="400">The record type or organisation is missing or invalid.</response>
     /// <response code="404">
     /// The requested record was not found in the organisation or is not accessible to the caller.
     /// </response>
-    [HttpGet("{id:int}", Name = nameof(GetRecord))]
-    [ProducesResponseType<RecordDto>(StatusCodes.Status200OK)]
+    [HttpGet("{id:int}/overview", Name = nameof(GetRecordOverview))]
+    [ProducesResponseType<RecordOverviewDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<RecordDto>> GetRecord(
+    public async Task<ActionResult<RecordOverviewDto>> GetRecordOverview(
         int id,
         [FromQuery, Required] RecordType? recordType,
         [FromQuery, Required] int? organisationId,
         CancellationToken cancellationToken
     )
     {
-        var result = await recordViewService.GetRecord(
+        var result = await recordViewService.GetRecordOverview(
             id,
             recordType!.Value,
             organisationId!.Value,
             cancellationToken
         );
 
-        // Returned directly rather than via Ok() so it serialises with its recordType.
-        return result.Match<ActionResult<RecordDto>>(
-            record => record,
-            error =>
-                error switch
-                {
-                    GetRecordError.NotAllowed
-                    or GetRecordError.NotFound
-                    or GetRecordError.RecordTypeMismatch => NotFound(),
-                    _ => throw new UnreachableException("Unhandled GetRecordError variant."),
-                }
+        return result.Match<ActionResult<RecordOverviewDto>>(
+            overview => Ok(overview),
+            error => RecordNotFound(error)
         );
     }
+
+    /// <summary>
+    /// Retrieves a record's overview and every question that applies on its latest revision with
+    /// its answer, whatever its status. The answers are not checked.
+    /// </summary>
+    /// <param name="id">The identifier of the record to retrieve.</param>
+    /// <param name="recordType">The expected type of the record.</param>
+    /// <param name="organisationId">The organisation the record is expected to belong to.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>The record's overview and answers.</returns>
+    /// <response code="200">Returns the record's overview and answers.</response>
+    /// <response code="400">The record type or organisation is missing or invalid.</response>
+    /// <response code="404">
+    /// The requested record was not found in the organisation or is not accessible to the caller.
+    /// </response>
+    [HttpGet("{id:int}", Name = nameof(GetRecordDetail))]
+    [ProducesResponseType<RecordDetailDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<RecordDetailDto>> GetRecordDetail(
+        int id,
+        [FromQuery, Required] RecordType? recordType,
+        [FromQuery, Required] int? organisationId,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await recordViewService.GetRecordDetail(
+            id,
+            recordType!.Value,
+            organisationId!.Value,
+            cancellationToken
+        );
+
+        return result.Match<ActionResult<RecordDetailDto>>(
+            detail => Ok(detail),
+            error => RecordNotFound(error)
+        );
+    }
+
+    private NotFoundResult RecordNotFound(GetRecordError error) =>
+        error switch
+        {
+            GetRecordError.NotAllowed
+            or GetRecordError.NotFound
+            or GetRecordError.RecordTypeMismatch => NotFound(),
+            _ => throw new UnreachableException("Unhandled GetRecordError variant."),
+        };
 
     /// <summary>
     /// Creates a new record.
@@ -220,5 +314,188 @@ public class RecordController(
             ),
             _ => throw new UnreachableException("Unhandled DiscardRecordError variant."),
         };
+    }
+
+    /// <summary>
+    /// Puts a published record on hold.
+    /// </summary>
+    /// <param name="recordId">The identifier of the record to put on hold.</param>
+    /// <param name="organisationId">The organisation the record is expected to belong to.</param>
+    /// <param name="command">Why the record is being put on hold.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>An <see cref="ActionResult"/> indicating whether the record was put on hold.</returns>
+    /// <response code="200">The record was put on hold.</response>
+    /// <response code="400">
+    /// The reason is missing or is not a reason for putting a record on hold, or the reason is
+    /// <c>Other</c> and no note is given.
+    /// </response>
+    /// <response code="403">The caller can read the record but cannot change its status.</response>
+    /// <response code="404">
+    /// The record was not found in the organisation or is not accessible to the caller.
+    /// </response>
+    /// <response code="409">
+    /// The record's status can't be changed in its current state, or the record was updated by
+    /// another operation. The <c>code</c> member says which.
+    /// </response>
+    [HttpPatch("{recordId:int}/hold", Name = nameof(PutRecordOnHold))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public Task<ActionResult> PutRecordOnHold(
+        int recordId,
+        [FromQuery, Required] int? organisationId,
+        ChangeRecordStatusCommand command,
+        CancellationToken cancellationToken
+    ) =>
+        ChangeRecordStatus(
+            recordId,
+            organisationId!.Value,
+            RecordStatusChangeAction.PutOnHold,
+            command,
+            cancellationToken
+        );
+
+    /// <summary>
+    /// Removes the hold from a record, returning it to published.
+    /// </summary>
+    /// <param name="recordId">The identifier of the record to resume.</param>
+    /// <param name="organisationId">The organisation the record is expected to belong to.</param>
+    /// <param name="command">Why the hold is being removed.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>An <see cref="ActionResult"/> indicating whether the hold was removed.</returns>
+    /// <response code="200">The hold was removed.</response>
+    /// <response code="400">
+    /// The reason is missing or is not a reason for removing a hold, or the reason is
+    /// <c>Other</c> and no note is given.
+    /// </response>
+    /// <response code="403">The caller can read the record but cannot change its status.</response>
+    /// <response code="404">
+    /// The record was not found in the organisation or is not accessible to the caller.
+    /// </response>
+    /// <response code="409">
+    /// The record's status can't be changed in its current state, or the record was updated by
+    /// another operation. The <c>code</c> member says which.
+    /// </response>
+    [HttpPatch("{recordId:int}/resume", Name = nameof(ResumeRecord))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public Task<ActionResult> ResumeRecord(
+        int recordId,
+        [FromQuery, Required] int? organisationId,
+        ChangeRecordStatusCommand command,
+        CancellationToken cancellationToken
+    ) =>
+        ChangeRecordStatus(
+            recordId,
+            organisationId!.Value,
+            RecordStatusChangeAction.Resume,
+            command,
+            cancellationToken
+        );
+
+    /// <summary>
+    /// Archives a published or on hold record.
+    /// </summary>
+    /// <param name="recordId">The identifier of the record to archive.</param>
+    /// <param name="organisationId">The organisation the record is expected to belong to.</param>
+    /// <param name="command">Why the record is being archived.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>An <see cref="ActionResult"/> indicating whether the record was archived.</returns>
+    /// <response code="200">The record was archived.</response>
+    /// <response code="400">
+    /// The reason is missing or is not a reason for archiving a record, or the reason is
+    /// <c>Other</c> and no note is given.
+    /// </response>
+    /// <response code="403">The caller can read the record but cannot change its status.</response>
+    /// <response code="404">
+    /// The record was not found in the organisation or is not accessible to the caller.
+    /// </response>
+    /// <response code="409">
+    /// The record's status can't be changed in its current state, or the record was updated by
+    /// another operation. The <c>code</c> member says which.
+    /// </response>
+    [HttpPatch("{recordId:int}/archive", Name = nameof(ArchiveRecord))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public Task<ActionResult> ArchiveRecord(
+        int recordId,
+        [FromQuery, Required] int? organisationId,
+        ChangeRecordStatusCommand command,
+        CancellationToken cancellationToken
+    ) =>
+        ChangeRecordStatus(
+            recordId,
+            organisationId!.Value,
+            RecordStatusChangeAction.Archive,
+            command,
+            cancellationToken
+        );
+
+    private async Task<ActionResult> ChangeRecordStatus(
+        int recordId,
+        int organisationId,
+        RecordStatusChangeAction change,
+        ChangeRecordStatusCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        Result<ChangeRecordStatusError> result = await recordStatusService.ChangeStatus(
+            recordId,
+            organisationId,
+            change,
+            command,
+            cancellationToken
+        );
+
+        if (result.IsOk)
+        {
+            return Ok();
+        }
+
+        return result.Error switch
+        {
+            // ADR-004: not found and not allowed are indistinguishable.
+            ChangeRecordStatusError.NotFound or ChangeRecordStatusError.NotAllowed => Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Not Found",
+                detail: "Record not found."
+            ),
+            ChangeRecordStatusError.CannotChangeStatus => Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Forbidden",
+                detail: "You are not authorised to change the status of this record."
+            ),
+            ChangeRecordStatusError.InvalidReason => InvalidStatusChange(
+                nameof(ChangeRecordStatusCommand.Reason),
+                "The reason is not valid for this status change."
+            ),
+            ChangeRecordStatusError.NoteRequired => InvalidStatusChange(
+                nameof(ChangeRecordStatusCommand.Note),
+                "Give more detail about the reason."
+            ),
+            ChangeRecordStatusError.TransitionNotPermitted => this.ConflictProblem(
+                "status_change_not_permitted",
+                "This record's status can't be changed in this way in its current state."
+            ),
+            ChangeRecordStatusError.ConcurrencyError => this.ConflictProblem(
+                "record_changed",
+                "This record was updated by someone else while its status was being changed."
+            ),
+            _ => throw new UnreachableException("Unhandled ChangeRecordStatusError variant."),
+        };
+    }
+
+    private ActionResult InvalidStatusChange(string field, string message)
+    {
+        ModelState.AddModelError(field, message);
+        return ValidationProblem(ModelState);
     }
 }

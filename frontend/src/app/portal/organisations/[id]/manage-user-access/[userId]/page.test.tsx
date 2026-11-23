@@ -67,7 +67,9 @@ describe('ManageUserAccess (direct invocation)', () => {
   it('returns the selected user summary and access actions', async () => {
     render(await ManageUserAccess({ params }))
 
-    expect(screen.getByRole('heading', { name: "Manage user's access" })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Manage users in your organisation' }),
+    ).toBeInTheDocument()
     expect(screen.getByText('julie.brooks@example.com is a standard user.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
       'href',
@@ -114,8 +116,8 @@ describe('ManageUserAccess (direct invocation)', () => {
   })
 
   it.each([
-    ['Active', 3],
-    ['Inactive', 3],
+    ['Active', 4],
+    ['Inactive', 4],
     ['AwaitingSetup', 1],
     ['Deactivated', 2],
   ] as const)('offers state-appropriate options for a %s user', async (status, actionCount) => {

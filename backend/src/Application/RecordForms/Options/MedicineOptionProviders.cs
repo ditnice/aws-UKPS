@@ -7,7 +7,168 @@ namespace UKPS.Api.Application.RecordForms.Options;
 /// <summary>The option providers used by the Medicine form.</summary>
 internal static class MedicineOptionProviders
 {
+    // Keep each method under 60 lines (MA0051): one method per form section.
     public static void Register(OptionProviderRegistry registry)
+    {
+        RegisterIndicationDetailsProviders(registry);
+        RegisterClinicalTrialsProviders(registry);
+        RegisterHtaAndLaunchProviders(registry);
+        RegisterOrphanAndAtmpProviders(registry);
+        RegisterLaboratoryTestingProviders(registry);
+        RegisterPatientAndClinicalRequirementsProviders(registry);
+        RegisterPricingAndBudgetImpactProviders(registry);
+        RegisterPimAndEamsProviders(registry);
+        RegisterProductProviders(registry);
+        RegisterMhraProcedureAndDatesProviders(registry);
+    }
+
+    private static void RegisterClinicalTrialsProviders(OptionProviderRegistry registry)
+    {
+        registry.AddEnum(OptionKeys.YesNo, (YesNo.Yes, "Yes"), (YesNo.No, "No"));
+
+        registry.AddEnum(
+            OptionKeys.ClinicalTrialsRecruitingInUk,
+            (YesNoUnknown.Yes, "Yes, trials are open and recruiting in the UK"),
+            (YesNoUnknown.No, "No"),
+            (YesNoUnknown.Unknown, "Unknown at this stage")
+        );
+    }
+
+    private static void RegisterMhraProcedureAndDatesProviders(OptionProviderRegistry registry)
+    {
+        registry.AddReference<MhraProcedureType>(
+            OptionKeys.MedicineMhraProcedureTypes,
+            q => q.Where(x => x.RelevantTo != ReferenceDataType.VaccinesOnly).OrderBy(x => x.Id),
+            x => new ReferenceOptionRow(x.Id, x.Label, x.IsArchived, null)
+        );
+
+        registry.AddReference<IrpReferenceRegulator>(
+            OptionKeys.IrpReferenceRegulators,
+            q => q.OrderBy(x => x.Id),
+            x => new ReferenceOptionRow(x.Id, x.Label, x.IsArchived, null)
+        );
+
+        registry.AddReference<IrpRoute>(
+            OptionKeys.IrpRoutes,
+            q => q.OrderBy(x => x.Id),
+            x => new ReferenceOptionRow(x.Id, x.Label, x.IsArchived, null)
+        );
+    }
+
+    private static void RegisterHtaAndLaunchProviders(OptionProviderRegistry registry)
+    {
+        registry.AddEnum(
+            OptionKeys.MedicineHtaAssessor,
+            (MedicineHtaAssessor.Nice, "NICE"),
+            (MedicineHtaAssessor.Smc, "SMC"),
+            (MedicineHtaAssessor.Awmsg, "AWMSG")
+        );
+    }
+
+    private static void RegisterOrphanAndAtmpProviders(OptionProviderRegistry registry)
+    {
+        registry.AddEnum(
+            OptionKeys.EuOrphanStatus,
+            (DesignationStatus.Granted, "Yes, orphan status granted"),
+            (DesignationStatus.NotGranted, "No, orphan status not granted"),
+            (DesignationStatus.DecisionToSubmitOngoing, "Decision to submit is ongoing"),
+            (
+                DesignationStatus.ApplicationSubmittedDecisionPending,
+                "Application submitted and decision pending"
+            ),
+            (DesignationStatus.NoSubmissionIntended, "No submission intended")
+        );
+
+        registry.AddEnum(
+            OptionKeys.EuAtmpClassificationStatus,
+            (DesignationStatus.Granted, "Yes"),
+            (DesignationStatus.NotGranted, "No"),
+            (DesignationStatus.DecisionToSubmitOngoing, "Decision to submit ongoing"),
+            (
+                DesignationStatus.ApplicationSubmittedDecisionPending,
+                "Application submitted - decision pending"
+            )
+        );
+
+        registry.AddReference<AtmpClassification>(
+            OptionKeys.AtmpClassifications,
+            q => q.OrderBy(x => x.Id),
+            x => new ReferenceOptionRow(x.Id, x.Label, x.IsArchived, null)
+        );
+    }
+
+    private static void RegisterPimAndEamsProviders(OptionProviderRegistry registry)
+    {
+        registry.AddEnum(
+            OptionKeys.PimDesignationStatus,
+            (DesignationStatus.Granted, "Granted"),
+            (DesignationStatus.NotGranted, "Not granted"),
+            (DesignationStatus.DecisionToSubmitOngoing, "Decision to submit is ongoing"),
+            (
+                DesignationStatus.ApplicationSubmittedDecisionPending,
+                "Application submitted and decision pending"
+            ),
+            (DesignationStatus.NoSubmissionIntended, "No submission intended")
+        );
+
+        registry.AddEnum(
+            OptionKeys.EamsOpinionDecision,
+            (EamsOpinionDecision.Positive, "Positive"),
+            (EamsOpinionDecision.Negative, "Negative")
+        );
+    }
+
+    private static void RegisterPatientAndClinicalRequirementsProviders(
+        OptionProviderRegistry registry
+    )
+    {
+        registry.AddEnum(
+            OptionKeys.NhsServiceChangesRequired,
+            (
+                NhsServiceChangesRequired.CompleteTransformation,
+                "Complete transformation",
+                "NHS services could not currently deliver this treatment"
+            ),
+            (
+                NhsServiceChangesRequired.SomeChange,
+                "Some change",
+                "Modifications to current NHS services will be required to deliver this treatment"
+            ),
+            (
+                NhsServiceChangesRequired.NoChanges,
+                "No changes",
+                "This product could be delivered by current NHS services"
+            ),
+            (NhsServiceChangesRequired.Unknown, "Unknown at this stage", null)
+        );
+
+        registry.AddReference<UkPatientPopulationRange>(
+            OptionKeys.UkPatientPopulationRanges,
+            q => q.OrderBy(x => x.SortOrder).ThenBy(x => x.Id),
+            x => new ReferenceOptionRow(x.Id, x.Label, x.IsArchived, null)
+        );
+    }
+
+    private static void RegisterPricingAndBudgetImpactProviders(OptionProviderRegistry registry)
+    {
+        registry.AddEnum(
+            OptionKeys.PatientAccessSchemeRegion,
+            (PatientAccessSchemeRegion.England, "England"),
+            (PatientAccessSchemeRegion.Wales, "Wales"),
+            (PatientAccessSchemeRegion.Scotland, "Scotland"),
+            (PatientAccessSchemeRegion.NorthernIreland, "Northern Ireland")
+        );
+
+        registry.AddEnum(
+            OptionKeys.NetUkBudgetImpactBand,
+            (NetUkBudgetImpactBand.LessThan5M, "Less than £5 million per year"),
+            (NetUkBudgetImpactBand.Between5MAnd40M, "£5 million to less than £40 million per year"),
+            (NetUkBudgetImpactBand.FortyMOrMore, "£40 million or more per year"),
+            (NetUkBudgetImpactBand.Unknown, "Unknown at this stage")
+        );
+    }
+
+    private static void RegisterIndicationDetailsProviders(OptionProviderRegistry registry)
     {
         registry.AddEnum(
             OptionKeys.YesNoUnknown,
@@ -43,6 +204,102 @@ internal static class MedicineOptionProviders
             OptionKeys.TherapeuticAreas,
             q => q.OrderBy(x => x.DisplayOrder).ThenBy(x => x.Id),
             x => new ReferenceOptionRow(x.Id, x.Code + ": " + x.Label, x.IsArchived, x.ParentId)
+        );
+    }
+
+    private static void RegisterProductProviders(OptionProviderRegistry registry)
+    {
+        registry.AddReference<FormulationType>(
+            OptionKeys.FormulationTypes,
+            q => q.OrderBy(x => x.Id),
+            x => new ReferenceOptionRow(x.Id, x.Label, x.IsArchived, null)
+        );
+
+        registry.AddEnum(
+            OptionKeys.MedicineTechnologyStatus,
+            (MedicineTechnologyStatus.Biosimilar, "Biosimilar"),
+            (
+                MedicineTechnologyStatus.NewChemicalOrBiologicalEntity,
+                "New chemical/biological entity"
+            ),
+            (MedicineTechnologyStatus.NewDosingRegimen, "New dosing regimen"),
+            (MedicineTechnologyStatus.NewFormulation, "New formulation"),
+            (MedicineTechnologyStatus.NewIndication, "New indication"),
+            (MedicineTechnologyStatus.NewPresentation, "New presentation"),
+            (
+                MedicineTechnologyStatus.SpcAmendmentWithoutIndicationChange,
+                "SPC amendment without indication change"
+            )
+        );
+    }
+
+    private static void RegisterLaboratoryTestingProviders(OptionProviderRegistry registry)
+    {
+        RegisterBiomarkerProviders(registry);
+        RegisterTestingRequirementProviders(registry);
+    }
+
+    private static void RegisterBiomarkerProviders(OptionProviderRegistry registry)
+    {
+        registry.AddEnum(
+            OptionKeys.BiomarkerType,
+            (
+                BiomarkerType.GenomicBiomarker,
+                "Genomic biomarker",
+                "For example, a gene mutation, chromosomal alteration"
+            ),
+            (
+                BiomarkerType.NonGenomicBiomarker,
+                "Non-genomic biomarker",
+                "For example, a protein expression, hormone level, or cell count"
+            ),
+            (BiomarkerType.Unknown, "Unknown at this stage", null)
+        );
+
+        registry.AddEnum(
+            OptionKeys.GenomicTestNgtdRelationship,
+            (
+                GenomicTestNgtdRelationship.NewTest,
+                "New test, target not currently in the NGTD",
+                "For example, if the target is not currently tested for"
+            ),
+            (
+                GenomicTestNgtdRelationship.ExistingTestNewIndication,
+                "Existing test, new or expanded indication",
+                "The test already exists but is not currently used for this disease or patient population. For example, the test already appears in the NGTD for a different use"
+            ),
+            (
+                GenomicTestNgtdRelationship.ExistingTestSameIndication,
+                "Existing test, same indication",
+                "The test is already routinely used for this indication. For example, a new medicine targets the same biomarker as an existing one"
+            ),
+            (GenomicTestNgtdRelationship.Unknown, "Unknown at this stage", null)
+        );
+    }
+
+    private static void RegisterTestingRequirementProviders(OptionProviderRegistry registry)
+    {
+        registry.AddEnum(
+            OptionKeys.GenomicTestMandatoryStatus,
+            (
+                GenomicTestMandatoryStatus.MandatoryNoAlternatives,
+                "Testing is mandatory, and treatment cannot proceed without a positive result from this test"
+            ),
+            (
+                GenomicTestMandatoryStatus.MandatoryAlternativesMayExist,
+                "Testing is mandatory, but there may be suitable alternative tests"
+            ),
+            (
+                GenomicTestMandatoryStatus.RecommendedNotRequired,
+                "Testing is recommended but not required"
+            ),
+            (GenomicTestMandatoryStatus.Unknown, "Unknown at this stage")
+        );
+
+        registry.AddReference<PatientPathwayPoint>(
+            OptionKeys.PatientPathwayPoints,
+            q => q.OrderBy(x => x.Id),
+            x => new ReferenceOptionRow(x.Id, x.Label, x.IsArchived, null)
         );
     }
 }

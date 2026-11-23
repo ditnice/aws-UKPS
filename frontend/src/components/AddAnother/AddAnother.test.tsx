@@ -1,7 +1,11 @@
+import { useForm } from '@tanstack/react-form'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { AddAnother, AddAnotherProps } from './AddAnother'
+import styles from './AddAnother.module.scss'
 
 const defaultProps: AddAnotherProps<string> = {
   addItemLabel: 'add-item-label',
@@ -38,6 +42,11 @@ const getInputByLabelText = (labelText: string): HTMLInputElement => {
   return input as HTMLInputElement
 }
 
+const singleItemField: AddAnotherProps<string>['field'] = {
+  ...defaultProps.field,
+  state: { value: ['1'], meta: { errors: [] } },
+}
+
 afterEach(cleanup)
 
 describe('AddAnother', () => {
@@ -52,15 +61,31 @@ describe('AddAnother', () => {
   it('should render', () => {
     renderComponent()
 
-    const input = screen.getByLabelText(defaultProps.labelPrefix)
+    const input = screen.getByLabelText(`${defaultProps.labelPrefix} 1`)
 
     expect(input).toBeDefined()
+  })
+
+  it('should leave the input box at its default width when no width is given', () => {
+    renderComponent()
+
+    const box = getInputByLabelText(`${defaultProps.labelPrefix} 1`).closest(`.${styles.input}`)
+
+    expect((box as HTMLElement).style.getPropertyValue('--input-basis')).toBe('')
+  })
+
+  it('should size the input box from the width it is given', () => {
+    renderComponent({ inputWidth: 'one-half' })
+
+    const box = getInputByLabelText(`${defaultProps.labelPrefix} 1`).closest(`.${styles.input}`)
+
+    expect((box as HTMLElement).style.getPropertyValue('--input-basis')).toBe('50%')
   })
 
   it('should render an input for each value', () => {
     renderComponent()
 
-    expect(getInputByLabelText('label-prefix')).toBeDefined()
+    expect(getInputByLabelText('label-prefix 1')).toBeDefined()
     expect(getInputByLabelText('label-prefix 2')).toBeDefined()
     expect(getInputByLabelText('label-prefix 3')).toBeDefined()
   })
@@ -68,7 +93,7 @@ describe('AddAnother', () => {
   it('should render each input with the expected name', () => {
     renderComponent()
 
-    expect(getInputByLabelText('label-prefix').getAttribute('name')).toBe('test-field[0]')
+    expect(getInputByLabelText('label-prefix 1').getAttribute('name')).toBe('test-field[0]')
     expect(getInputByLabelText('label-prefix 2').getAttribute('name')).toBe('test-field[1]')
     expect(getInputByLabelText('label-prefix 3').getAttribute('name')).toBe('test-field[2]')
   })
@@ -76,15 +101,31 @@ describe('AddAnother', () => {
   it('should render each input with the expected value', () => {
     renderComponent()
 
-    expect(getInputByLabelText('label-prefix').value).toBe('test-field[0]')
+    expect(getInputByLabelText('label-prefix 1').value).toBe('test-field[0]')
     expect(getInputByLabelText('label-prefix 2').value).toBe('test-field[1]')
     expect(getInputByLabelText('label-prefix 3').value).toBe('test-field[2]')
   })
 
-  it('should render the hint on the first input only', () => {
+  it('should render the hint above the first input and link it to that input only', () => {
     renderComponent()
 
-    expect(screen.getByText(defaultProps.hint)).toBeDefined()
+    expect(screen.getByText('hint')).toBeInTheDocument()
+    expect(getInputByLabelText('label-prefix 1')).toHaveAccessibleDescription('hint')
+    expect(getInputByLabelText('label-prefix 2')).not.toHaveAccessibleDescription('hint')
+  })
+
+  it('should not number the label when there is only one item', () => {
+    renderComponent({ field: singleItemField })
+
+    expect(screen.getByLabelText('label-prefix')).toBeInTheDocument()
+  })
+
+  it('should not render a remove button when there is only one item', () => {
+    renderComponent({ field: singleItemField })
+
+    expect(
+      screen.queryByRole('button', { name: new RegExp(defaultProps.removeItemLabel) }),
+    ).not.toBeInTheDocument()
   })
 
   it('should render a remove button for the first item', () => {
@@ -104,15 +145,15 @@ describe('AddAnother', () => {
     renderComponent()
 
     expect(screen.getByTestId('remove-button-1').textContent).toBe(
-      `${defaultProps.removeItemLabel} 2`,
+      `${defaultProps.removeItemLabel} label-prefix 2`,
     )
   })
 
   it('should give each remove button a distinct accessible name', () => {
     renderComponent()
 
-    expect(screen.getByRole('button', { name: 'remove-item-label 2' })).toBeDefined()
-    expect(screen.getByRole('button', { name: 'remove-item-label 3' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'remove-item-label label-prefix 2' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'remove-item-label label-prefix 3' })).toBeDefined()
   })
 
   it('should call removeValue with the item index when a remove button is clicked', () => {
@@ -242,7 +283,7 @@ describe('AddAnother', () => {
 
     renderComponent({ getSubfield })
 
-    fireEvent.blur(screen.getByLabelText('label-prefix'))
+    fireEvent.blur(screen.getByLabelText('label-prefix 1'))
 
     expect(handleBlur).toHaveBeenCalledTimes(1)
   })
@@ -304,7 +345,7 @@ describe('AddAnother', () => {
 
     renderComponent({ getSubfield })
 
-    expect(screen.getByLabelText('label-prefix').getAttribute('aria-invalid')).toBe('true')
+    expect(screen.getByLabelText('label-prefix 1').getAttribute('aria-invalid')).toBe('true')
   })
 
   it('should render no inputs when the field has no values', () => {
@@ -320,5 +361,129 @@ describe('AddAnother', () => {
 
     expect(screen.queryByLabelText('label-prefix')).toBeNull()
     expect(screen.getByTestId('add-item-button')).toBeDefined()
+  })
+
+  describe('focus', () => {
+    const TanStackField = () => {
+      const form = useForm({ defaultValues: { entries: ['a', 'b'] } })
+      return (
+        <form.Field name="entries" mode="array">
+          {(field) => (
+            <AddAnother
+              {...defaultProps}
+              field={field}
+              getSubfield={(name, renderSubfield) => (
+                <form.Field name={name}>{renderSubfield}</form.Field>
+              )}
+            />
+          )}
+        </form.Field>
+      )
+    }
+
+    it('focuses each new input when a live TanStack array field updates synchronously', async () => {
+      const user = userEvent.setup()
+      render(<TanStackField />)
+
+      await user.click(screen.getByRole('button', { name: 'add-item-label' }))
+      expect(getInputByLabelText('label-prefix 3')).toHaveFocus()
+
+      await user.click(screen.getByRole('button', { name: 'add-item-label' }))
+      expect(getInputByLabelText('label-prefix 4')).toHaveFocus()
+    })
+
+    const Stateful = ({ legend }: { legend?: string }) => {
+      const [values, setValues] = useState(['a', 'b'])
+      return (
+        <AddAnother
+          {...defaultProps}
+          legend={legend}
+          title={legend ? undefined : 'Other names'}
+          field={{
+            ...defaultProps.field,
+            state: { value: values, meta: { errors: [] } },
+            pushValue: (value) => setValues((current) => [...current, value]),
+            removeValue: (index) => setValues((current) => current.filter((_, i) => i !== index)),
+          }}
+          getSubfield={(name, subfieldRender) =>
+            subfieldRender({
+              name,
+              handleBlur: vi.fn(),
+              state: { value: '', meta: { errors: [] } },
+              handleChange: vi.fn(),
+            })
+          }
+        />
+      )
+    }
+
+    it('focuses the new input when an item is added', () => {
+      render(<Stateful />)
+
+      fireEvent.click(screen.getByTestId('add-item-button'))
+
+      expect(getInputByLabelText('label-prefix 3')).toHaveFocus()
+    })
+
+    it('focuses the title when an item is removed', () => {
+      render(<Stateful />)
+
+      fireEvent.click(screen.getByTestId('remove-button-1'))
+
+      expect(screen.getByRole('heading', { name: 'Other names' })).toHaveFocus()
+    })
+
+    it('labels the list with a legend and focuses it when an item is removed', () => {
+      render(<Stateful legend="Trial numbers" />)
+
+      expect(screen.getByRole('group', { name: 'Trial numbers' })).toBeInTheDocument()
+      fireEvent.click(screen.getByTestId('remove-button-0'))
+
+      expect(screen.getByText('Trial numbers')).toHaveFocus()
+    })
+
+    it('hides item labels behind a legend unless the items have a label of their own', () => {
+      const props = { ...defaultProps, field: singleItemField, legend: 'Trial numbers' }
+      const labelIsHidden = (text: string) =>
+        screen.getByText(text, { selector: 'label' }).closest(`.${styles.hiddenLabel}`) !== null
+      const { rerender } = render(<AddAnother {...props} />)
+
+      expect(labelIsHidden('label-prefix')).toBe(true)
+
+      rerender(<AddAnother {...props} itemLabel="Trial number" />)
+
+      expect(labelIsHidden('Trial number')).toBe(false)
+      expect(getInputByLabelText('Trial number')).toBeInTheDocument()
+    })
+
+    it('ignores a blank item label', () => {
+      render(
+        <AddAnother
+          {...defaultProps}
+          field={singleItemField}
+          itemLabel="  "
+          legend="Trial numbers"
+        />,
+      )
+
+      expect(
+        screen.getByText('label-prefix', { selector: 'label' }).closest(`.${styles.hiddenLabel}`),
+      ).not.toBeNull()
+    })
+  })
+})
+
+describe('AddAnother legend size', () => {
+  it("shows the legend as lead text when asked, keeping the items' labels standard", () => {
+    renderComponent({ legend: 'Numbers', legendSize: 'lead' })
+    expect(screen.getByText('Numbers')).toHaveClass(styles.leadLegend)
+    for (const label of document.querySelectorAll('label.input__label')) {
+      expect(label).not.toHaveClass(styles.leadLegend)
+    }
+  })
+
+  it('keeps the standard legend by default', () => {
+    renderComponent({ legend: 'Numbers' })
+    expect(screen.getByText('Numbers')).not.toHaveClass(styles.leadLegend)
   })
 })

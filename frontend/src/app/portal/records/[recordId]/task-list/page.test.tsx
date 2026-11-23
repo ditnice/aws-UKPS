@@ -26,8 +26,8 @@ vi.mock('next/navigation', () => ({
 
 type GetRecordTaskListResult = Awaited<ReturnType<typeof getRecordTaskList>>
 
-// The Medicine form has one task today. The second section is illustrative, to show that every
-// section and task is rendered.
+// A trimmed version of the Medicine form: one task from each of its two sections, to show that
+// every section and task is rendered.
 const taskList = {
   data: {
     recordId: 42,
@@ -37,8 +37,8 @@ const taskList = {
     recordTitle: 'COVID-19, 18+ who do not require supplemental oxygen',
     sections: [
       {
-        id: 'indication-details',
-        title: 'Indication details',
+        id: 'indication-and-development',
+        title: 'Provide indication and development information',
         tasks: [
           {
             id: 'indication-details',
@@ -49,14 +49,14 @@ const taskList = {
         ],
       },
       {
-        id: 'treatment-details',
-        title: 'Treatment details',
+        id: 'service-readiness',
+        title: 'Provide service readiness information (optional)',
         tasks: [
           {
-            id: 'formulation',
-            title: 'Formulation',
+            id: 'laboratory-testing',
+            title: 'Laboratory testing',
             status: 'NotStarted',
-            firstPageId: 'formulation-type',
+            firstPageId: 'diagnostic-test-required',
           },
         ],
       },
@@ -66,8 +66,27 @@ const taskList = {
   response: new Response(null, { status: 200 }),
 } satisfies GetRecordTaskListResult
 
-const renderPage = async (recordId = '42') => {
-  const page = await RecordTaskListPage({ params: Promise.resolve({ recordId }) })
+// The same list with the mandatory task completed. The optional service readiness task is still
+// not started, to show that it does not hold back submission.
+const mandatoryTasksCompleteTaskList = {
+  ...taskList,
+  data: {
+    ...taskList.data,
+    sections: [
+      {
+        ...taskList.data.sections[0],
+        tasks: [{ ...taskList.data.sections[0].tasks[0], status: 'Completed' }],
+      },
+      taskList.data.sections[1],
+    ],
+  },
+} satisfies GetRecordTaskListResult
+
+const renderPage = async (recordId = '42', action?: string) => {
+  const page = await RecordTaskListPage({
+    params: Promise.resolve({ recordId }),
+    searchParams: Promise.resolve({ action }),
+  })
   render(page)
 }
 
@@ -93,15 +112,23 @@ describe('RecordTaskListPage', () => {
       screen.getByText('COVID-19, 18+ who do not require supplemental oxygen'),
     ).toBeInTheDocument()
     expect(screen.getByText('Draft')).toBeInTheDocument()
-    expect(screen.getByText('You have completed 0 of 2 mandatory tasks')).toBeInTheDocument()
+    expect(screen.getByText('You have completed 0 of 1 mandatory tasks')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Skip to first incomplete task' })).toHaveAttribute(
       'href',
       '/portal/records/42/indication',
     )
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Indication details' }),
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Provide indication and development information',
+      }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: 'Treatment details' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Provide service readiness information (optional)',
+      }),
+    ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
       'href',
       '/portal/organisations/7/records/42',
@@ -110,12 +137,62 @@ describe('RecordTaskListPage', () => {
       'href',
       '/portal/records/42/indication',
     )
-    expect(screen.getByRole('link', { name: 'Formulation' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Laboratory testing' })).toHaveAttribute(
       'href',
-      '/portal/records/42/formulation-type',
+      '/portal/records/42/diagnostic-test-required',
     )
     expect(screen.getByText('In progress')).toBeInTheDocument()
     expect(screen.getByText('Not yet started')).toBeInTheDocument()
+  })
+
+  it('does not offer review and submit while a mandatory task is incomplete', async () => {
+    await renderPage()
+
+    expect(screen.queryByRole('link', { name: 'Review and submit record' })).not.toBeInTheDocument()
+  })
+
+  it('offers review and submit once every mandatory task is complete', async () => {
+    vi.mocked(getRecordTaskList).mockResolvedValue(mandatoryTasksCompleteTaskList)
+
+    await renderPage()
+
+    expect(screen.getByRole('link', { name: 'Review and submit record' })).toHaveAttribute(
+      'href',
+      '/portal/records/42/check-your-answers',
+    )
+  })
+
+  it('links back to the organisation records list', async () => {
+    await renderPage()
+
+    expect(screen.getByRole('link', { name: 'Return to my records' })).toHaveAttribute(
+      'href',
+      '/portal/organisations/7/records',
+    )
+  })
+
+  it('shows the draft saved alert when the draft-saved action is set', async () => {
+    await renderPage('42', 'draft-saved')
+
+    expect(
+      screen.getByRole('heading', { level: 3, name: 'Draft record saved' }),
+    ).toBeInTheDocument()
+  })
+
+  it('does not show the draft saved alert without the draft-saved action', async () => {
+    await renderPage()
+
+    expect(
+      screen.queryByRole('heading', { level: 3, name: 'Draft record saved' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('does not show the alert for other actions', async () => {
+    await renderPage('42', 'discarded')
+
+    expect(
+      screen.queryByRole('heading', { level: 3, name: 'Record successfully discarded' }),
+    ).not.toBeInTheDocument()
   })
 
   it('returns not found for an invalid record ID', async () => {

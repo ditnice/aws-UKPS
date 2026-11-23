@@ -14,7 +14,8 @@ The record task list is available at `GET /records/{recordId}/task-list`. It rea
 and returns the form's sections and tasks, including each task's first page and a status derived
 from saved answers. This read does not write to the database. A task is `Completed` when all its
 required questions have answers, `InProgress` when it has at least one answer but required
-answers remain, and `NotStarted` when it has no saved answers.
+answers remain, and `NotStarted` when it has no saved answers. Questions hidden by their
+conditions are ignored.
 
 ## Conventions
 
@@ -113,14 +114,15 @@ All of the following are written in one transaction at `T0`.
 ### `record_field_audit` (1 row per answered field inserted)
 
 Each row has `record_id = 5`, `revision_id = 7`, `old_value = null`, `changed_by = 12` and
-`changed_at = T0`. A blank branded name is not audited.
+`changed_at = T0`. A blank branded name, or no other identifiers, is not audited.
 
 | `field_path` | `new_value` |
 |---|---|
 | `record_product_detail.company_code` | `GS-7977` |
 | `record_product_detail.branded_name` | `Sovaldi` |
 | `record_product_detail.record_title` | `Chronic hepatitis C in adults` |
-| `record_product_detail.names_and_identifiers` | `{"GenericName":["sofosbuvir"],"OtherIdentifier":["PSI-7977"]}` |
+| `record_product_detail.generic_names` | `["sofosbuvir"]` |
+| `record_product_detail.other_identifiers` | `["PSI-7977"]` |
 
 ### `record_product_details` (1 row inserted)
 
@@ -246,7 +248,7 @@ choice: the condition if one is picked, otherwise the area.
 
 Selections are sorted as text before they are compared and audited, so choosing `["7","10"]`
 would be stored in the audit as `["10","7"]`. Choosing the same option twice is rejected with
-"You have selected the same option more than once.". If nothing is ticked (the question is optional), no
+"You have selected the same option more than once". If nothing is ticked (the question is optional), no
 junction rows are written; a first save with nothing ticked is not a change, so it writes no
 audit rows and does not touch the revision.
 
@@ -285,6 +287,8 @@ The content table stores the enum's integer; the audit stores its name.
 
 **Response:** `{ "nextPageId": null }`. This is the last page of the task, so its button reads
 **Save and return to task list**, and the browser goes back to `/portal/records/5/task-list`.
+The Development background task is started from the task list (see
+[Conditional answers](#conditional-answers-development-background)).
 
 | Table | Change |
 |---|---|
@@ -352,3 +356,19 @@ task list, then choose the task and step through its pages:
 - **Removing a therapeutic area** deletes its junction row; adding one inserts a row. Areas that
   stay selected are left alone. The audit row holds the whole old and new lists.
 - **The indication row is never duplicated**: later saves update the row created in step 1.
+
+## Conditional answers: Development background
+
+Each Development background page has a Yes/No question and a follow-up question that is revealed
+beneath one option, for example the co-marketing company name under **Yes**. A follow-up only
+applies while its trigger has that answer. The first save inserts the
+revision's `medicines_development_backgrounds` row, in the same way step 1 inserts the indication
+row.
+
+- **Saving with the follow-up hidden** stores it as `null`, even if the browser sent a value. It
+  is not validated, so a required follow-up can be left blank.
+- **Changing the trigger so the follow-up no longer applies** clears the follow-up in the same
+  save, with its own audit row. For example, changing co-marketed from Yes to No writes two
+  audit rows: `field_path = medicines_development_background.is_co_marketed` (`Yes` → `No`) and
+  `field_path = medicines_development_background.co_marketing_company_name` (`Acme Pharma` →
+  `null`).

@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ApproveData, ApproveErrors, ApproveResponses, CreateRecordData, CreateRecordErrors, CreateRecordResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, DiscardRecordData, DiscardRecordErrors, DiscardRecordResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentOrganisationChampionsData, GetCurrentOrganisationChampionsErrors, GetCurrentOrganisationChampionsResponses, GetCurrentUserOrganisationsData, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsData, GetOrganisationsPublicOptionsResponses, GetRecordData, GetRecordErrors, GetRecordFormPageData, GetRecordFormPageErrors, GetRecordFormPageResponses, GetRecordResponses, GetRecordTaskListData, GetRecordTaskListErrors, GetRecordTaskListResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeData, GetUsersMeErrors, GetUsersMeResponses, GetUsersResponses, PatchUsersByUserIdData, PatchUsersByUserIdErrors, PatchUsersByUserIdResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthMfaData, PostAuthMfaErrors, PostAuthMfaResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthSignOutData, PostAuthSignOutErrors, PostAuthSignOutResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RejectData, RejectErrors, RejectResponses, RemoveUserData, RemoveUserErrors, RemoveUserResponses, SaveRecordFormPageData, SaveRecordFormPageErrors, SaveRecordFormPageResponses, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, ArchiveRecordData, ArchiveRecordErrors, ArchiveRecordResponses, CancelPendingEmailChangeData, CancelPendingEmailChangeErrors, CancelPendingEmailChangeResponses, ConfirmNewPasswordData, ConfirmNewPasswordErrors, ConfirmNewPasswordResponses, CreateRecordData, CreateRecordErrors, CreateRecordResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, DiscardRecordData, DiscardRecordErrors, DiscardRecordResponses, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentOrganisationChampionsData, GetCurrentOrganisationChampionsErrors, GetCurrentOrganisationChampionsResponses, GetCurrentUserOrganisationsData, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationCompanyCodesData, GetOrganisationCompanyCodesErrors, GetOrganisationCompanyCodesResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsData, GetOrganisationsPublicOptionsResponses, GetRecordCheckAnswersData, GetRecordCheckAnswersErrors, GetRecordCheckAnswersResponses, GetRecordDetailData, GetRecordDetailErrors, GetRecordDetailResponses, GetRecordFormPageData, GetRecordFormPageErrors, GetRecordFormPageResponses, GetRecordOverviewData, GetRecordOverviewErrors, GetRecordOverviewResponses, GetRecordTaskListData, GetRecordTaskListErrors, GetRecordTaskListResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeData, GetUsersMeErrors, GetUsersMeResponses, GetUsersResponses, InitiateForgottenPasswordProcedureData, InitiateForgottenPasswordProcedureErrors, InitiateForgottenPasswordProcedureResponses, InitiateUpdateMultiFactorAuthenticationData, InitiateUpdateMultiFactorAuthenticationErrors, InitiateUpdateMultiFactorAuthenticationResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupSmsMfaData, PostAuthSetupSmsMfaErrors, PostAuthSetupSmsMfaResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthSignOutData, PostAuthSignOutErrors, PostAuthSignOutResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostAuthVerifySmsMfaData, PostAuthVerifySmsMfaErrors, PostAuthVerifySmsMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, PutRecordOnHoldData, PutRecordOnHoldErrors, PutRecordOnHoldResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RejectData, RejectErrors, RejectResponses, RemoveUserData, RemoveUserErrors, RemoveUserResponses, ResendVerificationEmailData, ResendVerificationEmailErrors, ResendVerificationEmailResponses, RespondToMultiFactorAuthenticationChallengeData, RespondToMultiFactorAuthenticationChallengeErrors, RespondToMultiFactorAuthenticationChallengeResponses, ResumeRecordData, ResumeRecordErrors, ResumeRecordResponses, SaveRecordFormPageData, SaveRecordFormPageErrors, SaveRecordFormPageResponses, SubmitRecordData, SubmitRecordErrors, SubmitRecordResponses, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateUserDetailsData, UpdateUserDetailsErrors, UpdateUserDetailsResponses, UpdateUserEmailData, UpdateUserEmailErrors, UpdateUserEmailResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, VerifyMultiFactorAuthenticationUpdateData, VerifyMultiFactorAuthenticationUpdateErrors, VerifyMultiFactorAuthenticationUpdateResponses, VerifyPendingEmailAddressData, VerifyPendingEmailAddressErrors, VerifyPendingEmailAddressResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -47,8 +47,32 @@ export const postAuthSignOut = <ThrowOnError extends boolean = false>(options?: 
 /**
  * Completes a multi-factor authentication challenge for an existing authentication session.
  */
-export const postAuthMfa = <ThrowOnError extends boolean = false>(options: Options<PostAuthMfaData, ThrowOnError>): RequestResult<PostAuthMfaResponses, PostAuthMfaErrors, ThrowOnError> => (options.client ?? client).post<PostAuthMfaResponses, PostAuthMfaErrors, ThrowOnError>({
+export const respondToMultiFactorAuthenticationChallenge = <ThrowOnError extends boolean = false>(options: Options<RespondToMultiFactorAuthenticationChallengeData, ThrowOnError>): RequestResult<RespondToMultiFactorAuthenticationChallengeResponses, RespondToMultiFactorAuthenticationChallengeErrors, ThrowOnError> => (options.client ?? client).post<RespondToMultiFactorAuthenticationChallengeResponses, RespondToMultiFactorAuthenticationChallengeErrors, ThrowOnError>({
     url: '/auth/mfa',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Sets up SMS multi-factor authentication for a user.
+ */
+export const postAuthSetupSmsMfa = <ThrowOnError extends boolean = false>(options: Options<PostAuthSetupSmsMfaData, ThrowOnError>): RequestResult<PostAuthSetupSmsMfaResponses, PostAuthSetupSmsMfaErrors, ThrowOnError> => (options.client ?? client).post<PostAuthSetupSmsMfaResponses, PostAuthSetupSmsMfaErrors, ThrowOnError>({
+    url: '/auth/setup-sms-mfa',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Verifies the user's SMS multi-factor authentication setup by validating the provided authentication code.
+ */
+export const postAuthVerifySmsMfa = <ThrowOnError extends boolean = false>(options: Options<PostAuthVerifySmsMfaData, ThrowOnError>): RequestResult<PostAuthVerifySmsMfaResponses, PostAuthVerifySmsMfaErrors, ThrowOnError> => (options.client ?? client).post<PostAuthVerifySmsMfaResponses, PostAuthVerifySmsMfaErrors, ThrowOnError>({
+    url: '/auth/verify-sms-mfa',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -100,6 +124,34 @@ export const postAuthVerifyMfa = <ThrowOnError extends boolean = false>(options:
 });
 
 /**
+ * Initiates the forgotten password procedure for a user.
+ *
+ * Starts the password recovery flow for the account identified in the command.
+ * The number of attempts is limited; once the permitted limit has been exceeded,
+ * further requests are rejected.
+ */
+export const initiateForgottenPasswordProcedure = <ThrowOnError extends boolean = false>(options: Options<InitiateForgottenPasswordProcedureData, ThrowOnError>): RequestResult<InitiateForgottenPasswordProcedureResponses, InitiateForgottenPasswordProcedureErrors, ThrowOnError> => (options.client ?? client).post<InitiateForgottenPasswordProcedureResponses, InitiateForgottenPasswordProcedureErrors, ThrowOnError>({
+    url: '/auth/initiate-forgotten-password',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Confirms a password reset by validating the confirmation code and setting a new password.
+ */
+export const confirmNewPassword = <ThrowOnError extends boolean = false>(options: Options<ConfirmNewPasswordData, ThrowOnError>): RequestResult<ConfirmNewPasswordResponses, ConfirmNewPasswordErrors, ThrowOnError> => (options.client ?? client).post<ConfirmNewPasswordResponses, ConfirmNewPasswordErrors, ThrowOnError>({
+    url: '/auth/confirm-new-password',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * Gets the champion contacts for the current organisation.
  */
 export const getCurrentOrganisationChampions = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentOrganisationChampionsData, ThrowOnError>): RequestResult<GetCurrentOrganisationChampionsResponses, GetCurrentOrganisationChampionsErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentOrganisationChampionsResponses, GetCurrentOrganisationChampionsErrors, ThrowOnError>({ url: '/users/me/organisations/current/champions', ...options });
@@ -114,6 +166,24 @@ export const getCurrentUserOrganisations = <ThrowOnError extends boolean = false
  */
 export const updateCurrentOrganisation = <ThrowOnError extends boolean = false>(options: Options<UpdateCurrentOrganisationData, ThrowOnError>): RequestResult<UpdateCurrentOrganisationResponses, UpdateCurrentOrganisationErrors, ThrowOnError> => (options.client ?? client).patch<UpdateCurrentOrganisationResponses, UpdateCurrentOrganisationErrors, ThrowOnError>({
     url: '/users/me/current-organisation',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Initiates the process of updating the authenticated user's multi-factor authentication settings.
+ */
+export const initiateUpdateMultiFactorAuthentication = <ThrowOnError extends boolean = false>(options?: Options<InitiateUpdateMultiFactorAuthenticationData, ThrowOnError>): RequestResult<InitiateUpdateMultiFactorAuthenticationResponses, InitiateUpdateMultiFactorAuthenticationErrors, ThrowOnError> => (options?.client ?? client).post<InitiateUpdateMultiFactorAuthenticationResponses, InitiateUpdateMultiFactorAuthenticationErrors, ThrowOnError>({ url: '/mfa/update', ...options });
+
+/**
+ * Verifies the multi-factor authentication code provided by the authenticated user
+ * to complete the update of their multi-factor authentication settings.
+ */
+export const verifyMultiFactorAuthenticationUpdate = <ThrowOnError extends boolean = false>(options: Options<VerifyMultiFactorAuthenticationUpdateData, ThrowOnError>): RequestResult<VerifyMultiFactorAuthenticationUpdateResponses, VerifyMultiFactorAuthenticationUpdateErrors, ThrowOnError> => (options.client ?? client).post<VerifyMultiFactorAuthenticationUpdateResponses, VerifyMultiFactorAuthenticationUpdateErrors, ThrowOnError>({
+    url: '/mfa/verify',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -183,9 +253,22 @@ export const getOrganisationsPublicOptions = <ThrowOnError extends boolean = fal
 export const getOrganisationRecords = <ThrowOnError extends boolean = false>(options: Options<GetOrganisationRecordsData, ThrowOnError>): RequestResult<GetOrganisationRecordsResponses, GetOrganisationRecordsErrors, ThrowOnError> => (options.client ?? client).get<GetOrganisationRecordsResponses, GetOrganisationRecordsErrors, ThrowOnError>({ url: '/records/organisations/{organisationId}', ...options });
 
 /**
- * Retrieves the data held on the latest revision of a record, whatever its status.
+ * Retrieves the company codes already used on an organisation's records that contain the
+ * search text, for suggesting while a user types a company code.
  */
-export const getRecord = <ThrowOnError extends boolean = false>(options: Options<GetRecordData, ThrowOnError>): RequestResult<GetRecordResponses, GetRecordErrors, ThrowOnError> => (options.client ?? client).get<GetRecordResponses, GetRecordErrors, ThrowOnError>({ url: '/records/{id}', ...options });
+export const getOrganisationCompanyCodes = <ThrowOnError extends boolean = false>(options: Options<GetOrganisationCompanyCodesData, ThrowOnError>): RequestResult<GetOrganisationCompanyCodesResponses, GetOrganisationCompanyCodesErrors, ThrowOnError> => (options.client ?? client).get<GetOrganisationCompanyCodesResponses, GetOrganisationCompanyCodesErrors, ThrowOnError>({ url: '/records/organisations/{organisationId}/company-codes', ...options });
+
+/**
+ * Retrieves a record's status, permitted actions and identifying details, whatever its
+ * status, without its answers.
+ */
+export const getRecordOverview = <ThrowOnError extends boolean = false>(options: Options<GetRecordOverviewData, ThrowOnError>): RequestResult<GetRecordOverviewResponses, GetRecordOverviewErrors, ThrowOnError> => (options.client ?? client).get<GetRecordOverviewResponses, GetRecordOverviewErrors, ThrowOnError>({ url: '/records/{id}/overview', ...options });
+
+/**
+ * Retrieves a record's overview and every question that applies on its latest revision with
+ * its answer, whatever its status. The answers are not checked.
+ */
+export const getRecordDetail = <ThrowOnError extends boolean = false>(options: Options<GetRecordDetailData, ThrowOnError>): RequestResult<GetRecordDetailResponses, GetRecordDetailErrors, ThrowOnError> => (options.client ?? client).get<GetRecordDetailResponses, GetRecordDetailErrors, ThrowOnError>({ url: '/records/{id}', ...options });
 
 /**
  * Creates a new record.
@@ -205,6 +288,42 @@ export const createRecord = <ThrowOnError extends boolean = false>(options: Opti
 export const discardRecord = <ThrowOnError extends boolean = false>(options: Options<DiscardRecordData, ThrowOnError>): RequestResult<DiscardRecordResponses, DiscardRecordErrors, ThrowOnError> => (options.client ?? client).patch<DiscardRecordResponses, DiscardRecordErrors, ThrowOnError>({ url: '/records/{recordId}/discard', ...options });
 
 /**
+ * Puts a published record on hold.
+ */
+export const putRecordOnHold = <ThrowOnError extends boolean = false>(options: Options<PutRecordOnHoldData, ThrowOnError>): RequestResult<PutRecordOnHoldResponses, PutRecordOnHoldErrors, ThrowOnError> => (options.client ?? client).patch<PutRecordOnHoldResponses, PutRecordOnHoldErrors, ThrowOnError>({
+    url: '/records/{recordId}/hold',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Removes the hold from a record, returning it to published.
+ */
+export const resumeRecord = <ThrowOnError extends boolean = false>(options: Options<ResumeRecordData, ThrowOnError>): RequestResult<ResumeRecordResponses, ResumeRecordErrors, ThrowOnError> => (options.client ?? client).patch<ResumeRecordResponses, ResumeRecordErrors, ThrowOnError>({
+    url: '/records/{recordId}/resume',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Archives a published or on hold record.
+ */
+export const archiveRecord = <ThrowOnError extends boolean = false>(options: Options<ArchiveRecordData, ThrowOnError>): RequestResult<ArchiveRecordResponses, ArchiveRecordErrors, ThrowOnError> => (options.client ?? client).patch<ArchiveRecordResponses, ArchiveRecordErrors, ThrowOnError>({
+    url: '/records/{recordId}/archive',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * Retrieves a page of a record's content form: its questions, rules, options and the current
  * answers on the record's latest revision.
  */
@@ -216,6 +335,25 @@ export const getRecordFormPage = <ThrowOnError extends boolean = false>(options:
  */
 export const saveRecordFormPage = <ThrowOnError extends boolean = false>(options: Options<SaveRecordFormPageData, ThrowOnError>): RequestResult<SaveRecordFormPageResponses, SaveRecordFormPageErrors, ThrowOnError> => (options.client ?? client).put<SaveRecordFormPageResponses, SaveRecordFormPageErrors, ThrowOnError>({
     url: '/records/{recordId}/pages/{pageId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Retrieves every question that applies on the record's latest revision with its answer, the
+ * errors that would stop it being submitted, and the revision hash to submit with.
+ */
+export const getRecordCheckAnswers = <ThrowOnError extends boolean = false>(options: Options<GetRecordCheckAnswersData, ThrowOnError>): RequestResult<GetRecordCheckAnswersResponses, GetRecordCheckAnswersErrors, ThrowOnError> => (options.client ?? client).get<GetRecordCheckAnswersResponses, GetRecordCheckAnswersErrors, ThrowOnError>({ url: '/records/{recordId}/check-answers', ...options });
+
+/**
+ * Submits the record's draft revision, as it was when check your answers loaded. A medicine
+ * goes to QA review.
+ */
+export const submitRecord = <ThrowOnError extends boolean = false>(options: Options<SubmitRecordData, ThrowOnError>): RequestResult<SubmitRecordResponses, SubmitRecordErrors, ThrowOnError> => (options.client ?? client).post<SubmitRecordResponses, SubmitRecordErrors, ThrowOnError>({
+    url: '/records/{recordId}/submit',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -253,7 +391,7 @@ export const removeUser = <ThrowOnError extends boolean = false>(options: Option
 /**
  * Updates the details of the specified user.
  */
-export const patchUsersByUserId = <ThrowOnError extends boolean = false>(options: Options<PatchUsersByUserIdData, ThrowOnError>): RequestResult<PatchUsersByUserIdResponses, PatchUsersByUserIdErrors, ThrowOnError> => (options.client ?? client).patch<PatchUsersByUserIdResponses, PatchUsersByUserIdErrors, ThrowOnError>({
+export const updateUserDetails = <ThrowOnError extends boolean = false>(options: Options<UpdateUserDetailsData, ThrowOnError>): RequestResult<UpdateUserDetailsResponses, UpdateUserDetailsErrors, ThrowOnError> => (options.client ?? client).patch<UpdateUserDetailsResponses, UpdateUserDetailsErrors, ThrowOnError>({
     url: '/users/{userId}',
     ...options,
     headers: {
@@ -261,6 +399,40 @@ export const patchUsersByUserId = <ThrowOnError extends boolean = false>(options
         ...options.headers
     }
 });
+
+/**
+ * Updates the email address of the specified user.
+ */
+export const updateUserEmail = <ThrowOnError extends boolean = false>(options: Options<UpdateUserEmailData, ThrowOnError>): RequestResult<UpdateUserEmailResponses, UpdateUserEmailErrors, ThrowOnError> => (options.client ?? client).patch<UpdateUserEmailResponses, UpdateUserEmailErrors, ThrowOnError>({
+    url: '/users/{userId}/email',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Resends the email verification message to a user.
+ */
+export const resendVerificationEmail = <ThrowOnError extends boolean = false>(options: Options<ResendVerificationEmailData, ThrowOnError>): RequestResult<ResendVerificationEmailResponses, ResendVerificationEmailErrors, ThrowOnError> => (options.client ?? client).post<ResendVerificationEmailResponses, ResendVerificationEmailErrors, ThrowOnError>({ url: '/users/{userId}/email/resend', ...options });
+
+/**
+ * Verifies a user's pending email address using a verification token.
+ */
+export const verifyPendingEmailAddress = <ThrowOnError extends boolean = false>(options: Options<VerifyPendingEmailAddressData, ThrowOnError>): RequestResult<VerifyPendingEmailAddressResponses, VerifyPendingEmailAddressErrors, ThrowOnError> => (options.client ?? client).post<VerifyPendingEmailAddressResponses, VerifyPendingEmailAddressErrors, ThrowOnError>({
+    url: '/users/{userId}/email/verify',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Cancels a user's unverified pending email change.
+ */
+export const cancelPendingEmailChange = <ThrowOnError extends boolean = false>(options: Options<CancelPendingEmailChangeData, ThrowOnError>): RequestResult<CancelPendingEmailChangeResponses, CancelPendingEmailChangeErrors, ThrowOnError> => (options.client ?? client).delete<CancelPendingEmailChangeResponses, CancelPendingEmailChangeErrors, ThrowOnError>({ url: '/users/{userId}/email/pending', ...options });
 
 /**
  * Creates a new user account and initiates the onboarding process.

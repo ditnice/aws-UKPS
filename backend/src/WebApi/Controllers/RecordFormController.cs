@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.RecordForms;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
+using UKPS.Api.WebApi.CustomResponses;
 
 namespace UKPS.Api.WebApi.Controllers;
 
@@ -20,8 +21,6 @@ public class RecordFormController(
     IRecordFormSaveService saveService
 ) : ControllerBase
 {
-    private const string CodeExtension = "code";
-
     /// <summary>
     /// Retrieves a page of a record's content form: its questions, rules, options and the current
     /// answers on the record's latest revision.
@@ -100,54 +99,43 @@ public class RecordFormController(
             cancellationToken
         );
 
-        return result.Match<ActionResult<SaveRecordPageDto>>(
-            saved => Ok(saved),
-            error =>
-                error switch
-                {
-                    SaveRecordPageError.NotFound or SaveRecordPageError.NotAllowed =>
-                        PageNotFound(),
-                    SaveRecordPageError.CannotEdit => Problem(
-                        statusCode: StatusCodes.Status403Forbidden,
-                        title: "Forbidden",
-                        detail: "You are not authorised to edit this record."
-                    ),
-                    SaveRecordPageError.NotEditable => Conflict(
-                        "record_not_editable",
-                        "This record can't be edited in its current status."
-                    ),
-                    SaveRecordPageError.RevisionChanged => Conflict(
-                        "revision_changed",
-                        "This record has changed since the page was loaded."
-                    ),
-                    SaveRecordPageError.FormVersionChanged => Conflict(
-                        "form_version_changed",
-                        "This form has changed since the page was loaded."
-                    ),
-                    SaveRecordPageError.Invalid invalid => InvalidAnswers(invalid),
-                    _ => throw new UnreachableException("Unhandled SaveRecordPageError variant."),
-                }
+        return result.Match(saved => Ok(saved), HandleError);
+    }
+
+    private ActionResult<SaveRecordPageDto> HandleError(SaveRecordPageError error)
+    {
+        return error.Match(
+            notFound: _ => PageNotFound(),
+            notAllowed: _ => PageNotFound(),
+            cannotEdit: _ =>
+                Problem(
+                    statusCode: StatusCodes.Status403Forbidden,
+                    title: "Forbidden",
+                    detail: "You are not authorised to edit this record."
+                ),
+            notEditable: _ =>
+                this.ConflictProblem(
+                    "record_not_editable",
+                    "This record can no longer be edited because it has been submitted."
+                ),
+            formVersionChanged: _ =>
+                this.ConflictProblem(
+                    "form_version_changed",
+                    "This form has changed since the page was loaded."
+                ),
+            concurrentUpdate: _ =>
+                this.ConflictProblem("concurrent_update", "This record was modified concurrently."),
+            pageAnswersChanged: _ =>
+                this.ConflictProblem(
+                    "page_answers_changed",
+                    "This page has changed since it was loaded."
+                ),
+            invalid: InvalidAnswers
         );
     }
 
     private ObjectResult PageNotFound() =>
-        Problem(
-            statusCode: StatusCodes.Status404NotFound,
-            title: "Not Found",
-            detail: "The specified page could not be found."
-        );
-
-    private ObjectResult Conflict(string code, string detail)
-    {
-        ProblemDetails problem = ProblemDetailsFactory.CreateProblemDetails(
-            HttpContext,
-            statusCode: StatusCodes.Status409Conflict,
-            title: "Conflict",
-            detail: detail
-        );
-        problem.Extensions[CodeExtension] = code;
-        return new ObjectResult(problem) { StatusCode = StatusCodes.Status409Conflict };
-    }
+        this.NotFoundProblem("The specified page could not be found.");
 
     private ActionResult InvalidAnswers(SaveRecordPageError.Invalid invalid)
     {

@@ -1,12 +1,11 @@
-import Link from 'next/link'
-
 import { TableAndFiltersGrid } from '@/app/portal/components/_components/TableAndFiltersGrid'
-import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
-import { Button } from '@/components/Button/Button'
+import { getCurrentOrganisationChampions, getUsersMe, UserRole } from '@/client/generated'
+import { createServerApiClient } from '@/client/server-api'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 
 import OrganisationPageWrapper from '../_components/OrganisationPageWrapper'
 
+import { CreateRecordActionBanner } from './_components/CreateRecordActionBanner'
 import { RecordActionAlert } from './_components/RecordActionAlert'
 import { parseRecordAction, type RecordActionSearchParams } from './_lib/recordActionAlert'
 import { RecordsFetch } from './RecordsFetch'
@@ -19,11 +18,23 @@ type OrganisationRecordsPage = {
   params: Promise<{ id: string }>
   searchParams: Promise<OrganisationRecordsSearchParams & RecordActionSearchParams>
 }
+
 const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRecordsPage) => {
   const { id: organisationId } = await params
   const resolvedSearchParams = await searchParams
   const query = parseQueryFromSearchParams(resolvedSearchParams)
   const recordAction = parseRecordAction(resolvedSearchParams)
+  const apiClient = await createServerApiClient()
+  const { data: currentUser } = await getUsersMe({ client: apiClient })
+  const isStandardUser = currentUser?.userRole === UserRole.STANDARD
+
+  let championEmails: string[] = []
+  if (isStandardUser) {
+    const { data } = await getCurrentOrganisationChampions({
+      client: apiClient,
+    })
+    championEmails = data ?? []
+  }
 
   return (
     <OrganisationPageWrapper organisationId={organisationId}>
@@ -31,7 +42,35 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
         <>
           {recordAction && <RecordActionAlert action={recordAction} />}
           <PageHeader heading={`${organisation.organisationName}`} />
-          <CreateMedicineRecordActionBanner organisationId={organisationId} />
+          {isStandardUser && championEmails.length > 0 && (
+            <>
+              <div className="champion-user">
+                {championEmails.length === 1 ? (
+                  <p>
+                    Your champion user is:{' '}
+                    <a href={`mailto:${championEmails[0]}`}>{championEmails[0]}</a>
+                  </p>
+                ) : (
+                  <>
+                    <p>Your champion users are:</p>
+                    <ul className="multiple-champion-users">
+                      {championEmails.map((email) => (
+                        <li key={email}>
+                          <a href={`mailto:${email}`}>{email}</a>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+          {currentUser && (
+            <CreateRecordActionBanner
+              organisationId={organisationId}
+              allowedPharmaceuticalEntity={currentUser?.allowedPharmaceuticalEntity}
+            />
+          )}
           <TableAndFiltersGrid
             title="Search and filter records"
             filters={<RecordsTablesFilters query={query} />}
@@ -51,28 +90,4 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
     </OrganisationPageWrapper>
   )
 }
-
-const CreateMedicineRecordActionBanner = ({ organisationId }: { organisationId: string }) => {
-  return (
-    <ActionBanner
-      variant="subtle"
-      title="Create Record"
-      cta={
-        <>
-          <Button
-            elementType={Link}
-            href={`/portal/organisations/${organisationId}/records/create`}
-          >
-            Create medicine record
-          </Button>
-        </>
-      }
-    >
-      To create a new record select the record type you want to create.{' '}
-      <a>View a record template (opens in new tab)</a> to check what information you will need to
-      provide.
-    </ActionBanner>
-  )
-}
-
 export default OrganisationRecordsPage

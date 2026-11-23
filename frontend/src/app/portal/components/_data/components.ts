@@ -26,6 +26,11 @@ export const componentDefinitions = [
     slug: 'alphabet',
   },
   {
+    description: 'Suggest matching values as users type, while still accepting any value.',
+    label: 'Autocomplete',
+    slug: 'autocomplete',
+  },
+  {
     description: 'Help users go back to the previous page in a multi-page transaction.',
     label: 'Back link',
     slug: 'back-link',
@@ -115,6 +120,11 @@ export const componentDefinitions = [
     description: 'Navigate between subpages in a section.',
     label: 'Stacked Nav',
     slug: 'stacked-nav',
+  },
+  {
+    description: 'Put related summary information in a titled box with optional actions.',
+    label: 'Summary Card',
+    slug: 'summary-card',
   },
   {
     description: 'Summarise key-value information with optional actions.',

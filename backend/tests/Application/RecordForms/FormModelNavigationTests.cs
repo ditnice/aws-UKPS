@@ -1,4 +1,5 @@
 using Shouldly;
+using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Persistence.Enums;
 
@@ -16,6 +17,12 @@ public class FormModelNavigationTests
         ]
     );
 
+    // No page has a condition, so every page applies.
+    private static readonly Applicability _applicability = FormApplicability.Evaluate(
+        _form,
+        new Dictionary<string, FormAnswer>(StringComparer.Ordinal)
+    );
+
     [Theory]
     [InlineData("a", "b")]
     [InlineData("b", null)]
@@ -24,7 +31,7 @@ public class FormModelNavigationTests
     [InlineData("e", null)]
     public void NextPage_StopsAtTheEndOfTheTask(string pageId, string? expected)
     {
-        (_form.NextPage(_form.FindPage(pageId)!)?.Id).ShouldBe(expected);
+        (_form.NextPage(_form.FindPage(pageId)!, _applicability)?.Id).ShouldBe(expected);
     }
 
     [Theory]
@@ -35,7 +42,7 @@ public class FormModelNavigationTests
     [InlineData("e", "d")]
     public void PreviousPage_StopsAtTheStartOfTheTask(string pageId, string? expected)
     {
-        (_form.PreviousPage(_form.FindPage(pageId)!)?.Id).ShouldBe(expected);
+        (_form.PreviousPage(_form.FindPage(pageId)!, _applicability)?.Id).ShouldBe(expected);
     }
 
     private static FormSection Section(string id, params FormTask[] tasks) => new(id, id, 0, tasks);

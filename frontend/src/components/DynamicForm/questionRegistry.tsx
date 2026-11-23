@@ -1,11 +1,18 @@
 import type { FormControl } from '@/client/generated'
-import type { FormValue, HierarchicalEntry } from '@/lib/dynamic-form/types'
+import type { DateValue } from '@/lib/dynamic-form/dates'
+import type { FormValue, GroupItemValue, HierarchicalEntry } from '@/lib/dynamic-form/types'
 
+import { ActualDateQuestion } from './questions/ActualDateQuestion'
+import { ActualMonthQuestion } from './questions/ActualMonthQuestion'
 import { CheckboxQuestion } from './questions/CheckboxQuestion'
+import { GroupQuestion } from './questions/GroupQuestion'
 import { HierarchicalSelectQuestion } from './questions/HierarchicalSelectQuestion'
+import { PrecisionDateQuestion } from './questions/PrecisionDateQuestion'
+import { PrefixedNumberQuestion } from './questions/PrefixedNumberQuestion'
 import { RadioQuestion } from './questions/RadioQuestion'
 import { SelectQuestion } from './questions/SelectQuestion'
 import { TextareaQuestion } from './questions/TextareaQuestion'
+import { TextListQuestion } from './questions/TextListQuestion'
 import { TextQuestion } from './questions/TextQuestion'
 
 import type { QuestionProps } from './types'
@@ -31,4 +38,10 @@ export const questionRegistry: Record<FormControl, (props: QuestionProps) => Rea
   Radio: control<string>(RadioQuestion),
   Checkbox: control<string[]>(CheckboxQuestion),
   HierarchicalSelect: control<HierarchicalEntry | HierarchicalEntry[]>(HierarchicalSelectQuestion),
+  PrecisionDate: control<DateValue>(PrecisionDateQuestion),
+  PrefixedNumber: control<string>(PrefixedNumberQuestion),
+  ActualMonth: control<DateValue>(ActualMonthQuestion),
+  ActualDate: control<DateValue>(ActualDateQuestion),
+  Group: control<GroupItemValue[]>(GroupQuestion),
+  TextList: control<string[]>(TextListQuestion),
 }

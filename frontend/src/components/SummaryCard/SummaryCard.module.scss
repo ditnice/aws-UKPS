@@ -1,0 +1,71 @@
+@use '@/styles/colours';
+@use '@/styles/media-queries';
+@use '@/styles/spacing';
+@use '@/styles/typography';
+@use '@/styles/utils';
+
+// The card's padding provides the space below its last child, whatever that is.
+.summaryCard {
+  background: colours.$card-callout-background;
+  border: 1px solid colours.$border;
+  margin-bottom: utils.rem(spacing.$large);
+  padding: utils.rem(spacing.$medium);
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+
+  // A line above the first row separates the list from the card's header.
+  > [data-component='summary-list'] > :first-child {
+    border-top: 1px solid colours.$border;
+
+    // Stacked rows have no cell padding, so match the gap the other rows get below their line.
+    @include media-queries.mq($until: sm) {
+      padding-top: utils.rem(spacing.$medium);
+    }
+  }
+
+  // The card's border closes it off, so its last row needs no dividing line.
+  > [data-component='summary-list']:last-child > :last-child {
+    border-bottom: 0;
+  }
+}
+
+.header {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: utils.rem(spacing.$small spacing.$medium);
+  justify-content: space-between;
+  margin-bottom: utils.rem(spacing.$small);
+}
+
+// The same text style as a summary list title.
+.title {
+  @include typography.font-size(2);
+  font-family: typography.get-font-family(sans);
+  font-weight: bold;
+  margin: 0;
+}
+
+// Several actions are a list, separated by borders like the summary list's row actions.
+.actions {
+  display: flex;
+  gap: utils.rem(spacing.$small);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.action {
+  margin: 0;
+
+  &:not(:first-child) {
+    border-left: 1px solid colours.$border;
+    padding-left: utils.rem(spacing.$small);
+  }
+
+  a:focus {
+    isolation: isolate;
+  }
+}

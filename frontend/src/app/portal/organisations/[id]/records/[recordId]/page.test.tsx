@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getRecord, RecordDto } from '@/client/generated'
+import { getOrganisationRecords, getRecordDetail, RecordDetailDto } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 
 import RecordPage from './page'
@@ -15,7 +15,8 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/client/generated', async () => ({
-  getRecord: vi.fn(),
+  getRecordDetail: vi.fn(),
+  getOrganisationRecords: vi.fn(),
   RecordType: (
     await vi.importActual<typeof import('@/client/generated/types.gen')>(
       '@/client/generated/types.gen',
@@ -57,35 +58,71 @@ vi.mock('./_components/ManageRecordActionBanner', () => ({
   ManageRecordActionBanner: () => <div data-testid="manage-record-banner" />,
 }))
 
-vi.mock('./_components/MedicineRecordDetails', () => ({
-  MedicineRecordDetails: () => <div data-testid="medicine-record-details" />,
+vi.mock('./_components/RecordViewAlert', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./_components/RecordViewAlert')>()),
+  RecordViewAlert: ({ action }: { action: string }) => (
+    <div data-testid="record-alert" data-action={action} />
+  ),
 }))
 
-type GetRecordResult = Awaited<ReturnType<typeof getRecord>>
+vi.mock('./_components/RecordDetails', () => ({
+  RecordDetails: ({ sections }: { sections: { id: string }[] }) => (
+    <div data-testid="record-details" data-sections={sections.map((x) => x.id).join(',')} />
+  ),
+}))
 
-const medicineRecord: RecordDto = {
-  recordType: 'Medicine',
-  recordId: 42,
-  organisationId: 7,
-  recordStatus: 'Published',
-  displayStatus: 'QAReview',
-  canEditContent: false,
-  actions: ['ViewTimeline'],
-  recordClinicalTrials: [],
-  recordProductDetail: {
+beforeEach(() => {
+  vi.clearAllMocks()
+  vi.mocked(createServerApiClient).mockResolvedValue(
+    {} as Awaited<ReturnType<typeof createServerApiClient>>,
+  )
+  vi.mocked(getOrganisationRecords).mockResolvedValue({
+    data: {
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 10,
+    },
+    error: undefined,
+    response: new Response(),
+  })
+})
+
+afterEach(cleanup)
+
+type GetRecordResult = Awaited<ReturnType<typeof getRecordDetail>>
+
+const medicineRecord: RecordDetailDto = {
+  overview: {
+    recordType: 'Medicine',
+    recordId: 42,
+    organisationId: 7,
+    recordStatus: 'Published',
+    displayStatus: 'QAReview',
+    reviewedAt: null,
+    canEditContent: false,
+    actions: ['ViewTimeline'],
+    nextUpdateDue: null,
     companyCode: 'GC22',
     recordTitle: 'Early rheumatoid arthritis in adults',
-    namesAndIdentifiers: [],
   },
+  sections: [
+    { id: 'product-record-details', title: 'Product record details', tasks: [] },
+    { id: 'clinical-trials', title: 'Clinical trials', tasks: [] },
+  ],
 }
 
 const mockRecord = (result: Partial<GetRecordResult>) =>
-  vi.mocked(getRecord).mockResolvedValue(result as GetRecordResult)
+  vi.mocked(getRecordDetail).mockResolvedValue(result as GetRecordResult)
 
-const renderPage = async (recordId = '42', recordType: string | undefined = 'Medicine') => {
+const renderPage = async (
+  recordId = '42',
+  recordType: string | undefined = 'Medicine',
+  action?: string,
+) => {
   const page = await RecordPage({
     params: Promise.resolve({ id: '7', recordId }),
-    searchParams: Promise.resolve({ recordType }),
+    searchParams: Promise.resolve({ recordType, action }),
   })
   // The organisation wrapper mock renders the async record view directly, so resolve it here.
   const view = page.props.children({ id: 7 }) as ReactElement<unknown>
@@ -93,22 +130,13 @@ const renderPage = async (recordId = '42', recordType: string | undefined = 'Med
   render(await viewComponent(view.props))
 }
 
-beforeEach(() => {
-  vi.clearAllMocks()
-  vi.mocked(createServerApiClient).mockResolvedValue(
-    {} as Awaited<ReturnType<typeof createServerApiClient>>,
-  )
-})
-
-afterEach(cleanup)
-
 describe('RecordPage', () => {
-  it('renders the record header, manage banner and medicine details', async () => {
+  it('renders the record header, manage banner and the sections in the response', async () => {
     mockRecord({ data: medicineRecord, error: undefined, response: new Response() })
 
     await renderPage()
 
-    expect(getRecord).toHaveBeenCalledWith(
+    expect(getRecordDetail).toHaveBeenCalledWith(
       expect.objectContaining({
         path: { id: 42 },
         query: { recordType: 'Medicine', organisationId: 7 },
@@ -121,7 +149,36 @@ describe('RecordPage', () => {
     expect(screen.getByText('Record title:').tagName).toBe('STRONG')
     expect(screen.getByText('QA review')).toBeDefined()
     expect(screen.getByTestId('manage-record-banner')).toBeDefined()
-    expect(screen.getByTestId('medicine-record-details')).toBeDefined()
+    expect(screen.getByTestId('record-details').getAttribute('data-sections')).toBe(
+      'product-record-details,clinical-trials',
+    )
+  })
+
+  it('says details are not yet available when the record has no sections', async () => {
+    mockRecord({
+      data: { overview: { ...medicineRecord.overview, recordType: 'Vaccine' }, sections: [] },
+      error: undefined,
+      response: new Response(),
+    })
+
+    await renderPage('42', 'Vaccine')
+
+    expect(screen.queryByTestId('record-details')).toBeNull()
+    expect(
+      screen.getByText('Viewing the details of this type of record is not yet available.'),
+    ).toBeDefined()
+  })
+
+  it('leaves the company code out of the heading when there is none', async () => {
+    mockRecord({
+      data: { ...medicineRecord, overview: { ...medicineRecord.overview, companyCode: null } },
+      error: undefined,
+      response: new Response(),
+    })
+
+    await renderPage()
+
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Record 42')
   })
 
   it.each([
@@ -136,7 +193,23 @@ describe('RecordPage', () => {
         searchParams: Promise.resolve({ recordType }),
       }),
     ).rejects.toThrow('NEXT_NOT_FOUND')
-    expect(getRecord).not.toHaveBeenCalled()
+    expect(getRecordDetail).not.toHaveBeenCalled()
+  })
+
+  it('shows the alert for an action just taken', async () => {
+    mockRecord({ data: medicineRecord, error: undefined, response: new Response() })
+
+    await renderPage('42', 'Medicine', 'archived')
+
+    expect(screen.getByTestId('record-alert').getAttribute('data-action')).toBe('archived')
+  })
+
+  it.each([undefined, 'discarded'])('shows no alert for %s', async (action) => {
+    mockRecord({ data: medicineRecord, error: undefined, response: new Response() })
+
+    await renderPage('42', 'Medicine', action)
+
+    expect(screen.queryByTestId('record-alert')).toBeNull()
   })
 
   it('returns not found when the API cannot find the record', async () => {
@@ -153,5 +226,30 @@ describe('RecordPage', () => {
     expect(screen.getByRole('alert').textContent).toContain(
       'There was a problem retrieving the record',
     )
+  })
+
+  it.each([
+    ['Published', 'View record details'],
+    ['Archived', 'Archived record details'],
+    ['OnHold', 'Published record details'],
+    ['QAReview', 'Published record details'],
+  ] as const)('displays "%s" record with heading "%s"', async (status, expectedHeading) => {
+    mockRecord({
+      data: {
+        ...medicineRecord,
+        overview: { ...medicineRecord.overview, displayStatus: status },
+      },
+      error: undefined,
+      response: new Response(),
+    })
+
+    await renderPage()
+
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: expectedHeading,
+      }),
+    ).toBeDefined()
   })
 })

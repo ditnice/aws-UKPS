@@ -2,6 +2,7 @@ import { cookies, headers } from 'next/headers'
 import { redirect, unstable_rethrow } from 'next/navigation'
 import 'server-only'
 
+import { devRoleCookieName, isDevAuthenticationMode } from '@/lib/auth/cookies'
 import { buildSignInHref, getOrganisationSelectionHref } from '@/lib/auth/routing'
 
 import { AuthenticationFailCode } from './generated'
@@ -18,14 +19,20 @@ export async function createServerApiClient(): Promise<Client> {
     throw new Error('BACKEND_API_BASE_URL is required to create the server API client.')
   }
 
-  const accessToken = (await cookies()).get('access_token')?.value
+  const cookieStore = await cookies()
+  const accessToken = cookieStore.get('access_token')?.value
+  const devRole = isDevAuthenticationMode() ? cookieStore.get(devRoleCookieName)?.value : undefined
+  const forwardedCookies = [
+    accessToken && `access_token=${accessToken}`,
+    devRole && `${devRoleCookieName}=${devRole}`,
+  ].filter(Boolean)
   const returnTo = (await headers()).get('x-ukps-return-to') ?? undefined
 
   const client: Client = createClient({
     baseUrl,
     cache: 'no-store',
     fetch: createServerFetch(returnTo),
-    headers: accessToken ? { Cookie: `access_token=${accessToken}` } : undefined,
+    headers: forwardedCookies.length > 0 ? { Cookie: forwardedCookies.join('; ') } : undefined,
   })
 
   client.interceptors.error.use((err) => {

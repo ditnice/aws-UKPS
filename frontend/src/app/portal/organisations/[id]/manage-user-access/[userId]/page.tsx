@@ -43,7 +43,7 @@ export default async function ManageUserAccess({ params }: Props) {
   if (!user) {
     return (
       <>
-        <PageHeader backLink={backLink} heading="Manage user's access" />
+        <PageHeader backLink={backLink} heading="Manage users in your organisation" />
         <p role="alert">There was a problem retrieving the user. Please try again later.</p>
       </>
     )
@@ -51,7 +51,7 @@ export default async function ManageUserAccess({ params }: Props) {
 
   return (
     <>
-      <PageHeader backLink={backLink} heading="Manage user&#39;s access" />
+      <PageHeader backLink={backLink} heading="Manage users in your organisation" />
       <p>
         {user.workEmail} is a {user.userRole.toLowerCase()} user.
       </p>

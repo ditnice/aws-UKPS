@@ -13,22 +13,68 @@
   }
 }
 
+.question + .question {
+  margin-top: utils.rem(spacing.$x_large);
+}
+
 // On a single-question page the label is the page heading, so the field's own label and
-// legend are hidden visually but still announced.
+// legend are hidden visually but still announced. Questions revealed beneath an option keep
+// their labels, as do the questions inside a group's items (legends inside a nested fieldset).
 .labelAsHeading {
-  :global(.textarea__label),
-  :global(.form-group__legend) {
+  :global(.textarea__label):not([data-component='radios-conditional'] *),
+  :global(.form-group__legend):not([data-component='radios-conditional'] *, fieldset fieldset *) {
     @include visibility.invisible;
   }
 }
 
-.childLabel {
-  @include typography.font-size(h3);
+// The shared Radio makes a label regular weight when its own option has no hint. When any option
+// in the group has a hint, the designs keep every label bold, including options without one.
+.boldLabels {
+  :global(.radio__label) {
+    font-weight: bold;
+  }
+}
+
+// The NDS page header renders the caption as an inline page, so put the badge on its own line.
+.commercialBadge {
   display: block;
-  font-family: inherit;
-  font-weight: bold;
+  font-family: var(--sans-font-family);
+  margin-top: utils.rem(spacing.$small);
+  width: fit-content;
+}
+
+// A dropdown and a textbox side by side.
+.prefixedNumber {
+  display: flex;
+  flex-wrap: wrap;
+  gap: utils.rem(spacing.$medium);
+
+  // The select and input differ slightly in height by default. Each wrapper becomes a column
+  // whose box fills it, and the row stretches both wrappers to the taller one.
+  > * {
+    display: flex;
+    flex-direction: column;
+  }
+
+  select,
+  input {
+    flex: 1;
+  }
+}
+
+.childLabel {
+  @include typography.h2;
+  display: block;
   margin-bottom: utils.rem(spacing.$small);
   margin-top: utils.rem(spacing.$large);
+}
+
+// A hierarchical select's labels on a page of several questions, as bold lead text like the
+// labels of the questions around it.
+.leadLabel {
+  @include typography.lead-label;
+  display: block;
+  margin-bottom: utils.rem(spacing.$small);
 }
 
 .entry {
@@ -41,4 +87,18 @@
   flex-wrap: wrap;
   gap: utils.rem(spacing.$medium);
   margin-top: utils.rem(spacing.$large);
+}
+
+// Date parts sit side by side, as in the GOV.UK date input. A quarter dropdown sits beside the
+// year in the same way.
+.dateInput {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: utils.rem(spacing.$medium);
+
+  > [data-component='select'],
+  :global(.input) {
+    margin-bottom: 0;
+  }
 }

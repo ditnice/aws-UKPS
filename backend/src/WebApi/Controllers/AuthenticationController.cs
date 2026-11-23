@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using UKPS.Api.Application.Authentication;
@@ -9,11 +8,19 @@ using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.WebApi.CustomResponses;
+using SetupSmsMfaResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.SmsMultiFactorAuthenticationSetupDto,
+    UKPS.Api.Application.Authentication.Errors.SetupSmsMfaError
+>;
 using SetupUserResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.MultiFactorAuthenticationSetupDto,
     UKPS.Api.Application.Authentication.Errors.UserSetupError
 >;
 using VerifyMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
+    UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
+>;
+using VerifySmsMultiFactorAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
     UKPS.Api.Application.Authentication.Errors.VerifyMultiFactorAuthenticationError
 >;
@@ -31,10 +38,8 @@ namespace UKPS.Api.WebApi.Controllers;
 [Route("auth")]
 public class AuthenticationController : ControllerBase
 {
-    private const string CsrfCookieName = "csrf_token";
     private const string CsrfHeaderName = "X-CSRF-Token";
-    private const string RefreshCookieName = "refresh_token";
-    private const string AccessCookieName = "access_token";
+
     private const string RootCookiePath = "/";
     private const string AuthCookiePath = "/auth";
 
@@ -84,6 +89,12 @@ public class AuthenticationController : ControllerBase
             "The request could not be authenticated because the CSRF token was missing or invalid.",
         Status = StatusCodes.Status401Unauthorized,
     };
+    private readonly ProblemDetails _invalidMfaSetupCode = new ProblemDetails
+    {
+        Title = "Invalid multi-factor authentication code.",
+        Detail = "The supplied authentication code is invalid or has expired.",
+        Status = StatusCodes.Status400BadRequest,
+    };
 
     /// <summary>
     /// Initialises a new instance of the <see cref="AuthenticationController"/> class.
@@ -95,7 +106,10 @@ public class AuthenticationController : ControllerBase
     /// The service responsible for managing authorisation administration operations,
     /// such as user onboarding, setup token validation, and password management.
     /// </param>
-    /// <param name="dateTimeProvider"></param>
+    /// <param name="dateTimeProvider">
+    /// The provider used to obtain the current date and time, allowing time-dependent
+    /// logic (such as token expiry) to be abstracted and tested.
+    /// </param>
     public AuthenticationController(
         ILoginService loginService,
         IIdentityAdministrationService authorisationAdministrationService,
@@ -191,7 +205,7 @@ public class AuthenticationController : ControllerBase
         }
         var command = new RefreshAuthenticationTokenCommand
         {
-            RefreshToken = Request.Cookies[RefreshCookieName] ?? string.Empty,
+            RefreshToken = Request.Cookies[CookieNames.RefreshCookieName] ?? string.Empty,
         };
         return (await _loginService.RefreshAuthenticationToken(command, cancellationToken)).Match(
             HandleLoginSuccess,
@@ -220,7 +234,7 @@ public class AuthenticationController : ControllerBase
 
         ClearAuthenticationCookies();
         await _loginService.SignOut(
-            Request.Cookies[RefreshCookieName] ?? string.Empty,
+            Request.Cookies[CookieNames.RefreshCookieName] ?? string.Empty,
             cancellationToken
         );
 
@@ -252,7 +266,7 @@ public class AuthenticationController : ControllerBase
     /// <response code="401">
     /// The authentication session or verification code was invalid.
     /// </response>
-    [HttpPost("mfa")]
+    [HttpPost("mfa", Name = nameof(RespondToMultiFactorAuthenticationChallenge))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<AuthenticationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<AuthenticationProblemDetails>(StatusCodes.Status401Unauthorized)]
@@ -267,6 +281,92 @@ public class AuthenticationController : ControllerBase
                 cancellationToken
             )
         ).Match(HandleLoginSuccess, HandleLoginError);
+    }
+
+    /// <summary>
+    /// Sets up SMS multi-factor authentication for a user.
+    /// </summary>
+    /// <param name="command"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>
+    ///
+    /// </returns>
+    [HttpPost("setup-sms-mfa")]
+    [ProducesResponseType(typeof(SmsMultiFactorAuthenticationSetupDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status410Gone)]
+    public async Task<ActionResult<SmsMultiFactorAuthenticationSetupDto>> SetupSmsMfa(
+        [FromBody] SetupSmsMfaCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        SetupSmsMfaResult result = await _authorisationAdministrationService.SetupSmsMfa(
+            command,
+            cancellationToken
+        );
+
+        return result.Match(
+            dto => Ok(dto),
+            err =>
+                err.Match<ActionResult>(
+                    invalidPhoneNumber: () => BadRequest("The supplied phone number is invalid."),
+                    doesNotExist: () => NotFound(),
+                    expired: () => StatusCode(StatusCodes.Status410Gone, _setupTokenExpiredDetails),
+                    unauthorised: () => Unauthorized(),
+                    alreadyCompleted: () => Conflict(),
+                    tooManyAttempts: () => StatusCode(StatusCodes.Status429TooManyRequests),
+                    tooSoon: () => StatusCode(StatusCodes.Status429TooManyRequests),
+                    concurrentRequest: () => Conflict()
+                )
+        );
+    }
+
+    /// <summary>
+    /// Verifies the user's SMS multi-factor authentication setup by validating the provided authentication code.
+    /// </summary>
+    /// <param name="command"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>
+    ///
+    /// </returns>
+    [HttpPost("verify-sms-mfa")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> VerifySmsMultiFactorAuthentication(
+        [FromBody] VerifySmsMultiFactorAuthenticationCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        VerifySmsMultiFactorAuthenticationResult result =
+            await _authorisationAdministrationService.VerifySmsMultiFactorAuthentication(
+                command,
+                cancellationToken
+            );
+
+        return result.Match(
+            HandleLoginSuccess,
+            err =>
+                err.Match<ActionResult>(
+                    invalidCode: _ =>
+                        BadRequest(
+                            new ProblemDetails
+                            {
+                                Title = "Invalid multi-factor authentication code.",
+                                Detail =
+                                    "The supplied authentication code is invalid or has expired.",
+                                Status = StatusCodes.Status400BadRequest,
+                            }
+                        ),
+                    doesNotExist: _ => NotFound(),
+                    alreadyCompleted: _ => Conflict(),
+                    expired: _ => StatusCode(StatusCodes.Status410Gone, _setupTokenExpiredDetails),
+                    sessionExpired: _ => Unauthorized(),
+                    rateLimited: _ => StatusCode(StatusCodes.Status429TooManyRequests)
+                )
+        );
     }
 
     /// <summary>
@@ -478,24 +578,151 @@ public class AuthenticationController : ControllerBase
             HandleLoginSuccess,
             err =>
                 err.Match<ActionResult>(
-                    invalidCode: _ =>
-                        BadRequest(
-                            new ProblemDetails
-                            {
-                                Title = "Invalid multi-factor authentication code.",
-                                Detail =
-                                    "The supplied authentication code is invalid or has expired.",
-                                Status = StatusCodes.Status400BadRequest,
-                            }
-                        ),
-                    doesNotExist: _ => NotFound()
+                    invalidCode: _ => BadRequest(_invalidMfaSetupCode),
+                    doesNotExist: _ => NotFound(),
+                    alreadyCompleted: _ => Conflict(),
+                    expired: _ => StatusCode(StatusCodes.Status410Gone, _setupTokenExpiredDetails),
+                    sessionExpired: _ => Unauthorized(),
+                    rateLimited: _ => StatusCode(StatusCodes.Status429TooManyRequests)
                 )
+        );
+    }
+
+    /// <summary>
+    /// Initiates the forgotten password procedure for a user.
+    /// </summary>
+    /// <remarks>
+    /// Starts the password recovery flow for the account identified in the command.
+    /// The number of attempts is limited; once the permitted limit has been exceeded,
+    /// further requests are rejected.
+    /// </remarks>
+    /// <param name="command">
+    /// The command containing the details required to initiate the forgotten password procedure.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// An <see cref="ActionResult"/> indicating the outcome of the request.
+    /// </returns>
+    /// <response code="200">The forgotten password procedure was initiated successfully.</response>
+    /// <response code="429">The number of permitted attempts has been exceeded.</response>
+    [HttpPost("initiate-forgotten-password", Name = nameof(InitiateForgottenPasswordProcedure))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    public async Task<ActionResult> InitiateForgottenPasswordProcedure(
+        InitiateForgottenPasswordProcedureCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        InitiateForgottenPasswordProcedureResult result =
+            await _loginService.InitiateForgottenPasswordProcedure(command, cancellationToken);
+
+        return result.Match(
+            Ok,
+            err =>
+                err.Match<ActionResult>(numberOfAttemptsExceeded: _ =>
+                    Problem(
+                        title: "Requests exceeded.",
+                        detail: "The number of permitted attempts has been exceeded.",
+                        statusCode: StatusCodes.Status429TooManyRequests
+                    )
+                )
+        );
+    }
+
+    /// <summary>
+    /// Confirms a password reset by validating the confirmation code and setting a new password.
+    /// </summary>
+    /// <param name="value">
+    /// The command containing the confirmation code, the new password, and the details identifying the user.
+    /// </param>
+    /// <param name="ct">A token to cancel the operation.</param>
+    /// <returns>
+    /// An empty <c>200 OK</c> response when the password has been changed successfully.
+    /// Otherwise, a problem details response describing why the request failed.
+    /// </returns>
+    /// <response code="200">The password was changed successfully.</response>
+    /// <response code="400">
+    /// The request failed validation. This occurs when the confirmation code is incorrect or has expired,
+    /// or when the new password does not meet the password requirements.
+    /// The response body is a <see cref="ValidationProblemDetails"/> identifying the invalid field.
+    /// </response>
+    /// <response code="429">
+    /// Too many requests were made, or too many failed attempts have occurred.
+    /// The response body is a <see cref="ProblemDetails"/>. The client should wait before retrying.
+    /// </response>
+    [HttpPost("confirm-new-password", Name = nameof(ConfirmNewPassword))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
+    public async Task<ActionResult> ConfirmNewPassword(
+        ConfirmNewPasswordCommand value,
+        CancellationToken ct
+    )
+    {
+        ConfirmNewPasswordResult result = await _loginService.ConfirmNewPassword(value, ct);
+
+        return result.Match(
+            Ok,
+            err =>
+                err.Match(
+                    codeMismatch: _ =>
+                        CreateValidationProblem(
+                            "Incorrect confirmation code",
+                            nameof(value.ConfirmationCode),
+                            "The confirmation code is incorrect."
+                        ),
+                    codeExpired: _ =>
+                        CreateValidationProblem(
+                            "Expired confirmation code",
+                            nameof(value.ConfirmationCode),
+                            "The confirmation code has expired."
+                        ),
+                    invalidPassword: _ =>
+                        CreateValidationProblem(
+                            "Invalid password",
+                            nameof(value.NewPassword),
+                            "The new password does not meet the password requirements."
+                        ),
+                    historyPolicyViolation: _ =>
+                        CreateValidationProblem(
+                            "Invalid password",
+                            nameof(value.NewPassword),
+                            "The new password violates the history policy. Be sure to use a new password."
+                        ),
+                    tooManyRequests: _ =>
+                        Problem(
+                            title: "Too many requests",
+                            detail: "Too many password reset requests have been made. Please try again later.",
+                            statusCode: StatusCodes.Status429TooManyRequests
+                        ),
+                    tooManyFailedAttempts: _ =>
+                        Problem(
+                            title: "Too many failed attempts",
+                            detail: "Too many failed attempts have been made. Please wait before trying again.",
+                            statusCode: StatusCodes.Status429TooManyRequests
+                        )
+                )
+        );
+    }
+
+    private ActionResult CreateValidationProblem(string title, string key, string error)
+    {
+        return ValidationProblem(
+            new ValidationProblemDetails(
+                new Dictionary<string, string[]>(StringComparer.Ordinal) { [key] = [error] }
+            )
+            {
+                Title = title,
+                Status = StatusCodes.Status400BadRequest,
+            }
         );
     }
 
     private bool PassesCsrfValidation()
     {
-        string? csrfCookie = Request.Cookies[CsrfCookieName];
+        string? csrfCookie = Request.Cookies[CookieNames.CsrfCookieName];
         StringValues csrfHeader = Request.Headers[CsrfHeaderName];
 
         return !string.IsNullOrWhiteSpace(csrfCookie)
@@ -506,7 +733,7 @@ public class AuthenticationController : ControllerBase
     {
         TimeSpan accessTokenLifetime = _accessTokenValidity + _accessTokenRefreshThreshold;
         Response.Cookies.Append(
-            AccessCookieName,
+            CookieNames.AccessCookieName,
             dto.AccessToken,
             new CookieOptions
             {
@@ -519,7 +746,7 @@ public class AuthenticationController : ControllerBase
         );
 
         Response.Cookies.Append(
-            RefreshCookieName,
+            CookieNames.RefreshCookieName,
             dto.RefreshToken,
             new CookieOptions
             {
@@ -533,7 +760,7 @@ public class AuthenticationController : ControllerBase
 
         var csrfToken = Guid.NewGuid().ToString("N");
         Response.Cookies.Append(
-            CsrfCookieName,
+            CookieNames.CsrfCookieName,
             csrfToken,
             new CookieOptions
             {
@@ -552,9 +779,9 @@ public class AuthenticationController : ControllerBase
     {
         DateTimeOffset expires = _dateTimeProvider.GetOffsetUtcNow().AddDays(-1);
 
-        ExpireCookie(AccessCookieName, RootCookiePath, httpOnly: true, expires);
-        ExpireCookie(RefreshCookieName, AuthCookiePath, httpOnly: true, expires);
-        ExpireCookie(CsrfCookieName, RootCookiePath, httpOnly: false, expires);
+        ExpireCookie(CookieNames.AccessCookieName, RootCookiePath, httpOnly: true, expires);
+        ExpireCookie(CookieNames.RefreshCookieName, AuthCookiePath, httpOnly: true, expires);
+        ExpireCookie(CookieNames.CsrfCookieName, RootCookiePath, httpOnly: false, expires);
     }
 
     private void ExpireCookie(string name, string path, bool httpOnly, DateTimeOffset expires)
@@ -575,17 +802,22 @@ public class AuthenticationController : ControllerBase
 
     private ActionResult HandleLoginError(InitiateAuthenticationError error)
     {
-        return error switch
-        {
-            InitiateAuthenticationError.Unauthorised => Unauthorized(
-                AuthenticationProblemDetails.Unauthorised()
-            ),
-            InitiateAuthenticationError.Challenge c => Unauthorized(
-                AuthenticationProblemDetails.Challenge(c.ChallengeType, c.AuthenticationSession)
-            ),
-            _ => throw new UnreachableException(
-                $"Unhandled {nameof(InitiateAuthenticationError)} variant."
-            ),
-        };
+        return error.Match<ActionResult>(
+            unauthorised: () => Unauthorized(AuthenticationProblemDetails.Unauthorised()),
+            verificationRequired: () =>
+                BadRequest(
+                    new AuthenticationProblemDetails()
+                    {
+                        Title = "Email Requires Verification",
+                        Detail = "The email for the account provided requires verification",
+                        Status = StatusCodes.Status400BadRequest,
+                        Code = AuthenticationFailCode.PendingEmailRequiredVerification,
+                    }
+                ),
+            challenge: c =>
+                Unauthorized(
+                    AuthenticationProblemDetails.Challenge(c.ChallengeType, c.AuthenticationSession)
+                )
+        );
     }
 }

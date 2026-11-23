@@ -12,7 +12,8 @@ export const AuthenticationFailCode = {
     MEMBERSHIP_DEACTIVATED: 'MembershipDeactivated',
     MEMBERSHIP_NOT_IN_VALID_STATE: 'MembershipNotInValidState',
     ORGANISATION_NOT_ACTIVE: 'OrganisationNotActive',
-    SELECTED_ORGANISATION_MISMATCH: 'SelectedOrganisationMismatch'
+    SELECTED_ORGANISATION_MISMATCH: 'SelectedOrganisationMismatch',
+    PENDING_EMAIL_REQUIRED_VERIFICATION: 'PendingEmailRequiredVerification'
 } as const;
 
 export type AuthenticationFailCode = typeof AuthenticationFailCode[keyof typeof AuthenticationFailCode];
@@ -39,13 +40,59 @@ export type AuthenticationProblemDetails = {
     authenticationSession?: null | string;
 };
 
-export const BiomarkerType = {
-    UNKNOWN: 'Unknown',
-    NON_GENOMIC_BIOMARKER: 'NonGenomicBiomarker',
-    GENOMIC_BIOMARKER: 'GenomicBiomarker'
-} as const;
+/**
+ * Contains why a record is being put on hold, resumed or archived.
+ */
+export type ChangeRecordStatusCommand = {
+    reason: null | RecordStatusChangeReason;
+    /**
+     * Gets further details about the change. Required when the reason is
+     * RecordStatusChangeReason.Other.
+     */
+    note?: null | string;
+};
 
-export type BiomarkerType = typeof BiomarkerType[keyof typeof BiomarkerType];
+/**
+ * The company codes already used on an organisation's records, offered as suggestions while a
+ * user types a company code.
+ */
+export type CompanyCodeSuggestionsDto = {
+    /**
+     * Gets the distinct matching company codes, those starting with the search first, then
+     * alphabetically.
+     */
+    items: Array<string>;
+};
+
+/**
+ * The kind of a condition that decides whether a question applies. Part of the HTTP API
+ * contract: the member names are sent to the frontend, so never rename or remove one.
+ */
+export const ConditionKind = { ANSWER_IN: 'AnswerIn' } as const;
+
+/**
+ * The kind of a condition that decides whether a question applies. Part of the HTTP API
+ * contract: the member names are sent to the frontend, so never rename or remove one.
+ */
+export type ConditionKind = typeof ConditionKind[keyof typeof ConditionKind];
+
+/**
+ * Confirms a password reset and sets the new password.
+ */
+export type ConfirmNewPasswordCommand = {
+    /**
+     * Gets the account email address.
+     */
+    email: string;
+    /**
+     * Gets the password reset confirmation code.
+     */
+    confirmationCode: string;
+    /**
+     * Gets the new password.
+     */
+    newPassword: string;
+};
 
 /**
  * Represents the information required to create a new organisation.
@@ -119,32 +166,14 @@ export type CreateRecordDto = {
 };
 
 /**
- * Represents the level of precision for a date.
+ * Specifies the user details that can be edited.
  */
-export const DatePrecision = {
-    ESTIMATED_QUARTER: 'EstimatedQuarter',
-    ESTIMATED_MONTH: 'EstimatedMonth',
-    ACTUAL_DATE: 'ActualDate'
-} as const;
+export const EditableUserDetail = { FULL_NAME: 'FullName', WORK_PHONE: 'WorkPhone' } as const;
 
 /**
- * Represents the level of precision for a date.
+ * Specifies the user details that can be edited.
  */
-export type DatePrecision = typeof DatePrecision[keyof typeof DatePrecision];
-
-export const DesignationStatus = {
-    GRANTED: 'Granted',
-    NOT_GRANTED: 'NotGranted',
-    DECISION_TO_SUBMIT_ONGOING: 'DecisionToSubmitOngoing',
-    APPLICATION_SUBMITTED_DECISION_PENDING: 'ApplicationSubmittedDecisionPending',
-    NO_SUBMISSION_INTENDED: 'NoSubmissionIntended'
-} as const;
-
-export type DesignationStatus = typeof DesignationStatus[keyof typeof DesignationStatus];
-
-export const EamsOpinionDecision = { NEGATIVE: 'Negative', POSITIVE: 'Positive' } as const;
-
-export type EamsOpinionDecision = typeof EamsOpinionDecision[keyof typeof EamsOpinionDecision];
+export type EditableUserDetail = typeof EditableUserDetail[keyof typeof EditableUserDetail];
 
 /**
  * The input a record content question is rendered with. Part of the HTTP API contract: the
@@ -156,7 +185,13 @@ export const FormControl = {
     RADIO: 'Radio',
     SELECT: 'Select',
     CHECKBOX: 'Checkbox',
-    HIERARCHICAL_SELECT: 'HierarchicalSelect'
+    HIERARCHICAL_SELECT: 'HierarchicalSelect',
+    PRECISION_DATE: 'PrecisionDate',
+    ACTUAL_MONTH: 'ActualMonth',
+    PREFIXED_NUMBER: 'PrefixedNumber',
+    ACTUAL_DATE: 'ActualDate',
+    GROUP: 'Group',
+    TEXT_LIST: 'TextList'
 } as const;
 
 /**
@@ -165,23 +200,24 @@ export const FormControl = {
  */
 export type FormControl = typeof FormControl[keyof typeof FormControl];
 
-export const GenomicTestMandatoryStatus = {
-    UNKNOWN: 'Unknown',
-    RECOMMENDED_NOT_REQUIRED: 'RecommendedNotRequired',
-    MANDATORY_ALTERNATIVES_MAY_EXIST: 'MandatoryAlternativesMayExist',
-    MANDATORY_NO_ALTERNATIVES: 'MandatoryNoAlternatives'
+export const FormInputWidth = {
+    DEFAULT: 'Default',
+    FULL: 'Full',
+    THREE_QUARTERS: 'ThreeQuarters',
+    TWO_THIRDS: 'TwoThirds',
+    ONE_HALF: 'OneHalf',
+    ONE_THIRD: 'OneThird',
+    ONE_QUARTER: 'OneQuarter',
+    CHARS2: 'Chars2',
+    CHARS3: 'Chars3',
+    CHARS4: 'Chars4',
+    CHARS5: 'Chars5',
+    CHARS10: 'Chars10',
+    CHARS20: 'Chars20',
+    CHARS30: 'Chars30'
 } as const;
 
-export type GenomicTestMandatoryStatus = typeof GenomicTestMandatoryStatus[keyof typeof GenomicTestMandatoryStatus];
-
-export const GenomicTestNgtdRelationship = {
-    UNKNOWN: 'Unknown',
-    NEW_TEST: 'NewTest',
-    EXISTING_TEST_NEW_INDICATION: 'ExistingTestNewIndication',
-    EXISTING_TEST_SAME_INDICATION: 'ExistingTestSameIndication'
-} as const;
-
-export type GenomicTestNgtdRelationship = typeof GenomicTestNgtdRelationship[keyof typeof GenomicTestNgtdRelationship];
+export type FormInputWidth = typeof FormInputWidth[keyof typeof FormInputWidth];
 
 /**
  * Specifies the fields by which records can be sorted.
@@ -214,14 +250,38 @@ export const GetUsersQuerySortValue = {
  */
 export type GetUsersQuerySortValue = typeof GetUsersQuerySortValue[keyof typeof GetUsersQuerySortValue];
 
-export const IndicationPaediatricStatus = {
-    UNKNOWN: 'Unknown',
-    EXCLUSIVELY_CHILDREN: 'ExclusivelyChildren',
-    EXCLUSIVELY_ADULTS: 'ExclusivelyAdults',
-    BOTH_CHILDREN_AND_ADULTS: 'BothChildrenAndAdults'
-} as const;
+/**
+ * Represents a request to start the forgotten password flow for a user.
+ */
+export type InitiateForgottenPasswordProcedureCommand = {
+    /**
+     * Gets the email address of the user who has forgotten their password.
+     */
+    email: string;
+};
 
-export type IndicationPaediatricStatus = typeof IndicationPaediatricStatus[keyof typeof IndicationPaediatricStatus];
+/**
+ * The problems that stop a record being submitted. `errors` is keyed by question ID;
+ * `fields` adds each problem's page and task.
+ */
+export type InvalidRecordProblemDetails = {
+    type?: null | string;
+    title?: null | string;
+    status?: null | number;
+    detail?: null | string;
+    instance?: null | string;
+    /**
+     * Identifies the problem; always `record_invalid`.
+     */
+    code: string;
+    /**
+     * Each problem with its page and task, in form order.
+     */
+    fields: Array<SubmissionErrorDto>;
+    errors: {
+        [key: string]: Array<string>;
+    };
+};
 
 /**
  * Represents the credentials provided by a user when attempting to authenticate.
@@ -236,289 +296,6 @@ export type LoginRequest = {
      */
     password: string;
 };
-
-/**
- * Bodies a medicine may be submitted to for health technology assessment.
- * Multi-select — see RecordHta.MedicineHtaBodies. Only populated when
- * RecordHta.MedicineHtaSubmissionIntended is Yes.
- */
-export const MedicineHtaAssessor = {
-    NICE: 'Nice',
-    SMC: 'Smc',
-    AWMSG: 'Awmsg'
-} as const;
-
-/**
- * Bodies a medicine may be submitted to for health technology assessment.
- * Multi-select — see RecordHta.MedicineHtaBodies. Only populated when
- * RecordHta.MedicineHtaSubmissionIntended is Yes.
- */
-export type MedicineHtaAssessor = typeof MedicineHtaAssessor[keyof typeof MedicineHtaAssessor];
-
-/**
- * Represents the budget impact section of a medicine record.
- */
-export type MedicinesBudgetImpactDto = {
-    /**
-     * Gets the estimated uptake.
-     */
-    estimatedUptake?: null | string;
-    compassionateAccessAvailable?: null | YesNoUnknown;
-    /**
-     * Gets details of compassionate access.
-     */
-    compassionateAccessDetails?: null | string;
-    patientAccessSchemePlanned?: null | YesNoUnknown;
-    /**
-     * Gets the patient access scheme regions, or `null` if unanswered.
-     */
-    patientAccessSchemeRegions?: null | Array<PatientAccessSchemeRegion>;
-    indicationSpecificPricingPlanned?: null | YesNoUnknown;
-    /**
-     * Gets details of the indication-specific pricing.
-     */
-    indicationSpecificPricingDetails?: null | string;
-    netUkBudgetImpactBand?: null | NetUkBudgetImpactBand;
-};
-
-/**
- * Represents the development background section of a medicine record.
- */
-export type MedicinesDevelopmentBackgroundDto = {
-    isRepurposedMedicine?: null | YesNoUnknown;
-    /**
-     * Gets the differences from the current licensed indications.
-     */
-    repurposedMedicineDetails?: null | string;
-    isOriginatorCompany?: null | YesNoUnknown;
-    /**
-     * Gets the originator company name.
-     */
-    originatorCompanyName?: null | string;
-    isCoMarketed?: null | YesNoUnknown;
-    /**
-     * Gets the co-marketing company name.
-     */
-    coMarketingCompanyName?: null | string;
-};
-
-/**
- * Represents the Early Access to Medicines Scheme and Promising Innovative Medicine section of a
- * medicine record.
- */
-export type MedicinesEamsPimDto = {
-    pimDesignationStatus?: null | DesignationStatus;
-    willSubmitToEams?: null | YesNoUnknown;
-    eamsSubmissionDate?: null | RegulatoryDateDto;
-    eamsOpinionDate?: null | RegulatoryDateDto;
-    eamsOpinionDecision?: null | EamsOpinionDecision;
-};
-
-/**
- * Represents the EU status section of a medicine record.
- */
-export type MedicinesEuStatusDto = {
-    euOrphanStatus?: null | DesignationStatus;
-    /**
-     * Gets the EU orphan designation number.
-     */
-    euOrphanStatusNumber?: null | string;
-    euOrphanGrantedDate?: null | RegulatoryDateDto;
-    euAtmpClassificationStatus?: null | DesignationStatus;
-    atmpRecommendationDate?: null | RegulatoryDateDto;
-    atmpClassification?: null | ReferenceDataDto;
-};
-
-/**
- * Represents the global submission section of a medicine record.
- */
-export type MedicinesGlobalSubmissionDto = {
-    /**
-     * Gets the region of the first global submission.
-     */
-    globalFirstSubmissionRegion?: null | string;
-    globalSubmissionActualDate?: null | RegulatoryDateDto;
-};
-
-/**
- * Represents the indication details section of a medicine record.
- */
-export type MedicinesIndicationDetailDto = {
-    /**
-     * Gets the indication.
-     */
-    indication?: null | string;
-    bnfChapter?: null | ReferenceDataDto;
-    /**
-     * Gets the therapeutic areas, in display order.
-     */
-    therapeuticAreas: Array<ReferenceDataDto>;
-    indicationIsPaediatric?: null | IndicationPaediatricStatus;
-    indicationIsCancer?: null | YesNoUnknown;
-    indicationIsRareDisease?: null | YesNoUnknown;
-    formulationType?: null | ReferenceDataDto;
-    /**
-     * Gets the presentation.
-     */
-    presentation?: null | string;
-    /**
-     * Gets the mode of action.
-     */
-    modeOfAction?: null | string;
-    /**
-     * Gets the proposed dose regimen.
-     */
-    proposedDoseRegimen?: null | string;
-    isPersonalisedMedicine?: null | YesNoUnknown;
-    /**
-     * Gets the selected technology statuses, or `null` if unanswered.
-     */
-    medicineTechnologyStatus?: null | Array<MedicineTechnologyStatus>;
-};
-
-/**
- * Represents the international recognition section of a medicine record.
- */
-export type MedicinesIntlRecognitionDto = {
-    irpRoute?: null | ReferenceDataDto;
-    intlSubmissionDate?: null | RegulatoryDateDto;
-    intlLicenceDate?: null | RegulatoryDateDto;
-    intlConditionalApprovalAnticipated?: null | YesNoUnknown;
-};
-
-/**
- * Represents the laboratory testing section of a medicine record.
- */
-export type MedicinesLaboratoryTestingDto = {
-    diagnosticTestRequired?: null | YesNoUnknown;
-    biomarkerType?: null | BiomarkerType;
-    /**
-     * Gets the description of a non-genomic biomarker.
-     */
-    nonGenomicBiomarkerDescription?: null | string;
-    /**
-     * Gets the genomic target.
-     */
-    genomicTarget?: null | string;
-    genomicTestNgtdRelationship?: null | GenomicTestNgtdRelationship;
-    /**
-     * Gets the genomic sample type.
-     */
-    genomicSampleType?: null | string;
-    /**
-     * Gets the genomic test turnaround time details.
-     */
-    genomicTurnaroundTimeDetails?: null | string;
-    patientPathwayPoint?: null | ReferenceDataDto;
-    /**
-     * Gets the pathway point when not covered by the listed options.
-     */
-    genomicTestPathwayPointOther?: null | string;
-    /**
-     * Gets the genomic alterations.
-     */
-    genomicAlterations?: null | string;
-    /**
-     * Gets additional genomic factors.
-     */
-    additionalGenomicFactors?: null | string;
-    /**
-     * Gets the genomic test used in trials.
-     */
-    genomicTestUsedInTrials?: null | string;
-    /**
-     * Gets the genomic test specificity and sensitivity.
-     */
-    genomicTestSpecificitySensitivity?: null | string;
-    genomicTestMandatoryStatus?: null | GenomicTestMandatoryStatus;
-    /**
-     * Gets additional notes on the genomic test.
-     */
-    genomicTestNotes?: null | string;
-    /**
-     * Gets details of monitoring tests.
-     */
-    monitoringTestsDetails?: null | string;
-    /**
-     * Gets details of safety tests.
-     */
-    safetyTestsDetails?: null | string;
-};
-
-/**
- * Represents the patient identification section of a medicine record.
- */
-export type MedicinesPatientIdentificationDto = {
-    screeningRequired?: null | YesNoUnknown;
-    /**
-     * Gets details of the screening required.
-     */
-    screeningDetails?: null | string;
-    urgentIdentificationRequired?: null | YesNoUnknown;
-    /**
-     * Gets details of the urgent identification required.
-     */
-    urgentIdentificationDetails?: null | string;
-};
-
-/**
- * Represents the NHS service impact section of a medicine record.
- */
-export type MedicinesServiceImpactDto = {
-    nhsServiceChangesRequired?: null | NhsServiceChangesRequired;
-    /**
-     * Gets details of the NHS service changes.
-     */
-    nhsServiceChangesDetails?: null | string;
-    handlingStorageRequirements?: null | YesNoUnknown;
-    /**
-     * Gets details of the handling or storage requirements.
-     */
-    handlingStorageDetails?: null | string;
-    ukPatientPopulationRange?: null | ReferenceDataDto;
-    /**
-     * Gets notes on the UK patient population.
-     */
-    ukPatientPopulationNotes?: null | string;
-    /**
-     * Gets the estimated eligible patient population.
-     */
-    estimatedEligiblePatientPopulation?: null | string;
-};
-
-/**
- * Represents the treatment detail section of a medicine record.
- */
-export type MedicinesTreatmentDetailDto = {
-    /**
-     * Gets the proposed place in therapy.
-     */
-    proposedPlaceInTherapy: string;
-    /**
-     * Gets the estimated duration of treatment.
-     */
-    estimatedDurationOfTreatment?: null | string;
-};
-
-/**
- * Technology status types selected for a medicine record. Multi-select —
- * see MedicinesIndicationDetail.MedicineTechnologyStatus.
- */
-export const MedicineTechnologyStatus = {
-    BIOSIMILAR: 'Biosimilar',
-    NEW_CHEMICAL_OR_BIOLOGICAL_ENTITY: 'NewChemicalOrBiologicalEntity',
-    NEW_DOSING_REGIMEN: 'NewDosingRegimen',
-    NEW_FORMULATION: 'NewFormulation',
-    NEW_INDICATION: 'NewIndication',
-    NEW_PRESENTATION: 'NewPresentation',
-    SPC_AMENDMENT_WITHOUT_INDICATION_CHANGE: 'SpcAmendmentWithoutIndicationChange'
-} as const;
-
-/**
- * Technology status types selected for a medicine record. Multi-select —
- * see MedicinesIndicationDetail.MedicineTechnologyStatus.
- */
-export type MedicineTechnologyStatus = typeof MedicineTechnologyStatus[keyof typeof MedicineTechnologyStatus];
 
 /**
  * Represents the details required for a user to complete multi-factor authentication setup.
@@ -536,32 +313,14 @@ export type MultiFactorAuthenticationSetupDto = {
 };
 
 /**
- * The type of a product name or identifier. See RecordNameAndIdentifier.NameType.
+ * Represents the details required for a user to complete multi-factor authentication update.
  */
-export const NameAndIdentifierType = { GENERIC_NAME: 'GenericName', OTHER_IDENTIFIER: 'OtherIdentifier' } as const;
-
-/**
- * The type of a product name or identifier. See RecordNameAndIdentifier.NameType.
- */
-export type NameAndIdentifierType = typeof NameAndIdentifierType[keyof typeof NameAndIdentifierType];
-
-export const NetUkBudgetImpactBand = {
-    UNKNOWN: 'Unknown',
-    LESS_THAN5M: 'LessThan5M',
-    BETWEEN5M_AND40M: 'Between5MAnd40M',
-    FORTY_M_OR_MORE: 'FortyMOrMore'
-} as const;
-
-export type NetUkBudgetImpactBand = typeof NetUkBudgetImpactBand[keyof typeof NetUkBudgetImpactBand];
-
-export const NhsServiceChangesRequired = {
-    UNKNOWN: 'Unknown',
-    NO_CHANGES: 'NoChanges',
-    SOME_CHANGE: 'SomeChange',
-    COMPLETE_TRANSFORMATION: 'CompleteTransformation'
-} as const;
-
-export type NhsServiceChangesRequired = typeof NhsServiceChangesRequired[keyof typeof NhsServiceChangesRequired];
+export type MultiFactorAuthenticationUpdateDto = {
+    /**
+     * Gets the OTP authentication URI used to configure an authenticator application.
+     */
+    otpAuthUri: string;
+};
 
 /**
  * Represents the outcome of onboarding a new user.
@@ -753,21 +512,18 @@ export type PaginatedResponseDtoOfUserListItemDto = {
 };
 
 /**
- * Patient Access Scheme regions selected for a medicine record.
- * Multi-select — see MedicinesBudgetImpact.PatientAccessSchemeRegions.
+ * Represents a requested change to a user's work email address that is awaiting completion.
  */
-export const PatientAccessSchemeRegion = {
-    ENGLAND: 'England',
-    WALES: 'Wales',
-    SCOTLAND: 'Scotland',
-    NORTHERN_IRELAND: 'NorthernIreland'
-} as const;
-
-/**
- * Patient Access Scheme regions selected for a medicine record.
- * Multi-select — see MedicinesBudgetImpact.PatientAccessSchemeRegions.
- */
-export type PatientAccessSchemeRegion = typeof PatientAccessSchemeRegion[keyof typeof PatientAccessSchemeRegion];
+export type PendingWorkEmailChangeDto = {
+    /**
+     * Gets the new work email address that has been requested.
+     */
+    value: string;
+    /**
+     * Gets whether the new work email address has been verified by email.
+     */
+    verifiedByEmail: boolean;
+};
 
 /**
  * Flags enum stored as integer. Only Organisation uses Both;
@@ -813,33 +569,165 @@ export const RecordAction = {
 export type RecordAction = typeof RecordAction[keyof typeof RecordAction];
 
 /**
- * Represents a clinical trial on a record.
+ * One item of a group answer, such as a clinical trial.
  */
-export type RecordClinicalTrialDto = {
+export type RecordAnswersGroupItemDto = {
     /**
-     * Gets the study name.
+     * The answer to each of the group's questions, in order.
      */
-    studyName: string;
-    /**
-     * Gets the ClinicalTrials.gov number.
-     */
-    clinicalTrialsGovNumber: string;
-    /**
-     * Gets other registry numbers for the trial, e.g. ISRCTN or EudraCT, in display order.
-     */
-    otherClinicalTrialNumbers: Array<string>;
-    trialPhase?: null | TrialPhase;
-    /**
-     * Gets the brief description of key findings.
-     */
-    briefDescription?: null | string;
+    questions: Array<RecordAnswersQuestionDto>;
 };
 
 /**
- * Represents the answers about a record's clinical trials as a whole.
+ * An option chosen in an answer.
  */
-export type RecordClinicalTrialInformationDto = {
-    recruitingInUk?: null | YesNoUnknown;
+export type RecordAnswersOptionDto = {
+    /**
+     * The answer value: an enum member name or a reference ID.
+     */
+    value: string;
+    /**
+     * The text shown for the option.
+     */
+    label: string;
+    /**
+     * The label of the option's parent in a hierarchical select, or null.
+     */
+    parentLabel: null | string;
+};
+
+/**
+ * A question that applies and its answer, shown as a summary row.
+ */
+export type RecordAnswersQuestionDto = {
+    /**
+     * The question ID, which errors are keyed by. A group's question has an ID local to the group.
+     */
+    id: string;
+    /**
+     * The page the question is on, for its Change link.
+     */
+    pageId: string;
+    /**
+     * The question text.
+     */
+    label: string;
+    /**
+     * The control the question uses, which says how to format the answer.
+     */
+    type: FormControl;
+    /**
+     * True when the question takes several values rather than one.
+     */
+    multiple: boolean;
+    /**
+     * The saved values: at most one for a single-value question, and none when not yet provided
+     * or for a group.
+     */
+    values: Array<string>;
+    /**
+     * For a choice question, the chosen options in the order offered, so values can be shown by
+     * label; null for any other question.
+     */
+    selectedOptions: null | Array<RecordAnswersOptionDto>;
+    /**
+     * For a group, the heading of each item, numbered from 1, such as "Clinical trial"; null for
+     * any other question.
+     */
+    itemLabel: null | string;
+    /**
+     * For a group, its items in order; null for any other question.
+     */
+    items: null | Array<RecordAnswersGroupItemDto>;
+    /**
+     * For a group, the label of its add-another button, such as "Add another clinical trial";
+     * null for any other question.
+     */
+    addAnotherLabel: null | string;
+};
+
+/**
+ * A section of a record's answers.
+ */
+export type RecordAnswersSectionDto = {
+    /**
+     * The section ID.
+     */
+    id: string;
+    /**
+     * The section title.
+     */
+    title: string;
+    /**
+     * The tasks with a question that applies, in order.
+     */
+    tasks: Array<RecordAnswersTaskDto>;
+};
+
+/**
+ * A task of a record's answers.
+ */
+export type RecordAnswersTaskDto = {
+    /**
+     * The task ID.
+     */
+    id: string;
+    /**
+     * The task title.
+     */
+    title: string;
+    /**
+     * The questions that apply, in page order, including optional questions with no answer.
+     */
+    questions: Array<RecordAnswersQuestionDto>;
+};
+
+/**
+ * The whole of a record's latest revision for check your answers: every question that applies,
+ * grouped by section and task, and every error that would stop it being submitted.
+ */
+export type RecordCheckAnswersDto = {
+    /**
+     * The form's version. Send it back on submit.
+     */
+    formVersion: string;
+    /**
+     * The record the answers belong to.
+     */
+    recordId: number;
+    /**
+     * The organisation that owns the record; used for links back to the records list.
+     */
+    organisationId: number;
+    /**
+     * A hash of the whole revision. Send it back on submit; if anything in the revision has
+     * changed since, the submission is rejected.
+     */
+    revisionHash: string;
+    /**
+     * The sections with a question that applies, in form order.
+     */
+    sections: Array<RecordAnswersSectionDto>;
+    /**
+     * The problems that would stop the record being submitted, in form order, each on a question
+     * in IReadOnlyList&lt;RecordAnswersSectionDto&gt; RecordCheckAnswersDto.Sections. The record can be submitted when this is empty.
+     */
+    errors: Array<SubmissionErrorDto>;
+};
+
+/**
+ * A record's overview and every answer that applies on its latest revision.
+ */
+export type RecordDetailDto = {
+    /**
+     * Gets the record's status, permitted actions and identifying details.
+     */
+    overview: RecordOverviewDto;
+    /**
+     * Gets the sections with a question that applies, in form order; empty when the record type
+     * has no content form.
+     */
+    sections: Array<RecordAnswersSectionDto>;
 };
 
 /**
@@ -859,131 +747,6 @@ export const RecordDisplayStatus = {
  * record status; otherwise the workflow status of the latest revision is shown.
  */
 export type RecordDisplayStatus = typeof RecordDisplayStatus[keyof typeof RecordDisplayStatus];
-
-/**
- * Represents the data held on the latest revision of a record, whatever its workflow status.
- * The `recordType` property identifies the concrete type.
- */
-export type RecordDto = ({
-    recordType: 'Medicine';
-} & RecordDtoMedicineRecordDto) | ({
-    recordType: 'Vaccine';
-} & RecordDtoVaccineRecordDto);
-
-/**
- * Represents the data held on the latest revision of a medicine record.
- */
-export type RecordDtoMedicineRecordDto = {
-    recordType?: 'Medicine';
-    recordProductDetail?: null | RecordProductDetailDto;
-    medicinesIndicationDetail?: null | MedicinesIndicationDetailDto;
-    medicinesDevelopmentBackground?: null | MedicinesDevelopmentBackgroundDto;
-    recordClinicalTrialInformation?: null | RecordClinicalTrialInformationDto;
-    /**
-     * Gets the clinical trials.
-     */
-    recordClinicalTrials: Array<RecordClinicalTrialDto>;
-    recordMhraProcedure?: null | RecordMhraProcedureDto;
-    recordMhraDate?: null | RecordMhraDateDto;
-    medicinesGlobalSubmission?: null | MedicinesGlobalSubmissionDto;
-    medicinesIntlRecognition?: null | MedicinesIntlRecognitionDto;
-    recordHta?: null | RecordHtaDto;
-    medicinesEuStatus?: null | MedicinesEuStatusDto;
-    medicinesEamsPim?: null | MedicinesEamsPimDto;
-    medicinesLaboratoryTesting?: null | MedicinesLaboratoryTestingDto;
-    medicinesPatientIdentification?: null | MedicinesPatientIdentificationDto;
-    medicinesTreatmentDetail?: null | MedicinesTreatmentDetailDto;
-    medicinesServiceImpact?: null | MedicinesServiceImpactDto;
-    medicinesBudgetImpact?: null | MedicinesBudgetImpactDto;
-    /**
-     * Gets the record identifier.
-     */
-    recordId: number;
-    /**
-     * Gets the identifier of the organisation that owns the record.
-     */
-    organisationId: number;
-    /**
-     * Gets the record status.
-     */
-    recordStatus: RecordStatus;
-    /**
-     * Gets the status shown to users for the record.
-     */
-    displayStatus: RecordDisplayStatus;
-    /**
-     * Gets the date the record was last reviewed, when available.
-     */
-    reviewedAt?: null | string;
-    /**
-     * Gets whether the record type has a content form and the caller can edit it. When true,
-     * Update record links to the record's task list, which edits the latest revision.
-     */
-    canEditContent: boolean;
-    /**
-     * Gets the actions the user can take on the record, given its status and the workflow status
-     * of its latest revision.
-     */
-    actions: Array<RecordAction>;
-};
-
-/**
- * Represents the data held on the latest revision of a vaccine record.
- */
-export type RecordDtoVaccineRecordDto = {
-    recordType?: 'Vaccine';
-    /**
-     * Gets the record identifier.
-     */
-    recordId: number;
-    /**
-     * Gets the identifier of the organisation that owns the record.
-     */
-    organisationId: number;
-    /**
-     * Gets the record status.
-     */
-    recordStatus: RecordStatus;
-    /**
-     * Gets the status shown to users for the record.
-     */
-    displayStatus: RecordDisplayStatus;
-    /**
-     * Gets the date the record was last reviewed, when available.
-     */
-    reviewedAt?: null | string;
-    /**
-     * Gets whether the record type has a content form and the caller can edit it. When true,
-     * Update record links to the record's task list, which edits the latest revision.
-     */
-    canEditContent: boolean;
-    /**
-     * Gets the actions the user can take on the record, given its status and the workflow status
-     * of its latest revision.
-     */
-    actions: Array<RecordAction>;
-};
-
-/**
- * Represents the health technology assessment and launch section of a record.
- */
-export type RecordHtaDto = {
-    medicineHtaSubmissionIntended?: null | YesNoUnknown;
-    /**
-     * Gets the HTA bodies the medicine will be submitted to, or `null` if unanswered.
-     */
-    medicineHtaBodies?: null | Array<MedicineHtaAssessor>;
-    /**
-     * Gets additional HTA details.
-     */
-    htaAdditionalDetails?: null | string;
-    htaNiceAlignedPathway?: null | YesNoUnknown;
-    /**
-     * Gets the NICE technology appraisal development identifier.
-     */
-    niceTaDevelopmentId?: null | string;
-    ukLaunchDate?: null | RegulatoryDateDto;
-};
 
 /**
  * Represents the record summary returned by the record list endpoint.
@@ -1024,38 +787,75 @@ export type RecordListItemDto = {
 };
 
 /**
- * Represents the MHRA dates section of a record.
+ * A record's status, permitted actions and identifying details, from its latest revision,
+ * whatever its workflow status.
  */
-export type RecordMhraDateDto = {
-    ukSubmissionDate?: null | RegulatoryDateDto;
-    ukLicenceDate?: null | RegulatoryDateDto;
-    ukConditionalApprovalAnticipated?: null | YesNoUnknown;
+export type RecordOverviewDto = {
+    /**
+     * Gets the record identifier.
+     */
+    recordId: number;
+    /**
+     * Gets the identifier of the organisation that owns the record.
+     */
+    organisationId: number;
+    /**
+     * Gets the record type.
+     */
+    recordType: RecordType;
+    /**
+     * Gets the record status.
+     */
+    recordStatus: RecordStatus;
+    /**
+     * Gets the status shown to users for the record.
+     */
+    displayStatus: RecordDisplayStatus;
+    /**
+     * Gets the date the record was last reviewed, when available.
+     */
+    reviewedAt: null | string;
+    /**
+     * Gets whether the record type has a content form and the caller can edit it. When true,
+     * Update record links to the record's task list, which edits the latest revision.
+     */
+    canEditContent: boolean;
+    /**
+     * Gets the actions the user can take on the record, given its status and the workflow status
+     * of its latest revision.
+     */
+    actions: Array<RecordAction>;
+    /**
+     * Gets the date of when the next update is due.
+     */
+    nextUpdateDue: null | string;
+    /**
+     * Gets the latest revision's company code; null when it has no product details.
+     */
+    companyCode: null | string;
+    /**
+     * Gets the latest revision's record title; null when it has no product details.
+     */
+    recordTitle: null | string;
 };
 
 /**
- * Represents the MHRA procedure section of a record.
+ * A condition that decides whether a question applies, from another question's answer.
  */
-export type RecordMhraProcedureDto = {
-    mhraProcedureType?: null | ReferenceDataDto;
-    irpReferenceRegulator?: null | ReferenceDataDto;
+export type RecordPageConditionDto = {
     /**
-     * Gets the procedure details.
+     * How the condition is evaluated.
      */
-    procedureDetails?: null | string;
-};
-
-/**
- * Represents a name or identifier for a product.
- */
-export type RecordNameAndIdentifierDto = {
+    kind: ConditionKind;
     /**
-     * Gets the name or identifier.
+     * The ID of the trigger question, an earlier question on the same page.
      */
-    name: string;
+    questionId: string;
     /**
-     * Gets the type of the name or identifier.
+     * For ConditionKind.AnswerIn: the condition is met when the trigger's answer
+     * includes any of these option values.
      */
-    nameType: NameAndIdentifierType;
+    values: Array<string>;
 };
 
 /**
@@ -1067,14 +867,14 @@ export type RecordPageDto = {
      */
     formVersion: string;
     /**
-     * The concurrency token of the record's latest revision, which the page reads and writes.
-     * Echo it back on save.
-     */
-    revisionVersion: number;
-    /**
      * The record the page belongs to.
      */
     recordId: number;
+    /**
+     * The organisation that owns the record; used to look up suggestions such as the
+     * organisation's existing company codes.
+     */
+    organisationId: number;
     /**
      * The section the page belongs to.
      */
@@ -1093,7 +893,8 @@ export type RecordPageDto = {
     previousPageId: null | string;
     /**
      * The page after this one in its task, or null on the task's last page, where saving returns
-     * to the task list.
+     * to the task list. When a later page depends on this page's own answers it is offered even
+     * if those answers do not yet lead to it, and saving then decides where to go.
      */
     nextPageId: null | string;
     /**
@@ -1107,6 +908,11 @@ export type RecordPageDto = {
     answers: {
         [key: string]: unknown;
     };
+    /**
+     * A hash of the answers of the page that must be provided when saving updates.
+     * If the hash has changed, answers will be rejected.
+     */
+    pageHash: string;
 };
 
 /**
@@ -1122,13 +928,17 @@ export type RecordPageOptionDto = {
      */
     label: string;
     /**
+     * Help text shown under the option, or null when it has none.
+     */
+    hint: null | string;
+    /**
      * The child options of a hierarchical option, or null.
      */
     children: null | Array<RecordPageOptionDto>;
 };
 
 /**
- * A page's ID and title.
+ * A page's ID, title and "Commercial in confidence" flag.
  */
 export type RecordPagePageDto = {
     /**
@@ -1139,6 +949,10 @@ export type RecordPagePageDto = {
      * A short name for the page.
      */
     title: string;
+    /**
+     * Whether the page shows the "Commercial in confidence" badge.
+     */
+    commercialInConfidence: boolean;
 };
 
 /**
@@ -1154,7 +968,9 @@ export type RecordPageQuestionDto = {
      */
     type: FormControl;
     /**
-     * True when the answer is an array of strings rather than a string or null.
+     * True when the answer is an array of strings rather than a string or null, as for a
+     * checkbox, a multi-value hierarchical select or a text list. False for a group, whose answer
+     * is an array of objects.
      */
     multiple: boolean;
     /**
@@ -1169,6 +985,7 @@ export type RecordPageQuestionDto = {
      * A rendering hint, for example `combobox`.
      */
     display: null | string;
+    width?: null | FormInputWidth;
     /**
      * The empty option text of a dropdown.
      */
@@ -1182,9 +999,48 @@ export type RecordPageQuestionDto = {
      */
     childPlaceholder: null | string;
     /**
-     * The button text that adds another entry to a multi-value hierarchical select.
+     * The button text that adds another entry to a multi-value hierarchical select, a group or a
+     * text list.
      */
     addAnotherLabel: null | string;
+    /**
+     * The heading of each item of a group, numbered from 1, or the label of each entry of a text
+     * list, numbered from 1 once there are several; null for other controls.
+     */
+    itemLabel?: null | string;
+    /**
+     * The button text that removes an item of a group or an entry of a text list.
+     */
+    removeLabel?: null | string;
+    /**
+     * The questions asked of each item of a group, in order, or null for other controls. Each
+     * item of the answer is an object keyed by these questions' IDs, and their errors are keyed
+     * `{group id}[{item index}].{child id}`.
+     */
+    children?: null | Array<RecordPageQuestionDto>;
+    /**
+     * The prefixes a `PrefixedNumber` question offers before its digits, in order, or
+     * null for any other control. Not `required`, so existing clients and fixtures are
+     * unaffected.
+     */
+    prefixes?: null | Array<string>;
+    /**
+     * The exact number of digits a `PrefixedNumber` needs after its prefix, or null when up
+     * to 5 are allowed.
+     */
+    prefixDigits?: null | number;
+    /**
+     * What a `PrefixedNumber`'s number is, as its error messages name it at the start of a
+     * sentence, for example `Trial number`; null for any other control. Not `required`,
+     * so existing clients and fixtures are unaffected.
+     */
+    numberName?: null | string;
+    /**
+     * What a FormControl.PrecisionDate question's date is of, for its error
+     * messages, for example `submission`; null for other questions.
+     */
+    dateName: null | string;
+    showWhen: null | RecordPageConditionDto;
     /**
      * The rules, in evaluation order.
      */
@@ -1242,28 +1098,6 @@ export type RecordPageTaskDto = {
 };
 
 /**
- * Represents the names and identifiers section of a record.
- */
-export type RecordProductDetailDto = {
-    /**
-     * Gets the company code.
-     */
-    companyCode: string;
-    /**
-     * Gets the generic names and other identifiers, in display order.
-     */
-    namesAndIdentifiers: Array<RecordNameAndIdentifierDto>;
-    /**
-     * Gets the branded name.
-     */
-    brandedName?: null | string;
-    /**
-     * Gets the short human-readable label identifying the record.
-     */
-    recordTitle: string;
-};
-
-/**
  * Represents the status of a record in the system.
  */
 export const RecordStatus = {
@@ -1278,6 +1112,19 @@ export const RecordStatus = {
  * Represents the status of a record in the system.
  */
 export type RecordStatus = typeof RecordStatus[keyof typeof RecordStatus];
+
+export const RecordStatusChangeReason = {
+    DEVELOPMENT_DISCONTINUED: 'DevelopmentDiscontinued',
+    TRIAL_SUSPENDED: 'TrialSuspended',
+    FILING_WITHDRAWN: 'FilingWithdrawn',
+    TRIAL_RESUMED: 'TrialResumed',
+    PLANS_REFILED: 'PlansRefiled',
+    OTHER: 'Other',
+    ARCHIVED_AUTOMATICALLY: 'ArchivedAutomatically',
+    MANUALLY_DISCARDED: 'ManuallyDiscarded'
+} as const;
+
+export type RecordStatusChangeReason = typeof RecordStatusChangeReason[keyof typeof RecordStatusChangeReason];
 
 /**
  * The task list for a record's latest revision.
@@ -1376,20 +1223,6 @@ export const RecordType = { MEDICINE: 'Medicine', VACCINE: 'Vaccine' } as const;
 export type RecordType = typeof RecordType[keyof typeof RecordType];
 
 /**
- * Represents a selected reference data value.
- */
-export type ReferenceDataDto = {
-    /**
-     * Gets the reference data identifier.
-     */
-    id: number;
-    /**
-     * Gets the display label.
-     */
-    label: string;
-};
-
-/**
  * Represents the information required to register a new user.
  */
 export type RegisterUserCommandDto = {
@@ -1449,24 +1282,6 @@ export type RegisterUserDetailsDto = {
      * Gets the user phone number.
      */
     phoneNumber: string;
-};
-
-/**
- * Represents a regulatory milestone date.
- */
-export type RegulatoryDateDto = {
-    /**
-     * Gets the date. Quarter and month precision dates are stored as the first day of the period.
-     */
-    dateValue: string;
-    /**
-     * Gets the precision of the date.
-     */
-    datePrecision: DatePrecision;
-    /**
-     * Gets a value indicating whether the date is confidential.
-     */
-    isConfidential: boolean;
 };
 
 /**
@@ -1540,7 +1355,8 @@ export type RespondToMultiFactorAuthenticationChallengeCommand = {
 export const RuleKind = {
     REQUIRED: 'Required',
     MAX_LENGTH: 'MaxLength',
-    MAX_ITEMS: 'MaxItems'
+    MAX_ITEMS: 'MaxItems',
+    DISTINCT: 'Distinct'
 } as const;
 
 /**
@@ -1559,16 +1375,16 @@ export type SaveRecordPageCommand = {
      */
     formVersion: string;
     /**
-     * The uint RecordPageDto.RevisionVersion the page was loaded with.
-     */
-    revisionVersion: number;
-    /**
      * Every question on the page, keyed by question ID: null for an unanswered single-value
      * question and an empty array for an unanswered multi-value question.
      */
     answers: {
         [key: string]: unknown;
     };
+    /**
+     * The page hash value returned from the query.
+     */
+    pageHash: string;
 };
 
 /**
@@ -1579,6 +1395,25 @@ export type SaveRecordPageDto = {
      * The next page in the task, or null after the task's last page.
      */
     nextPageId: null | string;
+};
+
+/**
+ * Represents the command used to complete user setup by validating a setup token
+ * and assigning a phone number to the user for SMS MFA.
+ */
+export type SetupSmsMfaCommand = {
+    /**
+     * Gets the unique token used to identify and validate the pending user setup request.
+     */
+    setupToken: string;
+    /**
+     * Gets the phone number to assign to the user account.
+     */
+    phoneNumber: string;
+    /**
+     * Gets the password used to authenticate with the identity provider.
+     */
+    password: string;
 };
 
 /**
@@ -1597,6 +1432,17 @@ export type SetupUserCommand = {
 };
 
 /**
+ * Represents the details required for a user to complete SMS multi-factor authentication setup.
+ */
+export type SmsMultiFactorAuthenticationSetupDto = {
+    /**
+     * Gets the authentication session identifier required to complete the
+     * multi-factor authentication setup flow.
+     */
+    authenticationSession: string;
+};
+
+/**
  * Specifies the direction in which query results are sorted.
  */
 export const SortDirection = { ASCENDING: 'Ascending', DESCENDING: 'Descending' } as const;
@@ -1606,17 +1452,63 @@ export const SortDirection = { ASCENDING: 'Ascending', DESCENDING: 'Descending' 
  */
 export type SortDirection = typeof SortDirection[keyof typeof SortDirection];
 
-export const TrialPhase = {
-    PRECLINICAL: 'Preclinical',
-    PHASE_I: 'PhaseI',
-    PHASE_I_AND_II: 'PhaseIAndII',
-    PHASE_II: 'PhaseII',
-    PHASE_III: 'PhaseIII',
-    PHASE_III_AND_IV: 'PhaseIIIAndIV',
-    PHASE_IV: 'PhaseIV'
-} as const;
+/**
+ * A record submission or check answers conflict, or a selected-organisation conflict. Schema only: runtime responses use the
+ * problem details factory and extensions to preserve tracing metadata.
+ */
+export type SubmissionConflictProblemDetails = {
+    type?: null | string;
+    title?: null | string;
+    status?: null | number;
+    detail?: null | string;
+    instance?: null | string;
+    /**
+     * The domain code (record_not_submittable, form_version_changed or record_changed),
+     * or the authentication code SelectedOrganisationMismatch.
+     */
+    code: string;
+    /**
+     * The organisation requested, when it differs from the selected organisation.
+     */
+    organisationId?: null | number;
+};
 
-export type TrialPhase = typeof TrialPhase[keyof typeof TrialPhase];
+/**
+ * A problem that stops a record being submitted, and the question it is on.
+ */
+export type SubmissionErrorDto = {
+    /**
+     * The question to highlight, which is also its key in `errors`.
+     */
+    questionId: string;
+    /**
+     * The page the question is on, to link to.
+     */
+    pageId: string;
+    /**
+     * The task the page belongs to.
+     */
+    taskId: string;
+    /**
+     * What is wrong and how to fix it.
+     */
+    message: string;
+};
+
+/**
+ * Submits a record's draft revision, as it was when check your answers loaded.
+ */
+export type SubmitRecordCommand = {
+    /**
+     * The form version check your answers was loaded with.
+     */
+    formVersion: string;
+    /**
+     * The hash of the whole revision check your answers was loaded with. If anything in the
+     * revision has changed since, the submission is rejected.
+     */
+    revisionHash: string;
+};
 
 export const UkpsChallengeType = { MULTI_FACTOR_AUTHENTICATION_REQUIRED: 'MultiFactorAuthenticationRequired', MULTI_FACTOR_AUTHENTICATION_SETUP_REQUIRED: 'MultiFactorAuthenticationSetupRequired' } as const;
 
@@ -1681,17 +1573,23 @@ export type UpdateStatus = typeof UpdateStatus[keyof typeof UpdateStatus];
  */
 export type UpdateUserDetailsCommand = {
     /**
-     * Gets the user's full name.
+     * Gets the user detail that should be updated.
      */
-    fullName: string;
+    property: EditableUserDetail;
     /**
-     * Gets the user's work email address.
+     * Gets the new value to assign to the specified EditableUserDetail UpdateUserDetailsCommand.Property.
      */
-    workEmail: string;
+    value: string;
+};
+
+/**
+ * Represents the command to update the email address of an existing user.
+ */
+export type UpdateUserEmailCommand = {
     /**
-     * Gets the user's work telephone number.
+     * Gets the new email address for the user.
      */
-    workTelephone: string;
+    value: string;
 };
 
 /**
@@ -1768,6 +1666,19 @@ export type UserInformationDto = {
      * Gets whether the user can select more than one organisation. Only set for the current user.
      */
     hasMultipleOrganisations: boolean;
+    /**
+     * Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.
+     */
+    allowedPharmaceuticalEntity: PharmaceuticalEntity;
+    pendingWorkEmail?: null | PendingWorkEmailChangeDto;
+    /**
+     * Gets the MFA method in use for the current user.
+     */
+    mfaMethod: string;
+    /**
+     * Gets the obfuscated phone number used for SMS MFA, if applicable.
+     */
+    mfaPhoneNumber: string;
 };
 
 /**
@@ -1813,7 +1724,8 @@ export const UserMembershipAction = {
     DEACTIVATE_MEMBERSHIP: 'DeactivateMembership',
     REACTIVATE_MEMBERSHIP: 'ReactivateMembership',
     EDIT_USER_ROLE: 'EditUserRole',
-    REMOVE_USER: 'RemoveUser'
+    REMOVE_USER: 'RemoveUser',
+    MANAGE_USER_DETAILS: 'ManageUserDetails'
 } as const;
 
 /**
@@ -1889,6 +1801,46 @@ export type VerifyMultiFactorAuthenticationCommand = {
      */
     setupToken: string;
     /**
+     * Gets the authentication session identifier required to complete the
+     * multi-factor authentication verification flow.
+     */
+    authenticationSession: string;
+    /**
+     * Gets the verification code generated by the user's authenticator application.
+     */
+    code: string;
+};
+
+/**
+ * Represents a command to verify a multi-factor authentication update by supplying
+ * a verification code from the user's authenticator application.
+ */
+export type VerifyMultiFactorAuthenticationUpdateCommand = {
+    /**
+     * Gets the verification code generated by the user's authenticator application.
+     */
+    code: string;
+};
+
+/**
+ * Command to verify a user's pending email address using a previously issued verification token.
+ */
+export type VerifyPendingEmailAddressCommand = {
+    /**
+     * The verification token that was sent to the pending email address.
+     */
+    verificationToken: string;
+};
+
+/**
+ * Represents the details required to verify a user's SMS multi-factor authentication setup.
+ */
+export type VerifySmsMultiFactorAuthenticationCommand = {
+    /**
+     * Gets the unique token associated with the user onboarding record.
+     */
+    setupToken: string;
+    /**
      * Gets the verification code generated by the user's authenticator application.
      */
     code: string;
@@ -1898,14 +1850,6 @@ export type VerifyMultiFactorAuthenticationCommand = {
      */
     authenticationSession: string;
 };
-
-export const YesNoUnknown = {
-    UNKNOWN: 'Unknown',
-    NO: 'No',
-    YES: 'Yes'
-} as const;
-
-export type YesNoUnknown = typeof YesNoUnknown[keyof typeof YesNoUnknown];
 
 export type PostAuthLoginData = {
     /**
@@ -1987,7 +1931,7 @@ export type PostAuthSignOutResponses = {
     200: unknown;
 };
 
-export type PostAuthMfaData = {
+export type RespondToMultiFactorAuthenticationChallengeData = {
     /**
      * A token to monitor for cancellation requests.
      */
@@ -1997,7 +1941,7 @@ export type PostAuthMfaData = {
     url: '/auth/mfa';
 };
 
-export type PostAuthMfaErrors = {
+export type RespondToMultiFactorAuthenticationChallengeErrors = {
     /**
      * The supplied request was invalid.
      */
@@ -2008,12 +1952,76 @@ export type PostAuthMfaErrors = {
     401: AuthenticationProblemDetails;
 };
 
-export type PostAuthMfaError = PostAuthMfaErrors[keyof PostAuthMfaErrors];
+export type RespondToMultiFactorAuthenticationChallengeError = RespondToMultiFactorAuthenticationChallengeErrors[keyof RespondToMultiFactorAuthenticationChallengeErrors];
 
-export type PostAuthMfaResponses = {
+export type RespondToMultiFactorAuthenticationChallengeResponses = {
     /**
      * The multi-factor authentication challenge was successfully completed and an
      * authentication cookie was created.
+     */
+    200: unknown;
+};
+
+export type PostAuthSetupSmsMfaData = {
+    body: SetupSmsMfaCommand;
+    path?: never;
+    query?: never;
+    url: '/auth/setup-sms-mfa';
+};
+
+export type PostAuthSetupSmsMfaErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: ProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+    /**
+     * Gone
+     */
+    410: ProblemDetails;
+};
+
+export type PostAuthSetupSmsMfaError = PostAuthSetupSmsMfaErrors[keyof PostAuthSetupSmsMfaErrors];
+
+export type PostAuthSetupSmsMfaResponses = {
+    /**
+     * OK
+     */
+    200: SmsMultiFactorAuthenticationSetupDto;
+};
+
+export type PostAuthSetupSmsMfaResponse = PostAuthSetupSmsMfaResponses[keyof PostAuthSetupSmsMfaResponses];
+
+export type PostAuthVerifySmsMfaData = {
+    body: VerifySmsMultiFactorAuthenticationCommand;
+    path?: never;
+    query?: never;
+    url: '/auth/verify-sms-mfa';
+};
+
+export type PostAuthVerifySmsMfaErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+};
+
+export type PostAuthVerifySmsMfaError = PostAuthVerifySmsMfaErrors[keyof PostAuthVerifySmsMfaErrors];
+
+export type PostAuthVerifySmsMfaResponses = {
+    /**
+     * OK
      */
     200: unknown;
 };
@@ -2175,6 +2183,65 @@ export type PostAuthVerifyMfaResponses = {
     200: unknown;
 };
 
+export type InitiateForgottenPasswordProcedureData = {
+    /**
+     * A token that can be used to cancel the operation.
+     */
+    body: InitiateForgottenPasswordProcedureCommand;
+    path?: never;
+    query?: never;
+    url: '/auth/initiate-forgotten-password';
+};
+
+export type InitiateForgottenPasswordProcedureErrors = {
+    /**
+     * The number of permitted attempts has been exceeded.
+     */
+    429: ProblemDetails;
+};
+
+export type InitiateForgottenPasswordProcedureError = InitiateForgottenPasswordProcedureErrors[keyof InitiateForgottenPasswordProcedureErrors];
+
+export type InitiateForgottenPasswordProcedureResponses = {
+    /**
+     * The forgotten password procedure was initiated successfully.
+     */
+    200: unknown;
+};
+
+export type ConfirmNewPasswordData = {
+    /**
+     * A token to cancel the operation.
+     */
+    body: ConfirmNewPasswordCommand;
+    path?: never;
+    query?: never;
+    url: '/auth/confirm-new-password';
+};
+
+export type ConfirmNewPasswordErrors = {
+    /**
+     * The request failed validation. This occurs when the confirmation code is incorrect or has expired,
+     * or when the new password does not meet the password requirements.
+     * The response body is a ValidationProblemDetails identifying the invalid field.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Too many requests were made, or too many failed attempts have occurred.
+     * The response body is a ProblemDetails. The client should wait before retrying.
+     */
+    429: ProblemDetails;
+};
+
+export type ConfirmNewPasswordError = ConfirmNewPasswordErrors[keyof ConfirmNewPasswordErrors];
+
+export type ConfirmNewPasswordResponses = {
+    /**
+     * The password was changed successfully.
+     */
+    200: unknown;
+};
+
 export type GetCurrentOrganisationChampionsData = {
     body?: never;
     path?: never;
@@ -2259,6 +2326,73 @@ export type UpdateCurrentOrganisationError = UpdateCurrentOrganisationErrors[key
 export type UpdateCurrentOrganisationResponses = {
     /**
      * The current organisation was successfully updated.
+     */
+    200: unknown;
+};
+
+export type InitiateUpdateMultiFactorAuthenticationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/mfa/update';
+};
+
+export type InitiateUpdateMultiFactorAuthenticationErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type InitiateUpdateMultiFactorAuthenticationError = InitiateUpdateMultiFactorAuthenticationErrors[keyof InitiateUpdateMultiFactorAuthenticationErrors];
+
+export type InitiateUpdateMultiFactorAuthenticationResponses = {
+    /**
+     * OK
+     */
+    200: MultiFactorAuthenticationUpdateDto;
+};
+
+export type InitiateUpdateMultiFactorAuthenticationResponse = InitiateUpdateMultiFactorAuthenticationResponses[keyof InitiateUpdateMultiFactorAuthenticationResponses];
+
+export type VerifyMultiFactorAuthenticationUpdateData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: VerifyMultiFactorAuthenticationUpdateCommand;
+    path?: never;
+    query?: never;
+    url: '/mfa/verify';
+};
+
+export type VerifyMultiFactorAuthenticationUpdateErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type VerifyMultiFactorAuthenticationUpdateError = VerifyMultiFactorAuthenticationUpdateErrors[keyof VerifyMultiFactorAuthenticationUpdateErrors];
+
+export type VerifyMultiFactorAuthenticationUpdateResponses = {
+    /**
+     * OK
      */
     200: unknown;
 };
@@ -2637,7 +2771,114 @@ export type GetOrganisationRecordsResponses = {
 
 export type GetOrganisationRecordsResponse = GetOrganisationRecordsResponses[keyof GetOrganisationRecordsResponses];
 
-export type GetRecordData = {
+export type GetOrganisationCompanyCodesData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the organisation.
+         */
+        organisationId: number;
+    };
+    query?: {
+        /**
+         * Gets or initialises the text the company codes must contain, ignoring case. A blank search
+         * returns no suggestions.
+         */
+        Search?: string;
+        /**
+         * Gets or initialises the maximum number of suggestions to return.
+         */
+        Limit?: number;
+    };
+    url: '/records/organisations/{organisationId}/company-codes';
+};
+
+export type GetOrganisationCompanyCodesErrors = {
+    /**
+     * The query parameters are invalid.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller is not authorised to view the organisation's records.
+     */
+    403: ProblemDetails;
+    /**
+     * The specified organisation does not exist.
+     */
+    404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type GetOrganisationCompanyCodesError = GetOrganisationCompanyCodesErrors[keyof GetOrganisationCompanyCodesErrors];
+
+export type GetOrganisationCompanyCodesResponses = {
+    /**
+     * Returns the matching company codes.
+     */
+    200: CompanyCodeSuggestionsDto;
+};
+
+export type GetOrganisationCompanyCodesResponse = GetOrganisationCompanyCodesResponses[keyof GetOrganisationCompanyCodesResponses];
+
+export type GetRecordOverviewData = {
+    body?: never;
+    path: {
+        /**
+         * The identifier of the record to retrieve.
+         */
+        id: number;
+    };
+    query: {
+        /**
+         * The expected type of the record.
+         */
+        recordType: RecordType;
+        /**
+         * The organisation the record is expected to belong to.
+         */
+        organisationId: number;
+    };
+    url: '/records/{id}/overview';
+};
+
+export type GetRecordOverviewErrors = {
+    /**
+     * The record type or organisation is missing or invalid.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The requested record was not found in the organisation or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type GetRecordOverviewError = GetRecordOverviewErrors[keyof GetRecordOverviewErrors];
+
+export type GetRecordOverviewResponses = {
+    /**
+     * Returns the record's overview.
+     */
+    200: RecordOverviewDto;
+};
+
+export type GetRecordOverviewResponse = GetRecordOverviewResponses[keyof GetRecordOverviewResponses];
+
+export type GetRecordDetailData = {
     body?: never;
     path: {
         /**
@@ -2658,7 +2899,7 @@ export type GetRecordData = {
     url: '/records/{id}';
 };
 
-export type GetRecordErrors = {
+export type GetRecordDetailErrors = {
     /**
      * The record type or organisation is missing or invalid.
      */
@@ -2677,16 +2918,16 @@ export type GetRecordErrors = {
     409: AuthenticationProblemDetails;
 };
 
-export type GetRecordError = GetRecordErrors[keyof GetRecordErrors];
+export type GetRecordDetailError = GetRecordDetailErrors[keyof GetRecordDetailErrors];
 
-export type GetRecordResponses = {
+export type GetRecordDetailResponses = {
     /**
-     * Returns the record data.
+     * Returns the record's overview and answers.
      */
-    200: RecordDto;
+    200: RecordDetailDto;
 };
 
-export type GetRecordResponse = GetRecordResponses[keyof GetRecordResponses];
+export type GetRecordDetailResponse = GetRecordDetailResponses[keyof GetRecordDetailResponses];
 
 export type CreateRecordData = {
     /**
@@ -2764,6 +3005,168 @@ export type DiscardRecordError = DiscardRecordErrors[keyof DiscardRecordErrors];
 export type DiscardRecordResponses = {
     /**
      * The record was discarded.
+     */
+    200: unknown;
+};
+
+export type PutRecordOnHoldData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: ChangeRecordStatusCommand;
+    path: {
+        /**
+         * The identifier of the record to put on hold.
+         */
+        recordId: number;
+    };
+    query: {
+        /**
+         * The organisation the record is expected to belong to.
+         */
+        organisationId: number;
+    };
+    url: '/records/{recordId}/hold';
+};
+
+export type PutRecordOnHoldErrors = {
+    /**
+     * The reason is missing or is not a reason for putting a record on hold, or the reason is
+     * `Other` and no note is given.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but cannot change its status.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found in the organisation or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record's status can't be changed in its current state, or the record was updated by
+     * another operation. The `code` member says which.
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type PutRecordOnHoldError = PutRecordOnHoldErrors[keyof PutRecordOnHoldErrors];
+
+export type PutRecordOnHoldResponses = {
+    /**
+     * The record was put on hold.
+     */
+    200: unknown;
+};
+
+export type ResumeRecordData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: ChangeRecordStatusCommand;
+    path: {
+        /**
+         * The identifier of the record to resume.
+         */
+        recordId: number;
+    };
+    query: {
+        /**
+         * The organisation the record is expected to belong to.
+         */
+        organisationId: number;
+    };
+    url: '/records/{recordId}/resume';
+};
+
+export type ResumeRecordErrors = {
+    /**
+     * The reason is missing or is not a reason for removing a hold, or the reason is
+     * `Other` and no note is given.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but cannot change its status.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found in the organisation or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record's status can't be changed in its current state, or the record was updated by
+     * another operation. The `code` member says which.
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type ResumeRecordError = ResumeRecordErrors[keyof ResumeRecordErrors];
+
+export type ResumeRecordResponses = {
+    /**
+     * The hold was removed.
+     */
+    200: unknown;
+};
+
+export type ArchiveRecordData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: ChangeRecordStatusCommand;
+    path: {
+        /**
+         * The identifier of the record to archive.
+         */
+        recordId: number;
+    };
+    query: {
+        /**
+         * The organisation the record is expected to belong to.
+         */
+        organisationId: number;
+    };
+    url: '/records/{recordId}/archive';
+};
+
+export type ArchiveRecordErrors = {
+    /**
+     * The reason is missing or is not a reason for archiving a record, or the reason is
+     * `Other` and no note is given.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but cannot change its status.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found in the organisation or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record's status can't be changed in its current state, or the record was updated by
+     * another operation. The `code` member says which.
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type ArchiveRecordError = ArchiveRecordErrors[keyof ArchiveRecordErrors];
+
+export type ArchiveRecordResponses = {
+    /**
+     * The record was archived.
      */
     200: unknown;
 };
@@ -2863,6 +3266,104 @@ export type SaveRecordFormPageResponses = {
 };
 
 export type SaveRecordFormPageResponse = SaveRecordFormPageResponses[keyof SaveRecordFormPageResponses];
+
+export type GetRecordCheckAnswersData = {
+    body?: never;
+    path: {
+        /**
+         * The record to check.
+         */
+        recordId: number;
+    };
+    query?: never;
+    url: '/records/{recordId}/check-answers';
+};
+
+export type GetRecordCheckAnswersErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but not submit it.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record can't be submitted in its current state, or the selected organisation differs.
+     * The `code` member says which.
+     */
+    409: SubmissionConflictProblemDetails;
+};
+
+export type GetRecordCheckAnswersError = GetRecordCheckAnswersErrors[keyof GetRecordCheckAnswersErrors];
+
+export type GetRecordCheckAnswersResponses = {
+    /**
+     * Returns the record's answers and errors.
+     */
+    200: RecordCheckAnswersDto;
+};
+
+export type GetRecordCheckAnswersResponse = GetRecordCheckAnswersResponses[keyof GetRecordCheckAnswersResponses];
+
+export type SubmitRecordData = {
+    /**
+     * A token to monitor for cancellation requests.
+     */
+    body: SubmitRecordCommand;
+    path: {
+        /**
+         * The record to submit.
+         */
+        recordId: number;
+    };
+    query?: never;
+    url: '/records/{recordId}/submit';
+};
+
+export type SubmitRecordErrors = {
+    /**
+     * The request body is missing or malformed.
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but not submit it.
+     */
+    403: ProblemDetails;
+    /**
+     * The record was not found or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The record can't be submitted in its current state, or the form or revision changed since
+     * check your answers loaded, or the selected organisation differs. The `code` member says which.
+     */
+    409: SubmissionConflictProblemDetails;
+    /**
+     * The revision has problems to fix first. `errors` is keyed by question ID, and
+     * `fields` lists each problem with its page and task, in form order.
+     */
+    422: InvalidRecordProblemDetails;
+};
+
+export type SubmitRecordError = SubmitRecordErrors[keyof SubmitRecordErrors];
+
+export type SubmitRecordResponses = {
+    /**
+     * The record was submitted.
+     */
+    204: void;
+};
+
+export type SubmitRecordResponse = SubmitRecordResponses[keyof SubmitRecordResponses];
 
 export type GetRecordTaskListData = {
     body?: never;
@@ -3038,11 +3539,7 @@ export type GetUserDetailsWithinOrganisationErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * Returned if the caller is not authorised to view the organisation's users.
-     */
-    403: ProblemDetails;
-    /**
-     * Returned if the organisation does not exist or the user is not a member of it.
+     * The user does not exist in this organisation or is not accessible to the caller (ADR-004).
      */
     404: ProblemDetails;
     /**
@@ -3108,7 +3605,7 @@ export type RemoveUserResponses = {
 
 export type RemoveUserResponse = RemoveUserResponses[keyof RemoveUserResponses];
 
-export type PatchUsersByUserIdData = {
+export type UpdateUserDetailsData = {
     /**
      * A token to monitor for cancellation requests.
      */
@@ -3123,7 +3620,7 @@ export type PatchUsersByUserIdData = {
     url: '/users/{userId}';
 };
 
-export type PatchUsersByUserIdErrors = {
+export type UpdateUserDetailsErrors = {
     /**
      * The supplied user details are invalid.
      */
@@ -3142,16 +3639,179 @@ export type PatchUsersByUserIdErrors = {
     409: AuthenticationProblemDetails;
 };
 
-export type PatchUsersByUserIdError = PatchUsersByUserIdErrors[keyof PatchUsersByUserIdErrors];
+export type UpdateUserDetailsError = UpdateUserDetailsErrors[keyof UpdateUserDetailsErrors];
 
-export type PatchUsersByUserIdResponses = {
+export type UpdateUserDetailsResponses = {
     /**
      * The user's details were successfully updated.
      */
     200: UserDetailsDto;
 };
 
-export type PatchUsersByUserIdResponse = PatchUsersByUserIdResponses[keyof PatchUsersByUserIdResponses];
+export type UpdateUserDetailsResponse = UpdateUserDetailsResponses[keyof UpdateUserDetailsResponses];
+
+export type UpdateUserEmailData = {
+    /**
+     * A token that can be used to cancel the request.
+     */
+    body: UpdateUserEmailCommand;
+    path: {
+        /**
+         * The unique identifier of the user whose email address is to be updated.
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/users/{userId}/email';
+};
+
+export type UpdateUserEmailErrors = {
+    /**
+     * Bad Request
+     */
+    400: ValidationProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type UpdateUserEmailError = UpdateUserEmailErrors[keyof UpdateUserEmailErrors];
+
+export type UpdateUserEmailResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type ResendVerificationEmailData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the user to resend the verification email to.
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/users/{userId}/email/resend';
+};
+
+export type ResendVerificationEmailErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * No user exists with the specified userId.
+     */
+    404: ProblemDetails;
+    /**
+     * The request could not be completed because there is no pending verification for the user,
+     * or because a concurrent modification was detected. Retry may succeed in the latter case.
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type ResendVerificationEmailError = ResendVerificationEmailErrors[keyof ResendVerificationEmailErrors];
+
+export type ResendVerificationEmailResponses = {
+    /**
+     * The verification email was successfully resent.
+     */
+    200: unknown;
+};
+
+export type VerifyPendingEmailAddressData = {
+    /**
+     * A token to cancel the operation.
+     */
+    body: VerifyPendingEmailAddressCommand;
+    path: {
+        /**
+         * The ID of the user whose pending email address is being verified.
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/users/{userId}/email/verify';
+};
+
+export type VerifyPendingEmailAddressErrors = {
+    /**
+     * The verification token provided is invalid.
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The caller is not authorised to verify the email address for this user.
+     */
+    403: ProblemDetails;
+    /**
+     * The user does not exist.
+     */
+    404: ProblemDetails;
+    /**
+     * The user has no pending email address, or the pending email address has already been verified.
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type VerifyPendingEmailAddressError = VerifyPendingEmailAddressErrors[keyof VerifyPendingEmailAddressErrors];
+
+export type VerifyPendingEmailAddressResponses = {
+    /**
+     * The pending email address was verified successfully.
+     */
+    200: unknown;
+};
+
+export type CancelPendingEmailChangeData = {
+    body?: never;
+    path: {
+        /**
+         * The ID of the user whose pending email change is being cancelled.
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/users/{userId}/email/pending';
+};
+
+export type CancelPendingEmailChangeErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The specified user does not exist or is not accessible to the caller.
+     */
+    404: ProblemDetails;
+    /**
+     * The user has no pending email change or a concurrent change was detected.
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type CancelPendingEmailChangeError = CancelPendingEmailChangeErrors[keyof CancelPendingEmailChangeErrors];
+
+export type CancelPendingEmailChangeResponses = {
+    /**
+     * The pending email change was cancelled successfully.
+     */
+    200: unknown;
+};
 
 export type PostUsersOnboardData = {
     /**
@@ -3250,11 +3910,7 @@ export type GetUserRegistrationByIdErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The current user is not allowed to view membership requests for the organisation.
-     */
-    403: ProblemDetails;
-    /**
-     * No membership request was found with the supplied identifier.
+     * The membership request does not exist or is not accessible to the caller (ADR-004).
      */
     404: ProblemDetails;
     /**
@@ -3296,11 +3952,7 @@ export type ApproveErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The current user is not allowed to approve the membership request.
-     */
-    403: ProblemDetails;
-    /**
-     * The membership request could not be found.
+     * The membership request does not exist or is not accessible to the caller (ADR-004).
      */
     404: ProblemDetails;
     /**
@@ -3340,11 +3992,7 @@ export type RejectErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
-     * The current user is not allowed to reject the membership request.
-     */
-    403: ProblemDetails;
-    /**
-     * The membership request could not be found.
+     * The membership request does not exist or is not accessible to the caller (ADR-004).
      */
     404: ProblemDetails;
     /**

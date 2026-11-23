@@ -13,9 +13,29 @@ namespace UKPS.Api.Persistence.Data.Seeding.SyntheticData;
 internal sealed class SeedReferenceData
 {
     private static readonly HashSet<string> _medicinesOnlyProcedures = new(
-        ["Access Consortium", "Project Orbis"],
+        ["Access Consortium", "Orbis"],
         StringComparer.Ordinal
     );
+
+    private static readonly Dictionary<string, string> _procedureCodes = new(StringComparer.Ordinal)
+    {
+        ["MHRA national procedure"] = MhraProcedureTypeCodes.National,
+        ["International Recognition Procedure"] = MhraProcedureTypeCodes.InternationalRecognition,
+        ["Access Consortium"] = MhraProcedureTypeCodes.AccessConsortium,
+        ["Orbis"] = MhraProcedureTypeCodes.Orbis,
+        ["Other"] = MhraProcedureTypeCodes.Other,
+        ["Unknown at this stage"] = MhraProcedureTypeCodes.Unknown,
+    };
+
+    private static readonly Dictionary<string, string> _pathwayPointCodes = new(
+        StringComparer.Ordinal
+    )
+    {
+        ["Initial presentation"] = PatientPathwayPointCodes.InitialPresentation,
+        ["Progression"] = PatientPathwayPointCodes.Progression,
+        ["Longitudinal testing"] = PatientPathwayPointCodes.LongitudinalTesting,
+        ["Other"] = PatientPathwayPointCodes.Other,
+    };
 
     private SeedReferenceData(SyntheticReferenceData data)
     {
@@ -49,6 +69,7 @@ internal sealed class SeedReferenceData
             data.MhraProcedureTypes,
             e => new MhraProcedureType
             {
+                Code = _procedureCodes[e.Label],
                 Label = e.Label,
                 RelevantTo = _medicinesOnlyProcedures.Contains(e.Label)
                     ? ReferenceDataType.MedicinesOnly
@@ -66,7 +87,7 @@ internal sealed class SeedReferenceData
         );
         PatientPathwayPoints = CreateList(
             data.PatientPathwayPoints,
-            e => new PatientPathwayPoint { Label = e.Label }
+            e => new PatientPathwayPoint { Code = _pathwayPointCodes[e.Label], Label = e.Label }
         );
         UkPatientPopulationRanges = CreateList(
             data.UkPatientPopulationRanges,
@@ -134,6 +155,11 @@ internal sealed class SeedReferenceData
                 "medicines_intl_recognition.irp_route_id" => IdOf(IrpRoutes, value, x => x.Id),
                 "medicines_eu_status.atmp_classification_id" => IdOf(
                     AtmpClassifications,
+                    value,
+                    x => x.Id
+                ),
+                "medicines_laboratory_testing.patient_pathway_point_id" => IdOf(
+                    PatientPathwayPoints,
                     value,
                     x => x.Id
                 ),

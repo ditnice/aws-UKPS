@@ -1,10 +1,9 @@
 'use client'
 
-import { Checkbox } from '@nice-digital/nds-checkbox'
-import { FormGroup } from '@nice-digital/nds-form-group'
-import { Radio } from '@nice-digital/nds-radio'
-
+import { Checkbox, Checkboxes } from '@/components/Checkboxes/Checkboxes'
+import { FormGroup } from '@/components/FormGroup/FormGroup'
 import { Input } from '@/components/Input/Input'
+import { Radio, Radios } from '@/components/Radios/Radios'
 
 import { Example } from '../../_components/Example'
 
@@ -18,41 +17,43 @@ export function Examples() {
         </FormGroup>
       </Example>
       <Example title="Default form group">
-        <FormGroup
+        <Radios
           legend="Are you happy for us to contact you in the future?"
           name="contact-preference"
         >
           <Radio label="Yes" value="yes" />
           <Radio label="No" value="no" />
-        </FormGroup>
+        </Radios>
       </Example>
       <Example title="Inline radios">
-        <FormGroup
+        <Radios
           legend="Are you happy for us to contact you in the future?"
           name="contact-preference-inline"
           inline
         >
           <Radio label="Yes" value="yes" />
           <Radio label="No" value="no" />
-        </FormGroup>
+        </Radios>
       </Example>
       <Example title="Form group with hints">
-        <FormGroup
+        <Checkboxes
+          name="contact-preference-hints"
           legend="How would you like us to contact you?"
           hint="We promise not to contact you too often"
         >
-          <Checkbox label="Email" value="email" name="contact-preference-hints" />
-          <Checkbox label="Telephone" value="phone" name="contact-preference-hints" />
-        </FormGroup>
+          <Checkbox label="Email" value="email" />
+          <Checkbox label="Telephone" value="phone" />
+        </Checkboxes>
       </Example>
       <Example title="Error messages">
-        <FormGroup
+        <Checkboxes
+          name="contact-preference-error"
           legend="How would you like us to contact you?"
-          groupError="Please choose at least one contact method!"
+          error="Please choose at least one contact method!"
         >
-          <Checkbox label="Email" value="email" name="contact-preference-error" />
-          <Checkbox label="Telephone" value="phone" name="contact-preference-error" />
-        </FormGroup>
+          <Checkbox label="Email" value="email" />
+          <Checkbox label="Telephone" value="phone" />
+        </Checkboxes>
       </Example>
       <Example title="Form group with heading level">
         <FormGroup legend="Personal information" headingLevel={3}>

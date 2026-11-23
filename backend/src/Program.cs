@@ -14,6 +14,7 @@ using UKPS.Api.Persistence.Data.Seeding;
 using UKPS.Api.WebApi;
 using UKPS.Api.WebApi.Authorisation;
 using UKPS.Api.WebApi.Controllers;
+using UKPS.Api.WebApi.InternalServices.Authentication;
 using UKPS.Api.WebApi.InternalServices.Hosting;
 using UKPS.Api.WebApi.InternalServices.Identity;
 
@@ -34,6 +35,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserInfoService, WebApiCurrentUserInfoService>();
 builder.Services.AddScoped<ISetupLinkCreator, SetupLinkCreator>();
+builder.Services.AddScoped<IEmailVerificationLinkCreator, EmailVerificationLinkCreator>();
+builder.Services.AddScoped<IAccessTokenProvider, HttpContextAccessTokenProvider>();
 builder.Services.AddUkpsServices();
 builder.Services.AddSeedingServices();
 builder.Services.AddTransient<IDatabaseMigrator, DatabaseMigrator>();
@@ -50,6 +53,12 @@ builder.Services.Configure<DatabaseOptions>(
 builder
     .Services.AddOptions<EmailOptions>()
     .Bind(builder.Configuration.GetSection(EmailOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder
+    .Services.AddOptions<HostingOptions>()
+    .Bind(builder.Configuration.GetSection(HostingOptions.SectionName))
     .ValidateDataAnnotations()
     .ValidateOnStart();
 

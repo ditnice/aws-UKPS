@@ -1,5 +1,7 @@
 @use '@/styles/spacing';
+@use '@/styles/typography';
 @use '@/styles/utils';
+@use '@/styles/visibility';
 
 .root {
   margin-bottom: utils.rem(spacing.$large);
@@ -12,14 +14,44 @@
   margin-bottom: utils.rem(spacing.$small);
 }
 
+.row + .row {
+  margin-top: utils.rem(spacing.$large);
+}
+
 .input {
-  flex: 0 1 66.6667%;
+  flex: 0 1 var(--input-basis, 66.6667%);
   min-width: 0;
 
   // TODO: replace with a specific selector once global styling rules have been reviewed
   :is(div, input, p) {
     margin-bottom: 0;
   }
+}
+
+// A list that answers one question: the legend is its label, styled as an input label.
+.fieldset {
+  border: 0;
+  margin-left: 0;
+  margin-right: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.legend {
+  padding: 0;
+
+  &:focus {
+    outline-offset: utils.rem(spacing.$x_small);
+  }
+}
+
+.legend.leadLegend {
+  @include typography.lead-label;
+}
+
+// Each input keeps its own label for screen readers; the legend is the visible one.
+.hiddenLabel :global(.input__label) {
+  @include visibility.invisible;
 }
 
 .removeButton {

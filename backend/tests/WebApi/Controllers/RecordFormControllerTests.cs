@@ -35,9 +35,10 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
         StringComparer.Ordinal
     )
     {
+        ["concurrent_update"] = new SaveRecordPageError.ConcurrentUpdate(),
         ["record_not_editable"] = new SaveRecordPageError.NotEditable(),
-        ["revision_changed"] = new SaveRecordPageError.RevisionChanged(),
         ["form_version_changed"] = new SaveRecordPageError.FormVersionChanged(),
+        ["page_answers_changed"] = new SaveRecordPageError.PageAnswersChanged(),
     };
 
     private readonly IRecordFormQueryService _mockQueryService =
@@ -132,7 +133,6 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
                 "indication",
                 Arg.Is<SaveRecordPageCommand>(c =>
                     c.FormVersion == "2026.10.4"
-                    && c.RevisionVersion == 42
                     && c.Answers[Indication].GetString() == "Hepatitis C"
                 ),
                 Arg.Any<CancellationToken>()
@@ -147,7 +147,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
                 new Dictionary<string, string>(StringComparer.Ordinal)
                 {
                     [Indication] = "Enter the indication",
-                    ["stray"] = "This is not a question on this page.",
+                    ["stray"] = "This is not a question on this page",
                 }
             )
         );
@@ -159,7 +159,7 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
             await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(Ct)
         )!;
         problem.Errors[Indication].ShouldBe(["Enter the indication"]);
-        problem.Errors["stray"].ShouldBe(["This is not a question on this page."]);
+        problem.Errors["stray"].ShouldBe(["This is not a question on this page"]);
     }
 
     [Fact]
@@ -198,9 +198,10 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
     }
 
     [Theory]
+    [InlineData("concurrent_update")]
     [InlineData("record_not_editable")]
-    [InlineData("revision_changed")]
     [InlineData("form_version_changed")]
+    [InlineData("page_answers_changed")]
     public async Task SaveRecordFormPage_Conflict_ReturnsConflictWithCode(string code)
     {
         SetSaveResult(_conflicts[code]);
@@ -221,11 +222,11 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
             new SaveRecordPageCommand
             {
                 FormVersion = "2026.10.4",
-                RevisionVersion = 42,
                 Answers = new Dictionary<string, JsonElement>(StringComparer.Ordinal)
                 {
                     [Indication] = JsonSerializer.SerializeToElement("Hepatitis C"),
                 },
+                PageHash = "0987345987345987",
             },
             Ct
         );
@@ -258,8 +259,8 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
         new()
         {
             FormVersion = "2026.10.4",
-            RevisionVersion = 42,
             RecordId = 5,
+            OrganisationId = 3,
             Section = new RecordPageSectionDto
             {
                 Id = "indication-details",
@@ -270,7 +271,12 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
                 Id = "indication-details",
                 Title = "Indication details",
             },
-            Page = new RecordPagePageDto { Id = "indication", Title = "Indication" },
+            Page = new RecordPagePageDto
+            {
+                Id = "indication",
+                Title = "Indication",
+                CommercialInConfidence = false,
+            },
             PreviousPageId = null,
             NextPageId = "bnf-chapter",
             Questions =
@@ -287,6 +293,8 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
                     ChildLabel = null,
                     ChildPlaceholder = null,
                     AddAnotherLabel = null,
+                    DateName = null,
+                    ShowWhen = null,
                     Rules =
                     [
                         new RecordPageRuleDto
@@ -303,5 +311,6 @@ public class RecordFormControllerTests : IClassFixture<WebApplicationFactory<Pro
             {
                 [Indication] = JsonSerializer.SerializeToElement("Hepatitis C"),
             },
+            PageHash = "27897348658",
         };
 }

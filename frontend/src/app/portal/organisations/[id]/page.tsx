@@ -9,6 +9,7 @@ import { SummaryList, SummaryListRow } from '@/components/SummaryList/SummaryLis
 
 import { TableAndFiltersGrid } from '../../components/_components/TableAndFiltersGrid'
 
+import { NotPermitted } from './_components/NotPermitted'
 import { OrganisationActionAlert } from './_components/OrganisationActionAlert'
 import { OrganisationFilters } from './_components/OrganisationFilters'
 import OrganisationPageWrapper from './_components/OrganisationPageWrapper'
@@ -45,15 +46,8 @@ export default async function OrganisationPage({ params, searchParams }: Props) 
     )
   }
 
-  if (currentUser.userRole == 'Standard') {
-    return (
-      <section>
-        <PageHeader heading="User is not permitted to view this page" />
-        <p role="alert">
-          The current user is not permitted to view this page. Please contact your champion user.
-        </p>
-      </section>
-    )
+  if (currentUser.userRole === 'Standard') {
+    return <NotPermitted />
   }
 
   return (

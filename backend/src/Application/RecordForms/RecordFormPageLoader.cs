@@ -1,5 +1,7 @@
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
 using UKPS.Api.Persistence;
@@ -18,6 +20,11 @@ internal sealed class RecordFormPageLoader(
     OptionProviderRegistry optionProviders
 )
 {
+    private static readonly MethodInfo _loadCodesMethod = typeof(RecordFormPageLoader).GetMethod(
+        nameof(LoadCodesAsync),
+        BindingFlags.NonPublic | BindingFlags.Static
+    )!;
+
     /// <summary>
     /// Finds the record's latest revision and the page, and checks the caller can read them. The
     /// revision is tracked when <paramref name="track"/> is set, for a save.
@@ -93,34 +100,181 @@ internal sealed class RecordFormPageLoader(
     }
 
     /// <summary>
-    /// Loads the revision's row of every entity on the page, tracked when
-    /// <paramref name="track"/> is set, for a save.
+    /// Loads the rows and answers the page needs and works out what applies, or returns null when
+    /// the page does not apply, which callers treat as not found. A save loads, and tracks, the
+    /// rows of every answer it may clear as well.
     /// </summary>
-    public async Task<Dictionary<FormEntity, object?>> LoadRowsAsync(
-        FormPage page,
+    public async Task<LoadedAnswers?> LoadAnswersAsync(
+        LoadedPage loaded,
+        bool forSave,
+        CancellationToken cancellationToken
+    )
+    {
+        FormModel model = loaded.Model;
+        FormPage page = loaded.Page;
+        IReadOnlyList<FormEntity> entities = forSave
+            ? model.EntitiesToSave(page)
+            : model.EntitiesToRead(page);
+
+        var (rows, answers) = await LoadRowsAsync(
+            model,
+            entities,
+            loaded.Revision.Id,
+            track: forSave,
+            cancellationToken
+        );
+        ReferenceCodes codes = await LoadReferenceCodesAsync(model, cancellationToken);
+        Applicability applicability = FormApplicability.Evaluate(model, answers, codes);
+        return applicability.Applies(page)
+            ? new LoadedAnswers(rows, answers, applicability, codes)
+            : null;
+    }
+
+    /// <summary>
+    /// Works out which of the form's pages and questions apply to the revision, loading only the
+    /// rows of <see cref="FormModel.TriggerEntities"/>.
+    /// </summary>
+    public async Task<Applicability> LoadApplicabilityAsync(
+        FormModel model,
+        int revisionId,
+        CancellationToken cancellationToken
+    )
+    {
+        var (_, answers) = await LoadRowsAsync(
+            model,
+            model.TriggerEntities,
+            revisionId,
+            track: false,
+            cancellationToken
+        );
+        ReferenceCodes codes = await LoadReferenceCodesAsync(model, cancellationToken);
+        return FormApplicability.Evaluate(model, answers, codes);
+    }
+
+    /// <summary>
+    /// Loads the answer to every question in the form on the revision, and works out what applies.
+    /// </summary>
+    public async Task<(
+        Dictionary<string, FormAnswer> Answers,
+        Applicability Applicability
+    )> LoadAllAnswersAsync(FormModel model, int revisionId, CancellationToken cancellationToken)
+    {
+        var (_, answers) = await LoadRowsAsync(
+            model,
+            model.Questions.Select(static q => q.Entity).Distinct(),
+            revisionId,
+            track: false,
+            cancellationToken
+        );
+        ReferenceCodes codes = await LoadReferenceCodesAsync(model, cancellationToken);
+        return (answers, FormApplicability.Evaluate(model, answers, codes));
+    }
+
+    /// <summary>Loads the codes of the reference data that the form's conditions name.</summary>
+    private async Task<ReferenceCodes> LoadReferenceCodesAsync(
+        FormModel model,
+        CancellationToken cancellationToken
+    )
+    {
+        if (model.ReferenceTriggerTypes.Count == 0)
+        {
+            return ReferenceCodes.None;
+        }
+
+        Dictionary<Type, IReadOnlyList<(int Id, string Code)>> rows = [];
+        foreach (Type type in model.ReferenceTriggerTypes)
+        {
+            rows[type] = await (Task<IReadOnlyList<(int Id, string Code)>>)
+                _loadCodesMethod
+                    .MakeGenericMethod(type)
+                    .Invoke(null, [dbContext, cancellationToken])!;
+        }
+
+        return new ReferenceCodes(rows);
+    }
+
+    private static async Task<IReadOnlyList<(int Id, string Code)>> LoadCodesAsync<TEntity>(
+        AppDbContext dbContext,
+        CancellationToken cancellationToken
+    )
+        where TEntity : class
+    {
+        var rows = await dbContext
+            .Set<TEntity>()
+            .AsNoTracking()
+            .Select(static x => new
+            {
+                Id = EF.Property<int>(x, "Id"),
+                Code = EF.Property<string>(x, "Code"),
+            })
+            .ToListAsync(cancellationToken);
+        return [.. rows.Select(static x => (x.Id, x.Code))];
+    }
+
+    /// <summary>
+    /// Loads the revision's row of each entity, and the answer of every question stored in them.
+    /// </summary>
+    private async Task<(
+        Dictionary<FormEntity, object?> Rows,
+        Dictionary<string, FormAnswer> Answers
+    )> LoadRowsAsync(
+        FormModel model,
+        IEnumerable<FormEntity> entities,
         int revisionId,
         bool track,
         CancellationToken cancellationToken
     )
     {
         Dictionary<FormEntity, object?> rows = [];
-        foreach (FormEntity entity in page.Entities)
+        foreach (FormEntity entity in entities)
         {
             rows[entity] = await entity.LoadAsync(dbContext, revisionId, track, cancellationToken);
         }
 
-        return rows;
+        Dictionary<string, FormAnswer> answers = model
+            .Questions.Where(q => rows.ContainsKey(q.Entity))
+            .ToDictionary(
+                static q => q.Id,
+                q => q.Binding.Read(rows[q.Entity]),
+                StringComparer.Ordinal
+            );
+        return (rows, answers);
     }
 
-    public static Dictionary<string, FormAnswer> ReadAnswers(
-        FormPage page,
-        Dictionary<FormEntity, object?> rows
-    ) =>
-        page.Questions.ToDictionary(
-            static q => q.Id,
-            q => q.Binding.Read(rows[q.Entity]),
-            StringComparer.Ordinal
-        );
+    /// <summary>
+    /// The options of every answered choice question that applies, enough to label and check the
+    /// chosen values. Saved answers are passed in so archived items already chosen stay offered.
+    /// </summary>
+    public async Task<Dictionary<string, IReadOnlyList<FormOption>>> LoadAllOptionsAsync(
+        FormModel model,
+        IReadOnlyDictionary<string, FormAnswer> answers,
+        Applicability applicability,
+        CancellationToken cancellationToken
+    )
+    {
+        Dictionary<string, IReadOnlyList<FormOption>> options = new(StringComparer.Ordinal);
+        foreach (FormPage page in model.Pages.Where(applicability.Applies))
+        {
+            foreach (
+                FormQuestion question in page.Questions.Where(q =>
+                    q.HasOptions && applicability.Applies(q)
+                )
+            )
+            {
+                string[] values = [.. answers[question.Id].AllValues()];
+                if (values.Length > 0)
+                {
+                    options[question.Id] = await LoadQuestionOptionsAsync(
+                        question,
+                        values,
+                        cancellationToken
+                    );
+                }
+            }
+        }
+
+        return options;
+    }
 
     /// <summary>
     /// Loads the options of every choice question. Saved answers are passed in so archived items
@@ -128,25 +282,34 @@ internal sealed class RecordFormPageLoader(
     /// </summary>
     public async Task<Dictionary<string, IReadOnlyList<FormOption>>> LoadOptionsAsync(
         FormPage page,
-        Dictionary<string, FormAnswer> savedAnswers,
+        PageAnswers savedAnswers,
         CancellationToken cancellationToken
     )
     {
         Dictionary<string, IReadOnlyList<FormOption>> options = new(StringComparer.Ordinal);
         foreach (FormQuestion question in page.Questions.Where(static q => q.HasOptions))
         {
-            IOptionProvider provider =
-                optionProviders.Find(question.OptionKey!)
-                ?? throw new InvalidOperationException(
-                    $"Option provider '{question.OptionKey}' is not registered."
-                );
-            options[question.Id] = await provider.GetOptionsAsync(
-                dbContext,
-                savedAnswers[question.Id].AllValues().ToArray(),
+            options[question.Id] = await LoadQuestionOptionsAsync(
+                question,
+                [.. savedAnswers[question.Id].AllValues()],
                 cancellationToken
             );
         }
 
         return options;
+    }
+
+    private Task<IReadOnlyList<FormOption>> LoadQuestionOptionsAsync(
+        FormQuestion question,
+        string[] savedValues,
+        CancellationToken cancellationToken
+    )
+    {
+        IOptionProvider provider =
+            optionProviders.Find(question.OptionKey!)
+            ?? throw new InvalidOperationException(
+                $"Option provider '{question.OptionKey}' is not registered."
+            );
+        return provider.GetOptionsAsync(dbContext, savedValues, cancellationToken);
     }
 }

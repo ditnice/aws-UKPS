@@ -9,6 +9,7 @@ import CreateMedicineRecordForm from './CreateMedicineRecordForm'
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   createRecord: vi.fn(),
+  getOrganisationCompanyCodes: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
@@ -19,7 +20,11 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/client/generated', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/client/generated')>()
-  return { ...original, createRecord: mocks.createRecord }
+  return {
+    ...original,
+    createRecord: mocks.createRecord,
+    getOrganisationCompanyCodes: mocks.getOrganisationCompanyCodes,
+  }
 })
 
 const renderComponent = (organisationId = 1) => {
@@ -36,7 +41,7 @@ const validFormValues: FormValues = {
   recordTitle: 'record-title',
 }
 
-const otherIdentifiersLabel = 'Other names and identifiers (optional)'
+const otherIdentifiersLabel = 'Identifier'
 
 const setFieldValue = (label: string, value: string) => {
   fireEvent.change(screen.getByLabelText(label), {
@@ -73,6 +78,7 @@ const clickSubmitButton = () => {
 }
 
 beforeEach(() => {
+  mocks.getOrganisationCompanyCodes.mockResolvedValue({ data: { items: [] } })
   mocks.createRecord.mockResolvedValue({
     error: undefined,
     response: { ok: true },
@@ -92,10 +98,10 @@ describe('CreateMedicineRecordForm', () => {
       expect(screen.getByRole('button', { name: 'Save and continue' })).toBeDefined()
     })
 
-    it('renders the default company code field', () => {
+    it('renders the company code field as a type-ahead', () => {
       renderComponent()
 
-      expect(screen.getByLabelText('Company code')).toBeDefined()
+      expect(screen.getByRole('combobox', { name: 'Company code' })).toBeDefined()
     })
 
     it('renders the default generic name field', () => {
@@ -156,7 +162,7 @@ describe('CreateMedicineRecordForm', () => {
 
       fireEvent.click(screen.getByText('Add another active substance'))
 
-      expect(screen.getByLabelText('Generic name')).toBeDefined()
+      expect(screen.getByLabelText('Generic name 1')).toBeDefined()
       expect(screen.getByLabelText('Generic name 2')).toBeDefined()
     })
 
@@ -167,7 +173,7 @@ describe('CreateMedicineRecordForm', () => {
 
       expect(screen.getByLabelText('Generic name 2')).toBeDefined()
 
-      fireEvent.click(screen.getByRole('button', { name: 'Remove additional active substance 2' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Remove Generic name 2' }))
 
       expect(screen.queryByLabelText('Generic name 2')).toBeNull()
     })
@@ -229,7 +235,7 @@ describe('CreateMedicineRecordForm', () => {
 
       expect(screen.getByLabelText(`${otherIdentifiersLabel} 2`)).toBeDefined()
 
-      fireEvent.click(screen.getByRole('button', { name: 'Remove additional identifier 2' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Remove Identifier 2' }))
 
       expect(screen.queryByLabelText(`${otherIdentifiersLabel} 2`)).toBeNull()
     })
@@ -386,6 +392,29 @@ describe('CreateMedicineRecordForm', () => {
       })
     })
 
+    it("sends a company code chosen from the organisation's suggestions", async () => {
+      mocks.getOrganisationCompanyCodes.mockResolvedValue({ data: { items: ['CC1-ALPHA'] } })
+      renderComponent(123)
+
+      fillInForm(validFormValues)
+      fireEvent.click(await screen.findByRole('option', { name: 'CC1-ALPHA' }))
+      clickSubmitButton()
+
+      await waitFor(() => {
+        expect(mocks.createRecord).toHaveBeenCalled()
+      })
+
+      expect(mocks.getOrganisationCompanyCodes).toHaveBeenCalledWith(
+        expect.objectContaining({
+          path: { organisationId: 123 },
+          query: expect.objectContaining({ Search: 'cc1' }),
+        }),
+      )
+      expect(mocks.createRecord).toHaveBeenCalledWith({
+        body: expect.objectContaining({ companyCode: 'CC1-ALPHA' }),
+      })
+    })
+
     it('navigates to the records page after successful submission', async () => {
       renderComponent(123)
 
@@ -409,7 +438,7 @@ describe('CreateMedicineRecordForm', () => {
       clickSubmitButton()
 
       await waitFor(() => {
-        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/task-list')
+        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/task-list?action=draft-saved')
       })
     })
 
@@ -492,8 +521,8 @@ describe('CreateMedicineRecordForm', () => {
 
     it.each([
       ['company code', 'CompanyCode', 'Company code'],
-      ['generic names', 'GenericNames', 'Generic name'],
-      ['other names and identifiers', 'OtherIdentifiers', otherIdentifiersLabel],
+      ['generic names', 'GenericNames', 'Generic name 1'],
+      ['other names and identifiers', 'OtherIdentifiers', `${otherIdentifiersLabel} 1`],
     ])(
       'allows resubmission after correcting %s rejected by the API',
       async (_, errorKey, label) => {

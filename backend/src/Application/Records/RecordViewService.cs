@@ -1,31 +1,80 @@
-using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.RecordForms;
+using UKPS.Api.Application.RecordForms.Dtos;
+using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.Records.Dtos;
-using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
-using UKPS.Api.Persistence.Entities.ReferenceData;
-using UKPS.Api.Persistence.Entities.SharedRevisionContent;
 using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Application.Records;
 
-// Type aliases for Result
-using GetRecordResult = Result<RecordDto, GetRecordError>;
+using GetRecordDetailResult = Result<RecordDetailDto, GetRecordError>;
+using GetRecordOverviewResult = Result<RecordOverviewDto, GetRecordError>;
 
 internal sealed class RecordViewService(
     AppDbContext dbContext,
     IOrganisationAuthoriser organisationAuthoriser,
     ICurrentUserInfoService currentUserInfoService,
-    FormModelRegistry formModels
+    FormModelRegistry formModels,
+    RecordFormPageLoader formLoader
 ) : IRecordViewService
 {
-    public async Task<GetRecordResult> GetRecord(
+    public async Task<GetRecordOverviewResult> GetRecordOverview(
+        int recordId,
+        RecordType recordType,
+        int organisationId,
+        CancellationToken cancellationToken
+    )
+    {
+        Result<RecordHeader, GetRecordError> found = await FindRecord(
+            recordId,
+            recordType,
+            organisationId,
+            cancellationToken
+        );
+        return await found.Match(
+            onOk: async record =>
+                GetRecordOverviewResult.Ok(await ToOverview(record, cancellationToken)),
+            onErr: static error => Task.FromResult(GetRecordOverviewResult.Err(error))
+        );
+    }
+
+    public async Task<GetRecordDetailResult> GetRecordDetail(
+        int recordId,
+        RecordType recordType,
+        int organisationId,
+        CancellationToken cancellationToken
+    )
+    {
+        Result<RecordHeader, GetRecordError> found = await FindRecord(
+            recordId,
+            recordType,
+            organisationId,
+            cancellationToken
+        );
+        return await found.Match(
+            onOk: async record =>
+                GetRecordDetailResult.Ok(
+                    new RecordDetailDto
+                    {
+                        Overview = await ToOverview(record, cancellationToken),
+                        Sections = await GetSections(record, cancellationToken),
+                    }
+                ),
+            onErr: static error => Task.FromResult(GetRecordDetailResult.Err(error))
+        );
+    }
+
+    /// <summary>
+    /// Finds the record and its latest revision, checking the caller can read it and that it is of
+    /// the requested type.
+    /// </summary>
+    private async Task<Result<RecordHeader, GetRecordError>> FindRecord(
         int recordId,
         RecordType recordType,
         int organisationId,
@@ -43,52 +92,79 @@ internal sealed class RecordViewService(
             )
         )
         {
-            return GetRecordResult.Err(new GetRecordError.NotAllowed(recordId));
-        }
-
-        RecordHeader? record = await GetRecordHeader(recordId, cancellationToken);
-
-        if (record is null || record.OrganisationId != organisationId)
-        {
-            return GetRecordResult.Err(new GetRecordError.NotFound(recordId));
-        }
-
-        // Every record is created with a revision, so this only guards against bad data.
-        if (record.LatestRevisionId is null || record.LatestRevisionStatus is null)
-        {
-            return GetRecordResult.Err(new GetRecordError.NotFound(recordId));
-        }
-
-        if (record.RecordType != recordType)
-        {
-            return GetRecordResult.Err(
-                new GetRecordError.RecordTypeMismatch(recordId, recordType, record.RecordType)
+            return Result<RecordHeader, GetRecordError>.Err(
+                new GetRecordError.NotAllowed(recordId)
             );
         }
 
-        int revisionId = record.LatestRevisionId.Value;
-        IReadOnlyCollection<RecordAction> actions = Record.GetPermittedActions(
-            new(record.RecordStatus, record.LatestRevisionStatus.Value),
-            record.HasSingleRevision
-        );
+        RecordHeaderRow? row = await GetRecordHeaderRow(recordId, cancellationToken);
 
-        return GetRecordResult.Ok(
-            recordType switch
-            {
-                RecordType.Medicine => await GetMedicineRecord(
-                    recordId,
-                    record,
-                    revisionId,
-                    actions,
-                    cancellationToken
-                ),
-                RecordType.Vaccine => GetVaccineRecord(recordId, record, actions),
-                _ => throw new UnreachableException($"Unhandled record type {recordType}."),
-            }
+        // Every record is created with a revision, so a missing one only guards against bad data.
+        if (
+            row
+                is not {
+                    LatestRevisionId: int latestRevisionId,
+                    LatestRevisionStatus: WorkflowStatus latestRevisionStatus,
+                }
+            || row.OrganisationId != organisationId
+        )
+        {
+            return Result<RecordHeader, GetRecordError>.Err(new GetRecordError.NotFound(recordId));
+        }
+
+        if (row.RecordType != recordType)
+        {
+            return Result<RecordHeader, GetRecordError>.Err(
+                new GetRecordError.RecordTypeMismatch(recordId, recordType, row.RecordType)
+            );
+        }
+
+        return Result<RecordHeader, GetRecordError>.Ok(
+            new RecordHeader(
+                row.Id,
+                row.OrganisationId,
+                row.RecordType,
+                row.RecordStatus,
+                row.ReviewedAt,
+                latestRevisionId,
+                row.DisplayStatus,
+                latestRevisionStatus,
+                row.HasSingleRevision,
+                row.NextUpdateDue
+            )
         );
     }
 
-    private Task<RecordHeader?> GetRecordHeader(
+    /// <summary>
+    /// Every question that applies on the latest revision with its answer, built as check your
+    /// answers builds them but without checking them; empty when the record type has no form.
+    /// </summary>
+    private async Task<IReadOnlyList<RecordAnswersSectionDto>> GetSections(
+        RecordHeader record,
+        CancellationToken cancellationToken
+    )
+    {
+        FormModel? model = formModels.Find(record.RecordType);
+        if (model is null)
+        {
+            return [];
+        }
+
+        var (answers, applicability) = await formLoader.LoadAllAnswersAsync(
+            model,
+            record.LatestRevisionId,
+            cancellationToken
+        );
+        var options = await formLoader.LoadAllOptionsAsync(
+            model,
+            answers,
+            applicability,
+            cancellationToken
+        );
+        return new RecordAnswersBuilder(model, answers, applicability, options).Build();
+    }
+
+    private Task<RecordHeaderRow?> GetRecordHeaderRow(
         int recordId,
         CancellationToken cancellationToken
     ) =>
@@ -96,7 +172,8 @@ internal sealed class RecordViewService(
             .Records.AsNoTracking()
             .Where(r => r.Id == recordId)
             .SelectLatestRevision()
-            .Select(x => new RecordHeader(
+            .Select(x => new RecordHeaderRow(
+                x.Record.Id,
                 x.Record.OrganisationId,
                 x.Record.RecordType,
                 x.Record.RecordStatus,
@@ -104,9 +181,44 @@ internal sealed class RecordViewService(
                 x.LatestRevisionId,
                 x.DisplayStatus,
                 x.LatestRevisionStatus,
-                x.HasSingleRevision
+                x.HasSingleRevision,
+                x.NextUpdateDue
             ))
             .SingleOrDefaultAsync(cancellationToken);
+
+    private async Task<RecordOverviewDto> ToOverview(
+        RecordHeader record,
+        CancellationToken cancellationToken
+    )
+    {
+        var productDetail = await dbContext
+            .RecordProductDetails.AsNoTracking()
+            .Where(x => x.RevisionId == record.LatestRevisionId)
+            .Select(static x => new { x.CompanyCode, x.RecordTitle })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        return new()
+        {
+            RecordId = record.Id,
+            OrganisationId = record.OrganisationId,
+            RecordType = record.RecordType,
+            RecordStatus = record.RecordStatus,
+            DisplayStatus = record.DisplayStatus,
+            ReviewedAt = record.ReviewedAt,
+            CanEditContent = CanEditContent(record),
+            Actions = Record.GetPermittedActions(
+                new(record.RecordStatus, record.LatestRevisionStatus),
+                record.HasSingleRevision,
+                organisationAuthoriser.CanPerformOperationOnOrganisation(
+                    Operation.ChangeRecordStatus,
+                    record.OrganisationId
+                )
+            ),
+            NextUpdateDue = record.NextUpdateDue,
+            CompanyCode = productDetail?.CompanyCode,
+            RecordTitle = productDetail?.RecordTitle,
+        };
+    }
 
     /// <summary>
     /// Whether the record type has a content form and the caller can edit the record's content.
@@ -118,433 +230,9 @@ internal sealed class RecordViewService(
             record.OrganisationId
         );
 
-    private async Task<MedicineRecordDto> GetMedicineRecord(
-        int recordId,
-        RecordHeader record,
-        int revisionId,
-        IReadOnlyCollection<RecordAction> actions,
-        CancellationToken cancellationToken
-    )
-    {
-        return new MedicineRecordDto
-        {
-            RecordId = recordId,
-            OrganisationId = record.OrganisationId,
-            RecordStatus = record.RecordStatus,
-            DisplayStatus = record.DisplayStatus,
-            ReviewedAt = record.ReviewedAt,
-            CanEditContent = CanEditContent(record),
-            Actions = actions,
-            RecordProductDetail = await GetRecordProductDetail(revisionId, cancellationToken),
-            MedicinesIndicationDetail = await GetMedicinesIndicationDetail(
-                revisionId,
-                cancellationToken
-            ),
-            MedicinesDevelopmentBackground = await GetMedicinesDevelopmentBackground(
-                revisionId,
-                cancellationToken
-            ),
-            RecordClinicalTrialInformation = await GetRecordClinicalTrialInformation(
-                revisionId,
-                cancellationToken
-            ),
-            RecordClinicalTrials = await GetRecordClinicalTrials(revisionId, cancellationToken),
-            RecordMhraProcedure = await GetRecordMhraProcedure(revisionId, cancellationToken),
-            RecordMhraDate = await GetRecordMhraDate(revisionId, cancellationToken),
-            MedicinesGlobalSubmission = await GetMedicinesGlobalSubmission(
-                revisionId,
-                cancellationToken
-            ),
-            MedicinesIntlRecognition = await GetMedicinesIntlRecognition(
-                revisionId,
-                cancellationToken
-            ),
-            RecordHta = await GetRecordHta(revisionId, cancellationToken),
-            MedicinesEuStatus = await GetMedicinesEuStatus(revisionId, cancellationToken),
-            MedicinesEamsPim = await GetMedicinesEamsPim(revisionId, cancellationToken),
-            MedicinesLaboratoryTesting = await GetMedicinesLaboratoryTesting(
-                revisionId,
-                cancellationToken
-            ),
-            MedicinesPatientIdentification = await GetMedicinesPatientIdentification(
-                revisionId,
-                cancellationToken
-            ),
-            MedicinesTreatmentDetail = await GetMedicinesTreatmentDetail(
-                revisionId,
-                cancellationToken
-            ),
-            MedicinesServiceImpact = await GetMedicinesServiceImpact(revisionId, cancellationToken),
-            MedicinesBudgetImpact = await GetMedicinesBudgetImpact(revisionId, cancellationToken),
-        };
-    }
-
-    // TODO: Populate the vaccine record sections.
-    private VaccineRecordDto GetVaccineRecord(
-        int recordId,
-        RecordHeader record,
-        IReadOnlyCollection<RecordAction> actions
-    )
-    {
-        return new VaccineRecordDto
-        {
-            RecordId = recordId,
-            OrganisationId = record.OrganisationId,
-            RecordStatus = record.RecordStatus,
-            DisplayStatus = record.DisplayStatus,
-            ReviewedAt = record.ReviewedAt,
-            CanEditContent = CanEditContent(record),
-            Actions = actions,
-        };
-    }
-
-    private Task<RecordProductDetailDto?> GetRecordProductDetail(
-        int revisionId,
-        CancellationToken cancellationToken
-    ) =>
-        dbContext
-            .RecordProductDetails.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .Select(x => new RecordProductDetailDto
-            {
-                CompanyCode = x.CompanyCode,
-                NamesAndIdentifiers = x
-                    .NamesAndIdentifiers.OrderBy(n => n.DisplayOrder)
-                    .ThenBy(n => n.Id)
-                    .Select(n => new RecordNameAndIdentifierDto
-                    {
-                        Name = n.Name,
-                        NameType = n.NameType,
-                    })
-                    .ToList(),
-                BrandedName = x.BrandedName,
-                RecordTitle = x.RecordTitle,
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-    private Task<MedicinesIndicationDetailDto?> GetMedicinesIndicationDetail(
-        int revisionId,
-        CancellationToken cancellationToken
-    ) =>
-        dbContext
-            .MedicinesIndicationDetails.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .Select(x => new MedicinesIndicationDetailDto
-            {
-                Indication = x.Indication,
-                BnfChapter =
-                    x.BnfChapter == null
-                        ? null
-                        : new ReferenceDataDto { Id = x.BnfChapter.Id, Label = x.BnfChapter.Label },
-                TherapeuticAreas = x
-                    .TherapeuticAreas.OrderBy(t => t.TherapeuticArea!.DisplayOrder)
-                    .ThenBy(t => t.TherapeuticArea!.Label)
-                    .Select(t => new ReferenceDataDto
-                    {
-                        Id = t.TherapeuticAreaId,
-                        Label = t.TherapeuticArea!.Label,
-                    })
-                    .ToList(),
-                IndicationIsPaediatric = x.IndicationIsPaediatric,
-                IndicationIsCancer = x.IndicationIsCancer,
-                IndicationIsRareDisease = x.IndicationIsRareDisease,
-                FormulationType = ToDto(x.FormulationType),
-                Presentation = x.Presentation,
-                ModeOfAction = x.ModeOfAction,
-                ProposedDoseRegimen = x.ProposedDoseRegimen,
-                IsPersonalisedMedicine = x.IsPersonalisedMedicine,
-                MedicineTechnologyStatus = ToFlagList(x.MedicineTechnologyStatus),
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-    private Task<MedicinesDevelopmentBackgroundDto?> GetMedicinesDevelopmentBackground(
-        int revisionId,
-        CancellationToken cancellationToken
-    ) =>
-        dbContext
-            .MedicinesDevelopmentBackgrounds.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .Select(x => new MedicinesDevelopmentBackgroundDto
-            {
-                IsRepurposedMedicine = x.IsRepurposedMedicine,
-                RepurposedMedicineDetails = x.RepurposedMedicineDetails,
-                IsOriginatorCompany = x.IsOriginatorCompany,
-                OriginatorCompanyName = x.OriginatorCompanyName,
-                IsCoMarketed = x.IsCoMarketed,
-                CoMarketingCompanyName = x.CoMarketingCompanyName,
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-    private Task<MedicinesTreatmentDetailDto?> GetMedicinesTreatmentDetail(
-        int revisionId,
-        CancellationToken cancellationToken
-    ) =>
-        dbContext
-            .MedicinesTreatmentDetails.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .Select(x => new MedicinesTreatmentDetailDto
-            {
-                ProposedPlaceInTherapy = x.ProposedPlaceInTherapy,
-                EstimatedDurationOfTreatment = x.EstimatedDurationOfTreatment,
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-    private Task<MedicinesPatientIdentificationDto?> GetMedicinesPatientIdentification(
-        int revisionId,
-        CancellationToken cancellationToken
-    ) =>
-        dbContext
-            .MedicinesPatientIdentifications.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .Select(x => new MedicinesPatientIdentificationDto
-            {
-                ScreeningRequired = x.ScreeningRequired,
-                ScreeningDetails = x.ScreeningDetails,
-                UrgentIdentificationRequired = x.UrgentIdentificationRequired,
-                UrgentIdentificationDetails = x.UrgentIdentificationDetails,
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-    private Task<MedicinesLaboratoryTestingDto?> GetMedicinesLaboratoryTesting(
-        int revisionId,
-        CancellationToken cancellationToken
-    ) =>
-        dbContext
-            .MedicinesLaboratoryTestings.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .Select(x => new MedicinesLaboratoryTestingDto
-            {
-                DiagnosticTestRequired = x.DiagnosticTestRequired,
-                BiomarkerType = x.BiomarkerType,
-                NonGenomicBiomarkerDescription = x.NonGenomicBiomarkerDescription,
-                GenomicTarget = x.GenomicTarget,
-                GenomicTestNgtdRelationship = x.GenomicTestNgtdRelationship,
-                GenomicSampleType = x.GenomicSampleType,
-                GenomicTurnaroundTimeDetails = x.GenomicTurnaroundTimeDetails,
-                PatientPathwayPoint = ToDto(x.PatientPathwayPoint),
-                GenomicTestPathwayPointOther = x.GenomicTestPathwayPointOther,
-                GenomicAlterations = x.GenomicAlterations,
-                AdditionalGenomicFactors = x.AdditionalGenomicFactors,
-                GenomicTestUsedInTrials = x.GenomicTestUsedInTrials,
-                GenomicTestSpecificitySensitivity = x.GenomicTestSpecificitySensitivity,
-                GenomicTestMandatoryStatus = x.GenomicTestMandatoryStatus,
-                GenomicTestNotes = x.GenomicTestNotes,
-                MonitoringTestsDetails = x.MonitoringTestsDetails,
-                SafetyTestsDetails = x.SafetyTestsDetails,
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-    private Task<MedicinesServiceImpactDto?> GetMedicinesServiceImpact(
-        int revisionId,
-        CancellationToken cancellationToken
-    ) =>
-        dbContext
-            .MedicinesServiceImpacts.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .Select(x => new MedicinesServiceImpactDto
-            {
-                NhsServiceChangesRequired = x.NhsServiceChangesRequired,
-                NhsServiceChangesDetails = x.NhsServiceChangesDetails,
-                HandlingStorageRequirements = x.HandlingStorageRequirements,
-                HandlingStorageDetails = x.HandlingStorageDetails,
-                UkPatientPopulationRange = ToDto(x.UkPatientPopulationRange),
-                UkPatientPopulationNotes = x.UkPatientPopulationNotes,
-                EstimatedEligiblePatientPopulation = x.EstimatedEligiblePatientPopulation,
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-    private Task<MedicinesBudgetImpactDto?> GetMedicinesBudgetImpact(
-        int revisionId,
-        CancellationToken cancellationToken
-    ) =>
-        dbContext
-            .MedicinesBudgetImpacts.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .Select(x => new MedicinesBudgetImpactDto
-            {
-                EstimatedUptake = x.EstimatedUptake,
-                CompassionateAccessAvailable = x.CompassionateAccessAvailable,
-                CompassionateAccessDetails = x.CompassionateAccessDetails,
-                PatientAccessSchemePlanned = x.PatientAccessSchemePlanned,
-                PatientAccessSchemeRegions = ToFlagList(x.PatientAccessSchemeRegions),
-                IndicationSpecificPricingPlanned = x.IndicationSpecificPricingPlanned,
-                IndicationSpecificPricingDetails = x.IndicationSpecificPricingDetails,
-                NetUkBudgetImpactBand = x.NetUkBudgetImpactBand,
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-    private Task<MedicinesEamsPimDto?> GetMedicinesEamsPim(
-        int revisionId,
-        CancellationToken cancellationToken
-    ) =>
-        dbContext
-            .MedicinesEamsPims.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .Select(x => new MedicinesEamsPimDto
-            {
-                PimDesignationStatus = x.PimDesignationStatus,
-                WillSubmitToEams = x.WillSubmitToEams,
-                EamsSubmissionDate = ToDto(x.EamsSubmissionDate),
-                EamsOpinionDate = ToDto(x.EamsOpinionDate),
-                EamsOpinionDecision = x.EamsOpinionDecision,
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-    private Task<MedicinesEuStatusDto?> GetMedicinesEuStatus(
-        int revisionId,
-        CancellationToken cancellationToken
-    ) =>
-        dbContext
-            .MedicinesEuStatuses.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .Select(x => new MedicinesEuStatusDto
-            {
-                EuOrphanStatus = x.EuOrphanStatus,
-                EuOrphanStatusNumber = x.EuOrphanStatusNumber,
-                EuOrphanGrantedDate = ToDto(x.EuOrphanGrantedDate),
-                EuAtmpClassificationStatus = x.EuAtmpClassificationStatus,
-                AtmpRecommendationDate = ToDto(x.AtmpRecommendationDate),
-                AtmpClassification = ToDto(x.AtmpClassification),
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-    private Task<MedicinesGlobalSubmissionDto?> GetMedicinesGlobalSubmission(
-        int revisionId,
-        CancellationToken cancellationToken
-    ) =>
-        dbContext
-            .MedicinesGlobalSubmissions.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .Select(x => new MedicinesGlobalSubmissionDto
-            {
-                GlobalFirstSubmissionRegion = x.GlobalFirstSubmissionRegion,
-                GlobalSubmissionActualDate = ToDto(x.GlobalSubmissionActualDate),
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-    private Task<MedicinesIntlRecognitionDto?> GetMedicinesIntlRecognition(
-        int revisionId,
-        CancellationToken cancellationToken
-    ) =>
-        dbContext
-            .MedicinesIntlRecognitions.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .Select(x => new MedicinesIntlRecognitionDto
-            {
-                IrpRoute = ToDto(x.IrpRoute),
-                IntlSubmissionDate = ToDto(x.IntlSubmissionDate),
-                IntlLicenceDate = ToDto(x.IntlLicenceDate),
-                IntlConditionalApprovalAnticipated = x.IntlConditionalApprovalAnticipated,
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-    private Task<RecordClinicalTrialInformationDto?> GetRecordClinicalTrialInformation(
-        int revisionId,
-        CancellationToken cancellationToken
-    ) =>
-        dbContext
-            .RecordClinicalTrialInformation.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .Select(x => new RecordClinicalTrialInformationDto
-            {
-                RecruitingInUk = x.RecruitingInUk,
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-    private async Task<IReadOnlyCollection<RecordClinicalTrialDto>> GetRecordClinicalTrials(
-        int revisionId,
-        CancellationToken cancellationToken
-    ) =>
-        await dbContext
-            .RecordClinicalTrials.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .OrderBy(x => x.Id)
-            .Select(x => new RecordClinicalTrialDto
-            {
-                StudyName = x.StudyName,
-                ClinicalTrialsGovNumber = x.ClinicalTrialsGovNumber,
-                OtherClinicalTrialNumbers = x
-                    .OtherClinicalTrialNumbers.OrderBy(n => n.DisplayOrder)
-                    .ThenBy(n => n.Id)
-                    .Select(n => n.OtherRegistryNumber)
-                    .ToList(),
-                TrialPhase = x.TrialPhase,
-                BriefDescription = x.BriefDescription,
-            })
-            .ToListAsync(cancellationToken);
-
-    private Task<RecordHtaDto?> GetRecordHta(int revisionId, CancellationToken cancellationToken) =>
-        dbContext
-            .RecordHtas.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .Select(x => new RecordHtaDto
-            {
-                MedicineHtaSubmissionIntended = x.MedicineHtaSubmissionIntended,
-                MedicineHtaBodies = ToFlagList(x.MedicineHtaBodies),
-                HtaAdditionalDetails = x.HtaAdditionalDetails,
-                HtaNiceAlignedPathway = x.HtaNiceAlignedPathway,
-                NiceTaDevelopmentId = x.NiceTaDevelopmentId,
-                UkLaunchDate = ToDto(x.UkLaunchDate),
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-    private Task<RecordMhraDateDto?> GetRecordMhraDate(
-        int revisionId,
-        CancellationToken cancellationToken
-    ) =>
-        dbContext
-            .RecordMhraDates.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .Select(x => new RecordMhraDateDto
-            {
-                UkSubmissionDate = ToDto(x.UkSubmissionDate),
-                UkLicenceDate = ToDto(x.UkLicenceDate),
-                UkConditionalApprovalAnticipated = x.UkConditionalApprovalAnticipated,
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-    private Task<RecordMhraProcedureDto?> GetRecordMhraProcedure(
-        int revisionId,
-        CancellationToken cancellationToken
-    ) =>
-        dbContext
-            .RecordMhraProcedures.AsNoTracking()
-            .Where(x => x.RevisionId == revisionId)
-            .Select(x => new RecordMhraProcedureDto
-            {
-                MhraProcedureType = ToDto(x.MhraProcedureType),
-                IrpReferenceRegulator = ToDto(x.IrpReferenceRegulator),
-                ProcedureDetails = x.ProcedureDetails,
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-    private static ReferenceDataDto? ToDto(ReferenceDataBase? referenceData) =>
-        referenceData is null
-            ? null
-            : new ReferenceDataDto { Id = referenceData.Id, Label = referenceData.Label };
-
-    private static RegulatoryDateDto? ToDto(RegulatoryDate? regulatoryDate) =>
-        regulatoryDate is null
-            ? null
-            : new RegulatoryDateDto
-            {
-                DateValue = regulatoryDate.DateValue,
-                DatePrecision = regulatoryDate.DatePrecision,
-                IsConfidential = regulatoryDate.IsConfidential,
-            };
-
-    /// <summary>
-    /// Splits a combined [Flags] value into the individual values it contains.
-    /// </summary>
-    private static List<TEnum>? ToFlagList<TEnum>(TEnum? combinedFlags)
-        where TEnum : struct, Enum
-    {
-        return (combinedFlags is null)
-            ? null
-            : Enum.GetValues<TEnum>().Where(flag => combinedFlags.Value.HasFlag(flag)).ToList();
-    }
-
-    private sealed record RecordHeader(
+    /// <summary>The record and its latest revision, as read from the database.</summary>
+    private sealed record RecordHeaderRow(
+        int Id,
         int OrganisationId,
         RecordType RecordType,
         RecordStatus RecordStatus,
@@ -552,6 +240,21 @@ internal sealed class RecordViewService(
         int? LatestRevisionId,
         RecordDisplayStatus DisplayStatus,
         WorkflowStatus? LatestRevisionStatus,
-        bool HasSingleRevision
+        bool HasSingleRevision,
+        DateTime? NextUpdateDue
+    );
+
+    /// <summary>A record the caller can read, with its latest revision.</summary>
+    private sealed record RecordHeader(
+        int Id,
+        int OrganisationId,
+        RecordType RecordType,
+        RecordStatus RecordStatus,
+        DateTime? ReviewedAt,
+        int LatestRevisionId,
+        RecordDisplayStatus DisplayStatus,
+        WorkflowStatus LatestRevisionStatus,
+        bool HasSingleRevision,
+        DateTime? NextUpdateDue
     );
 }

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Identity;
@@ -38,7 +39,8 @@ internal sealed partial class UserOnboardingService
     public async Task<Result<UserOnboardingOutcome, OnboardUserError>> OnboardUserToOrganisation(
         OnboardUserCommandDto command,
         OnboardingFlow onboardingFlow,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        IDbContextTransaction? externalTx = null
     )
     {
         User? existingUser = await _dbContext
@@ -49,39 +51,94 @@ internal sealed partial class UserOnboardingService
             return await AddMembershipToExistingUser(existingUser, command, cancellationToken);
         }
 
-        Task<Result<UserOnboardingOutcome, OnboardUserError>> HandleIdentityUserCreationFailed(
-            CreateNewUserError error
-        )
+        if (externalTx is not null || _dbContext.Database.CurrentTransaction != null)
         {
-            return error switch
-            {
-                CreateNewUserError.UsernameAlreadyExists => Task.FromResult(
-                    Result<UserOnboardingOutcome, OnboardUserError>.Err(
-                        new OnboardUserError.UsernameAlreadyExists()
-                    )
-                ),
-                _ => throw new InvalidOperationException(
-                    $"An unexpected error occurred when creating a new user [{error}]"
-                ),
-            };
+            return await RunUserCreationAsync(
+                command,
+                onboardingFlow,
+                commit: null,
+                cancellationToken
+            );
+        }
+
+        var strategy = _dbContext.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
+        {
+            await using var tx = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+            return await RunUserCreationAsync(
+                command,
+                onboardingFlow,
+                commit: () => tx.CommitAsync(cancellationToken),
+                cancellationToken
+            );
+        });
+    }
+
+    private async Task<Result<UserOnboardingOutcome, OnboardUserError>> RunUserCreationAsync(
+        OnboardUserCommandDto command,
+        OnboardingFlow onboardingFlow,
+        Func<Task>? commit,
+        CancellationToken cancellationToken
+    )
+    {
+        // Advisory xact lock is released when whichever transaction is in use ends.
+        await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT pg_advisory_xact_lock(hashtextextended(ukps.normalise_email({command.NewUserEmail}), 0))",
+            cancellationToken
+        );
+
+        bool emailInUse = await _dbContext.Users.AnyAsync(
+            x =>
+                x.NormalisedWorkEmail == EmailDbFunctions.Normalise(command.NewUserEmail)
+                || x.NormalisedPendingWorkEmail == EmailDbFunctions.Normalise(command.NewUserEmail),
+            cancellationToken
+        );
+        if (emailInUse)
+        {
+            return Result<UserOnboardingOutcome, OnboardUserError>.Err(
+                new OnboardUserError.UserAlreadyInOrganisation()
+            );
         }
 
         CognitoUsername cognitoUsername = CognitoUsername.GenerateNew();
-        var result = await _administerIdentityService.CreateNewUser(
+        var identityResult = await _administerIdentityService.CreateNewUser(
             cognitoUsername,
             command.NewUserEmail,
             cancellationToken
         );
-        return await result.Match(
-            onOk: () =>
-                CreateANewUserInDatabase(
+
+        return await identityResult.Match(
+            onOk: async () =>
+            {
+                var created = await CreateANewUserInDatabase(
                     cognitoUsername,
                     onboardingFlow,
                     command,
                     cancellationToken
-                ),
+                );
+                if (commit != null)
+                    await commit(); // only commit if we own the transaction
+                return created;
+            },
             onErr: HandleIdentityUserCreationFailed
         );
+    }
+
+    private static Task<
+        Result<UserOnboardingOutcome, OnboardUserError>
+    > HandleIdentityUserCreationFailed(CreateNewUserError error)
+    {
+        return error switch
+        {
+            CreateNewUserError.UsernameAlreadyExists => Task.FromResult(
+                Result<UserOnboardingOutcome, OnboardUserError>.Err(
+                    new OnboardUserError.UsernameAlreadyExists()
+                )
+            ),
+            _ => throw new InvalidOperationException(
+                $"An unexpected error occurred when creating a new user [{error}]"
+            ),
+        };
     }
 
     private async Task<Result<UserOnboardingOutcome, OnboardUserError>> CreateANewUserInDatabase(
@@ -125,13 +182,7 @@ internal sealed partial class UserOnboardingService
             );
         }
         catch (DbUpdateException updateException)
-            when (updateException.InnerException is PostgresException postgresException
-                && string.Equals(
-                    postgresException.ConstraintName,
-                    ConstraintNames.UserUniqueEmail,
-                    StringComparison.Ordinal
-                )
-            )
+            when (ConstraintExceptions.IsUniqueEmailException(updateException))
         {
             return Result<UserOnboardingOutcome, OnboardUserError>.Err(
                 new OnboardUserError.UserAlreadyInOrganisation()

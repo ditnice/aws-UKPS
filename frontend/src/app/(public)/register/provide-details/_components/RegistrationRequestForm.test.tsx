@@ -84,7 +84,7 @@ describe('RegistrationRequestForm', () => {
     await user.selectOptions(screen.getByLabelText(organisationLabel), '1')
     await fillInput(user, screen.getByLabelText('Full name'), 'Jane Smith')
     await fillInput(user, screen.getByLabelText('Work email address'), 'jane.smith@example.com')
-    await fillInput(user, screen.getByLabelText('Phone number'), '07400 123456')
+    await fillInput(user, screen.getByLabelText('Contact number'), '07400 123456')
     await user.click(screen.getByRole('button', { name: 'Submit request' }))
 
     await waitFor(() =>
@@ -107,7 +107,7 @@ describe('RegistrationRequestForm', () => {
     await user.selectOptions(screen.getByLabelText(organisationLabel), '1')
     await fillInput(user, screen.getByLabelText('Full name'), 'Jane Smith')
     await fillInput(user, screen.getByLabelText('Work email address'), 'jane.smith@example.com')
-    await fillInput(user, screen.getByLabelText('Phone number'), '07400123456')
+    await fillInput(user, screen.getByLabelText('Contact number'), '07400123456')
     await user.click(screen.getByRole('button', { name: 'Submit request' }))
 
     await waitFor(() => {
@@ -130,5 +130,15 @@ describe('RegistrationRequestForm', () => {
     expect(screen.getByRole('option', { name: 'Choose organisation' })).toBeInTheDocument()
     expect(screen.getAllByRole('option')).toHaveLength(1)
     expect(screen.queryByRole('option', { name: 'Test Organisation' })).toBeNull()
+  })
+
+  it('shows the hint text for the contact number', async () => {
+    render(<RegistrationRequestForm />)
+
+    expect(
+      await screen.findByText(
+        'This number will be visible to horizon scanning organisations. For international numbers include the country code.',
+      ),
+    ).toBeInTheDocument()
   })
 })

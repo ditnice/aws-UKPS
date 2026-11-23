@@ -11,7 +11,6 @@ internal sealed class MedicinesTreatmentDetailConfiguration
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).UseIdentityColumn();
-        builder.Property(x => x.ProposedPlaceInTherapy).IsRequired();
 
         builder
             .HasIndex(x => x.RevisionId)

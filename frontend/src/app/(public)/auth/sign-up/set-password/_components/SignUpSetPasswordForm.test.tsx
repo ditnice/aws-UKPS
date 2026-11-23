@@ -8,6 +8,7 @@ import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
 
 import { signUpMfaSetupStorageKey } from '../../_lib/mfaSetupStorage'
+import { SignUpPasswordProvider } from '../../_lib/SignUpPasswordContext'
 
 import { SignUpSetPasswordForm } from './SignUpSetPasswordForm'
 
@@ -36,7 +37,11 @@ afterEach(() => {
 })
 
 function renderForm() {
-  render(<SignUpSetPasswordForm setupToken={setupToken} />)
+  render(
+    <SignUpPasswordProvider>
+      <SignUpSetPasswordForm setupToken={setupToken} />
+    </SignUpPasswordProvider>,
+  )
 }
 
 async function enterPassword(password: string) {

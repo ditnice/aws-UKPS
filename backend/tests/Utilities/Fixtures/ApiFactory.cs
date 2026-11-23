@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using UKPS.Api.Application.Authentication;
+using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Seeding;
 using UKPS.Api.Tests.Utilities.MockInternalServices;
@@ -26,6 +28,8 @@ public sealed class ApiFactory(string connectionString) : WebApplicationFactory<
                 config.AddInMemoryCollection(
                     new Dictionary<string, string?>(StringComparer.Ordinal)
                     {
+                        [$"{EmailOptions.SectionName}:{nameof(EmailOptions.ListenerEnabled)}"] =
+                            $"{false}",
                         [
                             $"{CognitoOptions.SectionName}:{nameof(CognitoOptions.ServiceUrlOverride)}"
                         ] = "https://validurl.com",
@@ -64,6 +68,16 @@ public sealed class ApiFactory(string connectionString) : WebApplicationFactory<
         builder.UseSetting(
             $"{DevAuthenticationOptions.SectionName}:{nameof(DevAuthenticationOptions.IsEnabled)}",
             $"{true}"
+        );
+        builder.UseSetting(
+            $"{EmailOptions.SectionName}:{nameof(EmailOptions.ListenerEnabled)}",
+            $"{false}"
+        );
+        builder.ConfigureLogging(logging =>
+            logging.AddFilter(
+                "Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware",
+                LogLevel.Error
+            )
         );
     }
 }

@@ -1,0 +1,16 @@
+@use '@/styles/spacing';
+@use '@/styles/typography';
+@use '@/styles/utils';
+
+// A legend shown as a sub-heading uses the body font rather than the serif NDS heading styles.
+.legendHeading {
+  @include typography.font-size(h4);
+  font-family: inherit;
+  font-weight: bold;
+  margin: 0 0 utils.rem(spacing.$medium);
+}
+
+// Qualified by the NDS class so it wins over the NDS legend size whatever the stylesheet order.
+:global(.form-group__legend).leadLegend {
+  @include typography.lead-label;
+}

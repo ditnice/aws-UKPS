@@ -12,7 +12,7 @@ export const metadata = {
 
 export default function RadioPage() {
   return (
-    <ComponentPage title={component.label}>
+    <ComponentPage marker="custom" title={component.label}>
       <Examples />
     </ComponentPage>
   )

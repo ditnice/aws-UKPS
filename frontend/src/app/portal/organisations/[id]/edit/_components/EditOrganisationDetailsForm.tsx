@@ -4,10 +4,9 @@ import { revalidateLogic, useForm } from '@tanstack/react-form'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-import { FormGroup } from '@nice-digital/nds-form-group'
-
 import type { UpdateOrganisationDetailsDto } from '@/client/generated/types.gen'
 import { Button, ButtonGroup } from '@/components/Button/Button'
+import { FormGroup } from '@/components/FormGroup/FormGroup'
 import { Input } from '@/components/Input/Input'
 import { Textarea } from '@/components/Textarea/Textarea'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
@@ -156,7 +155,7 @@ export function EditOrganisationDetailsForm({
               <Input
                 label="Head office phone number"
                 name={field.name}
-                hint="For international numbers include the country code. For example +1 555-123-4567."
+                hint="For international numbers include the country code."
                 type="tel"
                 value={field.state.value}
                 onBlur={field.handleBlur}

@@ -12,7 +12,7 @@ namespace UKPS.Api.Application.InternalServices.Identity;
 internal interface IIdentityService
 {
     Task<AssociateSoftwareTokenResult> AssociateSoftwareToken(
-        string authenticationSessionId,
+        SessionIdentifier sessionIdentifier,
         CancellationToken cancellationToken
     );
 
@@ -45,6 +45,13 @@ internal interface IIdentityService
         CancellationToken cancellationToken
     );
 
+    Task<AuthenticationCredentialsDto> RespondToSmsMultiFactorAuthenticationChallenge(
+        CognitoUsername cognitoUsername,
+        string authenticationSession,
+        string code,
+        CancellationToken cancellationToken
+    );
+
     Task<UpdatePasswordResult> UpdatePassword(
         CognitoUsername cognitoUsername,
         string newPassword,
@@ -56,10 +63,47 @@ internal interface IIdentityService
         CancellationToken cancellationToken
     );
 
-    Task<AuthenticationCredentialsDto> VerifySoftwareToken(
-        CognitoUsername cognitoUsername,
-        string authenticationSessionId,
+    Task VerifySoftwareTokenWithAccessToken(
+        string accessToken,
         string code,
         CancellationToken cancellationToken
+    );
+
+    Task<AuthenticationCredentialsDto> VerifySoftwareTokenWithSession(
+        CognitoUsername cognitoUsername,
+        string authenticationSession,
+        string code,
+        CancellationToken cancellationToken
+    );
+
+    Task<bool> SendForgottenPasswordCommand(
+        CognitoUsername username,
+        CancellationToken cancellationToken
+    );
+
+    Task<ConfirmNewPasswordResult> ConfirmNewPassword(
+        CognitoUsername username,
+        string confirmationCode,
+        string newPassword,
+        CancellationToken cancellationToken
+    );
+
+    Task SetUserPhoneNumber(
+        CognitoUsername cognitoUsername,
+        string phoneNumber,
+        CancellationToken cancellationToken
+    );
+
+    Task<UserMfaDetails?> GetUserMfaDetails(
+        CognitoUsername cognitoUsername,
+        CancellationToken cancellationToken
+    );
+
+    Task SetUserMfaPreference(
+        CognitoUsername cognitoUsername,
+        bool smsEnabled,
+        bool smsPreferred,
+        CancellationToken cancellationToken,
+        bool softwareTokenEnabled = true
     );
 }

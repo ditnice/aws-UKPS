@@ -44,10 +44,12 @@ internal sealed class Record
     /// </summary>
     /// <param name="state">The record's status and its latest revision's workflow status.</param>
     /// <param name="hasSingleRevision">Whether the record has only one revision.</param>
+    /// <param name="canChangeStatus">Whether the user may put the record on hold, resume it or archive it.</param>
     /// <returns>The permitted actions.</returns>
     internal static IReadOnlyCollection<RecordAction> GetPermittedActions(
         RecordLifecycleState state,
-        bool hasSingleRevision
+        bool hasSingleRevision,
+        bool canChangeStatus
     )
     {
         return new RecordLifecycleStateMachine(state)
@@ -55,6 +57,7 @@ internal sealed class Record
             .Where(x => x != RecordLifecycleStateMachine.Command.Discard || hasSingleRevision)
             .Select(x => ConvertCommandToAction(x, state.RecordStatus))
             .OfType<RecordAction>()
+            .Where(x => canChangeStatus || x != RecordAction.ChangeStatus)
             .Append(RecordAction.ViewTimeline)
             .Distinct()
             .Order()
@@ -70,6 +73,81 @@ internal sealed class Record
         new RecordLifecycleStateMachine(new(RecordStatus, latestRevision.WorkflowStatus))
             .GetPermittedCommands()
             .Contains(RecordLifecycleStateMachine.Command.EditDraft);
+
+    /// <summary>
+    /// Whether the latest revision can be submitted. Only a draft can be, and not while the
+    /// record is on hold or archived.
+    /// </summary>
+    /// <param name="latestRevision">The record's latest revision.</param>
+    internal bool CanSubmit(RecordRevision latestRevision) =>
+        new RecordLifecycleStateMachine(new(RecordStatus, latestRevision.WorkflowStatus))
+            .GetPermittedCommands()
+            .Contains(RecordLifecycleStateMachine.Command.Submit);
+
+    /// <summary>
+    /// Submits the latest revision, if the record's state permits. A medicine revision goes to QA
+    /// review, with a pending QA review and the timeline event. The record status and
+    /// <see cref="ReviewedAt"/> are unchanged until QA approves it.
+    /// </summary>
+    /// <param name="latestRevision">The record's latest revision.</param>
+    /// <param name="time">When the revision was submitted.</param>
+    /// <param name="submittedBy">The user who submitted it.</param>
+    /// <returns>Whether the revision was submitted. Nothing is changed when it can't be.</returns>
+    internal bool TrySubmit(RecordRevision latestRevision, DateTime time, User submittedBy)
+    {
+        var result = new RecordLifecycleStateMachine(
+            new(RecordStatus, latestRevision.WorkflowStatus)
+        ).TrySendCommand(RecordLifecycleStateMachine.Command.Submit);
+        if (!result.Success)
+        {
+            return false;
+        }
+
+        switch (RecordType)
+        {
+            case RecordType.Medicine:
+                SubmitToQa(
+                    latestRevision,
+                    result.CurrentState.LatestRevisionStatus,
+                    time,
+                    submittedBy
+                );
+                return true;
+            case RecordType.Vaccine:
+                // TODO: vaccines skip QA review and are published on submission. Needs a vaccine
+                // Submit transition in RecordLifecycleStateMachine, then: revision and record to
+                // published, a status history row on first publication only, ReviewedAt = time,
+                // and a RecordPublished event.
+                throw new NotSupportedException(
+                    "Submitting a vaccine record is not supported yet."
+                );
+            default:
+                throw new InvalidOperationException($"Unsupported record type {RecordType}.");
+        }
+    }
+
+    private void SubmitToQa(
+        RecordRevision latestRevision,
+        WorkflowStatus toStatus,
+        DateTime time,
+        User submittedBy
+    )
+    {
+        latestRevision.WorkflowStatus = toStatus;
+        QaReview review = new() { Revision = latestRevision };
+        latestRevision.QaReviews.Add(review);
+        Events.Add(
+            new RecordEvent
+            {
+                Record = this,
+                Revision = latestRevision,
+                QaReview = review,
+                EventType = RecordEventType.SubmittedToQa,
+                PerformedAt = time,
+                PerformedByUser = submittedBy,
+            }
+        );
+    }
 
     private static RecordAction? ConvertCommandToAction(
         RecordLifecycleStateMachine.Command command,
@@ -119,6 +197,51 @@ internal sealed class Record
             }
         );
         RecordStatus = toStatus;
+    }
+
+    /// <summary>
+    /// Puts the record on hold, resumes it or archives it for a user, if its state permits. Adds
+    /// the status history row and timeline event, and sets <see cref="ReviewedAt"/>. The latest
+    /// revision keeps its workflow status.
+    /// </summary>
+    /// <param name="command">PutOnHold, Resume or Archive.</param>
+    /// <param name="latestRevision">The record's latest revision.</param>
+    /// <param name="time">When the status changed.</param>
+    /// <param name="changedBy">The user who changed it.</param>
+    /// <param name="reason">Why the status changed.</param>
+    /// <param name="note">Further details about the change.</param>
+    /// <returns>Whether the status changed. Nothing is changed when the state doesn't permit it.</returns>
+    internal bool TryChangeStatusByUser(
+        RecordLifecycleStateMachine.Command command,
+        RecordRevision latestRevision,
+        DateTime time,
+        User changedBy,
+        RecordStatusChangeReason reason,
+        string? note
+    )
+    {
+        var result = new RecordLifecycleStateMachine(
+            new(RecordStatus, latestRevision.WorkflowStatus)
+        ).TrySendCommand(command);
+        if (!result.Success)
+        {
+            return false;
+        }
+
+        ChangeStatus(result.CurrentState.RecordStatus, time, changedBy, reason, note);
+        ReviewedAt = time;
+
+        // Record-level: the revision's status doesn't change, so the event has no revision.
+        Events.Add(
+            new RecordEvent
+            {
+                Record = this,
+                EventType = RecordEventType.RecordStatusChanged,
+                PerformedAt = time,
+                PerformedByUser = changedBy,
+            }
+        );
+        return true;
     }
 
     internal static (Record record, RecordRevision recordRevision) CreateInitial(

@@ -29,7 +29,7 @@ const onboardUserSchema = z.object({
   contactNumber: z
     .string()
     .trim()
-    .min(1, errorMessages.userPhoneNumberRequired)
+    .min(1, errorMessages.userContactNumberRequired)
     .refine((value) => isValidPhoneNumber(value, 'GB'), errorMessages.phoneFormat),
 })
 
@@ -184,8 +184,8 @@ export function OrganisationOnboardUserForm({ organisationId }: OrganisationOnbo
               autoComplete="tel"
               error={Boolean(errorMessage)}
               errorMessage={errorMessage}
-              hint="For international numbers include the country code."
-              label="Phone number"
+              hint="This number will be visible to horizon scanning organisations. For international numbers include the country code."
+              label="Contact number"
               name={field.name}
               onBlur={field.handleBlur}
               onChange={(event: ChangeEvent<HTMLInputElement>) =>

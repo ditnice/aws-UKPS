@@ -1,24 +1,40 @@
 import z from 'zod'
 
-import { fieldName, validateQuestion } from './answers'
+import { fieldName, questionError } from './answers'
+import { shownQuestionIds } from './conditions'
 
 import type { FormValue, Question } from './types'
 
 /**
- * A schema that runs each question's rules on its form value, with the same messages and order
- * as the server.
+ * A schema that runs each shown question's rules on its form value, with the same messages and
+ * order as the server. Questions hidden by their conditions are not validated.
  */
 export const buildZodSchema = (questions: Question[]) =>
-  z.object(
-    Object.fromEntries(
-      questions.map((question, index) => [
-        fieldName(index),
-        z.custom<FormValue>().superRefine((value, ctx) => {
-          const message = validateQuestion(question, value)
-          if (message) {
-            ctx.addIssue({ code: 'custom', message })
-          }
-        }),
-      ]),
-    ),
-  )
+  z
+    .object(
+      Object.fromEntries(questions.map((_, index) => [fieldName(index), z.custom<FormValue>()])),
+    )
+    .superRefine((values, ctx) => {
+      const shown = shownQuestionIds(questions, values)
+      questions.forEach((question, index) => {
+        if (!shown.has(question.id)) {
+          return
+        }
+        const error = questionError(question, values[fieldName(index)])
+        if (error) {
+          // The parts let a date question highlight only the inputs at fault, and the items let a
+          // text list or group show each entry's error beside it. An error with items but no message
+          // is about the items alone; zod would otherwise fill the empty message with "Invalid input".
+          ctx.addIssue({
+            code: 'custom',
+            message: error.message,
+            path: [fieldName(index)],
+            params: (error.parts || error.items) && {
+              parts: error.parts,
+              items: error.items,
+              itemsOnly: !error.message,
+            },
+          })
+        }
+      })
+    })

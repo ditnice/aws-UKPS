@@ -21,36 +21,31 @@ public enum RecordStatusChangeReason
     FilingWithdrawn = 2,
 
     /// <summary>
-    /// Indicates that the record is awaiting external clarification.
-    /// </summary>
-    AwaitingExternalClarification = 3,
-
-    /// <summary>
     /// Indicates that a suspended trial has resumed. Only valid when moving
     /// from on_hold back to active.
     /// </summary>
-    TrialResumed = 4,
+    TrialResumed = 3,
 
     /// <summary>
-    /// Indicates that withdrawn or clarification-pending plans have been
-    /// refiled. Only valid when moving from on_hold back to active.
+    /// Indicates that withdrawn plans have been refiled. Only valid when
+    /// moving from on_hold back to active.
     /// </summary>
-    PlansRefiled = 5,
+    PlansRefiled = 4,
 
     /// <summary>
     /// Indicates that the reason for the status change is other than the predefined reasons.
     /// </summary>
-    Other = 6,
+    Other = 5,
 
     /// <summary>
     /// Indicates that the system archived the record, for example because the product has been
     /// available in the UK for more than 6 months, or the record has not been updated within the
     /// required period.
     /// </summary>
-    ArchivedAutomatically = 7,
+    ArchivedAutomatically = 6,
 
     /// <summary>
     /// Indicates that the record has been manually discarded - this can only happen when it is unpublished and a draft.
     /// </summary>
-    ManuallyDiscarded = 8,
+    ManuallyDiscarded = 7,
 }

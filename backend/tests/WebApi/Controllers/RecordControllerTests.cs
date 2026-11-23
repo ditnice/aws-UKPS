@@ -10,14 +10,21 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using NSubstitute;
 using Shouldly;
 using UKPS.Api.Application.Common;
+using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
-using UKPS.Api.Application.Records.Dtos.RecordDetails;
 using UKPS.Api.Application.Records.Errors;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Persistence.FormAnnotations;
 using UKPS.Api.Tests.Application.Records;
 using UKPS.Api.Tests.Utilities.Fixtures;
+using UKPS.Api.WebApi;
 using UKPS.Api.WebApi.InternalServices.Authentication;
+using CompanyCodesResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Records.Dtos.CompanyCodeSuggestionsDto,
+    UKPS.Api.Application.Records.Errors.GetRecordsError
+>;
 using CreateRecordResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Records.Dtos.CreateRecordDto,
     UKPS.Api.Application.Records.Errors.CreateRecordError
@@ -30,6 +37,8 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
 {
     private const int OrganisationId = 1;
     private const string RecordsUrl = "/records/organisations";
+    private static readonly string _companyCodesUrl =
+        $"{RecordsUrl}/{OrganisationId}/company-codes";
 
     private static readonly Dictionary<
         string,
@@ -71,6 +80,9 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         Substitute.For<IRecordViewService>();
     private readonly IRecordCreationService _mockRecordCreationService =
         Substitute.For<IRecordCreationService>();
+    private readonly IRecordStatusService _mockRecordStatusService =
+        Substitute.For<IRecordStatusService>();
+    private readonly WebApplicationFactory<Program> _factory;
     private readonly HttpClient _client;
     private readonly CreateRecordCommandFaker _createRecordCommandFaker = new();
     private readonly CreateRecordDto _defaultCreateRecordDto = new CreateRecordDto
@@ -83,26 +95,27 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     {
         ArgumentNullException.ThrowIfNull(factory);
 
-        _client = factory
-            .WithWebHostBuilder(builder =>
+        _factory = factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
             {
-                builder.ConfigureServices(services =>
-                {
-                    services.RemoveAll<IRecordService>();
-                    services.AddSingleton(_mockRecordService);
-                    services.RemoveAll<IRecordViewService>();
-                    services.AddSingleton(_mockRecordViewService);
-                    services.RemoveAll<IRecordCreationService>();
-                    services.AddSingleton(_mockRecordCreationService);
-                });
-                builder.ConfigureNoDatabase();
-                builder.UseSetting("AWS:LoadSecrets", $"{false}");
-                builder.UseSetting(
-                    $"{DevAuthenticationOptions.SectionName}:{nameof(DevAuthenticationOptions.IsEnabled)}",
-                    $"{true}"
-                );
-            })
-            .CreateClient();
+                services.RemoveAll<IRecordService>();
+                services.AddSingleton(_mockRecordService);
+                services.RemoveAll<IRecordViewService>();
+                services.AddSingleton(_mockRecordViewService);
+                services.RemoveAll<IRecordCreationService>();
+                services.AddSingleton(_mockRecordCreationService);
+                services.RemoveAll<IRecordStatusService>();
+                services.AddSingleton(_mockRecordStatusService);
+            });
+            builder.ConfigureNoDatabase();
+            builder.UseSetting("AWS:LoadSecrets", $"{false}");
+            builder.UseSetting(
+                $"{DevAuthenticationOptions.SectionName}:{nameof(DevAuthenticationOptions.IsEnabled)}",
+                $"{true}"
+            );
+        });
+        _client = _factory.CreateClient();
 
         _mockRecordService
             .GetOrganisationRecords(
@@ -118,6 +131,14 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         _mockRecordCreationService
             .CreateRecord(Arg.Any<CreateRecordCommand>(), Arg.Any<CancellationToken>())
             .Returns(CreateRecordResult.Ok(_defaultCreateRecordDto));
+    }
+
+    // Each test builds its own host, so it is disposed straight away rather than with the class
+    // fixture, which would hold every host's file watchers open until the class finishes.
+    public async ValueTask DisposeAsync()
+    {
+        _client.Dispose();
+        await _factory.DisposeAsync();
     }
 
     [Fact]
@@ -245,6 +266,101 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     }
 
     [Fact]
+    public async Task GetCompanyCodes_ReturnsOk_WithTheServiceSuggestions()
+    {
+        CompanyCodeSuggestionsDto expected = new() { Items = ["ABC-123", "XABC-9"] };
+        SetUpCompanyCodes(CompanyCodesResult.Ok(expected));
+
+        var response = await GetCompanyCodes("search=abc");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<CompanyCodeSuggestionsDto>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+        content.ShouldNotBeNull();
+        content.Items.ShouldBe(expected.Items);
+    }
+
+    [Fact]
+    public async Task GetCompanyCodes_PassesRouteAndQueryValuesToService()
+    {
+        SetUpCompanyCodes(CompanyCodesResult.Ok(new CompanyCodeSuggestionsDto { Items = [] }));
+
+        await GetCompanyCodes("search=ab%25c&limit=5");
+
+        await _mockRecordService
+            .Received(1)
+            .GetOrganisationCompanyCodes(
+                OrganisationId,
+                Arg.Is<GetCompanyCodeSuggestionsQueryDto>(x => x.Search == "ab%c" && x.Limit == 5),
+                Arg.Any<CancellationToken>()
+            );
+    }
+
+    [Fact]
+    public async Task GetCompanyCodes_ReturnsNotFound_WhenOrganisationNotFound()
+    {
+        SetUpCompanyCodes(
+            CompanyCodesResult.Err(new GetRecordsError.OrganisationNotFound(OrganisationId))
+        );
+
+        var response = await GetCompanyCodes("search=abc");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetCompanyCodes_ReturnsForbidden_WhenNotAllowed()
+    {
+        SetUpCompanyCodes(CompanyCodesResult.Err(new GetRecordsError.NotAllowed(OrganisationId)));
+
+        var response = await GetCompanyCodes("search=abc");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Theory]
+    [InlineData("limit=0")]
+    [InlineData("limit=21")]
+    [InlineData("limit=-1")]
+    public async Task GetCompanyCodes_ReturnsBadRequest_WhenLimitIsOutsideAllowedRange(string limit)
+    {
+        var response = await GetCompanyCodes($"search=abc&{limit}");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        await _mockRecordService
+            .DidNotReceiveWithAnyArgs()
+            .GetOrganisationCompanyCodes(default, default!, TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task GetCompanyCodes_ReturnsBadRequest_WhenSearchIsTooLong()
+    {
+        var response = await GetCompanyCodes($"search={new string('a', 201)}");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        await _mockRecordService
+            .DidNotReceiveWithAnyArgs()
+            .GetOrganisationCompanyCodes(default, default!, TestContext.Current.CancellationToken);
+    }
+
+    private Task<HttpResponseMessage> GetCompanyCodes(string query) =>
+        _client.GetAsync(
+            new Uri($"{_companyCodesUrl}?{query}", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+    private void SetUpCompanyCodes(CompanyCodesResult result) =>
+        _mockRecordService
+            .GetOrganisationCompanyCodes(
+                Arg.Any<int>(),
+                Arg.Any<GetCompanyCodeSuggestionsQueryDto>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(result);
+
+    [Fact]
     public async Task CreateRecord_ShouldPassProvidedValuesToTheService()
     {
         CreateRecordCommand command = _createRecordCommandFaker.Generate();
@@ -354,22 +470,64 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             .CreateRecord(Arg.Any<CreateRecordCommand>(), Arg.Any<CancellationToken>());
     }
 
-    [Fact]
-    public async Task GetRecord_ReturnsOk_WhenRecordExists()
-    {
-        MedicineRecordDto expected = new()
+    private static RecordOverviewDto Overview =>
+        new()
         {
             RecordId = 1,
             OrganisationId = OrganisationId,
+            RecordType = RecordType.Medicine,
             RecordStatus = RecordStatus.Published,
             DisplayStatus = RecordDisplayStatus.Draft,
+            ReviewedAt = null,
             CanEditContent = true,
             Actions = [RecordAction.Update, RecordAction.ViewTimeline],
-            RecordClinicalTrials = [],
+            NextUpdateDue = null,
+            CompanyCode = "ABC-123",
+            RecordTitle = "A record",
+        };
+
+    [Fact]
+    public async Task GetRecordDetail_ReturnsOk_WhenRecordExists()
+    {
+        RecordDetailDto expected = new()
+        {
+            Overview = Overview,
+            Sections =
+            [
+                new RecordAnswersSectionDto
+                {
+                    Id = "section",
+                    Title = "Section",
+                    Tasks =
+                    [
+                        new RecordAnswersTaskDto
+                        {
+                            Id = "task",
+                            Title = "Task",
+                            Questions =
+                            [
+                                new RecordAnswersQuestionDto
+                                {
+                                    Id = "question",
+                                    PageId = "page",
+                                    Label = "Question",
+                                    Type = FormControl.Text,
+                                    Multiple = false,
+                                    Values = ["Answer"],
+                                    SelectedOptions = null,
+                                    ItemLabel = null,
+                                    Items = null,
+                                    AddAnotherLabel = null,
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
         };
         _mockRecordViewService
-            .GetRecord(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
-            .Returns(Result<RecordDto, GetRecordError>.Ok(expected));
+            .GetRecordDetail(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
+            .Returns(Result<RecordDetailDto, GetRecordError>.Ok(expected));
 
         var response = await _client.GetAsync(
             new Uri("/records/1?recordType=Medicine&organisationId=4", UriKind.Relative),
@@ -377,24 +535,71 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var content = await response.Content.ReadFromJsonAsync<RecordDto>(
+        var content = await response.Content.ReadFromJsonAsync<RecordDetailDto>(
             TestJsonOptions.Default,
             TestContext.Current.CancellationToken
         );
-        var record = content.ShouldBeOfType<MedicineRecordDto>();
-        record.RecordId.ShouldBe(expected.RecordId);
-        record.OrganisationId.ShouldBe(expected.OrganisationId);
-        record.RecordStatus.ShouldBe(expected.RecordStatus);
-        record.DisplayStatus.ShouldBe(expected.DisplayStatus);
-        record.Actions.ShouldBe(expected.Actions);
+        content
+            .ShouldNotBeNull()
+            .Overview.ShouldBe(expected.Overview with { Actions = content.Overview.Actions });
+        content.Overview.Actions.ShouldBe(expected.Overview.Actions);
+        content
+            .Sections.ShouldHaveSingleItem()
+            .Tasks.ShouldHaveSingleItem()
+            .Questions.ShouldHaveSingleItem()
+            .Values.ShouldBe(["Answer"]);
     }
 
     [Fact]
-    public async Task GetRecord_ReturnsNotFound_WhenRecordNotFound()
+    public async Task GetRecordOverview_ReturnsOk_WhenRecordExists()
     {
         _mockRecordViewService
-            .GetRecord(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
-            .Returns(Result<RecordDto, GetRecordError>.Err(new GetRecordError.NotFound(1)));
+            .GetRecordOverview(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
+            .Returns(Result<RecordOverviewDto, GetRecordError>.Ok(Overview));
+
+        var response = await _client.GetAsync(
+            new Uri("/records/1/overview?recordType=Medicine&organisationId=4", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<RecordOverviewDto>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+        content.ShouldNotBeNull().ShouldBe(Overview with { Actions = content.Actions });
+        content.Actions.ShouldBe(Overview.Actions);
+    }
+
+    public static TheoryData<GetRecordError> RecordNotFoundErrors =>
+        new()
+        {
+            new GetRecordError.NotFound(1),
+            new GetRecordError.RecordTypeMismatch(1, RecordType.Medicine, RecordType.Vaccine),
+        };
+
+    [Theory]
+    [MemberData(nameof(RecordNotFoundErrors))]
+    public async Task GetRecordOverview_ReturnsNotFound_ForEachError(GetRecordError error)
+    {
+        _mockRecordViewService
+            .GetRecordOverview(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
+            .Returns(Result<RecordOverviewDto, GetRecordError>.Err(error));
+
+        var response = await _client.GetAsync(
+            new Uri("/records/1/overview?recordType=Medicine&organisationId=4", UriKind.Relative),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetRecordDetail_ReturnsNotFound_WhenRecordNotFound()
+    {
+        _mockRecordViewService
+            .GetRecordDetail(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
+            .Returns(Result<RecordDetailDto, GetRecordError>.Err(new GetRecordError.NotFound(1)));
 
         var response = await _client.GetAsync(
             new Uri("/records/1?recordType=Medicine&organisationId=4", UriKind.Relative),
@@ -405,12 +610,12 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     }
 
     [Fact]
-    public async Task GetRecord_ReturnsNotFound_WhenRecordTypeDoesNotMatch()
+    public async Task GetRecordDetail_ReturnsNotFound_WhenRecordTypeDoesNotMatch()
     {
         _mockRecordViewService
-            .GetRecord(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
+            .GetRecordDetail(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
             .Returns(
-                Result<RecordDto, GetRecordError>.Err(
+                Result<RecordDetailDto, GetRecordError>.Err(
                     new GetRecordError.RecordTypeMismatch(
                         1,
                         RecordType.Medicine,
@@ -428,11 +633,11 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     }
 
     [Fact]
-    public async Task GetRecord_ReturnsNotFound_WhenNotAllowed()
+    public async Task GetRecordDetail_ReturnsNotFound_WhenNotAllowed()
     {
         _mockRecordViewService
-            .GetRecord(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
-            .Returns(Result<RecordDto, GetRecordError>.Err(new GetRecordError.NotAllowed(1)));
+            .GetRecordDetail(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
+            .Returns(Result<RecordDetailDto, GetRecordError>.Err(new GetRecordError.NotAllowed(1)));
 
         var response = await _client.GetAsync(
             new Uri("/records/1?recordType=Medicine&organisationId=4", UriKind.Relative),
@@ -443,14 +648,14 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     }
 
     [Fact]
-    public async Task GetRecord_InaccessibleAndMissingRecords_ReturnIdenticalResponses()
+    public async Task GetRecordDetail_InaccessibleAndMissingRecords_ReturnIdenticalResponses()
     {
         _mockRecordViewService
-            .GetRecord(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
-            .Returns(Result<RecordDto, GetRecordError>.Err(new GetRecordError.NotAllowed(1)));
+            .GetRecordDetail(1, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
+            .Returns(Result<RecordDetailDto, GetRecordError>.Err(new GetRecordError.NotAllowed(1)));
         _mockRecordViewService
-            .GetRecord(2, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
-            .Returns(Result<RecordDto, GetRecordError>.Err(new GetRecordError.NotFound(2)));
+            .GetRecordDetail(2, RecordType.Medicine, 4, Arg.Any<CancellationToken>())
+            .Returns(Result<RecordDetailDto, GetRecordError>.Err(new GetRecordError.NotFound(2)));
 
         var inaccessibleResponse = await _client.GetAsync(
             new Uri("/records/1?recordType=Medicine&organisationId=4", UriKind.Relative),
@@ -572,6 +777,327 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         return await _client.SendAsync(request, TestContext.Current.CancellationToken);
     }
 
+    private static readonly string[] _statusChangePaths = ["hold", "resume", "archive"];
+
+    public static TheoryData<string> StatusChangePaths => new(_statusChangePaths);
+
+    public static TheoryData<string, RecordStatusChangeAction> StatusChangeEndpoints =>
+        new()
+        {
+            { "hold", RecordStatusChangeAction.PutOnHold },
+            { "resume", RecordStatusChangeAction.Resume },
+            { "archive", RecordStatusChangeAction.Archive },
+        };
+
+    [Theory]
+    [MemberData(nameof(StatusChangeEndpoints))]
+    public async Task ChangeRecordStatus_WhenSuccessful_PassesRequestToServiceAndReturnsOk(
+        string endpoint,
+        RecordStatusChangeAction change
+    )
+    {
+        _mockRecordStatusService
+            .ChangeStatus(
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<RecordStatusChangeAction>(),
+                Arg.Any<ChangeRecordStatusCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Result<ChangeRecordStatusError>.Ok());
+
+        var response = await SendStatusChangeRequest(
+            endpoint,
+            1,
+            "?organisationId=4",
+            new { reason = "Other", note = "A note" }
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        await _mockRecordStatusService
+            .Received(1)
+            .ChangeStatus(
+                1,
+                4,
+                change,
+                new ChangeRecordStatusCommand
+                {
+                    Reason = RecordStatusChangeReason.Other,
+                    Note = "A note",
+                },
+                Arg.Any<CancellationToken>()
+            );
+    }
+
+    public static TheoryData<
+        string,
+        ChangeRecordStatusError,
+        HttpStatusCode,
+        string?
+    > ChangeRecordStatusErrors
+    {
+        get
+        {
+            var data = new TheoryData<string, ChangeRecordStatusError, HttpStatusCode, string?>();
+            foreach (string endpoint in _statusChangePaths)
+            {
+                data.Add(
+                    endpoint,
+                    new ChangeRecordStatusError.NotFound(),
+                    HttpStatusCode.NotFound,
+                    null
+                );
+                data.Add(
+                    endpoint,
+                    new ChangeRecordStatusError.NotAllowed(),
+                    HttpStatusCode.NotFound,
+                    null
+                );
+                data.Add(
+                    endpoint,
+                    new ChangeRecordStatusError.CannotChangeStatus(),
+                    HttpStatusCode.Forbidden,
+                    null
+                );
+                data.Add(
+                    endpoint,
+                    new ChangeRecordStatusError.InvalidReason(),
+                    HttpStatusCode.BadRequest,
+                    null
+                );
+                data.Add(
+                    endpoint,
+                    new ChangeRecordStatusError.NoteRequired(),
+                    HttpStatusCode.BadRequest,
+                    null
+                );
+                data.Add(
+                    endpoint,
+                    new ChangeRecordStatusError.TransitionNotPermitted(),
+                    HttpStatusCode.Conflict,
+                    "status_change_not_permitted"
+                );
+                data.Add(
+                    endpoint,
+                    new ChangeRecordStatusError.ConcurrencyError(),
+                    HttpStatusCode.Conflict,
+                    "record_changed"
+                );
+            }
+            return data;
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(ChangeRecordStatusErrors))]
+    public async Task ChangeRecordStatus_WhenServiceReturnsError_ReturnsProblem(
+        string endpoint,
+        ChangeRecordStatusError error,
+        HttpStatusCode expectedStatusCode,
+        string? expectedCode
+    )
+    {
+        MockStatusChangeResult(1, Result<ChangeRecordStatusError>.Err(error));
+
+        var response = await SendStatusChangeRequest(endpoint, 1);
+
+        response.StatusCode.ShouldBe(expectedStatusCode);
+        JsonObject problem = (
+            await response.Content.ReadFromJsonAsync<JsonObject>(
+                TestContext.Current.CancellationToken
+            )
+        ).ShouldNotBeNull();
+        problem["status"]!.GetValue<int>().ShouldBe((int)expectedStatusCode);
+        problem["code"]?.GetValue<string>().ShouldBe(expectedCode);
+    }
+
+    [Theory]
+    [MemberData(nameof(StatusChangePaths))]
+    public async Task ChangeRecordStatus_WhenReasonIsInvalidForTheChange_ReturnsReasonError(
+        string endpoint
+    )
+    {
+        MockStatusChangeResult(
+            1,
+            Result<ChangeRecordStatusError>.Err(new ChangeRecordStatusError.InvalidReason())
+        );
+
+        var response = await SendStatusChangeRequest(endpoint, 1);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(
+            TestContext.Current.CancellationToken
+        );
+        problem.ShouldNotBeNull();
+        problem.Errors.Keys.ShouldBe(["Reason"]);
+    }
+
+    [Theory]
+    [MemberData(nameof(StatusChangePaths))]
+    public async Task ChangeRecordStatus_WhenNoteIsRequired_ReturnsNoteError(string endpoint)
+    {
+        MockStatusChangeResult(
+            1,
+            Result<ChangeRecordStatusError>.Err(new ChangeRecordStatusError.NoteRequired())
+        );
+
+        var response = await SendStatusChangeRequest(endpoint, 1);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(
+            TestContext.Current.CancellationToken
+        );
+        problem.ShouldNotBeNull();
+        problem.Errors.Keys.ShouldBe(["Note"]);
+    }
+
+    [Theory]
+    [MemberData(nameof(StatusChangePaths))]
+    public async Task ChangeRecordStatus_InaccessibleAndMissingRecords_ReturnIdenticalResponses(
+        string endpoint
+    )
+    {
+        MockStatusChangeResult(
+            1,
+            Result<ChangeRecordStatusError>.Err(new ChangeRecordStatusError.NotAllowed())
+        );
+        MockStatusChangeResult(
+            2,
+            Result<ChangeRecordStatusError>.Err(new ChangeRecordStatusError.NotFound())
+        );
+
+        var inaccessibleResponse = await SendStatusChangeRequest(endpoint, 1);
+        var missingResponse = await SendStatusChangeRequest(endpoint, 2);
+
+        inaccessibleResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        missingResponse.StatusCode.ShouldBe(inaccessibleResponse.StatusCode);
+
+        var inaccessibleBody = (
+            await inaccessibleResponse.Content.ReadFromJsonAsync<JsonObject>(
+                TestContext.Current.CancellationToken
+            )
+        ).ShouldNotBeNull();
+        var missingBody = (
+            await missingResponse.Content.ReadFromJsonAsync<JsonObject>(
+                TestContext.Current.CancellationToken
+            )
+        ).ShouldNotBeNull();
+
+        inaccessibleBody.Remove("traceId");
+        missingBody.Remove("traceId");
+        JsonNode.DeepEquals(inaccessibleBody, missingBody).ShouldBeTrue();
+    }
+
+    [Theory]
+    [MemberData(nameof(StatusChangePaths))]
+    public async Task ChangeRecordStatus_WhenOrganisationIsNotSelected_ReturnsMismatchConflict(
+        string endpoint
+    )
+    {
+        _mockRecordStatusService
+            .ChangeStatus(
+                1,
+                4,
+                Arg.Any<RecordStatusChangeAction>(),
+                Arg.Any<ChangeRecordStatusCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns<Result<ChangeRecordStatusError>>(_ =>
+                throw new SelectedOrganisationMismatchException(4)
+            );
+
+        var response = await SendStatusChangeRequest(endpoint, 1);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        JsonObject problem = (
+            await response.Content.ReadFromJsonAsync<JsonObject>(
+                TestContext.Current.CancellationToken
+            )
+        ).ShouldNotBeNull();
+        problem["code"]!
+            .GetValue<string>()
+            .ShouldBe(nameof(AuthenticationFailCode.SelectedOrganisationMismatch));
+        problem["organisationId"]!.GetValue<int>().ShouldBe(4);
+    }
+
+    public static TheoryData<string, string, string> InvalidStatusChangeRequests
+    {
+        get
+        {
+            var data = new TheoryData<string, string, string>();
+            foreach (string endpoint in _statusChangePaths)
+            {
+                data.Add(endpoint, "?organisationId=4", "{}");
+                data.Add(endpoint, "?organisationId=4", """{"reason":null}""");
+                data.Add(endpoint, "?organisationId=4", """{"reason":"Banana"}""");
+                data.Add(endpoint, "?organisationId=4", """{"reason":"Other","note":5}""");
+                data.Add(endpoint, "?organisationId=4", "");
+                data.Add(endpoint, "", """{"reason":"Other"}""");
+                data.Add(endpoint, "?organisationId=abc", """{"reason":"Other"}""");
+            }
+            return data;
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(InvalidStatusChangeRequests))]
+    public async Task ChangeRecordStatus_WhenRequestIsInvalid_ReturnsBadRequestWithoutCallingService(
+        string endpoint,
+        string query,
+        string body
+    )
+    {
+        using var request = new HttpRequestMessage(
+            HttpMethod.Patch,
+            new Uri($"records/1/{endpoint}{query}", UriKind.Relative)
+        )
+        {
+            Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json"),
+        };
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        await _mockRecordStatusService
+            .DidNotReceiveWithAnyArgs()
+            .ChangeStatus(
+                default,
+                default,
+                default,
+                default!,
+                TestContext.Current.CancellationToken
+            );
+    }
+
+    private void MockStatusChangeResult(int recordId, Result<ChangeRecordStatusError> result) =>
+        _mockRecordStatusService
+            .ChangeStatus(
+                recordId,
+                4,
+                Arg.Any<RecordStatusChangeAction>(),
+                Arg.Any<ChangeRecordStatusCommand>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(result);
+
+    private async Task<HttpResponseMessage> SendStatusChangeRequest(
+        string endpoint,
+        int recordId,
+        string query = "?organisationId=4",
+        object? body = null
+    )
+    {
+        using var request = new HttpRequestMessage(
+            HttpMethod.Patch,
+            new Uri($"records/{recordId}/{endpoint}{query}", UriKind.Relative)
+        )
+        {
+            Content = JsonContent.Create(body ?? new { reason = "Other" }),
+        };
+
+        return await _client.SendAsync(request, TestContext.Current.CancellationToken);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("?organisationId=4")]
@@ -581,19 +1107,26 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
     [InlineData("?recordType=Medicine")]
     [InlineData("?recordType=Medicine&organisationId=")]
     [InlineData("?recordType=Medicine&organisationId=abc")]
-    public async Task GetRecord_ReturnsBadRequest_WhenRecordTypeOrOrganisationMissingOrInvalid(
+    public async Task GetRecordEndpoints_ReturnBadRequest_WhenRecordTypeOrOrganisationMissingOrInvalid(
         string query
     )
     {
-        var response = await _client.GetAsync(
-            new Uri($"/records/1{query}", UriKind.Relative),
-            TestContext.Current.CancellationToken
-        );
+        foreach (string path in new[] { "/records/1", "/records/1/overview" })
+        {
+            var response = await _client.GetAsync(
+                new Uri($"{path}{query}", UriKind.Relative),
+                TestContext.Current.CancellationToken
+            );
 
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+            response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        }
+
         await _mockRecordViewService
             .DidNotReceiveWithAnyArgs()
-            .GetRecord(default, default, default, TestContext.Current.CancellationToken);
+            .GetRecordDetail(default, default, default, TestContext.Current.CancellationToken);
+        await _mockRecordViewService
+            .DidNotReceiveWithAnyArgs()
+            .GetRecordOverview(default, default, default, TestContext.Current.CancellationToken);
     }
 
     private static Uri AppendQueryParams(string url, GetRecordsQueryDto query)

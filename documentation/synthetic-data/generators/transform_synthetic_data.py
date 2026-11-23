@@ -88,6 +88,15 @@ def regulatory_date(value, as_of, rng):
     }
 
 
+def actual_month(value):
+    """A month the record knew had happened, for a question that collects the month only."""
+    return {
+        "dateValue": month_start(value).isoformat(),
+        "datePrecision": "ActualMonth",
+        "isConfidential": False,
+    }
+
+
 def yes_no_unknown(rng, yes, no, unknown):
     return weighted(rng, {"Yes": yes, "No": no, "Unknown": unknown})
 
@@ -429,13 +438,11 @@ ON_HOLD_NOTES = {
         "Pivotal trial {trial} paused pending independent data monitoring committee review.",
         "Recruitment to {trial} suspended following a protocol amendment.",
     ],
-    "AwaitingExternalClarification": [
-        "Awaiting MHRA confirmation of the eligible regulatory route.",
-        "Awaiting confirmation from the global partner on UK launch sequencing.",
-    ],
     "Other": [
         "Global development timelines under review following portfolio prioritisation.",
         "UK plans paused while manufacturing capacity is reviewed.",
+        "Awaiting MHRA confirmation of the eligible regulatory route.",
+        "Awaiting confirmation from the global partner on UK launch sequencing.",
     ],
 }
 
@@ -682,7 +689,9 @@ class RecordBuilder:
         notes = (ARCHIVE_NOTES if status == "Archived" else ON_HOLD_NOTES)[reason]
         if reason == "TrialSuspended":
             return rng.choice(notes).format(trial=trials[0]["clinicalTrialsGovNumber"])
-        return rng.choice(notes) if rng.random() < 0.9 else None
+        has_note = rng.random() < 0.9
+        # Other is always given with the detail of the reason.
+        return rng.choice(notes) if has_note or reason == "Other" else None
 
     def leave_draft_incomplete(self, rng, record):
         """Unpublished drafts are often missing their optional later sections."""
@@ -699,24 +708,24 @@ class RecordBuilder:
     # Regulatory timeline -----------------------------------------------------------------------
 
     PROCEDURE_DURATIONS = {
-        "MHRA National Procedure": (150, 420),
+        "MHRA national procedure": (150, 420),
         "International Recognition Procedure": (60, 200),
         "Access Consortium": (240, 330),
-        "Project Orbis": (180, 270),
+        "Orbis": (180, 270),
         "Other": (60, 300),
-        "Not yet confirmed": (240, 400),
+        "Unknown at this stage": (240, 400),
     }
 
     def procedure(self, rng, category, row):
         weights = {
             "International Recognition Procedure": 30,
-            "MHRA National Procedure": 30,
+            "MHRA national procedure": 30,
             "Access Consortium": 8,
             "Other": 11,
-            "Not yet confirmed": 11,
+            "Unknown at this stage": 11,
         }
         if category.is_cancer:
-            weights["Project Orbis"] = 12
+            weights["Orbis"] = 12
         return weighted(rng, weights)
 
     def timeline(self, rng, row, status, status_reason, status_note, procedure, record_dates):
@@ -776,7 +785,7 @@ class RecordBuilder:
                 "EC Decision Reliance Procedure following the European Commission decision.",
                 "Mutual recognition reliance procedure using the EU decision.",
             ])
-        elif procedure == "Not yet confirmed":
+        elif procedure == "Unknown at this stage":
             result["procedureDetails"] = rng.choice([
                 "Route to be confirmed following a scientific advice meeting with the MHRA.",
                 "Considering the Innovative Licensing and Access Pathway (ILAP); route not yet "
@@ -792,7 +801,7 @@ class RecordBuilder:
                 "submission.",
             ])
 
-        expedited = procedure == "Project Orbis" or designations["pimDesignationStatus"] == "Granted"
+        expedited = procedure == "Orbis" or designations["pimDesignationStatus"] == "Granted"
         result["ukConditionalApprovalAnticipated"] = (
             yes_no_unknown(rng, 45, 30, 25) if expedited else yes_no_unknown(rng, 10, 65, 25)
         )
@@ -824,9 +833,11 @@ class RecordBuilder:
         else:
             global_date = None
 
-        # Only the actual global first submission date is collected.
+        # Only the actual global first submission is collected, to the month. The draw matches
+        # regulatory_date's, so the random sequence for the remaining fields is unaffected.
         if global_date is not None and global_date <= as_of:
-            result["globalSubmissionActualDate"] = regulatory_date(global_date, as_of, rng)
+            rng.random()
+            result["globalSubmissionActualDate"] = actual_month(global_date)
 
         return result
 
@@ -1326,10 +1337,8 @@ def record_status(row):
         return "Archived", reason, None
     if metadata["on_hold"]:
         reason = {"Filing has been withdrawn": "FilingWithdrawn",
-                  "Trial has been suspended": "TrialSuspended"}.get(metadata["on_hold_reason"])
-        if reason is None:
-            rng = random.Random(f"ukps-hold-{metadata['id']}")
-            reason = weighted(rng, {"AwaitingExternalClarification": 60, "Other": 40})
+                  "Trial has been suspended": "TrialSuspended"}.get(metadata["on_hold_reason"],
+                                                                    "Other")
         return "OnHold", reason, None
     return "Published", None, None
 

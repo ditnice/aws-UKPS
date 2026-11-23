@@ -14,6 +14,9 @@ const gitignorePath = fileURLToPath(new URL('../.gitignore', import.meta.url))
 // wrapper has to import the package it wraps. `componentOnly` restricts just
 // the wrapped component, for packages whose other exports are still used.
 const ndsWrappers = [
+  { dir: 'Checkboxes', pkg: '@nice-digital/nds-checkbox', component: 'Checkboxes' },
+  { dir: 'FormGroup', pkg: '@nice-digital/nds-form-group', component: 'FormGroup' },
+  { dir: 'Radios', pkg: '@nice-digital/nds-radio', component: 'Radios' },
   { dir: 'Table', pkg: '@nice-digital/nds-table', component: 'Table' },
   { dir: 'Button', pkg: '@nice-digital/nds-button', component: 'Button' },
   { dir: 'Input', pkg: '@nice-digital/nds-input', component: 'Input' },

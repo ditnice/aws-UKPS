@@ -44,4 +44,157 @@ internal static class OptionKeys
     /// ID or junction. Archived options are hidden unless already saved.
     /// </summary>
     public const string TherapeuticAreas = "therapeutic-areas";
+
+    /// <summary>
+    /// The <c>BiomarkerType</c> enum: genomic biomarker, non-genomic biomarker and unknown at this
+    /// stage. For a <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
+    /// <c>BiomarkerType?</c> property.
+    /// </summary>
+    public const string BiomarkerType = "biomarker-type";
+
+    /// <summary>
+    /// The <c>GenomicTestNgtdRelationship</c> enum: how a test relates to the National Genomic Test
+    /// Directory (new test, existing test with a new or the same indication, or unknown at this
+    /// stage). For a <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
+    /// <c>GenomicTestNgtdRelationship?</c> property.
+    /// </summary>
+    public const string GenomicTestNgtdRelationship = "genomic-test-ngtd-relationship";
+
+    /// <summary>
+    /// The <c>GenomicTestMandatoryStatus</c> enum: whether testing is mandatory before treatment
+    /// can start (mandatory with or without alternatives, recommended only, or unknown at this
+    /// stage). For a <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
+    /// <c>GenomicTestMandatoryStatus?</c> property.
+    /// </summary>
+    public const string GenomicTestMandatoryStatus = "genomic-test-mandatory-status";
+
+    /// <summary>
+    /// The <c>PatientPathwayPoint</c> reference data as a flat list, ordered by ID. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
+    /// <c>PatientPathwayPointId</c> property. Archived options are hidden unless already saved.
+    /// </summary>
+    public const string PatientPathwayPoints = "patient-pathway-points";
+
+    /// <summary>
+    /// The <c>FormulationType</c> reference data as a flat list, ordered by ID. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
+    /// <c>FormulationTypeId</c> property. Archived options are hidden unless already saved.
+    /// </summary>
+    public const string FormulationTypes = "formulation-types";
+
+    /// <summary>
+    /// The <c>MedicineTechnologyStatus</c> flags enum: biosimilar, new chemical or biological
+    /// entity, new dosing regimen, new formulation, new indication, new presentation, and SPC
+    /// amendment without indication change. For a <see cref="FormControl.Checkbox"/> on a
+    /// <c>MedicineTechnologyStatus?</c> property.
+    /// </summary>
+    public const string MedicineTechnologyStatus = "medicine-technology-status";
+
+    /// <summary>
+    /// The <c>MedicineHtaAssessor</c> flags enum: NICE, SMC and AWMSG. For a
+    /// <see cref="FormControl.Checkbox"/> on a <c>MedicineHtaAssessor?</c> property.
+    /// </summary>
+    public const string MedicineHtaAssessor = "medicine-hta-assessor";
+
+    /// <summary>
+    /// The <c>DesignationStatus</c> enum worded for MHRA PIM designation: granted, not granted,
+    /// decision to submit is ongoing, application submitted and decision pending, and no
+    /// submission intended. For a <see cref="FormControl.Radio"/> on a
+    /// <c>DesignationStatus?</c> property. Other designations that share the enum need their own
+    /// key, so name this one with <c>[FormOptions]</c>.
+    /// </summary>
+    public const string PimDesignationStatus = "pim-designation-status";
+
+    /// <summary>
+    /// The <c>EamsOpinionDecision</c> enum: positive and negative. For a
+    /// <see cref="FormControl.Radio"/> on an <c>EamsOpinionDecision?</c> property.
+    /// </summary>
+    public const string EamsOpinionDecision = "eams-opinion-decision";
+
+    /// <summary>
+    /// The <c>NhsServiceChangesRequired</c> enum: complete transformation, some change, no
+    /// changes and unknown at this stage, with a hint on all but the last. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
+    /// <c>NhsServiceChangesRequired?</c> property.
+    /// </summary>
+    public const string NhsServiceChangesRequired = "nhs-service-changes-required";
+
+    /// <summary>
+    /// The <c>UkPatientPopulationRange</c> reference data as a flat list, ordered by sort order.
+    /// For a <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
+    /// <c>UkPatientPopulationRangeId</c> property. Archived options are hidden unless already saved.
+    /// </summary>
+    public const string UkPatientPopulationRanges = "uk-patient-population-ranges";
+
+    /// <summary>
+    /// The <c>DesignationStatus</c> enum worded for EU orphan medicine status: granted, not
+    /// granted, decision to submit ongoing, application submitted and decision pending, and no
+    /// submission intended. For a <see cref="FormControl.Radio"/> on a <c>DesignationStatus?</c>
+    /// property.
+    /// </summary>
+    public const string EuOrphanStatus = "eu-orphan-status";
+
+    /// <summary>
+    /// The <c>DesignationStatus</c> enum worded for EU ATMP classification: yes, no, decision to
+    /// submit ongoing, and application submitted and decision pending. It has no option for
+    /// <c>NoSubmissionIntended</c>. For a <see cref="FormControl.Radio"/> on a
+    /// <c>DesignationStatus?</c> property.
+    /// </summary>
+    public const string EuAtmpClassificationStatus = "eu-atmp-classification-status";
+
+    /// <summary>
+    /// The <c>AtmpClassification</c> reference data as a flat list, ordered by ID. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on an
+    /// <c>AtmpClassificationId</c> property. Archived options are hidden unless already saved.
+    /// </summary>
+    public const string AtmpClassifications = "atmp-classifications";
+
+    /// <summary>
+    /// The <c>MhraProcedureType</c> reference data that applies to medicines (every row but the
+    /// vaccines-only ones) as a flat list, ordered by ID. For a <see cref="FormControl.Radio"/> or
+    /// <see cref="FormControl.Select"/> on an <c>MhraProcedureTypeId</c> property. Archived
+    /// options are hidden unless already saved.
+    /// </summary>
+    public const string MedicineMhraProcedureTypes = "medicine-mhra-procedure-types";
+
+    /// <summary>
+    /// The <c>IrpReferenceRegulator</c> reference data as a flat list, ordered by ID. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on an
+    /// <c>IrpReferenceRegulatorId</c> property. Archived options are hidden unless already saved.
+    /// </summary>
+    public const string IrpReferenceRegulators = "irp-reference-regulators";
+
+    /// <summary>
+    /// The <c>IrpRoute</c> reference data as a flat list, ordered by ID. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on an
+    /// <c>IrpRouteId</c> property. Archived options are hidden unless already saved.
+    /// </summary>
+    public const string IrpRoutes = "irp-routes";
+
+    /// <summary>
+    /// The <c>PatientAccessSchemeRegion</c> flags enum: England, Wales, Scotland and Northern
+    /// Ireland. For a <see cref="FormControl.Checkbox"/> on a <c>PatientAccessSchemeRegion?</c>
+    /// property.
+    /// </summary>
+    public const string PatientAccessSchemeRegion = "patient-access-scheme-region";
+
+    /// <summary>
+    /// The <c>NetUkBudgetImpactBand</c> enum: less than £5 million, £5 million to less than £40
+    /// million, and £40 million or more per year, and unknown at this stage. For a
+    /// <see cref="FormControl.Radio"/> or <see cref="FormControl.Select"/> on a
+    /// <c>NetUkBudgetImpactBand?</c> property.
+    /// </summary>
+    public const string NetUkBudgetImpactBand = "net-uk-budget-impact-band";
+
+    /// <summary>
+    /// The <c>YesNo</c> enum: Yes and No. For a <see cref="FormControl.Radio"/> or
+    /// <see cref="FormControl.Select"/> on a <c>YesNo?</c> property.
+    /// </summary>
+    public const string YesNo = "yes-no";
+
+    /// <summary>
+    /// The <c>YesNoUnknown</c> enum for whether clinical trials are recruiting in the UK: "Yes,
+    /// trials are open and recruiting in the UK", No and Unknown at this stage.
+    /// </summary>
+    public const string ClinicalTrialsRecruitingInUk = "clinical-trials-recruiting-in-uk";
 }

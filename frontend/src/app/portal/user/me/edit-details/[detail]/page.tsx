@@ -1,0 +1,107 @@
+import { notFound } from 'next/navigation'
+import { ReactNode } from 'react'
+
+import { getUsersMe } from '@/client/generated'
+import { createServerApiClient } from '@/client/server-api'
+import { BackLink } from '@/components/BackLink/BackLink'
+import { PageHeader } from '@/components/PageHeader/PageHeader'
+import { ErrorState } from '@/components/Placeholder/ErrorState'
+import { errorMessages } from '@/lib/form/errorMessages'
+
+import { buildMyDetailsHref } from '../../navigation'
+
+import EditUserDetailForm from './editUserDetailValue/EditUserDetailForm'
+import EditUserEmailForm from './editUserEmail/EditUserEmailForm'
+import { findTypedPageProps, PageProps, UserDetail } from './navigation'
+import PendingEmailUpdateAlert from './PendingEmailUpdateAlert'
+
+const PageWrapper = (props: React.PropsWithChildren & { label: string; header?: ReactNode }) => {
+  return (
+    <>
+      {props.header}
+      <PageHeader
+        backLink={<BackLink href={buildMyDetailsHref()} />}
+        heading={`Edit ${props.label}`}
+      />
+      {props.children}
+    </>
+  )
+}
+
+const userDetailLabels: Record<UserDetail, string> = {
+  fullName: 'Full name',
+  contactNumber: 'Contact number',
+  email: 'Work email address',
+}
+
+const Page = async (props: PageProps) => {
+  const { params, searchParams } = await findTypedPageProps(props)
+  const { detail } = params
+
+  if (!detail) {
+    notFound()
+  }
+
+  const client = await createServerApiClient()
+  const { data: me, error } = await getUsersMe({ client })
+  const label = userDetailLabels[detail]
+
+  if (!me || error) {
+    return (
+      <PageWrapper label={label}>
+        <ErrorState>{errorMessages.failedToRetrieveCurrentUser}</ErrorState>
+      </PageWrapper>
+    )
+  }
+
+  const getHeader = () => {
+    if (detail === 'email' && me.pendingWorkEmail) {
+      return (
+        <>
+          <PendingEmailUpdateAlert
+            userId={me.userId}
+            verificationEmailResent={searchParams?.verificationLinkResent}
+            error={searchParams?.error}
+            {...me.pendingWorkEmail}
+          />
+        </>
+      )
+    }
+    return undefined
+  }
+
+  const getForm = () => {
+    switch (detail) {
+      case 'fullName':
+        return (
+          <EditUserDetailForm
+            label={label}
+            userId={me.userId}
+            property="FullName"
+            initialValue={me.fullName}
+          />
+        )
+      case 'email':
+        return <EditUserEmailForm userId={me.userId} initialValue={me.workEmail} />
+      case 'contactNumber':
+        return (
+          <EditUserDetailForm
+            label={label}
+            userId={me.userId}
+            property="WorkPhone"
+            initialValue={me.workTelephone}
+          />
+        )
+    }
+  }
+
+  return (
+    <>
+      <PageWrapper label={label} header={getHeader()}>
+        {getForm()}
+      </PageWrapper>
+    </>
+  )
+}
+
+export default Page

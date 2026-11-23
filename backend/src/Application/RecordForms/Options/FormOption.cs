@@ -4,7 +4,12 @@ namespace UKPS.Api.Application.RecordForms.Options;
 /// An option a choice question offers. The value is always a string on the wire: an enum member
 /// name or a reference ID. Only hierarchical options have children.
 /// </summary>
-internal sealed record FormOption(string Value, string Label, IReadOnlyList<FormOption> Children)
+internal sealed record FormOption(
+    string Value,
+    string Label,
+    IReadOnlyList<FormOption> Children,
+    string? Hint = null
+)
 {
     public FormOption(string value, string label)
         : this(value, label, []) { }

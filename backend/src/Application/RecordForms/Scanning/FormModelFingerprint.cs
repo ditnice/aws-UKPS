@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
+using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Application.RecordForms.Scanning;
 
@@ -36,8 +37,16 @@ internal static class FormModelFingerprint
                 {
                     text.AppendLine(
                         CultureInfo.InvariantCulture,
-                        $"    page {page.Id} | {page.Title} | {page.Order}"
+                        $"    page {page.Id} | {page.Title} | {page.Order} | {page.CommercialInConfidence}"
                     );
+                    if (page.ShowWhen is not null)
+                    {
+                        text.AppendLine(
+                            CultureInfo.InvariantCulture,
+                            $"      when {page.ShowWhen.Description}"
+                        );
+                    }
+
                     foreach (FormQuestion question in page.Questions)
                     {
                         AppendQuestion(text, question, options);
@@ -67,6 +76,17 @@ internal static class FormModelFingerprint
             CultureInfo.InvariantCulture,
             $"      binding {question.Binding.Description} | {question.Entity.RowSource}"
         );
+
+        AppendPresentation(text, question);
+
+        if (question.ShowWhen is not null)
+        {
+            text.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"      when {question.ShowWhen.Description}"
+            );
+        }
+
         foreach (FormRule rule in question.Rules)
         {
             text.AppendLine(
@@ -80,6 +100,43 @@ internal static class FormModelFingerprint
             text.AppendLine(
                 CultureInfo.InvariantCulture,
                 $"      options {question.OptionKey} | {options.Find(question.OptionKey)?.Description}"
+            );
+        }
+
+        foreach (FormQuestion child in question.Children)
+        {
+            text.AppendLine(CultureInfo.InvariantCulture, $"      child of {question.Id}:");
+            AppendQuestion(text, child, options);
+        }
+    }
+
+    /// <summary>
+    /// The prefixes of a prefixed number, the width of a text input, and the item labels of a
+    /// group or text list.
+    /// </summary>
+    private static void AppendPresentation(StringBuilder text, FormQuestion question)
+    {
+        if (question.Prefixes is not null)
+        {
+            string digits = question.PrefixDigits is { } exact
+                ? $" | digits {exact.ToString(CultureInfo.InvariantCulture)}"
+                : string.Empty;
+            text.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"      prefixes {string.Join(" | ", question.Prefixes)}{digits} | name {question.NumberName}"
+            );
+        }
+
+        if (question.Width is not null)
+        {
+            text.AppendLine(CultureInfo.InvariantCulture, $"      width {question.Width}");
+        }
+
+        if (question.Control is FormControl.Group or FormControl.TextList)
+        {
+            text.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"      items {question.ItemLabel} | {question.RemoveLabel} | {question.ItemKey}"
             );
         }
     }

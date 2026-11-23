@@ -56,4 +56,25 @@ public sealed record UserInformationDto
     /// Gets whether the user can select more than one organisation. Only set for the current user.
     /// </summary>
     public bool HasMultipleOrganisations { get; init; }
+
+    /// <summary>
+    /// Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.
+    /// </summary>
+    public required PharmaceuticalEntity AllowedPharmaceuticalEntity { get; init; }
+
+    /// <summary>
+    /// Gets the details of a requested change to the user's work email address that has not yet been
+    /// completed, or <see langword="null"/> if there is no pending change.
+    /// </summary>
+    public PendingWorkEmailChangeDto? PendingWorkEmail { get; init; }
+
+    /// <summary>
+    /// Gets the MFA method in use for the current user.
+    /// </summary>
+    public required string MfaMethod { get; init; }
+
+    /// <summary>
+    /// Gets the obfuscated phone number used for SMS MFA, if applicable.
+    /// </summary>
+    public required string MfaPhoneNumber { get; init; }
 }

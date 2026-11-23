@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text.Json;
 using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Enums;
@@ -12,11 +11,6 @@ namespace UKPS.Api.Persistence.Data.Seeding.SyntheticData;
 /// </summary>
 internal static class RecordContentHistory
 {
-    private static readonly JsonSerializerOptions _dateAuditJsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-    };
-
     /// <summary>Phrases that introduce the population an indication applies to.</summary>
     private static readonly string[] _populationPhrases =
     [
@@ -138,9 +132,15 @@ internal static class RecordContentHistory
         {
             CreationPageFields(record.ProductRecordDetails.NamesAndIdentifiers),
             IndicationFields(record),
+            DevelopmentBackgroundFields(
+                record.IndicationAndDevelopmentInformation.DevelopmentBackground
+            ),
+            LaboratoryTestingFields(record.ServiceReadinessInformation.LaboratoryTestingDetails),
             MhraFields(regulatory.MhraProcedureAndDates),
             HtaAndDesignationFields(regulatory),
+            PatientAndClinicalRequirementsFields(record.ServiceReadinessInformation),
             ServiceReadinessFields(record.ServiceReadinessInformation),
+            PricingAndBudgetImpactFields(record.ServiceReadinessInformation.PricingAndBudgetImpact),
         }
             .SelectMany(fields => fields)
             .ToDictionary(field => field.Path, field => field.Value, StringComparer.Ordinal);
@@ -154,9 +154,10 @@ internal static class RecordContentHistory
             (CreationPageFieldPaths.CompanyCode, names.CompanyCode),
             (CreationPageFieldPaths.BrandedName, names.BrandedName),
             (CreationPageFieldPaths.RecordTitle, names.RecordTitle),
+            (CreationPageFieldPaths.GenericNames, FieldAuditJson.TextList(names.GenericNames)),
             (
-                CreationPageFieldPaths.NamesAndIdentifiers,
-                FieldAuditJson.NamesAndIdentifiers(names.GenericNames, names.OtherIdentifiers)
+                CreationPageFieldPaths.OtherIdentifiers,
+                FieldAuditJson.TextList(names.OtherIdentifiers)
             ),
         ];
 
@@ -200,16 +201,82 @@ internal static class RecordContentHistory
                 indication.IsPersonalisedMedicine?.ToString()
             ),
             (
+                "medicines_indication_detail.medicine_technology_status",
+                indication.MedicineTechnologyStatus.Count == 0
+                    ? null
+                    : FieldAuditJson.Serialize(
+                        indication
+                            .MedicineTechnologyStatus.Select(status => status.ToString())
+                            .Order(StringComparer.Ordinal)
+                    )
+            ),
+            (
+                "record_clinical_trial_information.has_clinical_trials",
+                record.ClinicalTrialInformation.ClinicalTrials.Count == 0 ? null : nameof(YesNo.Yes)
+            ),
+            ("record_clinical_trial", ClinicalTrialsAudit(record.ClinicalTrialInformation)),
+            (
                 "record_clinical_trial_information.recruiting_in_uk",
                 record.ClinicalTrialInformation.RecruitingInUk?.ToString()
             ),
         ];
     }
 
+    /// <summary>
+    /// The trials as the form audits them: an array in display order, each item holding the
+    /// trial's answers in ordinal key order. NCT numbers can repeat, so trials are not keyed by them.
+    /// </summary>
+    private static string? ClinicalTrialsAudit(SyntheticClinicalTrialInformation section) =>
+        section.ClinicalTrials.Count == 0
+            ? null
+            : FieldAuditJson.Serialize(
+                section
+                    .ClinicalTrials.Select(static t => new Dictionary<string, object>(
+                        StringComparer.Ordinal
+                    )
+                    {
+                        ["clinical_trials_gov_number"] = t.ClinicalTrialsGovNumber,
+                        ["other_registry_numbers"] = t.OtherClinicalTrialNumbers,
+                        ["study_name"] = t.StudyName,
+                    })
+                    .ToList()
+            );
+
+    private static (string Path, string? Value)[] DevelopmentBackgroundFields(
+        SyntheticDevelopmentBackground background
+    ) =>
+        [
+            (
+                "medicines_development_background.is_repurposed_medicine",
+                background.IsRepurposedMedicine?.ToString()
+            ),
+            (
+                "medicines_development_background.repurposed_medicine_details",
+                background.RepurposedMedicineDetails
+            ),
+            (
+                "medicines_development_background.is_originator_company",
+                background.IsOriginatorCompany?.ToString()
+            ),
+            (
+                "medicines_development_background.originator_company_name",
+                background.OriginatorCompanyName
+            ),
+            (
+                "medicines_development_background.is_co_marketed",
+                background.IsCoMarketed?.ToString()
+            ),
+            (
+                "medicines_development_background.co_marketing_company_name",
+                background.CoMarketingCompanyName
+            ),
+        ];
+
     private static (string Path, string? Value)[] MhraFields(SyntheticMhraProcedureAndDates mhra) =>
         [
             ("record_mhra_procedure.mhra_procedure_type_id", mhra.MhraProcedureType),
             ("record_mhra_procedure.irp_reference_regulator_id", mhra.IrpReferenceRegulator),
+            ("record_mhra_procedure.procedure_details", mhra.ProcedureDetails),
             ("record_mhra_date.uk_submission_date", Format(mhra.UkSubmissionDate)),
             ("record_mhra_date.uk_licence_date", Format(mhra.UkLicenceDate)),
             (
@@ -245,6 +312,16 @@ internal static class RecordContentHistory
                 "record_hta.medicine_hta_submission_intended",
                 hta.MedicineHtaSubmissionIntended?.ToString()
             ),
+            (
+                "record_hta.medicine_hta_bodies",
+                hta.MedicineHtaBodies is null || hta.MedicineHtaBodies.Count == 0
+                    ? null
+                    : FieldAuditJson.Serialize(
+                        hta.MedicineHtaBodies.Select(body => body.ToString())
+                            .Order(StringComparer.Ordinal)
+                    )
+            ),
+            ("record_hta.hta_additional_details", hta.HtaAdditionalDetails),
             ("record_hta.hta_nice_aligned_pathway", hta.HtaNiceAlignedPathway?.ToString()),
             ("record_hta.nice_ta_development_id", hta.NiceTaDevelopmentId),
             ("record_hta.uk_launch_date", Format(hta.UkLaunchDate)),
@@ -277,14 +354,108 @@ internal static class RecordContentHistory
         ];
     }
 
-    private static (string Path, string? Value)[] ServiceReadinessFields(
-        SyntheticServiceReadiness readiness
+    private static (string Path, string? Value)[] LaboratoryTestingFields(
+        SyntheticLaboratoryTesting lab
     ) =>
         [
             (
                 "medicines_laboratory_testing.diagnostic_test_required",
-                readiness.LaboratoryTestingDetails.DiagnosticTestRequired?.ToString()
+                lab.DiagnosticTestRequired?.ToString()
             ),
+            ("medicines_laboratory_testing.biomarker_type", lab.BiomarkerType?.ToString()),
+            (
+                "medicines_laboratory_testing.non_genomic_biomarker_description",
+                lab.NonGenomicBiomarkerDescription
+            ),
+            ("medicines_laboratory_testing.genomic_target", lab.GenomicTarget),
+            (
+                "medicines_laboratory_testing.genomic_test_ngtd_relationship",
+                lab.GenomicTestNgtdRelationship?.ToString()
+            ),
+            ("medicines_laboratory_testing.genomic_sample_type", lab.GenomicSampleType),
+            (
+                "medicines_laboratory_testing.genomic_turnaround_time_details",
+                lab.GenomicTurnaroundTimeDetails
+            ),
+            ("medicines_laboratory_testing.patient_pathway_point_id", lab.PatientPathwayPoint),
+            (
+                "medicines_laboratory_testing.genomic_test_pathway_point_other",
+                lab.GenomicTestPathwayPointOther
+            ),
+            ("medicines_laboratory_testing.genomic_alterations", lab.GenomicAlterations),
+            (
+                "medicines_laboratory_testing.additional_genomic_factors",
+                lab.AdditionalGenomicFactors
+            ),
+            (
+                "medicines_laboratory_testing.genomic_test_used_in_trials",
+                lab.GenomicTestUsedInTrials
+            ),
+            (
+                "medicines_laboratory_testing.genomic_test_specificity_sensitivity",
+                lab.GenomicTestSpecificitySensitivity
+            ),
+            (
+                "medicines_laboratory_testing.genomic_test_mandatory_status",
+                lab.GenomicTestMandatoryStatus?.ToString()
+            ),
+            ("medicines_laboratory_testing.genomic_test_notes", lab.GenomicTestNotes),
+            ("medicines_laboratory_testing.monitoring_tests_details", lab.MonitoringTestsDetails),
+            ("medicines_laboratory_testing.safety_tests_details", lab.SafetyTestsDetails),
+        ];
+
+    private static (string Path, string? Value)[] PatientAndClinicalRequirementsFields(
+        SyntheticServiceReadiness readiness
+    )
+    {
+        SyntheticPatientAndClinicalRequirements patient = readiness.PatientAndClinicalRequirements;
+        return
+        [
+            (
+                "medicines_patient_identification.urgent_identification_required",
+                patient.UrgentIdentificationRequired?.ToString()
+            ),
+            (
+                "medicines_patient_identification.urgent_identification_details",
+                patient.UrgentIdentificationDetails
+            ),
+            (
+                "medicines_patient_identification.screening_required",
+                patient.ScreeningRequired?.ToString()
+            ),
+            ("medicines_patient_identification.screening_details", patient.ScreeningDetails),
+            (
+                "medicines_service_impact.nhs_service_changes_required",
+                patient.NhsServiceChangesRequired?.ToString()
+            ),
+            (
+                "medicines_service_impact.nhs_service_changes_details",
+                patient.NhsServiceChangesDetails
+            ),
+            (
+                "medicines_service_impact.handling_storage_requirements",
+                patient.HandlingStorageRequirements?.ToString()
+            ),
+            ("medicines_service_impact.handling_storage_details", patient.HandlingStorageDetails),
+            (
+                "medicines_service_impact.uk_patient_population_notes",
+                patient.UkPatientPopulationNotes
+            ),
+            (
+                "medicines_service_impact.estimated_eligible_patient_population",
+                patient.EstimatedEligiblePatientPopulation
+            ),
+            (
+                "medicines_treatment_detail.estimated_duration_of_treatment",
+                patient.EstimatedDurationOfTreatment
+            ),
+        ];
+    }
+
+    private static (string Path, string? Value)[] ServiceReadinessFields(
+        SyntheticServiceReadiness readiness
+    ) =>
+        [
             (
                 "medicines_treatment_detail.proposed_place_in_therapy",
                 readiness.PatientAndClinicalRequirements.ProposedPlaceInTherapy
@@ -293,9 +464,47 @@ internal static class RecordContentHistory
                 "medicines_service_impact.uk_patient_population_range_id",
                 readiness.PatientAndClinicalRequirements.UkPatientPopulationRange
             ),
+        ];
+
+    private static (string Path, string? Value)[] PricingAndBudgetImpactFields(
+        SyntheticPricingAndBudgetImpact pricing
+    ) =>
+        [
+            ("medicines_budget_impact.estimated_uptake", pricing.EstimatedUptake),
+            (
+                "medicines_budget_impact.compassionate_access_available",
+                pricing.CompassionateAccessAvailable?.ToString()
+            ),
+            (
+                "medicines_budget_impact.compassionate_access_details",
+                pricing.CompassionateAccessDetails
+            ),
+            (
+                "medicines_budget_impact.patient_access_scheme_planned",
+                pricing.PatientAccessSchemePlanned?.ToString()
+            ),
+            (
+                "medicines_budget_impact.patient_access_scheme_regions",
+                pricing.PatientAccessSchemeRegions is null
+                || pricing.PatientAccessSchemeRegions.Count == 0
+                    ? null
+                    : FieldAuditJson.Serialize(
+                        pricing
+                            .PatientAccessSchemeRegions.Select(region => region.ToString())
+                            .Order(StringComparer.Ordinal)
+                    )
+            ),
+            (
+                "medicines_budget_impact.indication_specific_pricing_planned",
+                pricing.IndicationSpecificPricingPlanned?.ToString()
+            ),
+            (
+                "medicines_budget_impact.indication_specific_pricing_details",
+                pricing.IndicationSpecificPricingDetails
+            ),
             (
                 "medicines_budget_impact.net_uk_budget_impact_band",
-                readiness.PricingAndBudgetImpact.NetUkBudgetImpactBand?.ToString()
+                pricing.NetUkBudgetImpactBand?.ToString()
             ),
         ];
 
@@ -519,20 +728,11 @@ internal static class RecordContentHistory
     private static string? Format(SyntheticRegulatoryDate? date) =>
         date is null
             ? null
-            : JsonSerializer.Serialize(
-                new DateAuditValue(
-                    date.DatePrecision.ToString(),
-                    date.DateValue.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                    date.IsConfidential
-                ),
-                _dateAuditJsonOptions
+            : FieldAuditJson.RegulatoryDate(
+                date.DatePrecision,
+                date.DateValue,
+                date.IsConfidential
             );
-
-    private sealed record DateAuditValue(
-        string DatePrecision,
-        string DateValue,
-        bool IsConfidential
-    );
 
     private sealed class Disclosure(IReadOnlySet<string> unknownFields)
     {

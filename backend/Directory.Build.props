@@ -17,6 +17,27 @@
     -->
   </PropertyGroup>
 
+  <!--
+    Opt-in enforcement of the IDE code-style rules from .editorconfig (IDE0005, IDE0130, naming),
+    used by the pre-commit build (`dotnet build -p:EnforceCodeStyle=true`) instead of a separate,
+    slow `dotnet format` pass. Normal builds don't fail on these rules; `just fix-style` applies
+    the available fixes. IDE0005 also needs an XML documentation file, which is switched on in
+    Directory.Build.targets (it has to see each project's own GenerateDocumentationFile setting).
+  -->
+  <PropertyGroup Condition="'$(EnforceCodeStyle)' == 'true'">
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <!--
+    Part of the compile-inputs hash, so switching EnforceCodeStyle on/off forces a recompile
+    instead of treating the previous build's output as up to date (which would skip the checks).
+    This relies on the SDK's internal _GenerateCompileDependencyCache target hashing every
+    CoreCompileCache item; if an SDK upgrade stops that, switching modes would skip the checks.
+  -->
+  <ItemGroup>
+    <CoreCompileCache Include="EnforceCodeStyle=$(EnforceCodeStyle)" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Meziantou.Analyzer" Version="2.*" PrivateAssets="all" />
     <PackageReference Include="Roslynator.Analyzers" Version="4.*" PrivateAssets="all" />

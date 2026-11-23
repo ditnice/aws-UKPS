@@ -172,6 +172,7 @@
           "Authentication"
         ],
         "summary": "Completes a multi-factor authentication challenge for an existing authentication session.",
+        "operationId": "RespondToMultiFactorAuthenticationChallenge",
         "requestBody": {
           "description": "A token to monitor for cancellation requests.",
           "content": {
@@ -233,6 +234,211 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/setup-sms-mfa": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Sets up SMS multi-factor authentication for a user.",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupSmsMfaCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupSmsMfaCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupSmsMfaCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsMultiFactorAuthenticationSetupDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsMultiFactorAuthenticationSetupDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsMultiFactorAuthenticationSetupDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify-sms-mfa": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Verifies the user's SMS multi-factor authentication setup by validating the provided authentication code.",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifySmsMultiFactorAuthenticationCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifySmsMultiFactorAuthenticationCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifySmsMultiFactorAuthenticationCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -701,6 +907,137 @@
         }
       }
     },
+    "/auth/initiate-forgotten-password": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Initiates the forgotten password procedure for a user.",
+        "description": "Starts the password recovery flow for the account identified in the command.\nThe number of attempts is limited; once the permitted limit has been exceeded,\nfurther requests are rejected.",
+        "operationId": "InitiateForgottenPasswordProcedure",
+        "requestBody": {
+          "description": "A token that can be used to cancel the operation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateForgottenPasswordProcedureCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateForgottenPasswordProcedureCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateForgottenPasswordProcedureCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The forgotten password procedure was initiated successfully."
+          },
+          "429": {
+            "description": "The number of permitted attempts has been exceeded.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/confirm-new-password": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Confirms a password reset by validating the confirmation code and setting a new password.",
+        "operationId": "ConfirmNewPassword",
+        "requestBody": {
+          "description": "A token to cancel the operation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmNewPasswordCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmNewPasswordCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmNewPasswordCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The password was changed successfully."
+          },
+          "400": {
+            "description": "The request failed validation. This occurs when the confirmation code is incorrect or has expired,\nor when the new password does not meet the password requirements.\nThe response body is a ValidationProblemDetails identifying the invalid field.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests were made, or too many failed attempts have occurred.\nThe response body is a ProblemDetails. The client should wait before retrying.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/me/organisations/current/champions": {
       "get": {
         "tags": [
@@ -915,6 +1252,192 @@
           },
           "401": {
             "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mfa/update": {
+      "post": {
+        "tags": [
+          "MultiFactorAuthentication"
+        ],
+        "summary": "Initiates the process of updating the authenticated user's multi-factor authentication settings.",
+        "operationId": "InitiateUpdateMultiFactorAuthentication",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultiFactorAuthenticationUpdateDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultiFactorAuthenticationUpdateDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultiFactorAuthenticationUpdateDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mfa/verify": {
+      "post": {
+        "tags": [
+          "MultiFactorAuthentication"
+        ],
+        "summary": "Verifies the multi-factor authentication code provided by the authenticated user\nto complete the update of their multi-factor authentication settings.",
+        "operationId": "VerifyMultiFactorAuthenticationUpdate",
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationUpdateCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationUpdateCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyMultiFactorAuthenticationUpdateCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2073,13 +2596,176 @@
         }
       }
     },
-    "/records/{id}": {
+    "/records/organisations/{organisationId}/company-codes": {
       "get": {
         "tags": [
           "Record"
         ],
-        "summary": "Retrieves the data held on the latest revision of a record, whatever its status.",
-        "operationId": "GetRecord",
+        "summary": "Retrieves the company codes already used on an organisation's records that contain the\nsearch text, for suggesting while a user types a company code.",
+        "operationId": "GetOrganisationCompanyCodes",
+        "parameters": [
+          {
+            "name": "organisationId",
+            "in": "path",
+            "description": "The unique identifier of the organisation.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Search",
+            "in": "query",
+            "description": "Gets or initialises the text the company codes must contain, ignoring case. A blank search\nreturns no suggestions.",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "Gets or initialises the maximum number of suggestions to return.",
+            "schema": {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the matching company codes.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCodeSuggestionsDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCodeSuggestionsDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCodeSuggestionsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The query parameters are invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not authorised to view the organisation's records.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified organisation does not exist.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/records/{id}/overview": {
+      "get": {
+        "tags": [
+          "Record"
+        ],
+        "summary": "Retrieves a record's status, permitted actions and identifying details, whatever its\nstatus, without its answers.",
+        "operationId": "GetRecordOverview",
         "parameters": [
           {
             "name": "id",
@@ -2113,21 +2799,163 @@
         ],
         "responses": {
           "200": {
-            "description": "Returns the record data.",
+            "description": "Returns the record's overview.",
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/RecordDto"
+                  "$ref": "#/components/schemas/RecordOverviewDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RecordDto"
+                  "$ref": "#/components/schemas/RecordOverviewDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RecordDto"
+                  "$ref": "#/components/schemas/RecordOverviewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The record type or organisation is missing or invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested record was not found in the organisation or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/records/{id}": {
+      "get": {
+        "tags": [
+          "Record"
+        ],
+        "summary": "Retrieves a record's overview and every question that applies on its latest revision with\nits answer, whatever its status. The answers are not checked.",
+        "operationId": "GetRecordDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The identifier of the record to retrieve.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "recordType",
+            "in": "query",
+            "description": "The expected type of the record.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/RecordType"
+            }
+          },
+          {
+            "name": "organisationId",
+            "in": "query",
+            "description": "The organisation the record is expected to belong to.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the record's overview and answers.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordDetailDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordDetailDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordDetailDto"
                 }
               }
             }
@@ -2453,6 +3281,477 @@
         }
       }
     },
+    "/records/{recordId}/hold": {
+      "patch": {
+        "tags": [
+          "Record"
+        ],
+        "summary": "Puts a published record on hold.",
+        "operationId": "PutRecordOnHold",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The identifier of the record to put on hold.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "organisationId",
+            "in": "query",
+            "description": "The organisation the record is expected to belong to.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The record was put on hold."
+          },
+          "400": {
+            "description": "The reason is missing or is not a reason for putting a record on hold, or the reason is\n`Other` and no note is given.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller can read the record but cannot change its status.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record was not found in the organisation or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The record's status can't be changed in its current state, or the record was updated by\nanother operation. The `code` member says which.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/records/{recordId}/resume": {
+      "patch": {
+        "tags": [
+          "Record"
+        ],
+        "summary": "Removes the hold from a record, returning it to published.",
+        "operationId": "ResumeRecord",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The identifier of the record to resume.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "organisationId",
+            "in": "query",
+            "description": "The organisation the record is expected to belong to.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The hold was removed."
+          },
+          "400": {
+            "description": "The reason is missing or is not a reason for removing a hold, or the reason is\n`Other` and no note is given.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller can read the record but cannot change its status.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record was not found in the organisation or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The record's status can't be changed in its current state, or the record was updated by\nanother operation. The `code` member says which.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/records/{recordId}/archive": {
+      "patch": {
+        "tags": [
+          "Record"
+        ],
+        "summary": "Archives a published or on hold record.",
+        "operationId": "ArchiveRecord",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The identifier of the record to archive.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "organisationId",
+            "in": "query",
+            "description": "The organisation the record is expected to belong to.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordStatusCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The record was archived."
+          },
+          "400": {
+            "description": "The reason is missing or is not a reason for archiving a record, or the reason is\n`Other` and no note is given.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller can read the record but cannot change its status.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record was not found in the organisation or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The record's status can't be changed in its current state, or the record was updated by\nanother operation. The `code` member says which.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/records/{recordId}/pages/{pageId}": {
       "get": {
         "tags": [
@@ -2709,6 +4008,296 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/records/{recordId}/check-answers": {
+      "get": {
+        "tags": [
+          "RecordSubmission"
+        ],
+        "summary": "Retrieves every question that applies on the record's latest revision with its answer, the\nerrors that would stop it being submitted, and the revision hash to submit with.",
+        "operationId": "GetRecordCheckAnswers",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The record to check.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the record's answers and errors.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordCheckAnswersDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordCheckAnswersDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordCheckAnswersDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller can read the record but not submit it.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record was not found or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The record can't be submitted in its current state, or the selected organisation differs.\nThe `code` member says which.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/records/{recordId}/submit": {
+      "post": {
+        "tags": [
+          "RecordSubmission"
+        ],
+        "summary": "Submits the record's draft revision, as it was when check your answers loaded. A medicine\ngoes to QA review.",
+        "operationId": "SubmitRecord",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "description": "The record to submit.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A token to monitor for cancellation requests.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitRecordCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitRecordCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitRecordCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "The record was submitted."
+          },
+          "400": {
+            "description": "The request body is missing or malformed.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller can read the record but not submit it.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The record was not found or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The record can't be submitted in its current state, or the form or revision changed since\ncheck your answers loaded, or the selected organisation differs. The `code` member says which.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionConflictProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The revision has problems to fix first. `errors` is keyed by question ID, and\n`fields` lists each problem with its page and task, in form order.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRecordProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRecordProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRecordProblemDetails"
                 }
               }
             }
@@ -3167,28 +4756,8 @@
               }
             }
           },
-          "403": {
-            "description": "Returned if the caller is not authorised to view the organisation's users.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "Returned if the organisation does not exist or the user is not a member of it.",
+            "description": "The user does not exist in this organisation or is not accessible to the caller (ADR-004).",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3256,6 +4825,7 @@
           "User"
         ],
         "summary": "Updates the details of the specified user.",
+        "operationId": "UpdateUserDetails",
         "parameters": [
           {
             "name": "userId",
@@ -3350,8 +4920,8 @@
               }
             }
           },
-          "409": {
-            "description": "The request conflicts with the existing data such as another users email.",
+          "401": {
+            "description": "Unauthorized",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3370,8 +4940,8 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized",
+          "409": {
+            "description": "The request conflicts with the existing data such as another users email.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3513,6 +5083,452 @@
           },
           "409": {
             "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/email": {
+      "patch": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Updates the email address of the specified user.",
+        "operationId": "UpdateUserEmail",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "The unique identifier of the user whose email address is to be updated.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A token that can be used to cancel the request.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserEmailCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserEmailCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserEmailCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/email/resend": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Resends the email verification message to a user.",
+        "operationId": "ResendVerificationEmail",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "The unique identifier of the user to resend the verification email to.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The verification email was successfully resent."
+          },
+          "404": {
+            "description": "No user exists with the specified userId.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request could not be completed because there is no pending verification for the user,\nor because a concurrent modification was detected. Retry may succeed in the latter case.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/email/verify": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Verifies a user's pending email address using a verification token.",
+        "operationId": "VerifyPendingEmailAddress",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "The ID of the user whose pending email address is being verified.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A token to cancel the operation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyPendingEmailAddressCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyPendingEmailAddressCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyPendingEmailAddressCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The pending email address was verified successfully."
+          },
+          "400": {
+            "description": "The verification token provided is invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not authorised to verify the email address for this user.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The user does not exist.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The user has no pending email address, or the pending email address has already been verified.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/email/pending": {
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Cancels a user's unverified pending email change.",
+        "operationId": "CancelPendingEmailChange",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "The ID of the user whose pending email change is being cancelled.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The pending email change was cancelled successfully."
+          },
+          "404": {
+            "description": "The specified user does not exist or is not accessible to the caller.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The user has no pending email change or a concurrent change was detected.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3799,28 +5815,8 @@
               }
             }
           },
-          "403": {
-            "description": "The current user is not allowed to view membership requests for the organisation.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "No membership request was found with the supplied identifier.",
+            "description": "The membership request does not exist or is not accessible to the caller (ADR-004).",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3915,28 +5911,8 @@
           "200": {
             "description": "The membership request was successfully approved."
           },
-          "403": {
-            "description": "The current user is not allowed to approve the membership request.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "The membership request could not be found.",
+            "description": "The membership request does not exist or is not accessible to the caller (ADR-004).",
             "content": {
               "text/plain": {
                 "schema": {
@@ -4031,28 +6007,8 @@
           "200": {
             "description": "The membership request was successfully rejected."
           },
-          "403": {
-            "description": "The current user is not allowed to reject the membership request.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "The membership request could not be found.",
+            "description": "The membership request does not exist or is not accessible to the caller (ADR-004).",
             "content": {
               "text/plain": {
                 "schema": {
@@ -4127,6 +6083,7 @@
           "MembershipNotInValidState",
           "OrganisationNotActive",
           "SelectedOrganisationMismatch",
+          "PendingEmailRequiredVerification",
           null
         ],
         "type": "string"
@@ -4205,14 +6162,80 @@
         },
         "description": "Represents problem details returned when authentication fails or\nadditional authentication is required."
       },
-      "BiomarkerType": {
-        "enum": [
-          "Unknown",
-          "NonGenomicBiomarker",
-          "GenomicBiomarker",
-          null
+      "ChangeRecordStatusCommand": {
+        "required": [
+          "reason"
         ],
-        "type": "string"
+        "type": "object",
+        "properties": {
+          "reason": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets why the status is changing. Each status change accepts only its own reasons.",
+                "$ref": "#/components/schemas/RecordStatusChangeReason"
+              }
+            ]
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets further details about the change. Required when the reason is\nRecordStatusChangeReason.Other."
+          }
+        },
+        "description": "Contains why a record is being put on hold, resumed or archived."
+      },
+      "CompanyCodeSuggestionsDto": {
+        "required": [
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets the distinct matching company codes, those starting with the search first, then\nalphabetically."
+          }
+        },
+        "description": "The company codes already used on an organisation's records, offered as suggestions while a\nuser types a company code."
+      },
+      "ConditionKind": {
+        "enum": [
+          "AnswerIn"
+        ],
+        "type": "string",
+        "description": "The kind of a condition that decides whether a question applies. Part of the HTTP API\ncontract: the member names are sent to the frontend, so never rename or remove one."
+      },
+      "ConfirmNewPasswordCommand": {
+        "required": [
+          "email",
+          "confirmationCode",
+          "newPassword"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Gets the account email address."
+          },
+          "confirmationCode": {
+            "type": "string",
+            "description": "Gets the password reset confirmation code."
+          },
+          "newPassword": {
+            "maxLength": 256,
+            "minLength": 8,
+            "type": "string",
+            "description": "Gets the new password."
+          }
+        },
+        "description": "Confirms a password reset and sets the new password."
       },
       "CreateOrganisationDto": {
         "required": [
@@ -4317,33 +6340,13 @@
         },
         "description": "Represents the result of creating a record."
       },
-      "DatePrecision": {
+      "EditableUserDetail": {
         "enum": [
-          "EstimatedQuarter",
-          "EstimatedMonth",
-          "ActualDate"
+          "FullName",
+          "WorkPhone"
         ],
         "type": "string",
-        "description": "Represents the level of precision for a date."
-      },
-      "DesignationStatus": {
-        "enum": [
-          "Granted",
-          "NotGranted",
-          "DecisionToSubmitOngoing",
-          "ApplicationSubmittedDecisionPending",
-          "NoSubmissionIntended",
-          null
-        ],
-        "type": "string"
-      },
-      "EamsOpinionDecision": {
-        "enum": [
-          "Negative",
-          "Positive",
-          null
-        ],
-        "type": "string"
+        "description": "Specifies the user details that can be edited."
       },
       "FormControl": {
         "enum": [
@@ -4352,27 +6355,33 @@
           "Radio",
           "Select",
           "Checkbox",
-          "HierarchicalSelect"
+          "HierarchicalSelect",
+          "PrecisionDate",
+          "ActualMonth",
+          "PrefixedNumber",
+          "ActualDate",
+          "Group",
+          "TextList"
         ],
         "type": "string",
         "description": "The input a record content question is rendered with. Part of the HTTP API contract: the\nmember names are sent to the frontend, so never rename or remove one."
       },
-      "GenomicTestMandatoryStatus": {
+      "FormInputWidth": {
         "enum": [
-          "Unknown",
-          "RecommendedNotRequired",
-          "MandatoryAlternativesMayExist",
-          "MandatoryNoAlternatives",
-          null
-        ],
-        "type": "string"
-      },
-      "GenomicTestNgtdRelationship": {
-        "enum": [
-          "Unknown",
-          "NewTest",
-          "ExistingTestNewIndication",
-          "ExistingTestSameIndication",
+          "Default",
+          "Full",
+          "ThreeQuarters",
+          "TwoThirds",
+          "OneHalf",
+          "OneThird",
+          "OneQuarter",
+          "Chars2",
+          "Chars3",
+          "Chars4",
+          "Chars5",
+          "Chars10",
+          "Chars20",
+          "Chars30",
           null
         ],
         "type": "string"
@@ -4398,15 +6407,80 @@
         "type": "string",
         "description": "Specifies the fields by which users can be sorted when querying users."
       },
-      "IndicationPaediatricStatus": {
-        "enum": [
-          "Unknown",
-          "ExclusivelyChildren",
-          "ExclusivelyAdults",
-          "BothChildrenAndAdults",
-          null
+      "InitiateForgottenPasswordProcedureCommand": {
+        "required": [
+          "email"
         ],
-        "type": "string"
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Gets the email address of the user who has forgotten their password."
+          }
+        },
+        "description": "Represents a request to start the forgotten password flow for a user."
+      },
+      "InvalidRecordProblemDetails": {
+        "required": [
+          "code",
+          "fields",
+          "errors"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identifies the problem; always `record_invalid`."
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmissionErrorDto"
+            },
+            "description": "Each problem with its page and task, in form order."
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "description": "The problems that stop a record being submitted. `errors` is keyed by question ID;\n`fields` adds each problem's page and task."
       },
       "LoginRequest": {
         "required": [
@@ -4428,766 +6502,6 @@
         },
         "description": "Represents the credentials provided by a user when attempting to authenticate."
       },
-      "MedicineHtaAssessor": {
-        "enum": [
-          "Nice",
-          "Smc",
-          "Awmsg"
-        ],
-        "type": "string",
-        "description": "Bodies a medicine may be submitted to for health technology assessment.\nMulti-select — see RecordHta.MedicineHtaBodies. Only populated when\nRecordHta.MedicineHtaSubmissionIntended is Yes."
-      },
-      "MedicinesBudgetImpactDto": {
-        "type": "object",
-        "properties": {
-          "estimatedUptake": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the estimated uptake."
-          },
-          "compassionateAccessAvailable": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether compassionate access is available.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "compassionateAccessDetails": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets details of compassionate access."
-          },
-          "patientAccessSchemePlanned": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether a patient access scheme is planned.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "patientAccessSchemeRegions": {
-            "type": [
-              "null",
-              "array"
-            ],
-            "items": {
-              "$ref": "#/components/schemas/PatientAccessSchemeRegion"
-            },
-            "description": "Gets the patient access scheme regions, or `null` if unanswered."
-          },
-          "indicationSpecificPricingPlanned": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether indication-specific pricing is planned.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "indicationSpecificPricingDetails": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets details of the indication-specific pricing."
-          },
-          "netUkBudgetImpactBand": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the net UK budget impact band.",
-                "$ref": "#/components/schemas/NetUkBudgetImpactBand"
-              }
-            ]
-          }
-        },
-        "description": "Represents the budget impact section of a medicine record."
-      },
-      "MedicinesDevelopmentBackgroundDto": {
-        "type": "object",
-        "properties": {
-          "isRepurposedMedicine": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether this is a repurposed medicine.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "repurposedMedicineDetails": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the differences from the current licensed indications."
-          },
-          "isOriginatorCompany": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether the submitting company is the originator.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "originatorCompanyName": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the originator company name."
-          },
-          "isCoMarketed": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether the product is co-marketed.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "coMarketingCompanyName": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the co-marketing company name."
-          }
-        },
-        "description": "Represents the development background section of a medicine record."
-      },
-      "MedicinesEamsPimDto": {
-        "type": "object",
-        "properties": {
-          "pimDesignationStatus": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the Promising Innovative Medicine designation status.",
-                "$ref": "#/components/schemas/DesignationStatus"
-              }
-            ]
-          },
-          "willSubmitToEams": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether the product will be submitted to EAMS.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "eamsSubmissionDate": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the EAMS submission date.",
-                "$ref": "#/components/schemas/RegulatoryDateDto"
-              }
-            ]
-          },
-          "eamsOpinionDate": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the EAMS opinion date.",
-                "$ref": "#/components/schemas/RegulatoryDateDto"
-              }
-            ]
-          },
-          "eamsOpinionDecision": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the EAMS opinion decision.",
-                "$ref": "#/components/schemas/EamsOpinionDecision"
-              }
-            ]
-          }
-        },
-        "description": "Represents the Early Access to Medicines Scheme and Promising Innovative Medicine section of a\nmedicine record."
-      },
-      "MedicinesEuStatusDto": {
-        "type": "object",
-        "properties": {
-          "euOrphanStatus": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the EU orphan designation status.",
-                "$ref": "#/components/schemas/DesignationStatus"
-              }
-            ]
-          },
-          "euOrphanStatusNumber": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the EU orphan designation number."
-          },
-          "euOrphanGrantedDate": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the date EU orphan status was granted.",
-                "$ref": "#/components/schemas/RegulatoryDateDto"
-              }
-            ]
-          },
-          "euAtmpClassificationStatus": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the EU advanced therapy medicinal product classification status.",
-                "$ref": "#/components/schemas/DesignationStatus"
-              }
-            ]
-          },
-          "atmpRecommendationDate": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the ATMP classification recommendation date.",
-                "$ref": "#/components/schemas/RegulatoryDateDto"
-              }
-            ]
-          },
-          "atmpClassification": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the ATMP classification.",
-                "$ref": "#/components/schemas/ReferenceDataDto"
-              }
-            ]
-          }
-        },
-        "description": "Represents the EU status section of a medicine record."
-      },
-      "MedicinesGlobalSubmissionDto": {
-        "type": "object",
-        "properties": {
-          "globalFirstSubmissionRegion": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the region of the first global submission."
-          },
-          "globalSubmissionActualDate": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the date of the first global submission.",
-                "$ref": "#/components/schemas/RegulatoryDateDto"
-              }
-            ]
-          }
-        },
-        "description": "Represents the global submission section of a medicine record."
-      },
-      "MedicinesIndicationDetailDto": {
-        "required": [
-          "therapeuticAreas"
-        ],
-        "type": "object",
-        "properties": {
-          "indication": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the indication."
-          },
-          "bnfChapter": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the BNF chapter.",
-                "$ref": "#/components/schemas/ReferenceDataDto"
-              }
-            ]
-          },
-          "therapeuticAreas": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ReferenceDataDto"
-            },
-            "description": "Gets the therapeutic areas, in display order."
-          },
-          "indicationIsPaediatric": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether the indication is paediatric.",
-                "$ref": "#/components/schemas/IndicationPaediatricStatus"
-              }
-            ]
-          },
-          "indicationIsCancer": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether the indication is cancer.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "indicationIsRareDisease": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether the product is intended to treat a rare disease.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "formulationType": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the formulation type.",
-                "$ref": "#/components/schemas/ReferenceDataDto"
-              }
-            ]
-          },
-          "presentation": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the presentation."
-          },
-          "modeOfAction": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the mode of action."
-          },
-          "proposedDoseRegimen": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the proposed dose regimen."
-          },
-          "isPersonalisedMedicine": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether this is a personalised medicine.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "medicineTechnologyStatus": {
-            "type": [
-              "null",
-              "array"
-            ],
-            "items": {
-              "$ref": "#/components/schemas/MedicineTechnologyStatus"
-            },
-            "description": "Gets the selected technology statuses, or `null` if unanswered."
-          }
-        },
-        "description": "Represents the indication details section of a medicine record."
-      },
-      "MedicinesIntlRecognitionDto": {
-        "type": "object",
-        "properties": {
-          "irpRoute": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the International Recognition Procedure route.",
-                "$ref": "#/components/schemas/ReferenceDataDto"
-              }
-            ]
-          },
-          "intlSubmissionDate": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the international submission date.",
-                "$ref": "#/components/schemas/RegulatoryDateDto"
-              }
-            ]
-          },
-          "intlLicenceDate": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the international licence date.",
-                "$ref": "#/components/schemas/RegulatoryDateDto"
-              }
-            ]
-          },
-          "intlConditionalApprovalAnticipated": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether international conditional approval is anticipated.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          }
-        },
-        "description": "Represents the international recognition section of a medicine record."
-      },
-      "MedicinesLaboratoryTestingDto": {
-        "type": "object",
-        "properties": {
-          "diagnosticTestRequired": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether a diagnostic test is required.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "biomarkerType": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the biomarker type.",
-                "$ref": "#/components/schemas/BiomarkerType"
-              }
-            ]
-          },
-          "nonGenomicBiomarkerDescription": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the description of a non-genomic biomarker."
-          },
-          "genomicTarget": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the genomic target."
-          },
-          "genomicTestNgtdRelationship": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the relationship of the genomic test to the National Genomic Test Directory.",
-                "$ref": "#/components/schemas/GenomicTestNgtdRelationship"
-              }
-            ]
-          },
-          "genomicSampleType": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the genomic sample type."
-          },
-          "genomicTurnaroundTimeDetails": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the genomic test turnaround time details."
-          },
-          "patientPathwayPoint": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the point in the patient pathway at which the test is performed.",
-                "$ref": "#/components/schemas/ReferenceDataDto"
-              }
-            ]
-          },
-          "genomicTestPathwayPointOther": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the pathway point when not covered by the listed options."
-          },
-          "genomicAlterations": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the genomic alterations."
-          },
-          "additionalGenomicFactors": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets additional genomic factors."
-          },
-          "genomicTestUsedInTrials": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the genomic test used in trials."
-          },
-          "genomicTestSpecificitySensitivity": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the genomic test specificity and sensitivity."
-          },
-          "genomicTestMandatoryStatus": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether the genomic test is mandatory.",
-                "$ref": "#/components/schemas/GenomicTestMandatoryStatus"
-              }
-            ]
-          },
-          "genomicTestNotes": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets additional notes on the genomic test."
-          },
-          "monitoringTestsDetails": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets details of monitoring tests."
-          },
-          "safetyTestsDetails": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets details of safety tests."
-          }
-        },
-        "description": "Represents the laboratory testing section of a medicine record."
-      },
-      "MedicinesPatientIdentificationDto": {
-        "type": "object",
-        "properties": {
-          "screeningRequired": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether screening is required.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "screeningDetails": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets details of the screening required."
-          },
-          "urgentIdentificationRequired": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether urgent patient identification is required.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "urgentIdentificationDetails": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets details of the urgent identification required."
-          }
-        },
-        "description": "Represents the patient identification section of a medicine record."
-      },
-      "MedicinesServiceImpactDto": {
-        "type": "object",
-        "properties": {
-          "nhsServiceChangesRequired": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether NHS service changes are required.",
-                "$ref": "#/components/schemas/NhsServiceChangesRequired"
-              }
-            ]
-          },
-          "nhsServiceChangesDetails": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets details of the NHS service changes."
-          },
-          "handlingStorageRequirements": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether there are handling or storage requirements.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "handlingStorageDetails": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets details of the handling or storage requirements."
-          },
-          "ukPatientPopulationRange": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the UK patient population range.",
-                "$ref": "#/components/schemas/ReferenceDataDto"
-              }
-            ]
-          },
-          "ukPatientPopulationNotes": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets notes on the UK patient population."
-          },
-          "estimatedEligiblePatientPopulation": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the estimated eligible patient population."
-          }
-        },
-        "description": "Represents the NHS service impact section of a medicine record."
-      },
-      "MedicinesTreatmentDetailDto": {
-        "required": [
-          "proposedPlaceInTherapy"
-        ],
-        "type": "object",
-        "properties": {
-          "proposedPlaceInTherapy": {
-            "type": "string",
-            "description": "Gets the proposed place in therapy."
-          },
-          "estimatedDurationOfTreatment": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the estimated duration of treatment."
-          }
-        },
-        "description": "Represents the treatment detail section of a medicine record."
-      },
-      "MedicineTechnologyStatus": {
-        "enum": [
-          "Biosimilar",
-          "NewChemicalOrBiologicalEntity",
-          "NewDosingRegimen",
-          "NewFormulation",
-          "NewIndication",
-          "NewPresentation",
-          "SpcAmendmentWithoutIndicationChange"
-        ],
-        "type": "string",
-        "description": "Technology status types selected for a medicine record. Multi-select —\nsee MedicinesIndicationDetail.MedicineTechnologyStatus."
-      },
       "MultiFactorAuthenticationSetupDto": {
         "required": [
           "otpAuthUri",
@@ -5207,33 +6521,19 @@
         },
         "description": "Represents the details required for a user to complete multi-factor authentication setup."
       },
-      "NameAndIdentifierType": {
-        "enum": [
-          "GenericName",
-          "OtherIdentifier"
+      "MultiFactorAuthenticationUpdateDto": {
+        "required": [
+          "otpAuthUri"
         ],
-        "type": "string",
-        "description": "The type of a product name or identifier. See RecordNameAndIdentifier.NameType."
-      },
-      "NetUkBudgetImpactBand": {
-        "enum": [
-          "Unknown",
-          "LessThan5M",
-          "Between5MAnd40M",
-          "FortyMOrMore",
-          null
-        ],
-        "type": "string"
-      },
-      "NhsServiceChangesRequired": {
-        "enum": [
-          "Unknown",
-          "NoChanges",
-          "SomeChange",
-          "CompleteTransformation",
-          null
-        ],
-        "type": "string"
+        "type": "object",
+        "properties": {
+          "otpAuthUri": {
+            "type": "string",
+            "description": "Gets the OTP authentication URI used to configure an authenticator application.",
+            "format": "uri"
+          }
+        },
+        "description": "Represents the details required for a user to complete multi-factor authentication update."
       },
       "OnboardedUserDto": {
         "required": [
@@ -5494,15 +6794,23 @@
         },
         "description": "Represents a paginated response containing a collection of items and pagination metadata."
       },
-      "PatientAccessSchemeRegion": {
-        "enum": [
-          "England",
-          "Wales",
-          "Scotland",
-          "NorthernIreland"
+      "PendingWorkEmailChangeDto": {
+        "required": [
+          "value",
+          "verifiedByEmail"
         ],
-        "type": "string",
-        "description": "Patient Access Scheme regions selected for a medicine record.\nMulti-select — see MedicinesBudgetImpact.PatientAccessSchemeRegions."
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "Gets the new work email address that has been requested."
+          },
+          "verifiedByEmail": {
+            "type": "boolean",
+            "description": "Gets whether the new work email address has been verified by email."
+          }
+        },
+        "description": "Represents a requested change to a user's work email address that is awaiting completion."
       },
       "PharmaceuticalEntity": {
         "enum": [
@@ -5561,66 +6869,245 @@
         "type": "string",
         "description": "Defines the actions a user can take on a record."
       },
-      "RecordClinicalTrialDto": {
+      "RecordAnswersGroupItemDto": {
         "required": [
-          "studyName",
-          "clinicalTrialsGovNumber",
-          "otherClinicalTrialNumbers"
+          "questions"
         ],
         "type": "object",
         "properties": {
-          "studyName": {
-            "type": "string",
-            "description": "Gets the study name."
-          },
-          "clinicalTrialsGovNumber": {
-            "type": "string",
-            "description": "Gets the ClinicalTrials.gov number."
-          },
-          "otherClinicalTrialNumbers": {
+          "questions": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/RecordAnswersQuestionDto"
             },
-            "description": "Gets other registry numbers for the trial, e.g. ISRCTN or EudraCT, in display order."
+            "description": "The answer to each of the group's questions, in order."
+          }
+        },
+        "description": "One item of a group answer, such as a clinical trial."
+      },
+      "RecordAnswersOptionDto": {
+        "required": [
+          "value",
+          "label",
+          "parentLabel"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "The answer value: an enum member name or a reference ID."
           },
-          "trialPhase": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the trial phase.",
-                "$ref": "#/components/schemas/TrialPhase"
-              }
-            ]
+          "label": {
+            "type": "string",
+            "description": "The text shown for the option."
           },
-          "briefDescription": {
+          "parentLabel": {
             "type": [
               "null",
               "string"
             ],
-            "description": "Gets the brief description of key findings."
+            "description": "The label of the option's parent in a hierarchical select, or null."
           }
         },
-        "description": "Represents a clinical trial on a record."
+        "description": "An option chosen in an answer."
       },
-      "RecordClinicalTrialInformationDto": {
+      "RecordAnswersQuestionDto": {
+        "required": [
+          "id",
+          "pageId",
+          "label",
+          "type",
+          "multiple",
+          "values",
+          "selectedOptions",
+          "itemLabel",
+          "items",
+          "addAnotherLabel"
+        ],
         "type": "object",
         "properties": {
-          "recruitingInUk": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether any of the record's clinical trials are recruiting in the UK.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
+          "id": {
+            "type": "string",
+            "description": "The question ID, which errors are keyed by. A group's question has an ID local to the group."
+          },
+          "pageId": {
+            "type": "string",
+            "description": "The page the question is on, for its Change link."
+          },
+          "label": {
+            "type": "string",
+            "description": "The question text."
+          },
+          "type": {
+            "description": "The control the question uses, which says how to format the answer.",
+            "$ref": "#/components/schemas/FormControl"
+          },
+          "multiple": {
+            "type": "boolean",
+            "description": "True when the question takes several values rather than one."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The saved values: at most one for a single-value question, and none when not yet provided\nor for a group."
+          },
+          "selectedOptions": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/RecordAnswersOptionDto"
+            },
+            "description": "For a choice question, the chosen options in the order offered, so values can be shown by\nlabel; null for any other question."
+          },
+          "itemLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For a group, the heading of each item, numbered from 1, such as \"Clinical trial\"; null for\nany other question."
+          },
+          "items": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/RecordAnswersGroupItemDto"
+            },
+            "description": "For a group, its items in order; null for any other question."
+          },
+          "addAnotherLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For a group, the label of its add-another button, such as \"Add another clinical trial\";\nnull for any other question."
           }
         },
-        "description": "Represents the answers about a record's clinical trials as a whole."
+        "description": "A question that applies and its answer, shown as a summary row."
+      },
+      "RecordAnswersSectionDto": {
+        "required": [
+          "id",
+          "title",
+          "tasks"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The section ID."
+          },
+          "title": {
+            "type": "string",
+            "description": "The section title."
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordAnswersTaskDto"
+            },
+            "description": "The tasks with a question that applies, in order."
+          }
+        },
+        "description": "A section of a record's answers."
+      },
+      "RecordAnswersTaskDto": {
+        "required": [
+          "id",
+          "title",
+          "questions"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The task ID."
+          },
+          "title": {
+            "type": "string",
+            "description": "The task title."
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordAnswersQuestionDto"
+            },
+            "description": "The questions that apply, in page order, including optional questions with no answer."
+          }
+        },
+        "description": "A task of a record's answers."
+      },
+      "RecordCheckAnswersDto": {
+        "required": [
+          "formVersion",
+          "recordId",
+          "organisationId",
+          "revisionHash",
+          "sections",
+          "errors"
+        ],
+        "type": "object",
+        "properties": {
+          "formVersion": {
+            "type": "string",
+            "description": "The form's version. Send it back on submit."
+          },
+          "recordId": {
+            "type": "integer",
+            "description": "The record the answers belong to.",
+            "format": "int32"
+          },
+          "organisationId": {
+            "type": "integer",
+            "description": "The organisation that owns the record; used for links back to the records list.",
+            "format": "int32"
+          },
+          "revisionHash": {
+            "type": "string",
+            "description": "A hash of the whole revision. Send it back on submit; if anything in the revision has\nchanged since, the submission is rejected."
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordAnswersSectionDto"
+            },
+            "description": "The sections with a question that applies, in form order."
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmissionErrorDto"
+            },
+            "description": "The problems that would stop the record being submitted, in form order, each on a question\nin IReadOnlyList&lt;RecordAnswersSectionDto&gt; RecordCheckAnswersDto.Sections. The record can be submitted when this is empty."
+          }
+        },
+        "description": "The whole of a record's latest revision for check your answers: every question that applies,\ngrouped by section and task, and every error that would stop it being submitted."
+      },
+      "RecordDetailDto": {
+        "required": [
+          "overview",
+          "sections"
+        ],
+        "type": "object",
+        "properties": {
+          "overview": {
+            "description": "Gets the record's status, permitted actions and identifying details.",
+            "$ref": "#/components/schemas/RecordOverviewDto"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordAnswersSectionDto"
+            },
+            "description": "Gets the sections with a question that applies, in form order; empty when the record type\nhas no content form."
+          }
+        },
+        "description": "A record's overview and every answer that applies on its latest revision."
       },
       "RecordDisplayStatus": {
         "enum": [
@@ -5632,387 +7119,6 @@
         ],
         "type": "string",
         "description": "Represents the status shown to users for a record. On hold and archived records show their\nrecord status; otherwise the workflow status of the latest revision is shown."
-      },
-      "RecordDto": {
-        "required": [
-          "recordType"
-        ],
-        "type": "object",
-        "anyOf": [
-          {
-            "$ref": "#/components/schemas/RecordDtoMedicineRecordDto"
-          },
-          {
-            "$ref": "#/components/schemas/RecordDtoVaccineRecordDto"
-          }
-        ],
-        "description": "Represents the data held on the latest revision of a record, whatever its workflow status.\nThe `recordType` property identifies the concrete type.",
-        "discriminator": {
-          "propertyName": "recordType",
-          "mapping": {
-            "Medicine": "#/components/schemas/RecordDtoMedicineRecordDto",
-            "Vaccine": "#/components/schemas/RecordDtoVaccineRecordDto"
-          }
-        }
-      },
-      "RecordDtoMedicineRecordDto": {
-        "required": [
-          "recordClinicalTrials",
-          "recordId",
-          "organisationId",
-          "recordStatus",
-          "displayStatus",
-          "canEditContent",
-          "actions"
-        ],
-        "properties": {
-          "recordType": {
-            "enum": [
-              "Medicine"
-            ],
-            "type": "string"
-          },
-          "recordProductDetail": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the names and identifiers section.",
-                "$ref": "#/components/schemas/RecordProductDetailDto"
-              }
-            ]
-          },
-          "medicinesIndicationDetail": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the indication details section.",
-                "$ref": "#/components/schemas/MedicinesIndicationDetailDto"
-              }
-            ]
-          },
-          "medicinesDevelopmentBackground": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the development background section.",
-                "$ref": "#/components/schemas/MedicinesDevelopmentBackgroundDto"
-              }
-            ]
-          },
-          "recordClinicalTrialInformation": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the answers about the clinical trials as a whole.",
-                "$ref": "#/components/schemas/RecordClinicalTrialInformationDto"
-              }
-            ]
-          },
-          "recordClinicalTrials": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RecordClinicalTrialDto"
-            },
-            "description": "Gets the clinical trials."
-          },
-          "recordMhraProcedure": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the MHRA procedure section.",
-                "$ref": "#/components/schemas/RecordMhraProcedureDto"
-              }
-            ]
-          },
-          "recordMhraDate": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the MHRA dates section.",
-                "$ref": "#/components/schemas/RecordMhraDateDto"
-              }
-            ]
-          },
-          "medicinesGlobalSubmission": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the global submission section.",
-                "$ref": "#/components/schemas/MedicinesGlobalSubmissionDto"
-              }
-            ]
-          },
-          "medicinesIntlRecognition": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the international recognition section.",
-                "$ref": "#/components/schemas/MedicinesIntlRecognitionDto"
-              }
-            ]
-          },
-          "recordHta": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the health technology assessment and launch section.",
-                "$ref": "#/components/schemas/RecordHtaDto"
-              }
-            ]
-          },
-          "medicinesEuStatus": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the EU status section.",
-                "$ref": "#/components/schemas/MedicinesEuStatusDto"
-              }
-            ]
-          },
-          "medicinesEamsPim": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the EAMS and PIM section.",
-                "$ref": "#/components/schemas/MedicinesEamsPimDto"
-              }
-            ]
-          },
-          "medicinesLaboratoryTesting": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the laboratory testing section.",
-                "$ref": "#/components/schemas/MedicinesLaboratoryTestingDto"
-              }
-            ]
-          },
-          "medicinesPatientIdentification": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the patient identification section.",
-                "$ref": "#/components/schemas/MedicinesPatientIdentificationDto"
-              }
-            ]
-          },
-          "medicinesTreatmentDetail": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the treatment detail section.",
-                "$ref": "#/components/schemas/MedicinesTreatmentDetailDto"
-              }
-            ]
-          },
-          "medicinesServiceImpact": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the NHS service impact section.",
-                "$ref": "#/components/schemas/MedicinesServiceImpactDto"
-              }
-            ]
-          },
-          "medicinesBudgetImpact": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the budget impact section.",
-                "$ref": "#/components/schemas/MedicinesBudgetImpactDto"
-              }
-            ]
-          },
-          "recordId": {
-            "type": "integer",
-            "description": "Gets the record identifier.",
-            "format": "int32"
-          },
-          "organisationId": {
-            "type": "integer",
-            "description": "Gets the identifier of the organisation that owns the record.",
-            "format": "int32"
-          },
-          "recordStatus": {
-            "description": "Gets the record status.",
-            "$ref": "#/components/schemas/RecordStatus"
-          },
-          "displayStatus": {
-            "description": "Gets the status shown to users for the record.",
-            "$ref": "#/components/schemas/RecordDisplayStatus"
-          },
-          "reviewedAt": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the date the record was last reviewed, when available.",
-            "format": "date-time"
-          },
-          "canEditContent": {
-            "type": "boolean",
-            "description": "Gets whether the record type has a content form and the caller can edit it. When true,\nUpdate record links to the record's task list, which edits the latest revision."
-          },
-          "actions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RecordAction"
-            },
-            "description": "Gets the actions the user can take on the record, given its status and the workflow status\nof its latest revision."
-          }
-        },
-        "description": "Represents the data held on the latest revision of a medicine record."
-      },
-      "RecordDtoVaccineRecordDto": {
-        "required": [
-          "recordId",
-          "organisationId",
-          "recordStatus",
-          "displayStatus",
-          "canEditContent",
-          "actions"
-        ],
-        "properties": {
-          "recordType": {
-            "enum": [
-              "Vaccine"
-            ],
-            "type": "string"
-          },
-          "recordId": {
-            "type": "integer",
-            "description": "Gets the record identifier.",
-            "format": "int32"
-          },
-          "organisationId": {
-            "type": "integer",
-            "description": "Gets the identifier of the organisation that owns the record.",
-            "format": "int32"
-          },
-          "recordStatus": {
-            "description": "Gets the record status.",
-            "$ref": "#/components/schemas/RecordStatus"
-          },
-          "displayStatus": {
-            "description": "Gets the status shown to users for the record.",
-            "$ref": "#/components/schemas/RecordDisplayStatus"
-          },
-          "reviewedAt": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the date the record was last reviewed, when available.",
-            "format": "date-time"
-          },
-          "canEditContent": {
-            "type": "boolean",
-            "description": "Gets whether the record type has a content form and the caller can edit it. When true,\nUpdate record links to the record's task list, which edits the latest revision."
-          },
-          "actions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RecordAction"
-            },
-            "description": "Gets the actions the user can take on the record, given its status and the workflow status\nof its latest revision."
-          }
-        },
-        "description": "Represents the data held on the latest revision of a vaccine record."
-      },
-      "RecordHtaDto": {
-        "type": "object",
-        "properties": {
-          "medicineHtaSubmissionIntended": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether a medicine HTA submission is intended.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "medicineHtaBodies": {
-            "type": [
-              "null",
-              "array"
-            ],
-            "items": {
-              "$ref": "#/components/schemas/MedicineHtaAssessor"
-            },
-            "description": "Gets the HTA bodies the medicine will be submitted to, or `null` if unanswered."
-          },
-          "htaAdditionalDetails": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets additional HTA details."
-          },
-          "htaNiceAlignedPathway": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether the NICE aligned pathway applies.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          },
-          "niceTaDevelopmentId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the NICE technology appraisal development identifier."
-          },
-          "ukLaunchDate": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the UK commercial launch date.",
-                "$ref": "#/components/schemas/RegulatoryDateDto"
-              }
-            ]
-          }
-        },
-        "description": "Represents the health technology assessment and launch section of a record."
       },
       "RecordListItemDto": {
         "required": [
@@ -6069,110 +7175,127 @@
         },
         "description": "Represents the record summary returned by the record list endpoint."
       },
-      "RecordMhraDateDto": {
+      "RecordOverviewDto": {
+        "required": [
+          "recordId",
+          "organisationId",
+          "recordType",
+          "recordStatus",
+          "displayStatus",
+          "reviewedAt",
+          "canEditContent",
+          "actions",
+          "nextUpdateDue",
+          "companyCode",
+          "recordTitle"
+        ],
         "type": "object",
         "properties": {
-          "ukSubmissionDate": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the UK submission date.",
-                "$ref": "#/components/schemas/RegulatoryDateDto"
-              }
-            ]
+          "recordId": {
+            "type": "integer",
+            "description": "Gets the record identifier.",
+            "format": "int32"
           },
-          "ukLicenceDate": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the UK licence date.",
-                "$ref": "#/components/schemas/RegulatoryDateDto"
-              }
-            ]
+          "organisationId": {
+            "type": "integer",
+            "description": "Gets the identifier of the organisation that owns the record.",
+            "format": "int32"
           },
-          "ukConditionalApprovalAnticipated": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets whether conditional approval is anticipated in the UK.",
-                "$ref": "#/components/schemas/YesNoUnknown"
-              }
-            ]
-          }
-        },
-        "description": "Represents the MHRA dates section of a record."
-      },
-      "RecordMhraProcedureDto": {
-        "type": "object",
-        "properties": {
-          "mhraProcedureType": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the MHRA procedure type.",
-                "$ref": "#/components/schemas/ReferenceDataDto"
-              }
-            ]
+          "recordType": {
+            "description": "Gets the record type.",
+            "$ref": "#/components/schemas/RecordType"
           },
-          "irpReferenceRegulator": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Gets the IRP reference regulator. Populated when the procedure type is IRP.",
-                "$ref": "#/components/schemas/ReferenceDataDto"
-              }
-            ]
+          "recordStatus": {
+            "description": "Gets the record status.",
+            "$ref": "#/components/schemas/RecordStatus"
           },
-          "procedureDetails": {
+          "displayStatus": {
+            "description": "Gets the status shown to users for the record.",
+            "$ref": "#/components/schemas/RecordDisplayStatus"
+          },
+          "reviewedAt": {
             "type": [
               "null",
               "string"
             ],
-            "description": "Gets the procedure details."
+            "description": "Gets the date the record was last reviewed, when available.",
+            "format": "date-time"
+          },
+          "canEditContent": {
+            "type": "boolean",
+            "description": "Gets whether the record type has a content form and the caller can edit it. When true,\nUpdate record links to the record's task list, which edits the latest revision."
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordAction"
+            },
+            "description": "Gets the actions the user can take on the record, given its status and the workflow status\nof its latest revision."
+          },
+          "nextUpdateDue": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the date of when the next update is due.",
+            "format": "date-time"
+          },
+          "companyCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the latest revision's company code; null when it has no product details."
+          },
+          "recordTitle": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets the latest revision's record title; null when it has no product details."
           }
         },
-        "description": "Represents the MHRA procedure section of a record."
+        "description": "A record's status, permitted actions and identifying details, from its latest revision,\nwhatever its workflow status."
       },
-      "RecordNameAndIdentifierDto": {
+      "RecordPageConditionDto": {
         "required": [
-          "name",
-          "nameType"
+          "kind",
+          "questionId",
+          "values"
         ],
         "type": "object",
         "properties": {
-          "name": {
-            "type": "string",
-            "description": "Gets the name or identifier."
+          "kind": {
+            "description": "How the condition is evaluated.",
+            "$ref": "#/components/schemas/ConditionKind"
           },
-          "nameType": {
-            "description": "Gets the type of the name or identifier.",
-            "$ref": "#/components/schemas/NameAndIdentifierType"
+          "questionId": {
+            "type": "string",
+            "description": "The ID of the trigger question, an earlier question on the same page."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "For ConditionKind.AnswerIn: the condition is met when the trigger's answer\nincludes any of these option values."
           }
         },
-        "description": "Represents a name or identifier for a product."
+        "description": "A condition that decides whether a question applies, from another question's answer."
       },
       "RecordPageDto": {
         "required": [
           "formVersion",
-          "revisionVersion",
           "recordId",
+          "organisationId",
           "section",
           "task",
           "page",
           "previousPageId",
           "nextPageId",
           "questions",
-          "answers"
+          "answers",
+          "pageHash"
         ],
         "type": "object",
         "properties": {
@@ -6180,14 +7303,14 @@
             "type": "string",
             "description": "The form's version. Echo it back on save."
           },
-          "revisionVersion": {
-            "type": "integer",
-            "description": "The concurrency token of the record's latest revision, which the page reads and writes.\nEcho it back on save.",
-            "format": "uint32"
-          },
           "recordId": {
             "type": "integer",
             "description": "The record the page belongs to.",
+            "format": "int32"
+          },
+          "organisationId": {
+            "type": "integer",
+            "description": "The organisation that owns the record; used to look up suggestions such as the\norganisation's existing company codes.",
             "format": "int32"
           },
           "section": {
@@ -6214,7 +7337,7 @@
               "null",
               "string"
             ],
-            "description": "The page after this one in its task, or null on the task's last page, where saving returns\nto the task list."
+            "description": "The page after this one in its task, or null on the task's last page, where saving returns\nto the task list. When a later page depends on this page's own answers it is offered even\nif those answers do not yet lead to it, and saving then decides where to go."
           },
           "questions": {
             "type": "array",
@@ -6226,6 +7349,10 @@
           "answers": {
             "type": "object",
             "description": "Every question on the page, keyed by question ID: a string or null, or an array of strings\nfor multi-value questions."
+          },
+          "pageHash": {
+            "type": "string",
+            "description": "A hash of the answers of the page that must be provided when saving updates.\nIf the hash has changed, answers will be rejected."
           }
         },
         "description": "One page of a record content form: its questions, options and current answers."
@@ -6234,6 +7361,7 @@
         "required": [
           "value",
           "label",
+          "hint",
           "children"
         ],
         "type": "object",
@@ -6245,6 +7373,13 @@
           "label": {
             "type": "string",
             "description": "The text shown for the option."
+          },
+          "hint": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Help text shown under the option, or null when it has none."
           },
           "children": {
             "type": [
@@ -6262,7 +7397,8 @@
       "RecordPagePageDto": {
         "required": [
           "id",
-          "title"
+          "title",
+          "commercialInConfidence"
         ],
         "type": "object",
         "properties": {
@@ -6273,9 +7409,13 @@
           "title": {
             "type": "string",
             "description": "A short name for the page."
+          },
+          "commercialInConfidence": {
+            "type": "boolean",
+            "description": "Whether the page shows the \"Commercial in confidence\" badge."
           }
         },
-        "description": "A page's ID and title."
+        "description": "A page's ID, title and \"Commercial in confidence\" flag."
       },
       "RecordPageQuestionDto": {
         "required": [
@@ -6289,6 +7429,8 @@
           "childLabel",
           "childPlaceholder",
           "addAnotherLabel",
+          "dateName",
+          "showWhen",
           "rules",
           "options"
         ],
@@ -6304,7 +7446,7 @@
           },
           "multiple": {
             "type": "boolean",
-            "description": "True when the answer is an array of strings rather than a string or null."
+            "description": "True when the answer is an array of strings rather than a string or null, as for a\ncheckbox, a multi-value hierarchical select or a text list. False for a group, whose answer\nis an array of objects."
           },
           "label": {
             "type": "string",
@@ -6323,6 +7465,17 @@
               "string"
             ],
             "description": "A rendering hint, for example `combobox`."
+          },
+          "width": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The width of a `Text` input, or of each entry of a `TextList`, overriding the\ndefault of two-thirds; null for the default. Not `required`, so existing clients and\nfixtures are unaffected.",
+                "$ref": "#/components/schemas/FormInputWidth"
+              }
+            ]
           },
           "placeholder": {
             "type": [
@@ -6350,7 +7503,74 @@
               "null",
               "string"
             ],
-            "description": "The button text that adds another entry to a multi-value hierarchical select."
+            "description": "The button text that adds another entry to a multi-value hierarchical select, a group or a\ntext list."
+          },
+          "itemLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The heading of each item of a group, numbered from 1, or the label of each entry of a text\nlist, numbered from 1 once there are several; null for other controls."
+          },
+          "removeLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The button text that removes an item of a group or an entry of a text list."
+          },
+          "children": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/RecordPageQuestionDto"
+            },
+            "description": "The questions asked of each item of a group, in order, or null for other controls. Each\nitem of the answer is an object keyed by these questions' IDs, and their errors are keyed\n`{group id}[{item index}].{child id}`."
+          },
+          "prefixes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "The prefixes a `PrefixedNumber` question offers before its digits, in order, or\nnull for any other control. Not `required`, so existing clients and fixtures are\nunaffected."
+          },
+          "prefixDigits": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The exact number of digits a `PrefixedNumber` needs after its prefix, or null when up\nto 5 are allowed.",
+            "format": "int32"
+          },
+          "numberName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "What a `PrefixedNumber`'s number is, as its error messages name it at the start of a\nsentence, for example `Trial number`; null for any other control. Not `required`,\nso existing clients and fixtures are unaffected."
+          },
+          "dateName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "What a FormControl.PrecisionDate question's date is of, for its error\nmessages, for example `submission`; null for other questions."
+          },
+          "showWhen": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "When set, the question applies only while the condition is met; otherwise it is hidden,\nnot validated, and should be sent as null (or an empty array).",
+                "$ref": "#/components/schemas/RecordPageConditionDto"
+              }
+            ]
           },
           "rules": {
             "type": "array",
@@ -6435,39 +7655,6 @@
         },
         "description": "The task a page belongs to. Its title is the page caption."
       },
-      "RecordProductDetailDto": {
-        "required": [
-          "companyCode",
-          "namesAndIdentifiers",
-          "recordTitle"
-        ],
-        "type": "object",
-        "properties": {
-          "companyCode": {
-            "type": "string",
-            "description": "Gets the company code."
-          },
-          "namesAndIdentifiers": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RecordNameAndIdentifierDto"
-            },
-            "description": "Gets the generic names and other identifiers, in display order."
-          },
-          "brandedName": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Gets the branded name."
-          },
-          "recordTitle": {
-            "type": "string",
-            "description": "Gets the short human-readable label identifying the record."
-          }
-        },
-        "description": "Represents the names and identifiers section of a record."
-      },
       "RecordStatus": {
         "enum": [
           "Unpublished",
@@ -6478,6 +7665,20 @@
         ],
         "type": "string",
         "description": "Represents the status of a record in the system."
+      },
+      "RecordStatusChangeReason": {
+        "enum": [
+          "DevelopmentDiscontinued",
+          "TrialSuspended",
+          "FilingWithdrawn",
+          "TrialResumed",
+          "PlansRefiled",
+          "Other",
+          "ArchivedAutomatically",
+          "ManuallyDiscarded",
+          null
+        ],
+        "type": "string"
       },
       "RecordTaskListDto": {
         "required": [
@@ -6599,25 +7800,6 @@
         "type": "string",
         "description": "Represents the type of a record, such as Medicine or Vaccine."
       },
-      "ReferenceDataDto": {
-        "required": [
-          "id",
-          "label"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "description": "Gets the reference data identifier.",
-            "format": "int32"
-          },
-          "label": {
-            "type": "string",
-            "description": "Gets the display label."
-          }
-        },
-        "description": "Represents a selected reference data value."
-      },
       "RegisterUserCommandDto": {
         "required": [
           "fullName",
@@ -6698,30 +7880,6 @@
         },
         "description": "Represents the details of a user who has been registered."
       },
-      "RegulatoryDateDto": {
-        "required": [
-          "dateValue",
-          "datePrecision",
-          "isConfidential"
-        ],
-        "type": "object",
-        "properties": {
-          "dateValue": {
-            "type": "string",
-            "description": "Gets the date. Quarter and month precision dates are stored as the first day of the period.",
-            "format": "date"
-          },
-          "datePrecision": {
-            "description": "Gets the precision of the date.",
-            "$ref": "#/components/schemas/DatePrecision"
-          },
-          "isConfidential": {
-            "type": "boolean",
-            "description": "Gets a value indicating whether the date is confidential."
-          }
-        },
-        "description": "Represents a regulatory milestone date."
-      },
       "RemovedUserDto": {
         "required": [
           "displayName"
@@ -6798,7 +7956,8 @@
         "enum": [
           "Required",
           "MaxLength",
-          "MaxItems"
+          "MaxItems",
+          "Distinct"
         ],
         "type": "string",
         "description": "A validation rule kind. Rules are evaluated in the order of these values, never in attribute\norder. Part of the HTTP API contract: the member names are sent to the frontend, so never\nrename or remove one."
@@ -6806,8 +7965,8 @@
       "SaveRecordPageCommand": {
         "required": [
           "formVersion",
-          "revisionVersion",
-          "answers"
+          "answers",
+          "pageHash"
         ],
         "type": "object",
         "properties": {
@@ -6815,14 +7974,13 @@
             "type": "string",
             "description": "The string RecordPageDto.FormVersion the page was loaded with."
           },
-          "revisionVersion": {
-            "type": "integer",
-            "description": "The uint RecordPageDto.RevisionVersion the page was loaded with.",
-            "format": "uint32"
-          },
           "answers": {
             "type": "object",
             "description": "Every question on the page, keyed by question ID: null for an unanswered single-value\nquestion and an empty array for an unanswered multi-value question."
+          },
+          "pageHash": {
+            "type": "string",
+            "description": "The page hash value returned from the query."
           }
         },
         "description": "Every answer on a page, with the versions the page was loaded at."
@@ -6843,6 +8001,31 @@
         },
         "description": "Where to go after saving a page."
       },
+      "SetupSmsMfaCommand": {
+        "required": [
+          "setupToken",
+          "phoneNumber",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "setupToken": {
+            "type": "string",
+            "description": "Gets the unique token used to identify and validate the pending user setup request.",
+            "format": "uuid"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "Gets the phone number to assign to the user account."
+          },
+          "password": {
+            "pattern": ".*\\S.*",
+            "type": "string",
+            "description": "Gets the password used to authenticate with the identity provider."
+          }
+        },
+        "description": "Represents the command used to complete user setup by validating a setup token\nand assigning a phone number to the user for SMS MFA."
+      },
       "SetupUserCommand": {
         "required": [
           "setupToken",
@@ -6862,6 +8045,19 @@
         },
         "description": "Represents the command used to complete user setup by validating a setup token\nand assigning a new password to the user."
       },
+      "SmsMultiFactorAuthenticationSetupDto": {
+        "required": [
+          "authenticationSession"
+        ],
+        "type": "object",
+        "properties": {
+          "authenticationSession": {
+            "type": "string",
+            "description": "Gets the authentication session identifier required to complete the\nmulti-factor authentication setup flow."
+          }
+        },
+        "description": "Represents the details required for a user to complete SMS multi-factor authentication setup."
+      },
       "SortDirection": {
         "enum": [
           "Ascending",
@@ -6870,18 +8066,103 @@
         "type": "string",
         "description": "Specifies the direction in which query results are sorted."
       },
-      "TrialPhase": {
-        "enum": [
-          "Preclinical",
-          "PhaseI",
-          "PhaseIAndII",
-          "PhaseII",
-          "PhaseIII",
-          "PhaseIIIAndIV",
-          "PhaseIV",
-          null
+      "SubmissionConflictProblemDetails": {
+        "required": [
+          "code"
         ],
-        "type": "string"
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "The domain code (record_not_submittable, form_version_changed or record_changed),\nor the authentication code SelectedOrganisationMismatch."
+          },
+          "organisationId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The organisation requested, when it differs from the selected organisation.",
+            "format": "int32"
+          }
+        },
+        "description": "A record submission or check answers conflict, or a selected-organisation conflict. Schema only: runtime responses use the\nproblem details factory and extensions to preserve tracing metadata."
+      },
+      "SubmissionErrorDto": {
+        "required": [
+          "questionId",
+          "pageId",
+          "taskId",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "string",
+            "description": "The question to highlight, which is also its key in `errors`."
+          },
+          "pageId": {
+            "type": "string",
+            "description": "The page the question is on, to link to."
+          },
+          "taskId": {
+            "type": "string",
+            "description": "The task the page belongs to."
+          },
+          "message": {
+            "type": "string",
+            "description": "What is wrong and how to fix it."
+          }
+        },
+        "description": "A problem that stops a record being submitted, and the question it is on."
+      },
+      "SubmitRecordCommand": {
+        "required": [
+          "formVersion",
+          "revisionHash"
+        ],
+        "type": "object",
+        "properties": {
+          "formVersion": {
+            "type": "string",
+            "description": "The form version check your answers was loaded with."
+          },
+          "revisionHash": {
+            "type": "string",
+            "description": "The hash of the whole revision check your answers was loaded with. If anything in the\nrevision has changed since, the submission is rejected."
+          }
+        },
+        "description": "Submits a record's draft revision, as it was when check your answers loaded."
       },
       "UkpsChallengeType": {
         "enum": [
@@ -6956,26 +8237,35 @@
       },
       "UpdateUserDetailsCommand": {
         "required": [
-          "fullName",
-          "workEmail",
-          "workTelephone"
+          "property",
+          "value"
         ],
         "type": "object",
         "properties": {
-          "fullName": {
-            "type": "string",
-            "description": "Gets the user's full name."
+          "property": {
+            "description": "Gets the user detail that should be updated.",
+            "$ref": "#/components/schemas/EditableUserDetail"
           },
-          "workEmail": {
+          "value": {
             "type": "string",
-            "description": "Gets the user's work email address."
-          },
-          "workTelephone": {
-            "type": "string",
-            "description": "Gets the user's work telephone number."
+            "description": "Gets the new value to assign to the specified EditableUserDetail UpdateUserDetailsCommand.Property."
           }
         },
         "description": "Represents the details to update for an existing user."
+      },
+      "UpdateUserEmailCommand": {
+        "required": [
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "maxLength": 255,
+            "type": "string",
+            "description": "Gets the new email address for the user."
+          }
+        },
+        "description": "Represents the command to update the email address of an existing user."
       },
       "UserDetailsDto": {
         "required": [
@@ -7035,6 +8325,9 @@
           "organisationName",
           "userRole",
           "status",
+          "allowedPharmaceuticalEntity",
+          "mfaMethod",
+          "mfaPhoneNumber",
           "hasMultipleOrganisations"
         ],
         "type": "object",
@@ -7081,6 +8374,29 @@
           "hasMultipleOrganisations": {
             "type": "boolean",
             "description": "Gets whether the user can select more than one organisation. Only set for the current user."
+          },
+          "allowedPharmaceuticalEntity": {
+            "description": "Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.",
+            "$ref": "#/components/schemas/PharmaceuticalEntity"
+          },
+          "pendingWorkEmail": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the details of a requested change to the user's work email address that has not yet been\ncompleted, or `null` if there is no pending change.",
+                "$ref": "#/components/schemas/PendingWorkEmailChangeDto"
+              }
+            ]
+          },
+          "mfaMethod": {
+            "type": "string",
+            "description": "Gets the MFA method in use for the current user."
+          },
+          "mfaPhoneNumber": {
+            "type": "string",
+            "description": "Gets the obfuscated phone number used for SMS MFA, if applicable."
           }
         },
         "description": "Represents information about a user and their membership within an organisation."
@@ -7150,7 +8466,8 @@
           "DeactivateMembership",
           "ReactivateMembership",
           "EditUserRole",
-          "RemoveUser"
+          "RemoveUser",
+          "ManageUserDetails"
         ],
         "type": "string",
         "description": "Defines the actions that can be performed on a user or their membership."
@@ -7239,6 +8556,56 @@
       "VerifyMultiFactorAuthenticationCommand": {
         "required": [
           "setupToken",
+          "authenticationSession",
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "setupToken": {
+            "type": "string",
+            "description": "Gets the unique token associated with the user onboarding record.",
+            "format": "uuid"
+          },
+          "authenticationSession": {
+            "type": "string",
+            "description": "Gets the authentication session identifier required to complete the\nmulti-factor authentication verification flow."
+          },
+          "code": {
+            "type": "string",
+            "description": "Gets the verification code generated by the user's authenticator application."
+          }
+        },
+        "description": "Represents the details required to verify a user's multi-factor authentication setup."
+      },
+      "VerifyMultiFactorAuthenticationUpdateCommand": {
+        "required": [
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Gets the verification code generated by the user's authenticator application."
+          }
+        },
+        "description": "Represents a command to verify a multi-factor authentication update by supplying\na verification code from the user's authenticator application."
+      },
+      "VerifyPendingEmailAddressCommand": {
+        "required": [
+          "verificationToken"
+        ],
+        "type": "object",
+        "properties": {
+          "verificationToken": {
+            "type": "string",
+            "description": "The verification token that was sent to the pending email address."
+          }
+        },
+        "description": "Command to verify a user's pending email address using a previously issued verification token."
+      },
+      "VerifySmsMultiFactorAuthenticationCommand": {
+        "required": [
+          "setupToken",
           "code",
           "authenticationSession"
         ],
@@ -7258,16 +8625,7 @@
             "description": "Gets the authentication session identifier required to complete the\nmulti-factor authentication verification flow."
           }
         },
-        "description": "Represents the details required to verify a user's multi-factor authentication setup."
-      },
-      "YesNoUnknown": {
-        "enum": [
-          "Unknown",
-          "No",
-          "Yes",
-          null
-        ],
-        "type": "string"
+        "description": "Represents the details required to verify a user's SMS multi-factor authentication setup."
       }
     }
   },
@@ -7282,6 +8640,9 @@
       "name": "CurrentUserOrganisation"
     },
     {
+      "name": "MultiFactorAuthentication"
+    },
+    {
       "name": "Organisation"
     },
     {
@@ -7292,6 +8653,9 @@
     },
     {
       "name": "RecordForm"
+    },
+    {
+      "name": "RecordSubmission"
     },
     {
       "name": "RecordTaskList"

@@ -34,4 +34,9 @@ public enum UserMembershipAction
     /// Removes the user globally across all organisations. Only Super users may perform it.
     /// </summary>
     RemoveUser = 5,
+
+    /// <summary>
+    /// Manages the user's details and sign in methods
+    /// </summary>
+    ManageUserDetails = 6,
 }

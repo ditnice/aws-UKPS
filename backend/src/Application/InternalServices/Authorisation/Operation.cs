@@ -19,4 +19,10 @@ internal enum Operation
     /// users for their own organisation, unlike <see cref="Update"/>. Never granted to super users.
     /// </summary>
     EditRecordContent = 6,
+
+    /// <summary>
+    /// Putting a record on hold, resuming it or archiving it. Granted to standard and champion
+    /// users for their own organisation. Not granted to super users.
+    /// </summary>
+    ChangeRecordStatus = 7,
 }

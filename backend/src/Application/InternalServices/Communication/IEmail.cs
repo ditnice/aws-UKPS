@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using UKPS.Api.Application.Authentication.SecurityNotification;
 using UKPS.Api.Application.Organisations;
 using UKPS.Api.Application.Users;
 
@@ -24,6 +25,11 @@ namespace UKPS.Api.Application.InternalServices.Communication;
 [JsonDerivedType(
     typeof(UserMembershipRequestRejectedNotificationEmail),
     "UserMembershipRequestRejectedNotification"
+)]
+[JsonDerivedType(typeof(SecurityNotificationEmail), "SecurityNotificationEmail")]
+[JsonDerivedType(
+    typeof(EmailChangeVerificationRequestEmail),
+    "EmailChangeVerificationRequestEmail"
 )]
 public interface IEmail
 {

@@ -1,5 +1,6 @@
-import { Checkbox } from '@nice-digital/nds-checkbox'
-import { FormGroup } from '@nice-digital/nds-form-group'
+import { Checkbox, Checkboxes } from '@/components/Checkboxes/Checkboxes'
+
+import { labelSizeFor } from '../labelStyle'
 
 import type { QuestionProps } from '../types'
 
@@ -10,26 +11,26 @@ export function CheckboxQuestion({
   onChange,
   onBlur,
   error,
+  labelStyle,
 }: QuestionProps<string[]>) {
-  const toggle = (optionValue: string, checked: boolean) =>
-    onChange(checked ? [...value, optionValue] : value.filter((v) => v !== optionValue))
-
   return (
-    <FormGroup groupError={error} hint={question.hint ?? undefined} legend={question.label}>
+    <Checkboxes
+      error={error}
+      hint={question.hint ?? undefined}
+      legend={question.label}
+      legendSize={labelSizeFor(labelStyle)}
+      name={name}
+      value={value}
+      // Revalidate on every tick, not only on blur, so an error clears as soon as one is ticked.
+      onChange={(next) => {
+        onChange(next)
+        onBlur()
+      }}
+      onBlur={onBlur}
+    >
       {question.options?.map((option) => (
-        <Checkbox
-          checked={value.includes(option.value)}
-          error={Boolean(error)}
-          key={option.value}
-          label={option.label}
-          name={name}
-          onBlur={onBlur}
-          onChange={(event: { target: { checked: boolean } }) =>
-            toggle(option.value, event.target.checked)
-          }
-          value={option.value}
-        />
+        <Checkbox key={option.value} label={option.label} value={option.value} />
       ))}
-    </FormGroup>
+    </Checkboxes>
   )
 }

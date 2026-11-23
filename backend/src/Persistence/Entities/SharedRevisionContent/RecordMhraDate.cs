@@ -1,13 +1,49 @@
+using UKPS.Api.Persistence.Entities.MedicinesRevisionContent;
 using UKPS.Api.Persistence.Enums;
+using UKPS.Api.Persistence.FormAnnotations;
 
 namespace UKPS.Api.Persistence.Entities.SharedRevisionContent;
 
+[FormEntity]
 internal sealed class RecordMhraDate
 {
+    [FormIgnore("Database identity")]
     public int Id { get; set; }
+
+    [FormIgnore("Revision ownership is supplied by the server")]
     public int RevisionId { get; set; }
+
+    [FormPage(MedicineFormLayout.UkSubmissionDate)]
+    [FormField(
+        "record_mhra_date.uk_submission_date",
+        "What is the UK regulatory submission date?",
+        FormControl.PrecisionDate,
+        Hint = "Choose the level of detail you are currently able to provide. Estimate the date you plan to submit this product to the MHRA, or enter the actual date the dossier was formally accepted for review by the MHRA."
+    )]
+    [FormDateEvent(DateEventType.UkSubmission, Name = "submission")]
+    [FormRequired("Select an option")]
     public int? UkSubmissionDateId { get; set; }
+
+    [FormPage(MedicineFormLayout.UkLicenceDate)]
+    [FormField(
+        "record_mhra_date.uk_licence_date",
+        "What is the UK regulatory licence date?",
+        FormControl.PrecisionDate,
+        Hint = "Choose the level of detail you are currently able to provide. Estimate the date you expect MHRA will grant marketing authorisation for this indication, or enter the actual date MHRA granted marketing authorisation for the specific indication in scope. This refers to the regulatory approval date, not NICE recommendation or commercial launch."
+    )]
+    [FormDateEvent(DateEventType.UkLicence, Name = "licence")]
+    [FormRequired("Select an option")]
     public int? UkLicenceDateId { get; set; }
+
+    [FormPage(MedicineFormLayout.UkConditionalApproval)]
+    [FormField(
+        "record_mhra_date.uk_conditional_approval_anticipated",
+        "Is conditional approval anticipated in the UK?",
+        FormControl.Radio,
+        Hint = "Select yes if you anticipate conditional approval based on current plans."
+    )]
+    [FormRequired("Select an option")]
+    [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? UkConditionalApprovalAnticipated { get; set; }
 
     // Navigation

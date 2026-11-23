@@ -35,9 +35,18 @@ internal sealed class FormFieldAttribute(string id, string label, FormControl co
 
     /// <summary>
     /// A rendering hint for the frontend, for example <c>combobox</c>. It does not change
-    /// validation, and the frontend ignores hints it does not know.
+    /// validation, and the frontend ignores hints it does not know. A text field suggests values
+    /// as the user types with <c>autocomplete:&lt;source&gt;</c>, where the source names where the
+    /// suggestions come from, for example <c>autocomplete:company-codes</c>.
     /// </summary>
     public string? Display { get; set; }
+
+    /// <summary>
+    /// The width of a <see cref="FormControl.Text"/> input, or of each entry of a
+    /// <see cref="FormControl.TextList"/>, overriding the default of two-thirds. A text list takes
+    /// only a share of the container, not a character count. Only a Text or a TextList may set it.
+    /// </summary>
+    public FormInputWidth Width { get; set; }
 
     /// <summary>
     /// Position of the question on a page with several questions. No two questions on a page
@@ -67,9 +76,34 @@ internal sealed class FormFieldAttribute(string id, string label, FormControl co
     public string? ChildPlaceholder { get; set; }
 
     /// <summary>
-    /// The button text that adds another entry to a multi-value hierarchical select, for example
-    /// <c>Add another therapy area</c>. Only a <see cref="FormControl.HierarchicalSelect"/> on a
-    /// junction may set it; defaults to <c>Add another</c>.
+    /// The button text that adds another entry, for example <c>Add another therapy area</c>. Only
+    /// a <see cref="FormControl.HierarchicalSelect"/> on a junction, a
+    /// <see cref="FormControl.Group"/> or a <see cref="FormControl.TextList"/> may set it;
+    /// defaults to <c>Add another</c>.
     /// </summary>
     public string? AddAnotherLabel { get; set; }
+
+    /// <summary>
+    /// The heading of each item of a <see cref="FormControl.Group"/>, numbered from 1, for example
+    /// <c>Clinical trial</c> gives "Clinical trial 1". Required on a group. A
+    /// <see cref="FormControl.TextList"/> may also set it as the visible label of each entry: the
+    /// label alone while there is one entry, numbered from 1 once there are several. Not allowed
+    /// on any other control.
+    /// </summary>
+    public string? ItemLabel { get; set; }
+
+    /// <summary>
+    /// The button text that removes an item of a <see cref="FormControl.Group"/> or an entry of a
+    /// <see cref="FormControl.TextList"/>, for example <c>Remove clinical trial</c>. Defaults to
+    /// <c>Remove</c>.
+    /// </summary>
+    public string? RemoveLabel { get; set; }
+
+    /// <summary>
+    /// The ID of the child question whose answer identifies each item of a
+    /// <see cref="FormControl.Group"/> in the field audit, for example
+    /// <c>clinical_trials_gov_number</c>. The child must be required and distinct. When not set,
+    /// the audit lists the items in order.
+    /// </summary>
+    public string? ItemKey { get; set; }
 }
