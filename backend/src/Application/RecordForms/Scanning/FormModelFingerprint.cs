@@ -141,7 +141,7 @@ internal static class FormModelFingerprint
         {
             text.AppendLine(
                 CultureInfo.InvariantCulture,
-                $"      items {question.ItemLabel} | {question.RemoveLabel} | {question.ItemKey}"
+                $"      items {question.ItemLabel} | {question.RemoveLabel} | {question.ItemKey} | {question.CheckAnswersAddLabel}"
             );
         }
     }

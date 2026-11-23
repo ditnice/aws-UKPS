@@ -221,7 +221,7 @@ public class RecordCheckAnswersQueryServiceTests : DatabaseTestBase
 
         RecordAnswersQuestionDto trials = Question(dto, Trials);
         trials.ItemLabel.ShouldBe("Clinical trial");
-        trials.AddAnotherLabel.ShouldBe("Add another clinical trial");
+        trials.CheckAnswersAddLabel.ShouldBe("Add clinical trial");
         IReadOnlyList<RecordAnswersGroupItemDto> items = trials.Items.ShouldNotBeNull();
 
         trials.Values.ShouldBeEmpty();

@@ -149,6 +149,7 @@ public class FormModelValidatorTests
     [InlineData(
         "BrokenGroupEntity.ChapterId sets RemoveLabel, which only a multi-value HierarchicalSelect, a Group or a TextList uses."
     )]
+    [InlineData("BrokenGroupEntity.Text sets CheckAnswersAddLabel, which only a Group uses.")]
     [InlineData("BrokenGroupItem.BlankLabels sets a blank ItemLabel.")]
     [InlineData(
         "BrokenGroupEntity.Text sets RemoveLabel, which only a multi-value HierarchicalSelect, a Group or a TextList uses."

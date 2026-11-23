@@ -921,7 +921,7 @@ export const fakeRecordAnswersQuestionDto = (options: Options = {}, _callDepth =
         selectedOptions: f.datatype.boolean() ? f.helpers.multiple(() => fakeRecordAnswersOptionDto(options)) : null,
         itemLabel: f.datatype.boolean() ? f.string.sample() : null,
         items: _callDepth > MAX_CALL_DEPTH ? null : f.datatype.boolean() ? _callDepth > MAX_CALL_DEPTH ? [] : f.helpers.multiple(() => fakeRecordAnswersGroupItemDto(options, _callDepth + 1)) : null,
-        addAnotherLabel: f.datatype.boolean() ? f.string.sample() : null
+        checkAnswersAddLabel: f.datatype.boolean() ? f.string.sample() : null
     };
 };
 

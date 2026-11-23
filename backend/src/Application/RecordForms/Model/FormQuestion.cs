@@ -19,6 +19,9 @@ internal sealed record FormQuestion
     public string? ChildPlaceholder { get; init; }
     public string? AddAnotherLabel { get; init; }
 
+    /// <summary>The text of the button that adds a group item from check your answers.</summary>
+    public string? CheckAnswersAddLabel { get; init; }
+
     /// <summary>
     /// The heading of each item of a group or entry of a multi-value hierarchical select, numbered
     /// from 1, or the label of each entry of a text list, numbered from 1 once there are

@@ -36,10 +36,12 @@ type TaskAnswersProps = {
   rowAction?: (question: RecordAnswersQuestionDto) => ReactElement<SummaryListActionProps>
   /** A row's tag, such as a problem tag. */
   rowTag?: (question: RecordAnswersQuestionDto) => ReactNode
-  /** A group's tag, shown once above its items. */
+  /** A group's tag, shown once above its items, or on the title line of its empty card. */
   groupTag?: (question: RecordAnswersQuestionDto) => ReactNode
   /** A group item card's title-line action, such as an Edit link to that item. */
   groupItemAction?: (question: RecordAnswersQuestionDto, index: number, title: string) => ReactNode
+  /** Show one "Not yet provided" card for a group with no items. */
+  showEmptyGroupCard?: boolean
 }
 
 /**
@@ -53,6 +55,7 @@ export function TaskAnswers({
   rowTag,
   groupTag,
   groupItemAction,
+  showEmptyGroupCard = false,
 }: TaskAnswersProps) {
   return splitTaskQuestions(questions).map((block, index) =>
     block.kind === 'group' ? (
@@ -64,6 +67,7 @@ export function TaskAnswers({
           groupItemAction &&
           ((itemIndex, title) => groupItemAction(block.question, itemIndex, title))
         }
+        showEmptyCard={showEmptyGroupCard}
         titleHeadingLevel={groupItemHeadingLevel}
       />
     ) : (

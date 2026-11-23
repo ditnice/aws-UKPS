@@ -87,6 +87,13 @@ internal sealed class FormFieldAttribute(string id, string label, FormControl co
     public string? AddAnotherLabel { get; set; }
 
     /// <summary>
+    /// The text of the button that adds an item from check your answers, for example
+    /// <c>Add clinical trial</c>. Unlike <see cref="AddAnotherLabel"/>, it may be shown when there
+    /// are no items. Only a <see cref="FormControl.Group"/> may set it; defaults to <c>Add</c>.
+    /// </summary>
+    public string? CheckAnswersAddLabel { get; set; }
+
+    /// <summary>
     /// The heading of each item of a <see cref="FormControl.Group"/>, numbered from 1, for example
     /// <c>Clinical trial</c> gives "Clinical trial 1". Required on a group. A
     /// <see cref="FormControl.TextList"/> may also set it as the visible label of each entry: the

@@ -725,7 +725,7 @@ internal static partial class FormModelValidator
 
     /// <summary>
     /// Checks the item and remove labels (used by a group, text list or multi-value hierarchical
-    /// select) and the item key (used only by a group).
+    /// select) and the check answers add label and item key (used only by a group).
     /// </summary>
     private static void ValidateItemPresentation(
         QuestionDeclaration question,
@@ -742,6 +742,11 @@ internal static partial class FormModelValidator
             problems.Add(
                 $"{where} sets RemoveLabel, which only a multi-value HierarchicalSelect, a Group or a TextList uses."
             );
+        }
+
+        if (field.CheckAnswersAddLabel is not null && !isGroup)
+        {
+            problems.Add($"{where} sets CheckAnswersAddLabel, which only a Group uses.");
         }
 
         if (field.ItemKey is not null && !isGroup)

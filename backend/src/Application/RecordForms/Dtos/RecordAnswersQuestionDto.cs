@@ -44,8 +44,8 @@ public sealed record RecordAnswersQuestionDto
     public required IReadOnlyList<RecordAnswersGroupItemDto>? Items { get; init; }
 
     /// <summary>
-    /// For a group, the label of its add-another button, such as "Add another clinical trial";
-    /// null for any other question.
+    /// For a group, the text of the button that adds an item from check your answers, such as
+    /// "Add clinical trial"; null for any other question.
     /// </summary>
-    public required string? AddAnotherLabel { get; init; }
+    public required string? CheckAnswersAddLabel { get; init; }
 }
