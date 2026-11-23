@@ -195,14 +195,10 @@ internal partial class RecordService(
             return Result<DiscardRecordError>.Err(new DiscardRecordError.RecordNotFound());
         }
 
-        if (
-            !_organisationAuthoriser.CanPerformOperationOnOrganisation(
-                Operation.Create,
-                record.OrganisationId
-            )
-        )
+        DiscardRecordError? authorisationError = AuthoriseDiscard(record);
+        if (authorisationError is not null)
         {
-            return Result<DiscardRecordError>.Err(new DiscardRecordError.NotAllowed());
+            return Result<DiscardRecordError>.Err(authorisationError);
         }
 
         var latest = await dbContext
@@ -241,6 +237,27 @@ internal partial class RecordService(
             return Result<DiscardRecordError>.Err(new DiscardRecordError.ConcurrencyError());
         }
         return Result<DiscardRecordError>.Ok();
+    }
+
+    /// <summary>Why the caller may not discard the record, or null when they may.</summary>
+    private DiscardRecordError? AuthoriseDiscard(Record record)
+    {
+        if (
+            !_organisationAuthoriser.CanPerformOperationOnOrganisation(
+                Operation.Read,
+                record.OrganisationId
+            )
+        )
+        {
+            return new DiscardRecordError.NotAllowed();
+        }
+
+        return _organisationAuthoriser.CanPerformOperationOnOrganisation(
+            Operation.DiscardRecord,
+            record.OrganisationId
+        )
+            ? null
+            : new DiscardRecordError.CannotDiscard();
     }
 
     private IQueryable<RecordInformationTrackingProjection> ApplyFilters(

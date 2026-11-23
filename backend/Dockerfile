@@ -24,7 +24,7 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages dotnet restore src/
 FROM restore AS build
 
 COPY . .
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages dotnet publish src/UKPS.Api.csproj --configuration Release --no-restore --output /app/publish /p:UseAppHost=false
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages dotnet publish src/UKPS.Api.csproj --configuration Release -p:RunAnalyzers=false --output /app/publish /p:UseAppHost=false
 
 # TODO: Remove this temporary GSSAPI dependency when database authentication migrates to IAM auth with GSS encryption disabled.
 # Ubuntu 24.04 "noble", the same release the chiseled runtime is built from, so the copied

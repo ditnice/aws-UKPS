@@ -27,6 +27,7 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
   const apiClient = await createServerApiClient()
   const { data: currentUser } = await getUsersMe({ client: apiClient })
   const isStandardUser = currentUser?.userRole === UserRole.STANDARD
+  const canCreateRecords = currentUser && currentUser.userRole !== UserRole.SUPER
 
   let championEmails: string[] = []
   if (isStandardUser) {
@@ -65,10 +66,10 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
               </div>
             </>
           )}
-          {currentUser && (
+          {canCreateRecords && (
             <CreateRecordActionBanner
               organisationId={organisationId}
-              allowedPharmaceuticalEntity={currentUser?.allowedPharmaceuticalEntity}
+              allowedPharmaceuticalEntity={currentUser.allowedPharmaceuticalEntity}
             />
           )}
           <TableAndFiltersGrid

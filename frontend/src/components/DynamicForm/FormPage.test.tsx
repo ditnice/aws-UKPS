@@ -849,6 +849,35 @@ describe('FormPage', () => {
       )
     })
 
+    it.each(['Checkbox', 'Radio'] as const)('shows links in a %s hint', (type) => {
+      render(
+        <FormPage
+          page={page({
+            questions: [
+              question({
+                id: 'choices',
+                type,
+                multiple: type === 'Checkbox',
+                label: 'Choose',
+                hint: 'Read [the guide](https://example.com/guide).',
+                options: tree,
+              }),
+            ],
+            answers: { choices: type === 'Checkbox' ? [] : null },
+          })}
+        />,
+      )
+
+      expect(screen.getByRole('link', { name: 'the guide (opens in a new tab)' })).toHaveAttribute(
+        'href',
+        'https://example.com/guide',
+      )
+      const option = type === 'Checkbox' ? 'checkbox' : 'radio'
+      expect(screen.getByRole(option, { name: '1: Addiction' })).toHaveAccessibleDescription(
+        'Read the guide (opens in a new tab).',
+      )
+    })
+
     it('saves ticked checkboxes in selection insertion order', async () => {
       const user = userEvent.setup()
       render(
@@ -1411,7 +1440,7 @@ describe('FormPage', () => {
             question({
               id: 'global_date',
               type: 'ActualMonth',
-              label: 'Actual global first submission date',
+              label: 'Enter the date of GFS of this product',
               hint: null,
               rules: [],
             }),
@@ -1424,7 +1453,7 @@ describe('FormPage', () => {
         render(<FormPage page={monthPage()} />)
 
         expect(
-          screen.getByRole('group', { name: 'Actual global first submission date' }),
+          screen.getByRole('group', { name: 'Enter the date of GFS of this product' }),
         ).toBeInTheDocument()
         expect(screen.queryByRole('textbox', { name: 'Day' })).not.toBeInTheDocument()
         await user.type(screen.getByRole('textbox', { name: 'Month' }), '7')
