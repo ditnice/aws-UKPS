@@ -214,6 +214,11 @@ the request body instead.
 This applies even when the form's `onSubmit` calls `event.preventDefault()` and handles submission
 in JavaScript, because that handler only runs once the page has hydrated.
 
+The exception is a form whose `action` is a server action (for example
+`<form action={serverAction}>` or the `action` returned by `useActionState`). React and Next.js
+always submit these forms with `POST`, including before hydration, and ignore any `method` you set,
+so `method="post"` is not needed.
+
 #### Loading States
 
 - We should **NOT** show a loading state for data modification actions (POST, PUT, PATCH) in the browser, and there is no requirement to show a browser-native loading state. This is a requirement specified by GDS.
