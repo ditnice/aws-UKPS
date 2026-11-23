@@ -30,7 +30,10 @@ internal sealed class FormFieldAttribute(string id, string label, FormControl co
     /// <summary>The control to render.</summary>
     public FormControl Control { get; } = control;
 
-    /// <summary>Optional help text shown under the label.</summary>
+    /// <summary>
+    /// Optional help text shown under the label. A checkbox or radio question's hint can contain
+    /// links, written <c>[link text](https://...)</c>.
+    /// </summary>
     public string? Hint { get; set; }
 
     /// <summary>

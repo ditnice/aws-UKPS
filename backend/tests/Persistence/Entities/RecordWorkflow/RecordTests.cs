@@ -125,10 +125,71 @@ public sealed class RecordTests
         IReadOnlyCollection<RecordAction> actions = Record.GetPermittedActions(
             new(recordStatus, latestRevisionStatus),
             hasSingleRevision,
-            canChangeStatus: true
+            canUpdate: true,
+            canChangeStatus: true,
+            canConfirm: true,
+            canDiscard: true
         );
 
         actions.ShouldBe(expected);
+    }
+
+    [Theory]
+    [InlineData(RecordStatus.Unpublished, WorkflowStatus.Draft)]
+    [InlineData(RecordStatus.Published, WorkflowStatus.Published)]
+    public void GetPermittedActions_WhenUserCannotUpdate_OmitsUpdate(
+        RecordStatus recordStatus,
+        WorkflowStatus latestRevisionStatus
+    )
+    {
+        IReadOnlyCollection<RecordAction> actions = Record.GetPermittedActions(
+            new(recordStatus, latestRevisionStatus),
+            hasSingleRevision: true,
+            canUpdate: false,
+            canChangeStatus: true,
+            canConfirm: true,
+            canDiscard: true
+        );
+
+        actions.ShouldNotContain(RecordAction.Update);
+        actions.ShouldContain(RecordAction.ViewTimeline);
+    }
+
+    [Theory]
+    [InlineData(RecordStatus.Published, RecordAction.ConfirmCurrent)]
+    [InlineData(RecordStatus.OnHold, RecordAction.ConfirmOnHold)]
+    public void GetPermittedActions_WhenUserCannotConfirm_OmitsConfirm(
+        RecordStatus recordStatus,
+        RecordAction omitted
+    )
+    {
+        IReadOnlyCollection<RecordAction> actions = Record.GetPermittedActions(
+            new(recordStatus, WorkflowStatus.Published),
+            hasSingleRevision: true,
+            canUpdate: true,
+            canChangeStatus: true,
+            canConfirm: false,
+            canDiscard: true
+        );
+
+        actions.ShouldNotContain(omitted);
+        actions.ShouldContain(RecordAction.ChangeStatus);
+    }
+
+    [Fact]
+    public void GetPermittedActions_WhenUserCannotDiscard_OmitsDiscard()
+    {
+        IReadOnlyCollection<RecordAction> actions = Record.GetPermittedActions(
+            new(RecordStatus.Unpublished, WorkflowStatus.Draft),
+            hasSingleRevision: true,
+            canUpdate: true,
+            canChangeStatus: true,
+            canConfirm: true,
+            canDiscard: false
+        );
+
+        actions.ShouldNotContain(RecordAction.Discard);
+        actions.ShouldContain(RecordAction.Update);
     }
 
     [Theory]
@@ -142,7 +203,10 @@ public sealed class RecordTests
         IReadOnlyCollection<RecordAction> actions = Record.GetPermittedActions(
             new(recordStatus, latestRevisionStatus),
             hasSingleRevision: false,
-            canChangeStatus: false
+            canUpdate: true,
+            canChangeStatus: false,
+            canConfirm: true,
+            canDiscard: true
         );
 
         actions.ShouldNotContain(RecordAction.ChangeStatus);

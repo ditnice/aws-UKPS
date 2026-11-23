@@ -498,6 +498,9 @@ it useful elsewhere. It must not be mapped by EF, which a getter-only property i
 ### Hints
 
 - Pass hint text with `Hint = "..."`. A blank line (`\n\n`) starts a new paragraph.
+- A `Checkbox` or `Radio` question hint can contain links, written `[link text](https://...)`. They open
+  in a new tab, and "(opens in a new tab)" is added to the link text. Only `https` URLs without spaces
+  or brackets become links. Hints on other controls and on options are plain text.
 - Hints are shown above the input and linked to it with `aria-describedby`.
 - A radio option can carry its own hint. Register the enum with the three-part overload of `AddEnum`, `(Value, Label, Hint)`; see the `BiomarkerType` provider in `MedicineOptionProviders`. The hint shows under that option, and it is part of the form fingerprint, so changing it needs a version bump.
 - On a single-question page, the label is visually hidden on the field because it is already

@@ -140,6 +140,98 @@ public class RecordViewServiceTests : DatabaseTestBase
         result.ShouldBeSuccess().Actions.Contains(RecordAction.ChangeStatus).ShouldBe(expected);
     }
 
+    [Theory]
+    [InlineData(UserRole.Standard, true)]
+    [InlineData(UserRole.Champion, true)]
+    [InlineData(UserRole.Super, false)]
+    public async Task GetRecordOverview_Discard_IsOnlyReturnedToUsersWhoCanDiscard(
+        UserRole role,
+        bool expected
+    )
+    {
+        Record record = await AddRecord(RecordStatus.Unpublished);
+        await AddRevision(record, 1, WorkflowStatus.Draft);
+        _harness.UpdateCurrentUser(x => x with { UserRole = role });
+
+        GetRecordResult result = await Service.GetRecordOverview(
+            record.Id,
+            RecordType.Medicine,
+            _organisation.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess().Actions.Contains(RecordAction.Discard).ShouldBe(expected);
+    }
+
+    [Theory]
+    [InlineData(UserRole.Standard, true)]
+    [InlineData(UserRole.Champion, true)]
+    [InlineData(UserRole.Super, false)]
+    public async Task GetRecordOverview_Update_IsOnlyReturnedToUsersWhoCanEditContent(
+        UserRole role,
+        bool expected
+    )
+    {
+        Record record = await AddRecord(RecordStatus.Unpublished);
+        await AddRevision(record, 1, WorkflowStatus.Draft);
+        _harness.UpdateCurrentUser(x => x with { UserRole = role });
+
+        GetRecordResult result = await Service.GetRecordOverview(
+            record.Id,
+            RecordType.Medicine,
+            _organisation.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess().Actions.Contains(RecordAction.Update).ShouldBe(expected);
+    }
+
+    [Theory]
+    [InlineData(UserRole.Standard, true)]
+    [InlineData(UserRole.Champion, true)]
+    [InlineData(UserRole.Super, false)]
+    public async Task GetRecordOverview_ConfirmCurrent_IsOnlyReturnedToUsersWhoCanConfirm(
+        UserRole role,
+        bool expected
+    )
+    {
+        Record record = await AddRecord(RecordStatus.Published);
+        await AddRevision(record, 1, WorkflowStatus.Published);
+        _harness.UpdateCurrentUser(x => x with { UserRole = role });
+
+        GetRecordResult result = await Service.GetRecordOverview(
+            record.Id,
+            RecordType.Medicine,
+            _organisation.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess().Actions.Contains(RecordAction.ConfirmCurrent).ShouldBe(expected);
+    }
+
+    [Theory]
+    [InlineData(UserRole.Standard, true)]
+    [InlineData(UserRole.Champion, true)]
+    [InlineData(UserRole.Super, false)]
+    public async Task GetRecordOverview_ConfirmOnHold_IsOnlyReturnedToUsersWhoCanConfirm(
+        UserRole role,
+        bool expected
+    )
+    {
+        Record record = await AddRecord(RecordStatus.OnHold);
+        await AddRevision(record, 1, WorkflowStatus.Published);
+        _harness.UpdateCurrentUser(x => x with { UserRole = role });
+
+        GetRecordResult result = await Service.GetRecordOverview(
+            record.Id,
+            RecordType.Medicine,
+            _organisation.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess().Actions.Contains(RecordAction.ConfirmOnHold).ShouldBe(expected);
+    }
+
     [Fact]
     public async Task GetRecordOverview_DraftAfterPublishedRevision_ReturnsDraftRevisionTitle()
     {

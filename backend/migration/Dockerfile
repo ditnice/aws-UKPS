@@ -30,7 +30,7 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
 FROM restore AS build
 
 COPY . .
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages dotnet publish migration/MigratorLambda.csproj --configuration Release --runtime linux-x64 --self-contained true --no-restore --output /app/publish -p:PublishReadyToRun=true
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages dotnet publish migration/MigratorLambda.csproj --configuration Release -p:RunAnalyzers=false --runtime linux-x64 --self-contained true --output /app/publish -p:PublishReadyToRun=true
 
 # AWS Lambda .NET 10 base image for x86_64 (Amazon Linux 2023).
 # checkov:skip=CKV_DOCKER_2: Lambda provided runtime has no shell; health checks are handled at the Lambda service level.

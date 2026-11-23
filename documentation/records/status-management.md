@@ -88,7 +88,7 @@ The record DTO returns `actions`, the list of `RecordAction` values the user can
 | Discard | `Discard`, only when the record has a single revision |
 | Submit, Approve, Reject | None. These aren't offered on the record page |
 
-`ViewTimeline` is always included. This gives:
+`ViewTimeline` is always included. `Update`, `ChangeStatus`, `ConfirmCurrent`, `ConfirmOnHold` and `Discard` are left out when the user doesn't have permission for them, so super users never receive them. For a user with every permission, this gives:
 
 | `record_status` | Latest `workflow_status` | Actions |
 | --- | --- | --- |

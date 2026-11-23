@@ -905,7 +905,8 @@ One migration (`AddRecordContentForms`) adds:
 
 `Operation.EditRecordContent` is granted to Standard users in `OrganisationAuthoriser`, and
 Champion users already have every operation on their organisation. Super users are explicitly
-denied it, although they keep every other operation on every organisation.
+denied it, along with creating, discarding, confirming and changing the status of records. They
+keep every other operation on every organisation.
 
 The migration does not add any reference data. BNF chapters and therapeutic areas are already
 loaded by the synthetic data seeder; see [Reference data](reference-data.md).

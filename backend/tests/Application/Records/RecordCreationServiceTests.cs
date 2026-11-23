@@ -42,7 +42,14 @@ public class RecordCreationServiceTests : DatabaseTestBase
         _currentUser = new UserFaker().Generate();
         _currentDateTime = new DateTime(2022, 11, 01, 12, 56, 03, DateTimeKind.Utc);
         _harness
-            .UpdateCurrentUser(x => x with { CognitoUsername = _currentUser.CognitoUsername })
+            .UpdateCurrentUser(x =>
+                x with
+                {
+                    CognitoUsername = _currentUser.CognitoUsername,
+                    // The harness default is a Super user, who cannot create records.
+                    UserRole = UserRole.Champion,
+                }
+            )
             .UpdateCurrentTime(_currentDateTime);
     }
 
@@ -290,6 +297,7 @@ public class RecordCreationServiceTests : DatabaseTestBase
     [Fact]
     public async Task CreateRecord_WhenSpecifiedOrganisationDoesNotExist_ShouldReturnInvalidOrganisationError()
     {
+        _harness.UpdateCurrentUser(x => x with { OrganisationId = 999 });
         var nonExistentOrganisationCommand = _validCommand with { OrganisationId = 999 };
         CreateRecordResult result = await _harness.Service.CreateRecord(
             nonExistentOrganisationCommand,
@@ -311,13 +319,9 @@ public class RecordCreationServiceTests : DatabaseTestBase
     }
 
     [Theory]
-    [InlineData(UserRole.Standard, true)]
-    [InlineData(UserRole.Champion, true)]
-    [InlineData(UserRole.Super, false)]
-    public async Task CreateRecord_CanEditContent_IsOnlyTrueForUsersWhoCanEditContent(
-        UserRole userRole,
-        bool expected
-    )
+    [InlineData(UserRole.Standard)]
+    [InlineData(UserRole.Champion)]
+    public async Task CreateRecord_WhenTheUserCanCreate_CanEditContentIsTrue(UserRole userRole)
     {
         _harness.UpdateCurrentUser(x =>
             x with
@@ -327,7 +331,7 @@ public class RecordCreationServiceTests : DatabaseTestBase
             }
         );
         CreateRecordResult result = await _harness.Service.CreateRecord(_validCommand, Ct);
-        result.ShouldBeSuccess().CanEditContent.ShouldBe(expected);
+        result.ShouldBeSuccess().CanEditContent.ShouldBeTrue();
     }
 
     [Theory]
@@ -340,5 +344,24 @@ public class RecordCreationServiceTests : DatabaseTestBase
         _harness.UpdateCurrentUser(x => x with { UserRole = userRole, OrganisationId = 999 });
         CreateRecordResult result = await _harness.Service.CreateRecord(_validCommand, Ct);
         result.ShouldBeError().ShouldBeOfType<CreateRecordError.NotAuthorised>();
+    }
+
+    [Fact]
+    public async Task CreateRecord_SuperUser_IsNotAuthorisedAndWritesNothing()
+    {
+        _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                UserRole = UserRole.Super,
+                OrganisationId = _organisation.Id,
+            }
+        );
+        int recordsBefore = await _harness.GetClearedContext().Records.CountAsync(Ct);
+
+        CreateRecordResult result = await _harness.Service.CreateRecord(_validCommand, Ct);
+
+        result.ShouldBeError().ShouldBeOfType<CreateRecordError.NotAuthorised>();
+        int recordsAfter = await _harness.GetClearedContext().Records.CountAsync(Ct);
+        recordsAfter.ShouldBe(recordsBefore);
     }
 }
