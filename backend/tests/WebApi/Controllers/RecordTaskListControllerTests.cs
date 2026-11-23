@@ -117,12 +117,14 @@ public class RecordTaskListControllerTests : IClassFixture<WebApplicationFactory
                     Id = "indication-details",
                     Title = "Indication details",
                     Optional = false,
+                    SubText = "Tell us about the indication.",
                     Tasks =
                     [
                         new RecordTaskListTaskDto
                         {
                             Id = "indication-details",
                             Title = "Indication details",
+                            Hint = null,
                             Status = RecordTaskStatus.InProgress,
                             FirstPageId = "indication",
                         },

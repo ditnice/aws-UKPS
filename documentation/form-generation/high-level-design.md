@@ -222,7 +222,7 @@ invalid model stops the API starting. It holds structure only: bindings receive 
 - **Form order** is section order, then task order, then page order. A user enters a task from
   the task list and steps through its pages: Back goes to the previous page in the task, and Save
   and continue goes to the next. On a task's first page, Back returns to the task list. On its last
-  page the button reads **Save and return to task list**, and saving returns to the task list. A
+  page the button reads **Save and continue to task list**, and saving returns to the task list. A
   page opened from check your answers (a link with `?returnTo=check-your-answers`) has one button,
   **Save and return to check your answers**: saving returns to check your answers, and Back goes
   there too, whether or not the task has another page.
@@ -608,7 +608,7 @@ sequenceDiagram
     participant F as FormPage (browser)
     participant B as Backend
     participant P as Postgres
-    U->>F: Save and continue (or Save and return to task list)
+    U->>F: Save and continue (or Save and continue to task list)
     F->>F: Validate with Zod (same rules and messages)
     alt Client validation fails
         F-->>U: Errors shown against fields
@@ -714,7 +714,7 @@ examples below use record 5, revision 7.
 | `recordId` | Used to build page URLs |
 | `section`, `task`, `page` | IDs and titles; the task title is the page caption |
 | `previousPageId` | Target of Back: the previous page in the task that applies, or `null` when there is none, where Back goes to the task list |
-| `nextPageId` | The next page in the task that applies given the saved answers, or one that depends on this page's own answers and so could apply once they are saved (`PossibleNextPage`). `null` when there is none, where the button reads **Save and return to task list**. The save response, not this value, decides where saving goes |
+| `nextPageId` | The next page in the task that applies given the saved answers, or one that depends on this page's own answers and so could apply once they are saved (`PossibleNextPage`). `null` when there is none, where the button reads **Save and continue to task list**. The save response, not this value, decides where saving goes |
 | `questions` | `id`, `type` (the `FormControl`), `multiple` (the answer is an array), `label`, `hint`, `display`, `placeholder`, `childLabel`, `childPlaceholder`, `addAnotherLabel`, `removeLabel` (a text list's remove button), `showWhen` (`kind`, `questionId`, `values`, or `null`), `rules` (`kind`, `value`, `message`), `options` (`value`, `label`, `children`) |
 | `answers` | Every page question: a string or `null`, or an array for multi-value questions |
 

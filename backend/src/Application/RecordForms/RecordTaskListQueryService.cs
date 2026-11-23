@@ -67,25 +67,34 @@ internal sealed class RecordTaskListQueryService(
                 CompanyCode = productDetail?.CompanyCode,
                 RecordTitle = productDetail?.RecordTitle,
                 Sections = form
-                    .Model.Sections.Select(section => new RecordTaskListSectionDto
-                    {
-                        Id = section.Id,
-                        Title = section.Title,
-                        Optional = section.Optional,
-                        Tasks = section
-                            .Tasks.Select(task => new RecordTaskListTaskDto
-                            {
-                                Id = task.Id,
-                                Title = task.Title,
-                                Status = GetStatus(task, answered, applicability),
-                                FirstPageId = task.FirstPage.Id,
-                            })
-                            .ToArray(),
-                    })
+                    .Model.Sections.Select(section => ToDto(section, answered, applicability))
                     .ToArray(),
             }
         );
     }
+
+    private static RecordTaskListSectionDto ToDto(
+        FormSection section,
+        HashSet<string> answered,
+        Applicability applicability
+    ) =>
+        new()
+        {
+            Id = section.Id,
+            Title = section.Title,
+            Optional = section.Optional,
+            SubText = section.SubText,
+            Tasks = section
+                .Tasks.Select(task => new RecordTaskListTaskDto
+                {
+                    Id = task.Id,
+                    Title = task.Title,
+                    Hint = task.Hint,
+                    Status = GetStatus(task, answered, applicability),
+                    FirstPageId = task.FirstPage.Id,
+                })
+                .ToArray(),
+        };
 
     /// <summary>
     /// The task's status, counting only the questions that apply: a hidden question is neither an

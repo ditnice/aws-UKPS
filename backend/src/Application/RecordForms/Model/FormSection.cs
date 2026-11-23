@@ -8,10 +8,14 @@ namespace UKPS.Api.Application.RecordForms.Model;
 /// <param name="Optional">
 /// No question in the section is required to submit, even once the user has started a task in it.
 /// </param>
+/// <param name="SubText">
+/// Text shown under the section heading in the record task list, or null for none.
+/// </param>
 internal sealed record FormSection(
     string Id,
     string Title,
     int Order,
     IReadOnlyList<FormTask> Tasks,
-    bool Optional = false
+    bool Optional = false,
+    string? SubText = null
 );

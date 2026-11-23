@@ -7745,6 +7745,7 @@
           "id",
           "title",
           "optional",
+          "subText",
           "tasks"
         ],
         "type": "object",
@@ -7761,6 +7762,13 @@
             "type": "boolean",
             "description": "The section is optional: it is marked \"(optional)\" and does not count towards the tasks\nthat must be completed before the record can be reviewed and submitted."
           },
+          "subText": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Text shown under the section heading, or null for none. A blank line starts a new\nparagraph."
+          },
           "tasks": {
             "type": "array",
             "items": {
@@ -7775,6 +7783,7 @@
         "required": [
           "id",
           "title",
+          "hint",
           "status",
           "firstPageId"
         ],
@@ -7787,6 +7796,13 @@
           "title": {
             "type": "string",
             "description": "The task title."
+          },
+          "hint": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Hint text shown under the task link, or null for none. A blank line starts a new paragraph."
           },
           "status": {
             "description": "The task's status, derived from the saved answers.",

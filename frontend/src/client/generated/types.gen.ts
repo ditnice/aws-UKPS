@@ -1187,6 +1187,11 @@ export type RecordTaskListSectionDto = {
      */
     optional: boolean;
     /**
+     * Text shown under the section heading, or null for none. A blank line starts a new
+     * paragraph.
+     */
+    subText: null | string;
+    /**
      * The ordered tasks in the section.
      */
     tasks: Array<RecordTaskListTaskDto>;
@@ -1204,6 +1209,10 @@ export type RecordTaskListTaskDto = {
      * The task title.
      */
     title: string;
+    /**
+     * Hint text shown under the task link, or null for none. A blank line starts a new paragraph.
+     */
+    hint: null | string;
     /**
      * The task's status, derived from the saved answers.
      */

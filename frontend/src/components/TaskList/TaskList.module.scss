@@ -32,9 +32,15 @@
 }
 
 .task-list__task-description {
+  color: colours.$form-group-hint;
   margin-top: spacing.$small * 1px;
 }
 
 .task-list__summary {
   margin-bottom: spacing.$large * 1px;
+}
+
+.task-list__section-summary > :last-child,
+.task-list__task-description > :last-child {
+  margin-bottom: 0;
 }

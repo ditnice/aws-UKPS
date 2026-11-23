@@ -66,7 +66,8 @@ internal sealed class MedicineFormLayout()
                             new FormLayoutPage(RepurposedMedicine, "Repurposed medicine", 10),
                             new FormLayoutPage(Originator, "Original developer", 20),
                             new FormLayoutPage(CoMarketing, "Co-marketing", 30),
-                        ]
+                        ],
+                        Hint: "Enter development details for this product, such as the originator company and whether it is a repurposed medicine."
                     ),
                 ]
             ),
@@ -218,7 +219,8 @@ internal sealed class MedicineFormLayout()
                                 40,
                                 CommercialInConfidence: true
                             ),
-                        ]
+                        ],
+                        Hint: "Complete the indication details task first. If your product is a biosimilar, you will not need to complete this task."
                     ),
                 ]
             ),
@@ -322,7 +324,8 @@ internal sealed class MedicineFormLayout()
                                 150,
                                 CommercialInConfidence: true
                             ),
-                        ]
+                        ],
+                        Hint: "Enter details of required laboratory tests. Indicate whether genomic or non-genomic biomarkers are used for diagnostic tests."
                     ),
                     new FormLayoutTask(
                         "patient-and-clinical-requirements",
@@ -356,7 +359,8 @@ internal sealed class MedicineFormLayout()
                                 "Enter the estimated UK eligible population range",
                                 80
                             ),
-                        ]
+                        ],
+                        Hint: "Describe how you identify patients and calculate eligible patient population ranges. Enter clinical setting requirements for this product, for example, storage requirements."
                     ),
                     new FormLayoutTask(
                         "pricing-and-budget-impact",
@@ -392,12 +396,14 @@ internal sealed class MedicineFormLayout()
                                 50,
                                 CommercialInConfidence: true
                             ),
-                        ]
+                        ],
+                        Hint: "Enter anticipated costs, funding arrangements, and pricing flexibility."
                     ),
                 ],
                 // TODO: becomes mandatory within 12 months of the market authorisation date, so this
                 // flag will need to depend on the record (see RevisionValidator.IsInOptionalSection).
-                Optional: true
+                Optional: true,
+                SubText: "This section is optional. It becomes mandatory within 12 months of the market authorisation date."
             ),
         ]
     )

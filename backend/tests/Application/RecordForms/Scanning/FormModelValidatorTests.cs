@@ -31,6 +31,8 @@ public class FormModelValidatorTests
         form.Pages.Select(static p => p.Id).ShouldBe(["text", "chapter", "areas"]);
         FormTask task = form.Sections.Single().Tasks.Single();
         (task.Id, task.Title, task.FirstPage.Id).ShouldBe(("valid-task", "Valid task", "text"));
+        task.Hint.ShouldBe("Valid task hint");
+        form.Sections.Single().SubText.ShouldBe("Valid sub text");
         task.Pages.ShouldBe(form.Pages);
         form.FindPage("text")!
             .Questions.Select(static q => (q.Id, q.Control))
@@ -333,6 +335,8 @@ public class FormModelValidatorTests
     [InlineData(
         "BrokenTestLayout declares task 'Bad Task' with a badly formed ID or a blank title."
     )]
+    [InlineData("BrokenTestLayout declares section 'Bad Section' with blank sub text.")]
+    [InlineData("BrokenTestLayout declares task 'Bad Task' with a blank hint.")]
     [InlineData(
         "BrokenTestLayout, section 'Bad Section', has task 'Bad Task' and task 'tied-task' with the same Order 10."
     )]

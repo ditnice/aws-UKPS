@@ -231,13 +231,34 @@ describe('TaskListTask', () => {
     expect(asFragment()).toMatchSnapshot()
   })
 
+  it('describes each task link by its own hint and status', () => {
+    render(
+      <ul>
+        <TaskListTask
+          title="Task 1"
+          description={<p>Hint 1</p>}
+          href="/task-1"
+          status="in-progress"
+        />
+        <TaskListTask title="Task 2" href="/task-2" status="not-applicable" />
+      </ul>,
+    )
+
+    expect(screen.getByRole('link', { name: 'Task 1' })).toHaveAccessibleDescription(
+      'Hint 1 In progress',
+    )
+    expect(screen.getByRole('link', { name: 'Task 2' })).toHaveAccessibleDescription(
+      'Not applicable',
+    )
+  })
+
   it.each([
     ['cannot-start', 'Cannot start yet'],
     ['not-applicable', 'Not applicable'],
   ] as const)('renders the %s status as plain text', (status, label) => {
     const { asFragment } = render(
       <ul>
-        <TaskListTask title="Special designation" status={status} />
+        <TaskListTask id="task-4" title="Special designation" status={status} />
       </ul>,
     )
 

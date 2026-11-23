@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { Children, isValidElement } from 'react'
+import { Children, isValidElement, useId } from 'react'
 
 import { Tag } from '@/components/Tag/Tag'
 import type { TagColour } from '@/components/Tag/Tag'
@@ -55,13 +55,25 @@ const taskStatusColours = {
   completed: 'green',
 } as const satisfies Record<Exclude<TaskStatus, 'cannot-start' | 'not-applicable'>, TagColour>
 
-function TaskStatusLabel({ className, status }: { className?: string; status: TaskStatus }) {
+function TaskStatusLabel({
+  className,
+  id,
+  status,
+}: {
+  className?: string
+  id: string
+  status: TaskStatus
+}) {
   if (status === 'cannot-start' || status === 'not-applicable') {
-    return <span className={className}>{taskStatusLabels[status]}</span>
+    return (
+      <span className={className} id={id}>
+        {taskStatusLabels[status]}
+      </span>
+    )
   }
 
   return (
-    <Tag className={className} colour={taskStatusColours[status]}>
+    <Tag className={className} id={id} colour={taskStatusColours[status]}>
       {taskStatusLabels[status]}
     </Tag>
   )
@@ -140,13 +152,33 @@ export function TaskListTask({
   status,
   title,
 }: TaskListTaskProps) {
+  const generatedId = useId()
+  const idPrefix = id ?? generatedId
+  const descriptionId = `${idPrefix}-description`
+  const statusId = `${idPrefix}-status`
+
   return (
     <li id={id} className={clsx(styles['task-list__task'], className)}>
       <div>
-        <div>{href ? <a href={href}>{title}</a> : title}</div>
-        {description && <div className={styles['task-list__task-description']}>{description}</div>}
+        <div>
+          {href ? (
+            <a
+              href={href}
+              aria-describedby={description ? `${descriptionId} ${statusId}` : statusId}
+            >
+              {title}
+            </a>
+          ) : (
+            title
+          )}
+        </div>
+        {description && (
+          <div id={descriptionId} className={styles['task-list__task-description']}>
+            {description}
+          </div>
+        )}
       </div>
-      <TaskStatusLabel className={styles['task-list__status']} status={status} />
+      <TaskStatusLabel className={styles['task-list__status']} id={statusId} status={status} />
     </li>
   )
 }
