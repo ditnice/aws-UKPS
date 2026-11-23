@@ -170,7 +170,7 @@ describe('Edit user detail page', () => {
 
       await renderPage()
 
-      expect(screen.getByRole('heading', { name: 'Edit Work email address' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Edit work email address' })).toBeInTheDocument()
       expect(screen.getByTestId('back-link')).toHaveAttribute('href', '/portal/user/me')
     })
   })
