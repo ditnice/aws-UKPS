@@ -31,6 +31,14 @@
   }
 }
 
+// Hint text in place of a summary list, under the same dividing line a list's first row gets.
+.hint {
+  border-top: 1px solid colours.$border;
+  color: colours.$form-group-hint;
+  margin: 0;
+  padding-top: utils.rem(spacing.$small);
+}
+
 .header {
   align-items: baseline;
   display: flex;

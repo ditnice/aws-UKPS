@@ -10,7 +10,7 @@ import { Button } from '@/components/Button/Button'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { TaskAnswers } from '@/components/RecordAnswers/TaskAnswers'
-import { SummaryCard } from '@/components/SummaryCard/SummaryCard'
+import { SummaryCard, SummaryCardHint } from '@/components/SummaryCard/SummaryCard'
 import {
   SummaryList,
   SummaryListAction,
@@ -130,14 +130,14 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
               {/* The copy assumes PIM and EAMS on a biosimilar, the only task that can be wholly
                   conditional today. A second one needs the backend to send the reason. */}
               {task.notApplicable && (
-                <p>
+                <SummaryCardHint>
                   Your product is a biosimilar, you do not need to complete this task. You can
                   change technology status in indication details.
-                </p>
+                </SummaryCardHint>
               )}
               {untouched ? (
                 <SummaryList variant="wide-value">
-                  <SummaryListRow label="Not yet provided" value="">
+                  <SummaryListRow label="Not yet provided" plainLabel value="">
                     <SummaryListAction
                       href={checkAnswersPageHref(recordId, task.questions[0].pageId)}
                       visuallyHiddenText={task.title}

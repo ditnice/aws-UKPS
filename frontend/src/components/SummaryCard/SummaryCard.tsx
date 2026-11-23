@@ -14,6 +14,11 @@ export type SummaryCardProps = {
   titleHeadingLevel?: 2 | 3 | 4 | 5 | 6
 }
 
+/** Grey hint text inside a card, below a dividing line, such as why a task has no answers. */
+export function SummaryCardHint({ children }: { children: ReactNode }) {
+  return <p className={styles.hint}>{children}</p>
+}
+
 /** A titled box around a summary list or other content, with optional links on the title line. */
 export function SummaryCard({ actions, children, title, titleHeadingLevel = 2 }: SummaryCardProps) {
   const TitleHeading = `h${titleHeadingLevel}` as const
