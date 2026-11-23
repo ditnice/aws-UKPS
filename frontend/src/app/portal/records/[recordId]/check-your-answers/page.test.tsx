@@ -386,12 +386,10 @@ describe('CheckAnswersPage', () => {
     await renderPage()
 
     expect(
-      screen.getByText(/Your product is a biosimilar, so you do not need to complete this task/),
+      screen.getByText(
+        'Your product is a biosimilar, you do not need to complete this task. You can change technology status in indication details.',
+      ),
     ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'indication details' })).toHaveAttribute(
-      'href',
-      expect.stringContaining('technology-status'),
-    )
     expect(screen.queryByRole('link', { name: /Change|Edit section/ })).not.toBeInTheDocument()
   })
 

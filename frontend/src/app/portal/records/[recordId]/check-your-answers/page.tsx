@@ -131,12 +131,8 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
                   conditional today. A second one needs the backend to send the reason. */}
               {task.notApplicable && (
                 <SummaryCardHint>
-                  Your product is a biosimilar, so you do not need to complete this task. You can
-                  change the technology status in{' '}
-                  <Link href={checkAnswersPageHref(recordId, 'technology-status')}>
-                    indication details
-                  </Link>
-                  .
+                  Your product is a biosimilar, you do not need to complete this task. You can
+                  change technology status in indication details.
                 </SummaryCardHint>
               )}
               {untouched ? (
