@@ -1,6 +1,6 @@
 import { archiveRecord, putRecordOnHold, resumeRecord } from '@/client/generated'
 import type {
-  RecordDto,
+  RecordOverviewDto,
   RecordStatus,
   RecordStatusChangeReason,
   RecordType,
@@ -68,7 +68,7 @@ export const isStatusChangeAvailable = (action: RecordStatusChangeAction, status
   statusChangeActions[action].fromStatuses.includes(status)
 
 export const canMakeStatusChange = (
-  record: Pick<RecordDto, 'organisationId' | 'actions' | 'recordStatus'>,
+  record: Pick<RecordOverviewDto, 'organisationId' | 'actions' | 'recordStatus'>,
   organisationId: number,
   action: RecordStatusChangeAction,
 ) =>

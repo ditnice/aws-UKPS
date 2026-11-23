@@ -456,8 +456,8 @@ public class RecordSubmissionServiceTests : DatabaseTestBase
     {
         RecordFormPageLoader loader = Harness<RecordFormPageLoader>().Service;
         var (form, _) = await loader.LoadFormAsync(_record.Id, track: false, Ct);
-        var (answers, _) = await loader.LoadAllAnswersAsync(form!, Ct);
-        return (answers, form!.Revision.Id);
+        var (answers, _) = await loader.LoadAllAnswersAsync(form!.Model, form.Revision.Id, Ct);
+        return (answers, form.Revision.Id);
     }
 
     private ServiceTestHarness<IRecordSubmissionService> Harness(

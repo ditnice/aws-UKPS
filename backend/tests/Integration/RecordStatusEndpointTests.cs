@@ -69,7 +69,7 @@ public class RecordStatusEndpointTests : DatabaseTestBase
         JsonObject dto = (
             await _httpClient.GetFromJsonAsync<JsonObject>(
                 new Uri(
-                    $"/records/{record.Id}?recordType=Medicine&organisationId={_organisation.Id}",
+                    $"/records/{record.Id}/overview?recordType=Medicine&organisationId={_organisation.Id}",
                     UriKind.Relative
                 ),
                 cancellationToken
@@ -193,7 +193,7 @@ public class RecordStatusEndpointTests : DatabaseTestBase
         JsonObject dto = (
             await _httpClient.GetFromJsonAsync<JsonObject>(
                 new Uri(
-                    $"/records/{record.Id}?recordType=Medicine&organisationId={_organisation.Id}",
+                    $"/records/{record.Id}/overview?recordType=Medicine&organisationId={_organisation.Id}",
                     UriKind.Relative
                 ),
                 cancellationToken

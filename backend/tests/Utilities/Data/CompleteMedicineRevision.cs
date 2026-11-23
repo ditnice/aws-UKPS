@@ -50,6 +50,21 @@ internal static class CompleteMedicineRevision
         await context.SaveChangesAsync(cancellationToken);
 
         context.AddRange(
+            new RecordProductDetail
+            {
+                RevisionId = revisionId,
+                CompanyCode = "ABC-123",
+                RecordTitle = "Chronic hepatitis C in adults",
+                NamesAndIdentifiers =
+                [
+                    new RecordNameAndIdentifier
+                    {
+                        Name = "sofosbuvir",
+                        NameType = NameAndIdentifierType.GenericName,
+                        DisplayOrder = 1,
+                    },
+                ],
+            },
             new MedicinesIndicationDetail
             {
                 RevisionId = revisionId,

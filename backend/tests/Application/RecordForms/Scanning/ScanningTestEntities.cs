@@ -167,6 +167,26 @@ internal sealed class BrokenEntity
     [FormValuePrefixes("NCT", Digits = -1)]
     public string? NegativeDigits { get; set; }
 
+    [FormPage("broken-prefixes")]
+    [FormField(
+        "broken_entity.width_on_textarea",
+        "Width on textarea",
+        FormControl.Textarea,
+        Width = FormInputWidth.Full,
+        Order = 7
+    )]
+    public string? WidthOnTextarea { get; set; }
+
+    [FormPage("broken-prefixes")]
+    [FormField(
+        "broken_entity.blank_number_name",
+        "Blank number name",
+        FormControl.PrefixedNumber,
+        Order = 8
+    )]
+    [FormValuePrefixes("NCT", Name = " ")]
+    public string? BlankNumberName { get; set; }
+
     public RecordRevision? Revision { get; set; }
 }
 
@@ -708,6 +728,25 @@ internal sealed class VaccineTestLayout()
                     ),
                 ]
             ),
+            new FormLayoutSection(
+                "listed",
+                "Listed",
+                130,
+                [
+                    new FormLayoutTask(
+                        "listed-task",
+                        "Listed task",
+                        10,
+                        [new FormLayoutPage("listed", "Listed", 10)]
+                    ),
+                    new FormLayoutTask(
+                        "broken-listed-task",
+                        "Broken listed task",
+                        20,
+                        [new FormLayoutPage("broken-listed", "Broken listed", 10)]
+                    ),
+                ]
+            ),
         ]
     );
 
@@ -979,4 +1018,125 @@ internal sealed class BrokenGroupItemLabel
     public required string Label { get; set; }
     public int? DisplayOrder { get; set; }
     public BrokenGroupItem? BrokenGroupItem { get; set; }
+}
+
+internal enum ListedNameKind
+{
+    First = 0,
+    Second = 1,
+}
+
+/// <summary>Two text lists sharing one collection of rows, told apart by their kind.</summary>
+[FormEntity]
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class ListedEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+
+    public ICollection<ListedEntityName> Names { get; set; } = [];
+
+    [FormPage("listed")]
+    [FormField(
+        "listed_entity.first_names",
+        "First names",
+        FormControl.TextList,
+        Order = 10,
+        AddAnotherLabel = "Add another first name",
+        RemoveLabel = "Remove first name"
+    )]
+    [FormRequired("Enter a first name")]
+    [FormMaxItems(3, "Enter up to 3 first names")]
+    [FormDistinct("First name has already been entered")]
+    [FormListSource<ListedNameKind>(nameof(Names), ListedNameKind.First)]
+    public IEnumerable<string> FirstNames => Names.Select(static n => n.Name);
+
+    [FormPage("listed")]
+    [FormField("listed_entity.second_names", "Second names", FormControl.TextList, Order = 20)]
+    [FormListSource<ListedNameKind>(nameof(Names), ListedNameKind.Second)]
+    public IEnumerable<string> SecondNames => Names.Select(static n => n.Name);
+}
+
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class ListedEntityName
+{
+    public int Id { get; set; }
+    public int ListedEntityId { get; set; }
+    public required string Name { get; set; }
+    public ListedNameKind Kind { get; set; }
+    public int? DisplayOrder { get; set; }
+    public ListedEntity? ListedEntity { get; set; }
+}
+
+/// <summary>Breaks each text list and list source check.</summary>
+[FormEntity]
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class BrokenListedEntity
+{
+    [FormIgnore("Database identity")]
+    public int Id { get; set; }
+
+    [FormIgnore("Revision ownership")]
+    public int RevisionId { get; set; }
+
+    public RecordRevision? Revision { get; set; }
+
+    public ICollection<BrokenListedEntityName> Names { get; set; } = [];
+
+    [FormPage("broken-listed")]
+    [FormField("broken_listed_entity.mapped", "Mapped", FormControl.TextList, Order = 10)]
+    [FormListSource<ListedNameKind>(nameof(Names), ListedNameKind.First)]
+    public string? Mapped { get; set; }
+
+    [FormPage("broken-listed")]
+    [FormField("broken_listed_entity.unknown", "Unknown", FormControl.TextList, Order = 20)]
+    [FormListSource<ListedNameKind>("NoSuchNavigation", ListedNameKind.First)]
+    public IEnumerable<string> Unknown => Names.Select(static n => n.Name);
+
+    [FormPage("broken-listed")]
+    [FormField("broken_listed_entity.not_a_list", "Not a list", FormControl.Text, Order = 30)]
+    [FormListSource<ListedNameKind>(nameof(Names), ListedNameKind.First)]
+    public IEnumerable<string> NotAList => Names.Select(static n => n.Name);
+
+    [FormPage("broken-listed")]
+    [FormField("broken_listed_entity.wrong_kind", "Wrong kind", FormControl.TextList, Order = 40)]
+    [FormListSource<YesNoUnknown>(nameof(Names), YesNoUnknown.Yes)]
+    public IEnumerable<string> WrongKind => Names.Select(static n => n.Name);
+
+    [FormPage("broken-listed")]
+    [FormField(
+        "broken_listed_entity.list_labels_on_text",
+        "List labels on text",
+        FormControl.Text,
+        Order = 50,
+        RemoveLabel = "Remove"
+    )]
+    [FormDistinct("Already entered")]
+    public string? ListLabelsOnText { get; set; }
+
+    [FormPage("broken-listed")]
+    [FormField(
+        "broken_listed_entity.fixed_width_list",
+        "Fixed width list",
+        FormControl.TextList,
+        Width = FormInputWidth.Chars20,
+        Order = 60
+    )]
+    [FormListSource<ListedNameKind>(nameof(Names), ListedNameKind.Second)]
+    public IEnumerable<string> FixedWidthList => Names.Select(static n => n.Name);
+}
+
+[SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]
+internal sealed class BrokenListedEntityName
+{
+    public int Id { get; set; }
+    public int BrokenListedEntityId { get; set; }
+    public required string Name { get; set; }
+    public ListedNameKind Kind { get; set; }
+    public BrokenListedEntity? BrokenListedEntity { get; set; }
 }

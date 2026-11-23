@@ -1,3 +1,4 @@
+global using ResendVerificationEmailResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.ResendVerificationEmailError>;
 global using UpdateEmailToCompletePendingEmailChangeResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.UpdateEmailToCompletePendingEmailError>;
 global using VerifyPendingEmailAddressResult = UKPS.Api.Application.Common.Result<UKPS.Api.Application.Users.Errors.VerifyPendingEmailAddressError>;
 using UKPS.Api.Application.Common;
@@ -78,6 +79,20 @@ public interface IUserService
     );
 
     /// <summary>
+    /// Resends the account verification email to the specified user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user who should receive the verification email.</param>
+    /// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result is a
+    /// <see cref="ResendVerificationEmailResult"/> describing the outcome of the request.
+    /// </returns>
+    Task<ResendVerificationEmailResult> ResendVerificationEmail(
+        int userId,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
     /// Verifies a user's pending email address using the verification token supplied in the command.
     /// </summary>
     /// <param name="userId">The identifier of the user whose pending email address is being verified.</param>
@@ -104,6 +119,20 @@ public interface IUserService
     /// A task representing the asynchronous operation, containing the result of the pending email change.
     /// </returns>
     Task<UpdateEmailToCompletePendingEmailChangeResult> UpdateEmailToCompletePendingEmailChange(
+        int userId,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
+    /// Cancels the specified user's unverified pending email change.
+    /// </summary>
+    /// <param name="userId">The identifier of the user whose pending email change is being cancelled.</param>
+    /// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+    /// <returns>
+    /// A task that resolves to a <see cref="Result{TError}"/> indicating whether the pending email
+    /// change was cancelled, or which <see cref="CancelPendingEmailChangeError"/> case prevented it.
+    /// </returns>
+    Task<Result<CancelPendingEmailChangeError>> CancelPendingEmailChange(
         int userId,
         CancellationToken cancellationToken
     );

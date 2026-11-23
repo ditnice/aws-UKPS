@@ -215,7 +215,7 @@ public class UserController(IUserService userService) : ControllerBase
         return result.Match(
             Ok,
             err =>
-                err.Match<ActionResult>(
+                err.Match(
                     unauthorised: () => UserNotFound(),
                     userDoesNotExist: () => UserNotFound(),
                     conflictingEmail: () =>
@@ -241,6 +241,67 @@ public class UserController(IUserService userService) : ControllerBase
                             statusCode: StatusCodes.Status409Conflict,
                             title: "Conflict",
                             detail: "The user was modified by another request. Please retry."
+                        )
+                )
+        );
+    }
+
+    /// <summary>
+    /// Resends the email verification message to a user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user to resend the verification email to.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>
+    /// An empty <c>200 OK</c> response when the verification email has been queued for sending.
+    /// </returns>
+    /// <response code="200">The verification email was successfully resent.</response>
+    /// <response code="404">No user exists with the specified <paramref name="userId"/>.</response>
+    /// <response code="409">
+    /// The request could not be completed because there is no pending verification for the user,
+    /// or because a concurrent modification was detected. Retry may succeed in the latter case.
+    /// </response>
+    [HttpPost("{userId:int}/email/resend", Name = nameof(ResendVerificationEmail))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult> ResendVerificationEmail(
+        [FromRoute] int userId,
+        CancellationToken cancellationToken
+    )
+    {
+        ResendVerificationEmailResult result = await userService.ResendVerificationEmail(
+            userId,
+            cancellationToken
+        );
+
+        var notFoundResult = Problem(
+            statusCode: StatusCodes.Status404NotFound,
+            title: "User not found",
+            detail: $"No user with id '{userId}' exists."
+        );
+        return result.Match(
+            Ok,
+            err =>
+                err.Match<ActionResult>(
+                    notFound: _ => notFoundResult,
+                    noPendingVerification: _ =>
+                        Problem(
+                            statusCode: StatusCodes.Status409Conflict,
+                            title: "No pending verification",
+                            detail: "User has no pending email verification to resend."
+                        ),
+                    _ =>
+                        Problem(
+                            statusCode: StatusCodes.Status409Conflict,
+                            title: "Email already verified",
+                            detail: "The user has already verified this email."
+                        ),
+                    forbidden: _ => notFoundResult,
+                    concurrencyDetected: _ =>
+                        Problem(
+                            statusCode: StatusCodes.Status409Conflict,
+                            title: "Concurrency conflict",
+                            detail: "The user was modified by another request. Please try again."
                         )
                 )
         );
@@ -314,6 +375,51 @@ public class UserController(IUserService userService) : ControllerBase
                         Problem(
                             title: "Email address change could not be completed",
                             detail: "A concurrent change was detected. Please try changing your email address again through the portal.",
+                            statusCode: StatusCodes.Status409Conflict
+                        )
+                )
+        );
+    }
+
+    /// <summary>
+    /// Cancels a user's unverified pending email change.
+    /// </summary>
+    /// <param name="userId">The ID of the user whose pending email change is being cancelled.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>An empty 200 response when the pending email change has been cancelled.</returns>
+    /// <response code="200">The pending email change was cancelled successfully.</response>
+    /// <response code="404">The specified user does not exist or is not accessible to the caller.</response>
+    /// <response code="409">The user has no pending email change or a concurrent change was detected.</response>
+    [HttpDelete("{userId:int}/email/pending", Name = nameof(CancelPendingEmailChange))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult> CancelPendingEmailChange(
+        [FromRoute] int userId,
+        CancellationToken cancellationToken
+    )
+    {
+        Result<CancelPendingEmailChangeError> result = await userService.CancelPendingEmailChange(
+            userId,
+            cancellationToken
+        );
+
+        return result.Match(
+            Ok,
+            err =>
+                err.Match<ActionResult>(
+                    unauthorised: () => UserNotFound(),
+                    userDoesNotExist: () => UserNotFound(),
+                    noPendingEmailToCancel: () =>
+                        Problem(
+                            title: "No pending email",
+                            detail: "This user has no pending email change to cancel.",
+                            statusCode: StatusCodes.Status409Conflict
+                        ),
+                    concurrentChangeDetected: () =>
+                        Problem(
+                            title: "Email address change could not be cancelled",
+                            detail: "A concurrent change was detected. Please try again.",
                             statusCode: StatusCodes.Status409Conflict
                         )
                 )

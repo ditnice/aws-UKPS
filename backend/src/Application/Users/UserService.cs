@@ -3,6 +3,7 @@ using System.Linq.Expressions;
 using Amazon.Runtime;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using UKPS.Api.Application.Authentication.SecurityNotification;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Communication;
@@ -734,6 +735,60 @@ internal partial class UserService(
         }
     }
 
+    public async Task<ResendVerificationEmailResult> ResendVerificationEmail(
+        int userId,
+        CancellationToken cancellationToken
+    )
+    {
+        User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
+
+        if (user is null)
+        {
+            return ResendVerificationEmailResult.Err(new ResendVerificationEmailError.NotFound());
+        }
+
+        if (!currentUserInfoService.IsCurrentUser(user))
+        {
+            return ResendVerificationEmailResult.Err(new ResendVerificationEmailError.Forbidden());
+        }
+
+        if (user.PendingWorkEmail is null)
+        {
+            return ResendVerificationEmailResult.Err(
+                new ResendVerificationEmailError.NoPendingVerification()
+            );
+        }
+
+        if (user.PendingEmailVerifiedAt is not null)
+        {
+            return ResendVerificationEmailResult.Err(
+                new ResendVerificationEmailError.PendingEmailAlreadyVerified()
+            );
+        }
+
+        var token = VerificationTokenGenerator.Generate();
+        user.RefreshVerificationToken(token, timeProvider.GetUtcNow());
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await SendEmailVerificationEmail(
+                user.PendingWorkEmail,
+                token,
+                user.CognitoUsername,
+                cancellationToken
+            );
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return ResendVerificationEmailResult.Err(
+                new ResendVerificationEmailError.ConcurrencyDetected()
+            );
+        }
+
+        return ResendVerificationEmailResult.Ok();
+    }
+
     public async Task<VerifyPendingEmailAddressResult> VerifyPendingEmailAddress(
         int userId,
         VerifyPendingEmailAddressCommand command,
@@ -792,6 +847,64 @@ internal partial class UserService(
                 new VerifyPendingEmailAddressError.EmailAlreadyVerified(),
             _ => throw new InvalidOperationException(
                 $"The user verification error '{domainError}' is not supported."
+            ),
+        };
+    }
+
+    public async Task<Result<CancelPendingEmailChangeError>> CancelPendingEmailChange(
+        int userId,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            User? user = await dbContext.Users.FindAsync([userId], cancellationToken);
+
+            if (user is null)
+            {
+                return Result<CancelPendingEmailChangeError>.Err(
+                    new CancelPendingEmailChangeError.UserDoesNotExist()
+                );
+            }
+
+            if (!currentUserInfoService.IsCurrentUser(user))
+            {
+                return Result<CancelPendingEmailChangeError>.Err(
+                    new CancelPendingEmailChangeError.Unauthorised()
+                );
+            }
+
+            User.PendingEmailCancellationError? domainError = user.TryCancelPendingEmailChange(
+                timeProvider.GetUtcNow()
+            );
+            if (domainError is not null)
+            {
+                return Result<CancelPendingEmailChangeError>.Err(
+                    MapPendingEmailCancellationError(domainError.Value)
+                );
+            }
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return Result<CancelPendingEmailChangeError>.Ok();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result<CancelPendingEmailChangeError>.Err(
+                new CancelPendingEmailChangeError.ConcurrentChangeDetected()
+            );
+        }
+    }
+
+    private static CancelPendingEmailChangeError.NoPendingEmailToCancel MapPendingEmailCancellationError(
+        User.PendingEmailCancellationError domainError
+    )
+    {
+        return domainError switch
+        {
+            User.PendingEmailCancellationError.NoPendingEmailToCancel =>
+                new CancelPendingEmailChangeError.NoPendingEmailToCancel(),
+            _ => throw new InvalidOperationException(
+                $"The pending email cancellation error '{domainError}' is not supported."
             ),
         };
     }
@@ -1066,22 +1179,16 @@ internal partial class UserService(
         }
     }
 
-    private async Task HandleUserEvent(
+    private Task HandleUserEvent(
         User user,
         User.PendingEmailUpdatedEvent pendingEmailUpdatedEvent,
         CancellationToken cancellationToken
     )
     {
-        var link = emailVerificationLinkCreator.GetVerificationLink(
-            pendingEmailUpdatedEvent.VerificationToken
-        );
-        await emailService.SendEmail(
-            new SendEmailCommand()
-            {
-                RecipientAddress = pendingEmailUpdatedEvent.RequestedEmail,
-                PersonIdentifier = user.CognitoUsername,
-                Email = new EmailChangeVerificationRequestEmail() { EmailVerificationLink = link },
-            },
+        return SendEmailVerificationEmail(
+            pendingEmailUpdatedEvent.RequestedEmail,
+            pendingEmailUpdatedEvent.VerificationToken,
+            user.CognitoUsername,
             cancellationToken
         );
     }
@@ -1095,6 +1202,34 @@ internal partial class UserService(
         await identityService.UpdateUserEmail(
             user.CognitoUsername,
             emailUpdatedEvent.NewWorkEmail,
+            cancellationToken
+        );
+        await emailService.SendEmail(
+            new SendEmailCommand()
+            {
+                Email = new SecurityNotificationEmail() { ChangedValue = ChangedUserData.Email },
+                PersonIdentifier = user.CognitoUsername,
+                RecipientAddress = emailUpdatedEvent.PreviousWorkEmail,
+            },
+            cancellationToken
+        );
+    }
+
+    private async Task SendEmailVerificationEmail(
+        string newEmailAddress,
+        string verificationToken,
+        CognitoUsername cognitoUsername,
+        CancellationToken cancellationToken
+    )
+    {
+        var link = emailVerificationLinkCreator.GetVerificationLink(verificationToken);
+        await emailService.SendEmail(
+            new SendEmailCommand()
+            {
+                RecipientAddress = newEmailAddress,
+                PersonIdentifier = cognitoUsername,
+                Email = new EmailChangeVerificationRequestEmail() { EmailVerificationLink = link },
+            },
             cancellationToken
         );
     }

@@ -15,9 +15,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.18.1";
+    private const string ExpectedVersion = "2026.11.20.7";
     private const string ExpectedFingerprint =
-        "1be15c0e935f6f529513601be0acb99a8ad3cd1a11329e160cf45a9529113b0c";
+        "93e54fea8b1a842cc92e7fc520594acd408eb896acc567b24609a2dbfff900ac";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -341,12 +341,7 @@ public class MedicineFormModelTests
         FormQuestion trials = Model.FindQuestion("record_clinical_trial")!;
 
         (trials.ItemLabel, trials.AddAnotherLabel, trials.RemoveLabel, trials.ItemKey).ShouldBe(
-            (
-                "Clinical trial",
-                "Add another clinical trial",
-                "Remove clinical trial",
-                "clinical_trials_gov_number"
-            )
+            ("Clinical trial", "Add another clinical trial", "Remove clinical trial", null)
         );
         trials
             .Children.Select(static c => (c.Id, c.Control))
@@ -357,10 +352,10 @@ public class MedicineFormModelTests
             ]);
         trials.Children[1].Prefixes.ShouldBe(["NCT"]);
         trials.Children[1].PrefixDigits.ShouldBe(8);
-        trials.Children[2].ItemLabel.ShouldBe("Trial number");
+        trials.Children[2].ItemLabel.ShouldBe("Other registry number");
         trials
             .Children.Select(static c => string.Join(",", c.Rules.Select(static r => r.Kind)))
-            .ShouldBe(["Required", "Required,Distinct", "Distinct"]);
+            .ShouldBe(["Required", "Required", "Distinct"]);
         trials.Entity.Includes.ShouldBe([
             "ClinicalTrials",
             "ClinicalTrials.OtherClinicalTrialNumbers",
@@ -375,6 +370,7 @@ public class MedicineFormModelTests
                 $"{s.Id}: {string.Join(", ", s.Tasks.Select(static t => t.Id))}"
             )
             .ShouldBe([
+                "product-record-details: names-and-identifiers",
                 "indication-and-development: indication-details, development-background",
                 "clinical-trial-information: clinical-trials",
                 "regulatory-access-and-launch: mhra-procedure-and-dates, hta-and-launch",
@@ -505,6 +501,11 @@ public class MedicineFormModelTests
             .ToArray();
 
         questions.ShouldBe([
+            ("record_product_detail.company_code", FormControl.Text, AnswerShape.Single),
+            ("record_product_detail.other_identifiers", FormControl.TextList, AnswerShape.List),
+            ("record_product_detail.branded_name", FormControl.Text, AnswerShape.Single),
+            ("record_product_detail.generic_names", FormControl.TextList, AnswerShape.List),
+            ("record_product_detail.record_title", FormControl.Textarea, AnswerShape.Single),
             ("medicines_indication_detail.indication", FormControl.Textarea, AnswerShape.Single),
             (
                 "medicines_indication_detail.bnf_chapter_id",

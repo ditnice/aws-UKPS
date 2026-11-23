@@ -9,6 +9,7 @@ import CreateMedicineRecordForm from './CreateMedicineRecordForm'
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   createRecord: vi.fn(),
+  getOrganisationCompanyCodes: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
@@ -19,7 +20,11 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/client/generated', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/client/generated')>()
-  return { ...original, createRecord: mocks.createRecord }
+  return {
+    ...original,
+    createRecord: mocks.createRecord,
+    getOrganisationCompanyCodes: mocks.getOrganisationCompanyCodes,
+  }
 })
 
 const renderComponent = (organisationId = 1) => {
@@ -73,6 +78,7 @@ const clickSubmitButton = () => {
 }
 
 beforeEach(() => {
+  mocks.getOrganisationCompanyCodes.mockResolvedValue({ data: { items: [] } })
   mocks.createRecord.mockResolvedValue({
     error: undefined,
     response: { ok: true },
@@ -92,10 +98,10 @@ describe('CreateMedicineRecordForm', () => {
       expect(screen.getByRole('button', { name: 'Save and continue' })).toBeDefined()
     })
 
-    it('renders the default company code field', () => {
+    it('renders the company code field as a type-ahead', () => {
       renderComponent()
 
-      expect(screen.getByLabelText('Company code')).toBeDefined()
+      expect(screen.getByRole('combobox', { name: 'Company code' })).toBeDefined()
     })
 
     it('renders the default generic name field', () => {
@@ -383,6 +389,29 @@ describe('CreateMedicineRecordForm', () => {
           genericNames: ['gn1'],
           recordTitle: 'record-title',
         },
+      })
+    })
+
+    it("sends a company code chosen from the organisation's suggestions", async () => {
+      mocks.getOrganisationCompanyCodes.mockResolvedValue({ data: { items: ['CC1-ALPHA'] } })
+      renderComponent(123)
+
+      fillInForm(validFormValues)
+      fireEvent.click(await screen.findByRole('option', { name: 'CC1-ALPHA' }))
+      clickSubmitButton()
+
+      await waitFor(() => {
+        expect(mocks.createRecord).toHaveBeenCalled()
+      })
+
+      expect(mocks.getOrganisationCompanyCodes).toHaveBeenCalledWith(
+        expect.objectContaining({
+          path: { organisationId: 123 },
+          query: expect.objectContaining({ Search: 'cc1' }),
+        }),
+      )
+      expect(mocks.createRecord).toHaveBeenCalledWith({
+        body: expect.objectContaining({ companyCode: 'CC1-ALPHA' }),
       })
     })
 

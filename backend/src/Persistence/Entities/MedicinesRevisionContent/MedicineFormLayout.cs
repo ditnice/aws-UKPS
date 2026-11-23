@@ -16,6 +16,25 @@ internal sealed class MedicineFormLayout()
         RecordType.Medicine,
         [
             new FormLayoutSection(
+                "product-record-details",
+                "Provide product record details",
+                0,
+                [
+                    new FormLayoutTask(
+                        "names-and-identifiers",
+                        "Names and identifiers",
+                        10,
+                        [
+                            new FormLayoutPage(
+                                NamesAndIdentifiers,
+                                "Provide product record details",
+                                10
+                            ),
+                        ]
+                    ),
+                ]
+            ),
+            new FormLayoutSection(
                 "indication-and-development",
                 "Provide indication and development information",
                 10,
@@ -380,6 +399,9 @@ internal sealed class MedicineFormLayout()
         ]
     )
 {
+    /// <summary>The "Provide product record details" page's ID.</summary>
+    public const string NamesAndIdentifiers = "names-and-identifiers";
+
     /// <summary>The "Indication" page's ID.</summary>
     public const string Indication = "indication";
 

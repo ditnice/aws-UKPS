@@ -114,14 +114,15 @@ All of the following are written in one transaction at `T0`.
 ### `record_field_audit` (1 row per answered field inserted)
 
 Each row has `record_id = 5`, `revision_id = 7`, `old_value = null`, `changed_by = 12` and
-`changed_at = T0`. A blank branded name is not audited.
+`changed_at = T0`. A blank branded name, or no other identifiers, is not audited.
 
 | `field_path` | `new_value` |
 |---|---|
 | `record_product_detail.company_code` | `GS-7977` |
 | `record_product_detail.branded_name` | `Sovaldi` |
 | `record_product_detail.record_title` | `Chronic hepatitis C in adults` |
-| `record_product_detail.names_and_identifiers` | `{"GenericName":["sofosbuvir"],"OtherIdentifier":["PSI-7977"]}` |
+| `record_product_detail.generic_names` | `["sofosbuvir"]` |
+| `record_product_detail.other_identifiers` | `["PSI-7977"]` |
 
 ### `record_product_details` (1 row inserted)
 

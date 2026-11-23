@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Shouldly;
+using UKPS.Api.Application.Authentication.SecurityNotification;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.InternalServices.Hosting;
@@ -38,6 +39,8 @@ namespace UKPS.Api.Tests.Application.Users;
 [Collection(DatabaseCollection.Name)]
 public class UserServiceTests : DatabaseTestBase
 {
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
     private readonly OrganisationFaker _organisationFaker = new();
     private readonly UserFaker _userFaker = new();
     private readonly Faker<MockUser> _mockUserFaker =
@@ -1262,6 +1265,85 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task ResendVerificationEmail_WhenThereIsAPendingEmail_ShouldResendVerificationEmail()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        var token = await RequestEmailUpdate(currentUser);
+        _harness.Emails.Clear();
+
+        var result = await Service.ResendVerificationEmail(currentUser.Id, Ct);
+
+        result.ShouldBeSuccess();
+        var email = _harness
+            .Emails.Sent.ShouldHaveSingleItem()
+            .ShouldBeOfType<EmailChangeVerificationRequestEmail>();
+
+        email.EmailVerificationLink.AbsoluteUri.ShouldNotContain(token);
+    }
+
+    [Fact]
+    public async Task ResendVerificationEmail_WhenThereIsNoPendingEmail_ShouldNotResendVerificationEmailAndReturnANoPendingVerificationError()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+
+        _harness.Emails.Clear();
+
+        var result = await Service.ResendVerificationEmail(currentUser.Id, Ct);
+
+        result.ShouldBeError().ShouldBeOfType<ResendVerificationEmailError.NoPendingVerification>();
+        _harness.Emails.Sent.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task ResendVerificationEmail_WhenTargetUserDoesNotExist_ShouldResendVerificationEmailAndReturnANotFoundError()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        _ = await RequestEmailUpdate(currentUser);
+        _harness.Emails.Clear();
+
+        var result = await Service.ResendVerificationEmail(999, Ct);
+
+        result.ShouldBeError().ShouldBeOfType<ResendVerificationEmailError.NotFound>();
+        _harness.Emails.Sent.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task ResendVerificationEmail_WhenCurrentUserIsNotTheSameAsTargetUser_ShouldResendVerificationEmailAndReturnAForbiddenError()
+    {
+        User firstUser = await CreateExistingCurrentUser();
+        _ = await RequestEmailUpdate(firstUser);
+
+        _ = await CreateExistingCurrentUser(); // Sets a new current user.
+        _harness.Emails.Clear();
+
+        var result = await Service.ResendVerificationEmail(firstUser.Id, Ct);
+
+        result.ShouldBeError().ShouldBeOfType<ResendVerificationEmailError.Forbidden>();
+        _harness.Emails.Sent.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task ResendVerificationEmail_WhenTheEmailHasAlreadyBeenVerified_ShouldReturnAlreadyVerifiedError()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        var token = await RequestEmailUpdate(currentUser);
+        await Service.VerifyPendingEmailAddress(
+            currentUser.Id,
+            new VerifyPendingEmailAddressCommand() { VerificationToken = token },
+            TestContext.Current.CancellationToken
+        );
+
+        _harness.Emails.Clear();
+
+        var result = await Service.ResendVerificationEmail(currentUser.Id, Ct);
+
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<ResendVerificationEmailError.PendingEmailAlreadyVerified>();
+        _harness.Emails.Sent.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task VerifyPendingEmailAddress_ShouldMarkPendingEmailAsVerified()
     {
         User currentUser = await CreateExistingCurrentUser();
@@ -1382,6 +1464,75 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task CancelPendingEmailChange_WhenUnverifiedPendingExists_ShouldClearPendingEmail()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        _ = await RequestEmailUpdate(currentUser);
+
+        var result = await Service.CancelPendingEmailChange(
+            currentUser.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        var userInformation = await Service.GetCurrentUser(TestContext.Current.CancellationToken);
+        userInformation.WorkEmail.ShouldBe(currentUser.WorkEmail);
+        userInformation.PendingWorkEmail.ShouldBeNull();
+
+        User? databaseUser = await _harness
+            .GetClearedContext()
+            .Users.FindAsync([currentUser.Id], TestContext.Current.CancellationToken);
+        databaseUser.ShouldNotBeNull();
+        databaseUser.PendingWorkEmail.ShouldBeNull();
+        databaseUser.PendingEmailVerifiedAt.ShouldBeNull();
+        databaseUser.PendingEmailVerificationToken.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task CancelPendingEmailChange_WhenUserDoesNotExist_ShouldReturnUserDoesNotExistError()
+    {
+        _ = await CreateExistingCurrentUser();
+
+        var result = await Service.CancelPendingEmailChange(
+            999,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<CancelPendingEmailChangeError.UserDoesNotExist>();
+    }
+
+    [Fact]
+    public async Task CancelPendingEmailChange_WhenNotCurrentUser_ShouldReturnUnauthorisedError()
+    {
+        User firstUser = await CreateExistingCurrentUser();
+        _ = await RequestEmailUpdate(firstUser);
+        _ = await CreateExistingCurrentUser();
+
+        var result = await Service.CancelPendingEmailChange(
+            firstUser.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<CancelPendingEmailChangeError.Unauthorised>();
+    }
+
+    [Fact]
+    public async Task CancelPendingEmailChange_WhenNoPendingEmailChange_ShouldReturnNoPendingEmailToCancelError()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+
+        var result = await Service.CancelPendingEmailChange(
+            currentUser.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<CancelPendingEmailChangeError.NoPendingEmailToCancel>();
+    }
+
+    [Fact]
     public async Task UpdateEmailToCompletePendingEmailChange_ShouldUpdateUserToHaveNewEmailAndClearPending()
     {
         const string updateEmail = "testupdate@email.com";
@@ -1418,6 +1569,33 @@ public class UserServiceTests : DatabaseTestBase
         );
 
         result.ShouldBeSuccess();
+
+        MockUser? user = _harness.Cognito.GetUserByEmail(updateEmail);
+        user.ShouldNotBeNull().EmailVerified.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task UpdateEmailToCompletePendingEmailChange_ShouldNotifyOldEmailAddress()
+    {
+        const string updateEmail = "testupdate@email.com";
+        User currentUser = await CreateExistingCurrentUser();
+        await RequestAndVerifyEmailUpdate(currentUser, updateEmail);
+
+        var result = await Service.UpdateEmailToCompletePendingEmailChange(
+            currentUser.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+
+        var emailCommand = _harness
+            .Emails.SentCommands.Where(x => x.Email is SecurityNotificationEmail)
+            .ShouldHaveSingleItem();
+
+        emailCommand.RecipientAddress.ShouldBe(currentUser.WorkEmail);
+        (emailCommand.Email as SecurityNotificationEmail)!.ChangedValue.ShouldBe(
+            ChangedUserData.Email
+        );
 
         MockUser? user = _harness.Cognito.GetUserByEmail(updateEmail);
         user.ShouldNotBeNull().EmailVerified.ShouldBeTrue();

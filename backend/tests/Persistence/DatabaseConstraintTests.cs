@@ -5,9 +5,13 @@ using Shouldly;
 using UKPS.Api.Persistence.Configurations;
 using UKPS.Api.Persistence.Data.Fakers;
 using UKPS.Api.Persistence.Entities.Identity;
+using UKPS.Api.Persistence.Entities.RecordWorkflow;
+using UKPS.Api.Persistence.Entities.SharedRevisionContent;
+using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Application.Common;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
+using Record = UKPS.Api.Persistence.Entities.RecordWorkflow.Record;
 
 namespace UKPS.Api.Tests.Persistence;
 
@@ -283,6 +287,79 @@ public class DatabaseConstraintTests : DatabaseTestBase
             exception.InnerException.ShouldBeOfType<PostgresException>();
         postgresException.ConstraintName.ShouldBe(ConstraintNames.WorkEmailNoWhitespace);
     }
+
+    [Theory]
+    [InlineData(2)]
+    [InlineData(null)]
+    public async Task SaveChangesAsync_TwoNamesAtOnePositionInOneList_ThrowsDbUpdateException(
+        int? displayOrder
+    )
+    {
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        RecordProductDetail productDetail = await AddProductDetail(ct);
+        Context.RecordNamesAndIdentifiers.AddRange(
+            Name(productDetail, "first", NameAndIdentifierType.GenericName, displayOrder),
+            Name(productDetail, "second", NameAndIdentifierType.GenericName, displayOrder)
+        );
+
+        DbUpdateException exception = await Should.ThrowAsync<DbUpdateException>(() =>
+            Context.SaveChangesAsync(ct)
+        );
+        AssertUniqueViolation(
+            exception,
+            ConstraintNames.NameAndIdentifierUniqueDisplayOrderPerList
+        );
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_NamesAtOnePositionInDifferentLists_Succeeds()
+    {
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        RecordProductDetail productDetail = await AddProductDetail(ct);
+        Context.RecordNamesAndIdentifiers.AddRange(
+            Name(productDetail, "generic", NameAndIdentifierType.GenericName, 1),
+            Name(productDetail, "other", NameAndIdentifierType.OtherIdentifier, 1)
+        );
+
+        await Context.SaveChangesAsync(ct);
+
+        (await Context.RecordNamesAndIdentifiers.CountAsync(ct)).ShouldBe(2);
+    }
+
+    private async Task<RecordProductDetail> AddProductDetail(CancellationToken ct)
+    {
+        Organisation organisation = await AddEntity(_organisationFaker.Generate(), ct);
+        User user = await AddEntity(_userFaker.Generate(), ct);
+        Record record = await AddEntity(
+            new RecordFaker().RuleFor(x => x.OrganisationId, organisation.Id).Generate(),
+            ct
+        );
+        RecordRevision revision = await AddEntity(
+            new RecordRevisionFaker()
+                .RuleFor(x => x.RecordId, record.Id)
+                .RuleFor(x => x.CreatedBy, user.Id)
+                .Generate(),
+            ct
+        );
+        return await AddEntity(
+            new RecordProductDetailFaker(RecordType.Medicine, revision.Id).Generate(),
+            ct
+        );
+    }
+
+    private static RecordNameAndIdentifier Name(
+        RecordProductDetail productDetail,
+        string name,
+        NameAndIdentifierType type,
+        int? displayOrder
+    ) =>
+        new()
+        {
+            RecordProductDetailId = productDetail.Id,
+            Name = name,
+            NameType = type,
+            DisplayOrder = displayOrder,
+        };
 
     private static void AssertUniqueViolation(DbUpdateException exception, string constraintName)
     {

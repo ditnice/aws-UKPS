@@ -119,7 +119,8 @@ Enum columns store integers, but the tables show the member name in snake_case (
 `field_path` is the question's `FormField` ID, which is also its payload and validation error key. It is a public contract, so a released ID never changes.
 
 - **A column** is `<entity>.<column>`, with the entity's class name in snake_case (singular, unlike the table name), for example `medicines_indication_detail.bnf_chapter_id`.
-- **A collection** of child or junction rows is the child entity's name alone, for example `medicines_indication_detail_therapeutic_area` or `record_name_and_identifier`.
+- **A collection** of child or junction rows is the child entity's name alone, for example `medicines_indication_detail_therapeutic_area`.
+- **A text list sharing a collection** with another list is named after its unmapped property on the parent, for example `record_product_detail.generic_names`.
 
 `old_value` and `new_value` hold the answer as the form API sends it:
 
@@ -130,9 +131,10 @@ Enum columns store integers, but the tables show the member name in snake_case (
 | Enum | The C# member name | `ExclusivelyAdults`, `Unknown` |
 | Reference data | The ID in invariant digits | `5` |
 | Multi-select (flags enum or junction) | A JSON array of member names or IDs as strings, sorted ordinally | `["Nice","Smc"]`, `["14","22"]` |
-| Collection or date | A compact JSON object with snake_case field names, in a fixed key order, using the rules above for values | `{"date_precision":"EstimatedQuarter","date_value":"2026-07-01","is_confidential":false}` |
+| Text list | A JSON array of the entries in `display_order`, because their order is part of the answer; NULL when empty | `["ledipasvir","sofosbuvir"]` |
+| Date | A compact JSON object with snake_case field names, in a fixed key order, using the rules above for values | `{"date_precision":"EstimatedQuarter","date_value":"2026-07-01","is_confidential":false}` |
 
-Names and identifiers are keyed by `NameAndIdentifierType` member name, with each type's names in `display_order`, because their order is part of the answer.
+The generic names and other identifiers are two text lists, `record_product_detail.generic_names` and `record_product_detail.other_identifiers`, although both are stored in `record_names_and_identifiers`. Record creation and the names and identifiers page audit them the same way.
 
 <br>
 
@@ -203,7 +205,8 @@ A pharma user (7) opens the "Add new record" form, completes the first page (pro
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | 1 | 1 | `record_product_detail.company_code` | NULL | `ACM-0042` | 7 | 2026-01-10T09:00:00Z |
 | 2 | 1 | 1 | `record_product_detail.record_title` | NULL | `Chronic hepatitis C in adults` | 7 | 2026-01-10T09:00:00Z |
-| 3 | 1 | 1 | `record_name_and_identifier` | NULL | `{"GenericName":["ledipasvir","sofosbuvir"],"OtherIdentifier":["PF-04965842"]}` | 7 | 2026-01-10T09:00:00Z |
+| 3 | 1 | 1 | `record_product_detail.generic_names` | NULL | `["ledipasvir","sofosbuvir"]` | 7 | 2026-01-10T09:00:00Z |
+| 4 | 1 | 1 | `record_product_detail.other_identifiers` | NULL | `["PF-04965842"]` | 7 | 2026-01-10T09:00:00Z |
 
 > [!NOTE]
 > Only fields that changed are audited. `branded_name` went from NULL to NULL, so it has no row. When a page holds several questions, only the ones that changed get rows.
@@ -395,11 +398,11 @@ It is still revision 1, because sessions and users don't create revisions. Exist
 | id | field_path | old_value | new_value |
 | --- | --- | --- | --- |
 | 22 | `record_clinical_trial_information.has_clinical_trials` | NULL | `Yes` |
-| 23 | `record_clinical_trial` | NULL | `{"NCT06123456":{"other_registry_numbers":["2025-001234-56","ISRCTN12345678"],"study_name":"ION-UK"}}` |
+| 23 | `record_clinical_trial` | NULL | `[{"clinical_trials_gov_number":"NCT06123456","other_registry_numbers":["2025-001234-56","ISRCTN12345678"],"study_name":"ION-UK"}]` |
 | 24 | `record_clinical_trial_information.recruiting_in_uk` | NULL | `Yes` |
 
 > [!NOTE]
-> The trials collection, with the grandchild registry numbers nested inside it, is one JSON object keyed by NCT number, holding the answers the Medicine form asks (the vaccines-only phase and description are not on it), so the diff can match trials across revisions even though their PKs change. If a user edits the NCT number itself, the diff shows one trial removed and one added.
+> The trials collection, with the grandchild registry numbers nested inside it, is one JSON array in the order the trials were entered, holding the answers the Medicine form asks (the vaccines-only phase and description are not on it). It is not keyed by NCT number, because NCT numbers can repeat, so a diff compares trials by position.
 
 <br>
 

@@ -69,6 +69,14 @@
   margin-top: utils.rem(spacing.$large);
 }
 
+// A hierarchical select's labels on a page of several questions, as bold lead text like the
+// labels of the questions around it.
+.leadLabel {
+  @include typography.lead-label;
+  display: block;
+  margin-bottom: utils.rem(spacing.$small);
+}
+
 .entry {
   margin-bottom: utils.rem(spacing.$medium);
 }

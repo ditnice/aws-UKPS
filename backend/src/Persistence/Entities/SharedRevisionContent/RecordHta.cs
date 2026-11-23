@@ -38,7 +38,7 @@ internal sealed class RecordHta
         FormControl.Radio,
         Order = 10
     )]
-    [FormRequired("Select yes if you intend to submit for a HTA")]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? MedicineHtaSubmissionIntended { get; set; }
 
@@ -76,7 +76,7 @@ internal sealed class RecordHta
         FormControl.Radio,
         Order = 10
     )]
-    [FormRequired("Select yes if you intend to follow the MHRA/NICE aligned pathway")]
+    [FormRequired("Select an option")]
     [FormOptions(OptionKeys.YesNoUnknown)]
     public YesNoUnknown? HtaNiceAlignedPathway { get; set; }
 

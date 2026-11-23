@@ -1,6 +1,7 @@
 import { Radio, Radios } from '@/components/Radios/Radios'
 
 import styles from '../DynamicForm.module.scss'
+import { labelSizeFor } from '../labelStyle'
 
 import type { QuestionProps } from '../types'
 
@@ -11,6 +12,7 @@ export function RadioQuestion({
   onChange,
   onBlur,
   error,
+  labelStyle,
   revealed,
 }: QuestionProps<string>) {
   // Labels are bold across the whole group once any option has a hint, matching the designs.
@@ -22,6 +24,7 @@ export function RadioQuestion({
       error={error}
       hint={question.hint ?? undefined}
       legend={question.label}
+      legendSize={labelSizeFor(labelStyle)}
       name={name}
       onBlur={onBlur}
       // A choice is a whole answer, so revalidate straight away rather than waiting for blur.

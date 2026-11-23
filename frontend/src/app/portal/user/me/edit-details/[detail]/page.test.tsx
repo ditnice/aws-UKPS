@@ -38,6 +38,10 @@ vi.mock('./PendingEmailUpdateAlert', () => ({
   default: vi.fn(() => null),
 }))
 
+vi.mock('./editUserEmail/CancelPendingEmailChange', () => ({
+  default: () => <div data-testid="cancel-pending-email-change" />,
+}))
+
 vi.mock('@/components/BackLink/BackLink', () => ({
   BackLink: ({ href }: { href: string }) => (
     <a data-testid="back-link" href={href}>
@@ -101,7 +105,10 @@ const mockGetUsersMe = (result: { data?: unknown; error?: unknown }) => {
  * component function and render the React element it resolves to.
  */
 const renderPage = async () => {
-  const ui = await Page({} as Parameters<typeof Page>[0])
+  const ui = await Page({
+    params: Promise.resolve({ detail: 'email' }),
+    searchParams: Promise.resolve({}),
+  })
   return render(ui)
 }
 
@@ -241,18 +248,21 @@ describe('Edit user detail page', () => {
   })
 
   describe('pending email update', () => {
-    it('renders pending email update alert when pending email shown', async () => {
+    it('renders pending email update alert when pending email', async () => {
       setDetail('email')
 
-      const pendingWorkEmail = fakePendingWorkEmailChangeDto()
+      const pendingWorkEmail = { ...fakePendingWorkEmailChangeDto(), verifiedByEmail: false }
       mockGetUsersMe({
-        data: { ...fakeUserInformationDto(), pendingWorkEmail: pendingWorkEmail },
+        data: { ...fakeUserInformationDto(), pendingWorkEmail, userId: 123 },
       })
 
       await renderPage()
 
       expect(PendingEmailUpdateAlertMock).toHaveBeenCalledTimes(1)
-      expect(PendingEmailUpdateAlertMock.mock.calls[0][0]).toEqual(pendingWorkEmail)
+      expect(PendingEmailUpdateAlertMock.mock.calls[0][0]).toEqual({
+        ...pendingWorkEmail,
+        userId: 123,
+      })
     })
   })
 })

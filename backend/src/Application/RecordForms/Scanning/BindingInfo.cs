@@ -31,4 +31,16 @@ internal sealed record BindingInfo(BindingKind Kind)
 
     /// <summary>The string column holding each entry of a text list binding.</summary>
     public PropertyInfo? ChildValueProperty { get; init; }
+
+    /// <summary>
+    /// The collection navigation holding a text list's rows: the property itself, or the one its
+    /// <c>[FormListSource]</c> names.
+    /// </summary>
+    public PropertyInfo? ChildNavigation { get; init; }
+
+    /// <summary>The enum column that tells a shared collection's lists apart, if any.</summary>
+    public PropertyInfo? ChildKindProperty { get; init; }
+
+    /// <summary>The enum member of this list's rows in a shared collection.</summary>
+    public Enum? ChildKind { get; init; }
 }

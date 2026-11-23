@@ -66,6 +66,22 @@ describe('AddAnother', () => {
     expect(input).toBeDefined()
   })
 
+  it('should leave the input box at its default width when no width is given', () => {
+    renderComponent()
+
+    const box = getInputByLabelText(`${defaultProps.labelPrefix} 1`).closest(`.${styles.input}`)
+
+    expect((box as HTMLElement).style.getPropertyValue('--input-basis')).toBe('')
+  })
+
+  it('should size the input box from the width it is given', () => {
+    renderComponent({ inputWidth: 'one-half' })
+
+    const box = getInputByLabelText(`${defaultProps.labelPrefix} 1`).closest(`.${styles.input}`)
+
+    expect((box as HTMLElement).style.getPropertyValue('--input-basis')).toBe('50%')
+  })
+
   it('should render an input for each value', () => {
     renderComponent()
 
@@ -454,5 +470,20 @@ describe('AddAnother', () => {
         screen.getByText('label-prefix', { selector: 'label' }).closest(`.${styles.hiddenLabel}`),
       ).not.toBeNull()
     })
+  })
+})
+
+describe('AddAnother legend size', () => {
+  it("shows the legend as lead text when asked, keeping the items' labels standard", () => {
+    renderComponent({ legend: 'Numbers', legendSize: 'lead' })
+    expect(screen.getByText('Numbers')).toHaveClass(styles.leadLegend)
+    for (const label of document.querySelectorAll('label.input__label')) {
+      expect(label).not.toHaveClass(styles.leadLegend)
+    }
+  })
+
+  it('keeps the standard legend by default', () => {
+    renderComponent({ legend: 'Numbers' })
+    expect(screen.getByText('Numbers')).not.toHaveClass(styles.leadLegend)
   })
 })

@@ -11,11 +11,17 @@ namespace UKPS.Api.Application.RecordForms.Bindings;
 /// which stored row each submitted item keeps (<see cref="Apply"/>); <see cref="Resize"/> matches
 /// them by position.
 /// </summary>
+/// <remarks>
+/// When the collection is shared between several lists, a kind filter limits it to the rows whose
+/// enum column holds one member; other rows are never read, moved or removed.
+/// </remarks>
 internal sealed class ChildCollection
 {
     private readonly PropertyInfo _navigation;
     private readonly PropertyInfo _idProperty;
     private readonly PropertyInfo? _displayOrderProperty;
+    private readonly PropertyInfo? _kindProperty;
+    private readonly Enum? _kind;
     private readonly MethodInfo _add;
     private readonly MethodInfo _remove;
 
@@ -23,18 +29,27 @@ internal sealed class ChildCollection
 
     public string Description =>
         $"{_navigation.DeclaringType!.Name}.{_navigation.Name}:{ChildType.Name}"
-        + (_displayOrderProperty is null ? string.Empty : $" by {_displayOrderProperty.Name}");
+        + (_displayOrderProperty is null ? string.Empty : $" by {_displayOrderProperty.Name}")
+        + (_kindProperty is null ? string.Empty : $" where {_kindProperty.Name} = {_kind}");
 
+    /// <summary>
+    /// The children behind <paramref name="navigation"/>, limited to those whose
+    /// <paramref name="kindProperty"/> holds <paramref name="kind"/> when one is given.
+    /// </summary>
     public ChildCollection(
         PropertyInfo navigation,
         Type childType,
         PropertyInfo idProperty,
-        PropertyInfo? displayOrderProperty
+        PropertyInfo? displayOrderProperty,
+        PropertyInfo? kindProperty = null,
+        Enum? kind = null
     )
     {
         _navigation = navigation;
         _idProperty = idProperty;
         _displayOrderProperty = displayOrderProperty;
+        _kindProperty = kindProperty;
+        _kind = kind;
         ChildType = childType;
         Type collectionType = typeof(ICollection<>).MakeGenericType(childType);
         _add = collectionType.GetMethod(nameof(ICollection<>.Add))!;
@@ -47,6 +62,7 @@ internal sealed class ChildCollection
             ? []
             : items
                 .Cast<object>()
+                .Where(IsOfKind)
                 .OrderBy(item => (int?)_displayOrderProperty?.GetValue(item) ?? int.MaxValue)
                 .ThenBy(item => (int)_idProperty.GetValue(item)!)
                 .ToArray();
@@ -75,7 +91,7 @@ internal sealed class ChildCollection
     /// Brings the row's children in line with the submitted items. <paramref name="kept"/> holds,
     /// for each submitted item in order, the stored child row it keeps, or null for a new row.
     /// Stored rows that are not kept are removed, after <paramref name="clear"/> has emptied their
-    /// own children. Returns the rows in submitted order, with their display order set.
+    /// own children. Returns the rows in submitted order, with their display order (and kind) set.
     /// </summary>
     /// <remarks>
     /// A child with no <c>DisplayOrder</c> is read back in ID order, so keeping rows out of their
@@ -109,13 +125,14 @@ internal sealed class ChildCollection
             }
 
             object item = Activator.CreateInstance(ChildType)!;
+            _kindProperty?.SetValue(item, _kind);
             _add.Invoke(collection, [item]);
             result.Add(item);
         }
 
         for (int i = 0; i < result.Count; i++)
         {
-            // Stored from 1, as the synthetic data and the names and identifiers do.
+            // Stored from 1, as record creation and the synthetic data do.
             _displayOrderProperty?.SetValue(result[i], i + 1);
         }
 
@@ -123,12 +140,35 @@ internal sealed class ChildCollection
     }
 
     public Expression HasAnyExpression(ParameterExpression row) =>
-        Expression.Call(
-            typeof(Enumerable),
-            nameof(Enumerable.Any),
-            [ChildType],
-            Expression.Property(row, _navigation)
+        _kindProperty is null
+            ? Expression.Call(
+                typeof(Enumerable),
+                nameof(Enumerable.Any),
+                [ChildType],
+                Expression.Property(row, _navigation)
+            )
+            : Expression.Call(
+                typeof(Enumerable),
+                nameof(Enumerable.Any),
+                [ChildType],
+                Expression.Property(row, _navigation),
+                IsOfKindExpression()
+            );
+
+    private LambdaExpression IsOfKindExpression()
+    {
+        ParameterExpression child = Expression.Parameter(ChildType, "child");
+        return Expression.Lambda(
+            Expression.Equal(
+                Expression.Property(child, _kindProperty!),
+                Expression.Constant(_kind, _kindProperty!.PropertyType)
+            ),
+            child
         );
+    }
+
+    private bool IsOfKind(object item) =>
+        _kindProperty is null || Equals(_kindProperty.GetValue(item), _kind);
 
     private object CreateCollection(object row)
     {

@@ -193,10 +193,11 @@ public class RecordCreationServiceTests : DatabaseTestBase
                     ("record_product_detail.branded_name", null, "Harvoni"),
                     ("record_product_detail.record_title", null, "Chronic hepatitis C in adults"),
                     (
-                        "record_product_detail.names_and_identifiers",
+                        "record_product_detail.generic_names",
                         null,
-                        """{"GenericName":["sofosbuvir","ledipasvir"],"OtherIdentifier":["PF-04965842"]}"""
+                        """["sofosbuvir","ledipasvir"]"""
                     ),
+                    ("record_product_detail.other_identifiers", null, """["PF-04965842"]"""),
                 ],
                 ignoreOrder: true
             );
@@ -208,7 +209,7 @@ public class RecordCreationServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task CreateRecord_WithoutBrandedNameOrOtherIdentifiers_ShouldSkipBrandedNameAndAuditEmptyOtherIdentifiers()
+    public async Task CreateRecord_WithoutBrandedNameOrOtherIdentifiers_ShouldSkipThem()
     {
         CreateRecordCommand command = _validCommand with
         {
@@ -226,8 +227,8 @@ public class RecordCreationServiceTests : DatabaseTestBase
             .ToDictionaryAsync(static x => x.FieldPath, static x => x.NewValue, Ct);
 
         audits.Keys.ShouldNotContain("record_product_detail.branded_name");
-        audits["record_product_detail.names_and_identifiers"]
-            .ShouldBe("""{"GenericName":["sofosbuvir"],"OtherIdentifier":[]}""");
+        audits.Keys.ShouldNotContain("record_product_detail.other_identifiers");
+        audits["record_product_detail.generic_names"].ShouldBe("""["sofosbuvir"]""");
     }
 
     [Fact]
@@ -247,10 +248,43 @@ public class RecordCreationServiceTests : DatabaseTestBase
             .RecordFieldAudits.Where(x => x.RecordId == recordId)
             .ToDictionaryAsync(static x => x.FieldPath, static x => x.NewValue, Ct);
 
-        audits["record_product_detail.names_and_identifiers"]
-            .ShouldBe(
-                """{"GenericName":["Mölnlycke","A+B's <C>"],"OtherIdentifier":["Ödem & Co"]}"""
-            );
+        audits["record_product_detail.generic_names"].ShouldBe("""["Mölnlycke","A+B's <C>"]""");
+        audits["record_product_detail.other_identifiers"].ShouldBe("""["Ödem & Co"]""");
+    }
+
+    [Fact]
+    public async Task CreateRecord_WithPaddedAnswers_ShouldStoreAndAuditThemTrimmed()
+    {
+        CreateRecordCommand command = _validCommand with
+        {
+            CompanyCode = "  ABC-123 ",
+            BrandedName = " Humira ",
+            GenericNames = [" adalimumab  "],
+            OtherIdentifiers = ["\tD2E7 "],
+            RecordTitle = " Rheumatoid arthritis ",
+        };
+        int recordId = (await _harness.Service.CreateRecord(command, Ct))
+            .ShouldBeSuccess()
+            .RecordId;
+
+        var context = _harness.GetClearedContext();
+        var productDetail = await context
+            .RecordProductDetails.Include(x => x.NamesAndIdentifiers)
+            .SingleAsync(x => x.Revision!.RecordId == recordId, Ct);
+        var audits = await context
+            .RecordFieldAudits.Where(x => x.RecordId == recordId)
+            .ToDictionaryAsync(static x => x.FieldPath, static x => x.NewValue, Ct);
+
+        productDetail.CompanyCode.ShouldBe("ABC-123");
+        productDetail.BrandedName.ShouldBe("Humira");
+        productDetail.RecordTitle.ShouldBe("Rheumatoid arthritis");
+        productDetail.GenericNames.ShouldBe(["adalimumab"]);
+        productDetail.OtherIdentifiers.ShouldBe(["D2E7"]);
+        audits["record_product_detail.company_code"].ShouldBe("ABC-123");
+        audits["record_product_detail.branded_name"].ShouldBe("Humira");
+        audits["record_product_detail.record_title"].ShouldBe("Rheumatoid arthritis");
+        audits["record_product_detail.generic_names"].ShouldBe("""["adalimumab"]""");
+        audits["record_product_detail.other_identifiers"].ShouldBe("""["D2E7"]""");
     }
 
     [Fact]

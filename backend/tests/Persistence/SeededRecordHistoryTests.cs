@@ -317,11 +317,18 @@ public sealed class SeededRecordHistoryTests
             {
                 [CreationPageFieldPaths.CompanyCode] = productDetail.CompanyCode,
                 [CreationPageFieldPaths.RecordTitle] = productDetail.RecordTitle,
-                [CreationPageFieldPaths.NamesAndIdentifiers] = FieldAuditJson.NamesAndIdentifiers(
-                    NamesOfType(NameAndIdentifierType.GenericName),
-                    NamesOfType(NameAndIdentifierType.OtherIdentifier)
+                [CreationPageFieldPaths.GenericNames] = FieldAuditJson.TextList(
+                    NamesOfType(NameAndIdentifierType.GenericName)
                 ),
             };
+            if (
+                FieldAuditJson.TextList(NamesOfType(NameAndIdentifierType.OtherIdentifier)) is
+                { } other
+            )
+            {
+                expected[CreationPageFieldPaths.OtherIdentifiers] = other;
+            }
+
             if (productDetail.BrandedName is not null)
             {
                 expected[CreationPageFieldPaths.BrandedName] = productDetail.BrandedName;

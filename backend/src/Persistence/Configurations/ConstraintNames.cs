@@ -16,4 +16,7 @@ internal static class ConstraintNames
         "ck_membership_request_approved_at_rejected_at";
 
     public static string WorkEmailNoWhitespace => "work_email_no_whitespace";
+
+    public static string NameAndIdentifierUniqueDisplayOrderPerList =>
+        "ix_record_name_and_identifier_product_detail_type_display_order";
 }

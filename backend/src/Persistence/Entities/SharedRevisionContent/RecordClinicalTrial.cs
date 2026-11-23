@@ -24,9 +24,10 @@ internal sealed class RecordClinicalTrial
         "Study name",
         FormControl.Text,
         Hint = "Enter the official or commonly used study title. Use consistent naming across UK PharmaScan and public trial registries.",
+        Width = FormInputWidth.Full,
         Order = 10
     )]
-    [FormRequired("Enter the study name")]
+    [FormRequired("Enter study name")]
     public required string StudyName { get; set; }
 
     /// <summary>8-digit NCT identifier; system auto-links to ClinicalTrials.gov. Mandatory for both record types.</summary>
@@ -37,9 +38,8 @@ internal sealed class RecordClinicalTrial
         Hint = "Enter the 8 digit identification number that is assigned to any clinical trial registered on ClinicalTrials.gov.",
         Order = 20
     )]
-    [FormValuePrefixes("NCT", Digits = 8)]
+    [FormValuePrefixes("NCT", Digits = 8, Name = "Trial number")]
     [FormRequired("Enter the trial number from ClinicalTrials.gov")]
-    [FormDistinct("Trial number from ClinicalTrials.gov must be different for each clinical trial")]
     public required string ClinicalTrialsGovNumber { get; set; }
 
     /// <summary>
@@ -62,8 +62,9 @@ internal sealed class RecordClinicalTrial
         FormControl.TextList,
         Hint = "Enter any additional trial numbers from other registries.",
         AddAnotherLabel = "Add another trial number",
-        ItemLabel = "Trial number",
+        ItemLabel = "Other registry number",
         RemoveLabel = "Remove",
+        Width = FormInputWidth.Full,
         Order = 30
     )]
     [FormDistinct("Trial number from other registry must be different for each entry")]

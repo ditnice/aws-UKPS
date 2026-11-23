@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace UKPS.Api.Persistence.FormAnnotations;
 
 /// <summary>
@@ -10,12 +12,18 @@ namespace UKPS.Api.Persistence.FormAnnotations;
 /// A choice control takes its options from the one provider registered for the property's enum
 /// or referenced entity, unless <see cref="FormOptionsAttribute"/> names another.
 /// </remarks>
+[SuppressMessage(
+    "Design",
+    "CA1027:Mark enums with FlagsAttribute",
+    Justification = "Each value is one control, not a combination."
+)]
 public enum FormControl
 {
     /// <summary>
     /// A single-line text input for a string property. May have
-    /// <see cref="FormMaxLengthAttribute"/>; must not have <see cref="FormOptionsAttribute"/>.
-    /// The answer is the trimmed text, or null when blank.
+    /// <see cref="FormMaxLengthAttribute"/> and set <see cref="FormFieldAttribute.Width"/>; must
+    /// not have <see cref="FormOptionsAttribute"/>. The answer is the trimmed text, or null when
+    /// blank.
     /// </summary>
     Text = 0,
 
@@ -107,7 +115,7 @@ public enum FormControl
     /// <c>int? DisplayOrder</c>. The answer is an ordered array of trimmed strings; blank entries
     /// are dropped. May have <see cref="FormMaxItemsAttribute"/> and
     /// <see cref="FormDistinctAttribute"/>, and may set <see cref="FormFieldAttribute.ItemLabel"/>
-    /// to label each entry.
+    /// to label each entry and <see cref="FormFieldAttribute.Width"/> to widen the entries.
     /// </summary>
     TextList = 11,
 }

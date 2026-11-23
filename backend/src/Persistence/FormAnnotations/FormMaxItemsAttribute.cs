@@ -3,7 +3,8 @@ namespace UKPS.Api.Persistence.FormAnnotations;
 /// <summary>At most <see cref="Max"/> values may be chosen.</summary>
 /// <param name="max">
 /// The most values allowed. Must be positive. Only a multi-value question (a flags enum or a
-/// junction) may have it. A multi-value <see cref="FormControl.HierarchicalSelect"/> also hides
+/// junction) or a <see cref="FormControl.TextList"/> may have it. A multi-value
+/// <see cref="FormControl.HierarchicalSelect"/> also hides
 /// its add another button once this many entries are shown.
 /// </param>
 /// <param name="message">

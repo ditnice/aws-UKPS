@@ -188,6 +188,17 @@ internal sealed class User
         }
     }
 
+    internal void RefreshVerificationToken(string verificationToken, DateTime dateTime)
+    {
+        if (PendingWorkEmail is null)
+        {
+            throw new InvalidOperationException(
+                "Cannot refresh the verification token because there is no pending work email to verify."
+            );
+        }
+        PendingEmailVerificationToken = verificationToken;
+    }
+
     internal bool IsPendingEmailVerified()
     {
         return PendingWorkEmail is not null && PendingEmailVerifiedAt is not null;
@@ -333,11 +344,31 @@ internal sealed class User
         return null;
     }
 
+    internal PendingEmailCancellationError? TryCancelPendingEmailChange(DateTime dateTime)
+    {
+        if (PendingWorkEmail is null)
+        {
+            return PendingEmailCancellationError.NoPendingEmailToCancel;
+        }
+
+        PendingWorkEmail = null;
+        PendingEmailVerifiedAt = null;
+        PendingEmailVerificationToken = null;
+        UpdatedAt = dateTime;
+
+        return null;
+    }
+
     public enum VerificationError
     {
         NoPendingEmailToVerify = 0,
         InvalidVerificationToken = 1,
         AlreadyVerified = 2,
+    }
+
+    internal enum PendingEmailCancellationError
+    {
+        NoPendingEmailToCancel = 0,
     }
 
     internal record EmailUpdatedEvent : IUserDomainEvent

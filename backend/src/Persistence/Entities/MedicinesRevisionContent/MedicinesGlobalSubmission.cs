@@ -25,7 +25,7 @@ internal sealed class MedicinesGlobalSubmission
     [FormPage(MedicineFormLayout.GlobalFirstSubmission)]
     [FormField(
         "medicines_global_submission.global_first_submission_region",
-        "Enter the GFS location of this product",
+        "Enter the location of the GFS of this product",
         FormControl.Text,
         Order = 10,
         Hint = "Specify the geographic region or regulatory authority where the global first submission occurred."
@@ -38,7 +38,7 @@ internal sealed class MedicinesGlobalSubmission
     [FormPage(MedicineFormLayout.GlobalFirstSubmission)]
     [FormField(
         "medicines_global_submission.global_submission_actual_date",
-        "Actual global first submission date",
+        "Enter the date of GFS of this product",
         FormControl.ActualMonth,
         Order = 20,
         Hint = "For example, 3 2027"

@@ -79,10 +79,10 @@ model, telling it which column or junction table holds the answer.
 | Controls | `Text`, `Textarea`, `Radio`, `Select`, `Checkbox`, `HierarchicalSelect` (a parent dropdown, then an optional child dropdown; on a junction it repeats with "add another"), dates, `PrefixedNumber`, `Group` (repeating items of several questions) and `TextList` (repeating text boxes) |
 | Rules | `Required`, `MaxLength`, `MaxItems`, `Distinct` |
 | Bindings | Column (string, enum, reference ID), flags enum, junction table, regulatory date, group, text list |
-| Entry points | The record task list is the root of the journey. Record creation redirects to it, and **Update record** on the record details page opens it. Both show only when `canEditContent`, returned by `POST /records` and `GET /records/{id}`, is true: the record type has a form and the user can edit it |
+| Entry points | The record task list is the root of the journey. Record creation redirects to it, and **Update record** on the record details page opens it. Both show only when `canEditContent`, returned by `POST /records` and the record overview (`GET /records/{id}/overview`, and `overview` in `GET /records/{id}`), is true: the record type has a form and the user can edit it |
 | Audit | One event per save, one row per changed answer |
 | Conditions | Questions revealed by an answer on the same page, and pages shown by an answer on an earlier page (see [Conditional questions and pages](#conditional-questions-and-pages)) |
-| Later | Nested groups beyond a text list, choice questions inside groups, vaccine forms, searchable combobox, hiding answers that do not apply on View record |
+| Later | Nested groups beyond a text list, choice questions inside groups, vaccine forms, searchable combobox |
 
 ## Architecture
 
@@ -238,6 +238,13 @@ invalid model stops the API starting. It holds structure only: bindings receive 
   rechecks everything. A 422 refreshes the page with the current
   errors, and a 409 shows the API's message with a link to reload. If the record can't be
   submitted (403 or 409 when loading the page), the page says so instead of showing the answers.
+- **View record.** `GET /records/{id}` returns the record's overview and the same sections, tasks
+  and question rows as check your answers, built by the same `RecordAnswersBuilder`, but for any
+  status and any caller who can read the record, and without checking the answers. The record
+  details page shows an accordion per section and a card per task, with groups as one card per
+  item, and no Change, Edit or Add another links. Pages that only need the record's status,
+  actions and title, such as discard and change status, use `GET /records/{id}/overview`, which
+  loads no answers.
 - **No ties.** Two sections or pages with the same `Order`, or two questions on the same page
   with the same `Order`, fail startup. Attribute order in source is never relied on.
 
@@ -349,7 +356,8 @@ metadata, so attributes never contain expressions:
   Clinical trials persist `DisplayOrder` independently of their row identity, so changing or
   reordering trial numbers preserves the submitted order on subsequent reads.
 - **`TextListBinding`** stores an ordered `string[]` as child rows with one string column each,
-  matched by position, with `DisplayOrder` written from 1.
+  matched by position, with `DisplayOrder` written from 1. With `[FormListSource]`, several text
+  lists share one collection, each reading and writing only the rows of its enum kind.
 
 #### Content rows
 
@@ -394,8 +402,10 @@ names, or reference IDs as strings.
 The server is authoritative; the client mirrors it so users see errors without a round trip.
 
 1. Text answers are trimmed, and whitespace-only becomes `null`. Multi-select answers are sorted
-   so that the same selection in a different order is not a change.
-2. Each question's rules run in a **fixed order by kind** (`Required`, `MaxLength`, `MaxItems`).
+   so that the same selection in a different order is not a change. Text list entries are
+   trimmed and blank ones dropped, but their order is kept, so reordering them is a change.
+2. Each question's rules run in a **fixed order by kind** (`Required`, `MaxLength`, `MaxItems`,
+   `Distinct`).
    .NET does not guarantee attribute order, so source order is never used. Only the first
    failing rule's message is reported for that question.
 3. On the server only:
@@ -553,7 +563,7 @@ sequenceDiagram
 ```
 
 The record details page (`/portal/organisations/{id}/records/{recordId}`) links its **Update
-record** button to the same URL, when `canEditContent` from `GET /records/{id}` is true. This
+record** button to the same URL, when `overview.canEditContent` from `GET /records/{id}` is true. This
 lets users return to a record and change their answers.
 
 ### Loading a page
@@ -689,7 +699,7 @@ examples below use record 5, revision 7.
 | `section`, `task`, `page` | IDs and titles; the task title is the page caption |
 | `previousPageId` | Target of Back: the previous page in the task that applies, or `null` when there is none, where Back goes to the task list |
 | `nextPageId` | The next page in the task that applies given the saved answers, or one that depends on this page's own answers and so could apply once they are saved (`PossibleNextPage`). `null` when there is none, where the button reads **Save and return to task list**. The save response, not this value, decides where saving goes |
-| `questions` | `id`, `type` (the `FormControl`), `multiple` (the answer is an array), `label`, `hint`, `display`, `placeholder`, `childLabel`, `childPlaceholder`, `addAnotherLabel`, `showWhen` (`kind`, `questionId`, `values`, or `null`), `rules` (`kind`, `value`, `message`), `options` (`value`, `label`, `children`) |
+| `questions` | `id`, `type` (the `FormControl`), `multiple` (the answer is an array), `label`, `hint`, `display`, `placeholder`, `childLabel`, `childPlaceholder`, `addAnotherLabel`, `removeLabel` (a text list's remove button), `showWhen` (`kind`, `questionId`, `values`, or `null`), `rules` (`kind`, `value`, `message`), `options` (`value`, `label`, `children`) |
 | `answers` | Every page question: a string or `null`, or an array for multi-value questions |
 
 `GET /records/5/pages/therapeutic-area` returns `200 OK`:
@@ -806,7 +816,9 @@ record's task list.
 
 #### 400 Bad Request
 
-One error per question, keyed by question ID. A key that is not a question on the page is
+One error per question, keyed by question ID. A repeated text list entry is reported against
+the entry instead, keyed by its 0-based position among the entries saved (blank ones dropped),
+such as `record_product_detail.generic_names[2]`. A key that is not a question on the page is
 reported under its own key:
 
 ```json
@@ -858,9 +870,9 @@ Values are stored as text:
 - Single values are stored raw (`Unknown`, `12`, the indication text), so they can be queried
   directly, for example to report on fields moving away from `Unknown`.
 - Multi-select values (junction and flags) are stored as JSON (`["2","3"]`).
-- A collection whose grouping or order is part of the answer is stored as a JSON object instead,
-  for example names and identifiers, saved by record creation:
-  `{"GenericName":["sofosbuvir"],"OtherIdentifier":["PSI-7977"]}`.
+- Text lists are stored as a JSON array of their entries in order, for example the generic
+  names, whether record creation or the names and identifiers page saved them:
+  `["sofosbuvir","velpatasvir"]`. An empty list is no answer.
 - No answer is stored as `null`.
 
 ## Persistence changes
@@ -895,9 +907,6 @@ loaded by the synthetic data seeder; see [Reference data](reference-data.md).
 
 ## Not in the first delivery
 
-- **Hiding answers that do not apply on View record and check your answers.** Run
-  `FormApplicability.Evaluate` over the record's answers in `RecordViewService`, return the IDs
-  of questions that do not apply, and hide those rows.
 - **Conditional requiredness**, such as Service readiness becoming mandatory 12 months before the
   marketing authorisation date. A `FormRequiredWhen` can reuse `FormCondition`. A date condition
   kind would give the evaluator today's date. It probably belongs to section completeness

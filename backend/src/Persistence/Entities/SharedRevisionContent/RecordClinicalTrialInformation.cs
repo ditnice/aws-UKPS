@@ -35,7 +35,7 @@ internal sealed class RecordClinicalTrialInformation
         FormControl.Radio,
         Hint = "Add multiple clinical trials that are relevant to the product seeking market authorisation."
     )]
-    [FormRequired("Select yes if you wish to add a clinical trial")]
+    [FormRequired("Select an option")]
     public YesNo? HasClinicalTrials { get; set; }
 
     /// <summary>Are any of the record's clinical trials recruiting in the UK?</summary>
@@ -46,7 +46,7 @@ internal sealed class RecordClinicalTrialInformation
         FormControl.Radio
     )]
     [FormOptions(OptionKeys.ClinicalTrialsRecruitingInUk)]
-    [FormRequired("Select whether any clinical trials are recruiting in the UK")]
+    [FormRequired("Select an option")]
     public YesNoUnknown? RecruitingInUk { get; set; }
 
     // Navigation
@@ -61,8 +61,7 @@ internal sealed class RecordClinicalTrialInformation
         Hint = "Include all studies that support marketing authorisation and HTA submission.",
         ItemLabel = "Clinical trial",
         AddAnotherLabel = "Add another clinical trial",
-        RemoveLabel = "Remove clinical trial",
-        ItemKey = "clinical_trials_gov_number"
+        RemoveLabel = "Remove clinical trial"
     )]
     [FormRequired("Add at least one clinical trial")]
     public ICollection<RecordClinicalTrial> ClinicalTrials { get; set; } = [];

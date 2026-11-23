@@ -9,6 +9,7 @@ import { FormPage } from './FormPage'
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   saveRecordFormPage: vi.fn(),
+  getOrganisationCompanyCodes: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
@@ -17,7 +18,11 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/client/generated', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/client/generated')>()
-  return { ...original, saveRecordFormPage: mocks.saveRecordFormPage }
+  return {
+    ...original,
+    saveRecordFormPage: mocks.saveRecordFormPage,
+    getOrganisationCompanyCodes: mocks.getOrganisationCompanyCodes,
+  }
 })
 
 const question = (overrides: Partial<RecordPageQuestionDto>): RecordPageQuestionDto => ({
@@ -55,6 +60,7 @@ const page = (overrides: Partial<RecordPageDto> = {}): RecordPageDto => ({
   formVersion: '2026.10.1',
   pageHash: 'page-hash',
   recordId: 5,
+  organisationId: 3,
   section: { id: 'product-indication', title: 'Product indication' },
   task: { id: 'indication-details', title: 'Indication details' },
   page: { id: 'indication', title: 'Indication', commercialInConfidence: false },
@@ -131,6 +137,16 @@ const coMarketingPage = (revealedBy: string[] = ['Yes'], answers: Record<string,
     ],
     answers: { co: null, co_name: null, ...answers },
   })
+
+const groupQuestion = question({
+  id: 'group',
+  type: 'Group',
+  label: 'Studies',
+  hint: null,
+  itemLabel: 'Study',
+  rules: [],
+  children: [question({ id: 'study_name', type: 'Text', label: 'Study name', hint: null })],
+})
 
 describe('FormPage', () => {
   describe('rendering', () => {
@@ -241,6 +257,113 @@ describe('FormPage', () => {
       expect(screen.getByRole('link', { name: 'Back' }).getAttribute('href')).toBe(
         '/portal/records/5/indication',
       )
+    })
+
+    describe('label size', () => {
+      const label = (text: string) => screen.getByText(text, { selector: 'label' })
+      const legend = (text: string) => screen.getByText(text, { selector: 'legend' })
+      const other = question({ id: 'other', type: 'Text', label: 'Other', hint: null })
+
+      it('makes each question label lead text on a page with several questions', () => {
+        render(
+          <FormPage
+            page={page({
+              questions: [
+                question({}),
+                other,
+                question({ id: 'kind', type: 'Select', label: 'Kind', options: yesNo }),
+                question({ id: 'co', type: 'Radio', label: 'Co-marketed?', options: yesNo }),
+                question({ id: 'numbers', type: 'TextList', label: 'Numbers', rules: [] }),
+              ],
+              answers: {},
+            })}
+          />,
+        )
+
+        expect(
+          label('What is the indication this product is seeking a licence for?').closest(
+            '[class*="leadLabel"]',
+          ),
+        ).not.toBeNull()
+        expect(label('Other').className).toMatch(/leadLabel/)
+        expect(label('Kind').className).toMatch(/leadLabel/)
+        expect(legend('Co-marketed?').className).toMatch(/leadLegend/)
+        expect(legend('Numbers').className).toMatch(/leadLegend/)
+      })
+
+      it('keeps the standard size for the labels inside a question', () => {
+        render(
+          <FormPage
+            page={page({
+              questions: [
+                other,
+                question({ id: 'numbers', type: 'TextList', label: 'Numbers', rules: [] }),
+              ],
+              answers: {},
+            })}
+          />,
+        )
+
+        // The add another entry's own label, hidden behind the legend.
+        expect(document.querySelector('[id="numbers"] .input__label')?.className).not.toMatch(
+          /leadLabel/,
+        )
+      })
+
+      it('keeps the standard size for a question revealed beneath an option', () => {
+        const coMarketing = coMarketingPage(['Yes'], { co: 'Yes' })
+        render(
+          <FormPage
+            page={{
+              ...coMarketing,
+              questions: [...coMarketing.questions, other],
+              answers: { ...coMarketing.answers, other: null },
+            }}
+          />,
+        )
+
+        expect(legend('Is this product co-marketed?').className).toMatch(/leadLegend/)
+        expect(label('Co-marketing company name').className).not.toMatch(/leadLabel/)
+      })
+
+      it("keeps a group's heading and its items' labels at their own sizes", () => {
+        render(
+          <FormPage
+            page={page({
+              questions: [other, groupQuestion],
+              answers: { other: null, group: [] },
+            })}
+          />,
+        )
+
+        expect(screen.getByRole('heading', { level: 2, name: 'Studies' })).toBeInTheDocument()
+        expect(screen.getByText('Studies').closest('legend')?.className).not.toMatch(/leadLegend/)
+        expect(label('Study name').className).not.toMatch(/leadLabel/)
+      })
+
+      it('makes the labels of a hierarchical select lead text on a page of several', () => {
+        render(
+          <FormPage
+            page={page({
+              questions: [other, areasQuestion],
+              answers: { other: null, areas: ['13'] },
+            })}
+          />,
+        )
+
+        expect(label(areasQuestion.label).className).toMatch(/leadLabel/)
+        expect(label('Select the disease or condition (optional)').className).toMatch(/leadLabel/)
+      })
+
+      it('does not make the label lead text on a single-question page', () => {
+        render(<FormPage page={page()} />)
+
+        expect(
+          label('What is the indication this product is seeking a licence for?').closest(
+            '[class*="leadLabel"]',
+          ),
+        ).toBeNull()
+      })
     })
 
     it('fills in saved answers', () => {
@@ -1137,7 +1260,7 @@ describe('FormPage', () => {
       await user.type(screen.getByRole('textbox', { name: 'Year' }), '2027')
       save()
 
-      expect(await screen.findByText('Enter the estimated submission date')).toBeInTheDocument()
+      expect(await screen.findByText('Select a quarter')).toBeInTheDocument()
       expect(invalidParts()).toEqual(['Quarter'])
     })
 
@@ -1456,7 +1579,8 @@ describe('FormPage clinical trials', () => {
         type: 'Text',
         label: 'Study name',
         hint: 'Enter the official or commonly used study title.',
-        rules: [{ kind: 'Required', value: null, message: 'Enter the study name' }],
+        width: 'Full',
+        rules: [{ kind: 'Required', value: null, message: 'Enter study name' }],
       }),
       question({
         id: 'clinical_trials_gov_number',
@@ -1465,6 +1589,7 @@ describe('FormPage clinical trials', () => {
         hint: 'Enter the 8 digit identification number.',
         prefixes: ['NCT'],
         prefixDigits: 8,
+        numberName: 'Trial number',
         rules: [
           { kind: 'Required', value: null, message: 'Enter the trial number' },
           { kind: 'Distinct', value: null, message: 'Trial number must be different' },
@@ -1477,8 +1602,9 @@ describe('FormPage clinical trials', () => {
         label: 'Trial number from other registry (optional)',
         hint: 'Enter any additional trial numbers from other registries.',
         addAnotherLabel: 'Add another trial number',
-        itemLabel: 'Trial number',
+        itemLabel: 'Other registry number',
         removeLabel: 'Remove',
+        width: 'Full',
         rules: [{ kind: 'Distinct', value: null, message: 'Registry number must be different' }],
       }),
     ],
@@ -1517,6 +1643,17 @@ describe('FormPage clinical trials', () => {
     expect(screen.getByLabelText('Study name')).toHaveValue('')
     expect(screen.queryByRole('button', { name: /Remove clinical trial/ })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Add another trial number' })).toBeInTheDocument()
+  })
+
+  it('makes the study name and the other registry number full width', () => {
+    render(<FormPage page={trialsPage()} />)
+
+    const otherRegistryBox = screen
+      .getByLabelText('Other registry number')
+      .closest('[data-component="input"]')?.parentElement
+
+    expect(screen.getByLabelText('Study name')).toHaveStyle({ width: '100%' })
+    expect(otherRegistryBox?.style.getPropertyValue('--input-basis')).toBe('100%')
   })
 
   it('gives each trial an id that a link can scroll to', () => {
@@ -1589,8 +1726,8 @@ describe('FormPage clinical trials', () => {
     render(<FormPage page={trialsPage([savedTrial])} />)
 
     expect(screen.getByLabelText('Study name')).toHaveValue('ION-UK')
-    expect(screen.getByLabelText('Trial number 1')).toHaveValue('A1')
-    expect(screen.getByLabelText('Trial number 2')).toHaveValue('B2')
+    expect(screen.getByLabelText('Other registry number 1')).toHaveValue('A1')
+    expect(screen.getByLabelText('Other registry number 2')).toHaveValue('B2')
   })
 
   it('adds a trial, focusing its first field, and sends every trial as an item', async () => {
@@ -1641,14 +1778,14 @@ describe('FormPage clinical trials', () => {
     const user = userEvent.setup()
     render(<FormPage page={trialsPage([{ ...savedTrial, other_registry_numbers: [] }])} />)
 
-    expect(screen.getByLabelText('Trial number')).toBeVisible()
-    expect(screen.queryByLabelText('Trial number 1')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Other registry number')).toBeVisible()
+    expect(screen.queryByLabelText('Other registry number 1')).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Add another trial number' }))
 
-    expect(screen.queryByLabelText('Trial number')).not.toBeInTheDocument()
-    expect(screen.getByLabelText('Trial number 1')).toBeInTheDocument()
-    expect(screen.getByLabelText('Trial number 2')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Other registry number')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Other registry number 1')).toBeInTheDocument()
+    expect(screen.getByLabelText('Other registry number 2')).toBeInTheDocument()
   })
 
   it('adds and removes registry numbers, focusing the new box and then the list legend', async () => {
@@ -1657,9 +1794,9 @@ describe('FormPage clinical trials', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add another trial number' }))
 
-    const second = screen.getByLabelText('Trial number 2')
+    const second = screen.getByLabelText('Other registry number 2')
     expect(second).toHaveFocus()
-    await user.click(screen.getByRole('button', { name: 'Remove Trial number 2' }))
+    await user.click(screen.getByRole('button', { name: 'Remove Other registry number 2' }))
     expect(
       screen.getByText('Trial number from other registry (optional)', { selector: 'legend' }),
     ).toHaveFocus()
@@ -1696,8 +1833,8 @@ describe('FormPage clinical trials', () => {
 
     await user.click(screen.getByRole('button', { name: 'Save and continue' }))
 
-    expect(await screen.findByText('Enter the study name')).toBeInTheDocument()
-    expect(screen.getByText('ID must be 8 digits')).toBeInTheDocument()
+    expect(await screen.findByText('Enter study name')).toBeInTheDocument()
+    expect(screen.getByText('Trial number must be 8 digits long')).toBeInTheDocument()
     expect(screen.getByText('Registry number must be different')).toBeInTheDocument()
     expect(screen.getByText('Trial number must be different')).toBeInTheDocument()
     expect(screen.getAllByLabelText('Study name')[0]).toHaveAttribute('aria-invalid', 'true')
@@ -1719,13 +1856,13 @@ describe('FormPage clinical trials', () => {
 
       await user.click(
         screen.getByRole('button', {
-          name: `Remove Trial number ${entry}`,
+          name: `Remove Other registry number ${entry}`,
         }),
       )
 
       expect(screen.queryByText('Registry number must be different')).not.toBeInTheDocument()
-      const first = screen.getByLabelText('Trial number 1')
-      const second = screen.getByLabelText('Trial number 2')
+      const first = screen.getByLabelText('Other registry number 1')
+      const second = screen.getByLabelText('Other registry number 2')
       expect(first).toHaveValue('A1')
       expect(second).toHaveValue('B2')
       expect(first).not.toHaveAttribute('aria-invalid', 'true')
@@ -1777,11 +1914,11 @@ describe('FormPage clinical trials', () => {
         )
         expect(screen.getByLabelText('Study name')).toHaveValue('ION-EU')
       } else if (change === 'fill a blank registry entry') {
-        await user.type(screen.getAllByLabelText('Trial number 1')[0], 'A1')
+        await user.type(screen.getAllByLabelText('Other registry number 1')[0], 'A1')
       } else {
         await user.click(
           screen.getAllByRole('button', {
-            name: 'Remove Trial number 1',
+            name: 'Remove Other registry number 1',
           })[0],
         )
       }
@@ -1819,7 +1956,194 @@ describe('FormPage clinical trials', () => {
     expect(await screen.findByText('Study name from the server')).toBeInTheDocument()
     expect(screen.getByText('Add at least one clinical trial')).toBeInTheDocument()
     expect(screen.getByText('Entry from the server')).toBeInTheDocument()
-    expect(screen.getByLabelText('Trial number 2')).toHaveAttribute('aria-invalid', 'true')
-    expect(screen.getByLabelText('Trial number 1')).not.toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByLabelText('Other registry number 2')).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByLabelText('Other registry number 1')).not.toHaveAttribute(
+      'aria-invalid',
+      'true',
+    )
+  })
+})
+
+describe('FormPage names and identifiers', () => {
+  const genericNames = question({
+    id: 'record_product_detail.generic_names',
+    type: 'TextList',
+    multiple: true,
+    label: 'Active substance',
+    hint: 'Enter the standard, non-proprietary name for the active substances.',
+    addAnotherLabel: 'Add another active substance',
+    rules: [
+      { kind: 'Required', value: null, message: 'Enter generic name' },
+      { kind: 'Distinct', value: null, message: 'Generic names must be distinct' },
+    ],
+  })
+
+  const namesPage = (answer: string[] = ['sofosbuvir', 'velpatasvir']) =>
+    page({
+      section: { id: 'product-record-details', title: 'Provide product record details' },
+      task: { id: 'names-and-identifiers', title: 'Names and identifiers' },
+      page: {
+        id: 'names-and-identifiers',
+        title: 'Provide product record details',
+        commercialInConfidence: false,
+      },
+      nextPageId: null,
+      questions: [genericNames],
+      answers: { [genericNames.id]: answer },
+    })
+
+  // The task has one page, so its button returns to the task list.
+  const saveAndReturn = () =>
+    fireEvent.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+
+  const sentAnswers = () =>
+    (mocks.saveRecordFormPage.mock.calls[0][0] as { body: { answers: Record<string, unknown> } })
+      .body.answers
+
+  it('lists the saved entries under the question as a group', () => {
+    render(<FormPage page={namesPage()} />)
+
+    expect(screen.getByRole('group', { name: 'Active substance' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Active substance 1')).toHaveValue('sofosbuvir')
+    expect(screen.getByLabelText('Active substance 2')).toHaveValue('velpatasvir')
+  })
+
+  it('adds an entry, focusing it, and sends the entries in order without blanks', async () => {
+    const user = userEvent.setup()
+    render(<FormPage page={namesPage(['sofosbuvir'])} />)
+
+    await user.click(screen.getByRole('button', { name: 'Add another active substance' }))
+    expect(screen.getByLabelText('Active substance 2')).toHaveFocus()
+    await user.click(screen.getByRole('button', { name: 'Add another active substance' }))
+    await user.type(screen.getByLabelText('Active substance 3'), 'voxilaprevir')
+    saveAndReturn()
+
+    await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+    expect(sentAnswers()).toEqual({ [genericNames.id]: ['sofosbuvir', 'voxilaprevir'] })
+  })
+
+  it('removes an entry', async () => {
+    const user = userEvent.setup()
+    render(<FormPage page={namesPage()} />)
+
+    await user.click(screen.getByRole('button', { name: 'Remove Active substance 1' }))
+    saveAndReturn()
+
+    await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+    expect(sentAnswers()).toEqual({ [genericNames.id]: ['velpatasvir'] })
+  })
+
+  it('shows a repeated entry against that entry without saving', async () => {
+    render(<FormPage page={namesPage(['sofosbuvir', 'SOFOSBUVIR'])} />)
+
+    saveAndReturn()
+
+    expect(await screen.findByText('Generic names must be distinct')).toBeInTheDocument()
+    expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+  })
+
+  describe('company code', () => {
+    const companyCode = question({
+      id: 'record_product_detail.company_code',
+      type: 'Text',
+      label: 'Company code',
+      hint: 'Enter the primary internal code or working name your company uses.',
+      display: 'autocomplete:company-codes',
+      rules: [{ kind: 'Required', value: null, message: 'Enter company code' }],
+    })
+
+    const companyCodePage = (overrides: Partial<RecordPageQuestionDto> = {}) =>
+      page({
+        ...namesPage(),
+        questions: [{ ...companyCode, ...overrides }, genericNames],
+        answers: { [companyCode.id]: 'ABC', [genericNames.id]: ['sofosbuvir'] },
+      })
+
+    beforeEach(() => {
+      mocks.getOrganisationCompanyCodes.mockResolvedValue({
+        data: { items: ['ABC-123', 'ABC-456'] },
+      })
+    })
+
+    it("suggests the organisation's company codes and saves the one chosen", async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={companyCodePage()} />)
+
+      const input = screen.getByRole('combobox', { name: 'Company code' })
+      expect(input).toHaveValue('ABC')
+      await user.type(input, '-4')
+      await user.click(await screen.findByRole('option', { name: 'ABC-456' }))
+      saveAndReturn()
+
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+      expect(mocks.getOrganisationCompanyCodes).toHaveBeenCalledWith(
+        expect.objectContaining({
+          path: { organisationId: 3 },
+          query: expect.objectContaining({ Search: 'ABC-4' }),
+        }),
+      )
+      expect(sentAnswers()).toEqual({
+        [companyCode.id]: 'ABC-456',
+        [genericNames.id]: ['sofosbuvir'],
+      })
+    })
+
+    it('saves a company code that is not among the suggestions', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={companyCodePage()} />)
+
+      const input = screen.getByRole('combobox', { name: 'Company code' })
+      await user.clear(input)
+      await user.type(input, 'NEW-1')
+      saveAndReturn()
+
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+      expect(sentAnswers()).toMatchObject({ [companyCode.id]: 'NEW-1' })
+    })
+
+    it('still requires a company code', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={companyCodePage()} />)
+
+      await user.clear(screen.getByRole('combobox', { name: 'Company code' }))
+      saveAndReturn()
+
+      expect(await screen.findByText('Enter company code', { selector: 'p *, p' })).toBeVisible()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+    })
+
+    it('is a plain text input without the autocomplete display hint', () => {
+      render(<FormPage page={companyCodePage({ display: null })} />)
+
+      expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+      expect(screen.getByRole('textbox', { name: 'Company code' })).toHaveValue('ABC')
+    })
+
+    it('is a plain text input when the display hint names an unknown source', () => {
+      render(<FormPage page={companyCodePage({ display: 'autocomplete:unknown' })} />)
+
+      expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+      expect(screen.getByRole('textbox', { name: 'Company code' })).toHaveValue('ABC')
+    })
+
+    it('is a plain text input for the bare autocomplete hint, which names no source', () => {
+      render(<FormPage page={companyCodePage({ display: 'autocomplete' })} />)
+
+      expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+    })
+  })
+
+  it('shows a server error on an entry against the entry it names', async () => {
+    mocks.saveRecordFormPage.mockResolvedValue({
+      error: { errors: { [`${genericNames.id}[1]`]: ['Server says this one is repeated'] } },
+      response: { ok: false, status: 400 },
+    })
+    render(<FormPage page={namesPage(['sofosbuvir', '', 'velpatasvir'])} />)
+
+    saveAndReturn()
+
+    expect(await screen.findByText('Server says this one is repeated')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(mocks.push).not.toHaveBeenCalled()
   })
 })

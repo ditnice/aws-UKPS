@@ -1,6 +1,8 @@
 import { FormGroup } from '@/components/FormGroup/FormGroup'
 import type { DateValue } from '@/lib/dynamic-form/dates'
 
+import { labelSizeFor } from '../labelStyle'
+
 import { DateParts } from './DateParts'
 
 import type { QuestionProps } from '../types'
@@ -13,6 +15,7 @@ export function ActualMonthQuestion({
   onChange,
   onBlur,
   error,
+  labelStyle,
 }: QuestionProps<DateValue>) {
   return (
     <FormGroup
@@ -20,6 +23,7 @@ export function ActualMonthQuestion({
       hint={question.hint ?? undefined}
       identifier={name}
       legend={question.label}
+      legendSize={labelSizeFor(labelStyle)}
     >
       <DateParts
         invalid={error ? ['month', 'year'] : []}

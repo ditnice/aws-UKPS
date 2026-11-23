@@ -154,9 +154,10 @@ internal static class RecordContentHistory
             (CreationPageFieldPaths.CompanyCode, names.CompanyCode),
             (CreationPageFieldPaths.BrandedName, names.BrandedName),
             (CreationPageFieldPaths.RecordTitle, names.RecordTitle),
+            (CreationPageFieldPaths.GenericNames, FieldAuditJson.TextList(names.GenericNames)),
             (
-                CreationPageFieldPaths.NamesAndIdentifiers,
-                FieldAuditJson.NamesAndIdentifiers(names.GenericNames, names.OtherIdentifiers)
+                CreationPageFieldPaths.OtherIdentifiers,
+                FieldAuditJson.TextList(names.OtherIdentifiers)
             ),
         ];
 
@@ -222,22 +223,23 @@ internal static class RecordContentHistory
     }
 
     /// <summary>
-    /// The trials as the form audits them: one object keyed by trial number, each holding the
-    /// trial's other answers in ordinal key order.
+    /// The trials as the form audits them: an array in display order, each item holding the
+    /// trial's answers in ordinal key order. NCT numbers can repeat, so trials are not keyed by them.
     /// </summary>
     private static string? ClinicalTrialsAudit(SyntheticClinicalTrialInformation section) =>
         section.ClinicalTrials.Count == 0
             ? null
             : FieldAuditJson.Serialize(
-                section.ClinicalTrials.ToDictionary(
-                    static t => t.ClinicalTrialsGovNumber,
-                    static t => new Dictionary<string, object>(StringComparer.Ordinal)
+                section
+                    .ClinicalTrials.Select(static t => new Dictionary<string, object>(
+                        StringComparer.Ordinal
+                    )
                     {
+                        ["clinical_trials_gov_number"] = t.ClinicalTrialsGovNumber,
                         ["other_registry_numbers"] = t.OtherClinicalTrialNumbers,
                         ["study_name"] = t.StudyName,
-                    },
-                    StringComparer.Ordinal
-                )
+                    })
+                    .ToList()
             );
 
     private static (string Path, string? Value)[] DevelopmentBackgroundFields(

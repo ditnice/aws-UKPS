@@ -4,6 +4,7 @@ import { Select, SelectOption } from '@/components/Select/Select'
 import { prefixedNumberErrorParts, splitPrefixedNumber } from '@/lib/dynamic-form/prefixedNumber'
 
 import styles from '../DynamicForm.module.scss'
+import { labelSizeFor } from '../labelStyle'
 
 import type { QuestionProps } from '../types'
 
@@ -27,8 +28,9 @@ function FixedPrefixNumber({
   onChange,
   onBlur,
   error,
-  labelAsHeading,
+  labelStyle,
 }: QuestionProps<string>) {
+  const labelAsHeading = labelStyle === 'heading'
   const prefix = question.prefixes![0]
   const { number } = splitPrefixedNumber([prefix], value)
   // A whole ID pasted with its prefix, in any case, is not prefixed again: "nct01234567" is saved
@@ -55,6 +57,7 @@ function FixedPrefixNumber({
         hint={question.hint ?? undefined}
         inputMode="numeric"
         label={labelAsHeading ? null : question.label}
+        labelSize={labelSizeFor(labelStyle)}
         name={name}
         onBlur={onBlur}
         onChange={(event) => changeNumber(event.target.value)}
@@ -73,18 +76,24 @@ function ChosenPrefixNumber({
   onChange,
   onBlur,
   error,
+  labelStyle,
 }: QuestionProps<string>) {
   const prefixes = question.prefixes ?? []
   const { prefix, number } = splitPrefixedNumber(prefixes, value)
   const placeholder = question.placeholder ?? 'Select an option'
-  const errorParts = prefixedNumberErrorParts(error)
+  const errorParts = prefixedNumberErrorParts(error, question.numberName)
   // A whole ID pasted or typed into the number box replaces both parts rather than being
   // appended after the chosen prefix, so "GID-TA123" never becomes "GID-TAGID-TA123".
   const changeNumber = (typed: string) =>
     onChange(splitPrefixedNumber(prefixes, typed).prefix ? typed : prefix + typed)
 
   return (
-    <FormGroup error={error} hint={question.hint ?? undefined} legend={question.label}>
+    <FormGroup
+      error={error}
+      hint={question.hint ?? undefined}
+      legend={question.label}
+      legendSize={labelSizeFor(labelStyle)}
+    >
       <div className={styles.prefixedNumber}>
         <Select
           aria-label={placeholder}
