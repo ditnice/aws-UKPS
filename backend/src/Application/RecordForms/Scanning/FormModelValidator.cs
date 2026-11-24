@@ -129,6 +129,11 @@ internal static partial class FormModelValidator
                 );
             }
 
+            if (section.SubText is not null && string.IsNullOrWhiteSpace(section.SubText))
+            {
+                problems.Add($"{name} declares section '{section.Id}' with blank sub text.");
+            }
+
             if (section.Tasks.Count == 0)
             {
                 problems.Add($"{name} declares section '{section.Id}' with no tasks.");
@@ -136,13 +141,6 @@ internal static partial class FormModelValidator
 
             foreach (FormLayoutTask task in section.Tasks)
             {
-                if (!SlugPattern().IsMatch(task.Id) || string.IsNullOrWhiteSpace(task.Title))
-                {
-                    problems.Add(
-                        $"{name} declares task '{task.Id}' with a badly formed ID or a blank title."
-                    );
-                }
-
                 ValidateLayoutTask(name, task, problems);
             }
 
@@ -175,6 +173,18 @@ internal static partial class FormModelValidator
 
     private static void ValidateLayoutTask(string name, FormLayoutTask task, List<string> problems)
     {
+        if (!SlugPattern().IsMatch(task.Id) || string.IsNullOrWhiteSpace(task.Title))
+        {
+            problems.Add(
+                $"{name} declares task '{task.Id}' with a badly formed ID or a blank title."
+            );
+        }
+
+        if (task.Hint is not null && string.IsNullOrWhiteSpace(task.Hint))
+        {
+            problems.Add($"{name} declares task '{task.Id}' with a blank hint.");
+        }
+
         if (task.Pages.Count == 0)
         {
             problems.Add($"{name} declares task '{task.Id}' with no pages.");
@@ -667,11 +677,7 @@ internal static partial class FormModelValidator
             );
         }
 
-        if (
-            field.AddAnotherLabel is not null
-            && !(isHierarchical && question.Shape == AnswerShape.Multi)
-            && control is not (FormControl.Group or FormControl.TextList)
-        )
+        if (field.AddAnotherLabel is not null && !HasRepeatedItems(question, control))
         {
             problems.Add(
                 $"{where} sets AddAnotherLabel, which only a multi-value HierarchicalSelect, a Group or a TextList uses."
@@ -685,6 +691,11 @@ internal static partial class FormModelValidator
             problems.Add($"{where} uses HierarchicalSelect, which needs a ChildLabel.");
         }
     }
+
+    /// <summary>Whether the question repeats, so has buttons and labels for its items.</summary>
+    private static bool HasRepeatedItems(QuestionDeclaration question, FormControl control) =>
+        control is FormControl.Group or FormControl.TextList
+        || (control == FormControl.HierarchicalSelect && question.Shape == AnswerShape.Multi);
 
     private static void ValidateWidth(
         QuestionDeclaration question,
@@ -712,7 +723,10 @@ internal static partial class FormModelValidator
         }
     }
 
-    /// <summary>Checks the item and remove labels and item key only a group or text list uses.</summary>
+    /// <summary>
+    /// Checks the item and remove labels (used by a group, text list or multi-value hierarchical
+    /// select) and the check answers add label and item key (used only by a group).
+    /// </summary>
     private static void ValidateItemPresentation(
         QuestionDeclaration question,
         FormControl control,
@@ -723,12 +737,16 @@ internal static partial class FormModelValidator
         FormFieldAttribute field = question.Field;
         bool isGroup = control == FormControl.Group;
 
-        if (
-            field.RemoveLabel is not null
-            && control is not (FormControl.Group or FormControl.TextList)
-        )
+        if (field.RemoveLabel is not null && !HasRepeatedItems(question, control))
         {
-            problems.Add($"{where} sets RemoveLabel, which only a Group or a TextList uses.");
+            problems.Add(
+                $"{where} sets RemoveLabel, which only a multi-value HierarchicalSelect, a Group or a TextList uses."
+            );
+        }
+
+        if (field.CheckAnswersAddLabel is not null && !isGroup)
+        {
+            problems.Add($"{where} sets CheckAnswersAddLabel, which only a Group uses.");
         }
 
         if (field.ItemKey is not null && !isGroup)
@@ -737,12 +755,11 @@ internal static partial class FormModelValidator
         }
 
         bool itemLabelIsBlank = string.IsNullOrWhiteSpace(field.ItemLabel);
-        if (
-            field.ItemLabel is not null
-            && control is not (FormControl.Group or FormControl.TextList)
-        )
+        if (field.ItemLabel is not null && !HasRepeatedItems(question, control))
         {
-            problems.Add($"{where} sets ItemLabel, which only a Group or a TextList uses.");
+            problems.Add(
+                $"{where} sets ItemLabel, which only a multi-value HierarchicalSelect, a Group or a TextList uses."
+            );
         }
         else if (isGroup && itemLabelIsBlank)
         {
@@ -909,63 +926,96 @@ internal static partial class FormModelValidator
             );
         }
 
+        HashSet<string> conditionalPageIds =
+        [
+            .. pageConditions.Select(static x => x.Condition.PageId),
+        ];
         foreach (var (entity, condition) in pageConditions)
         {
-            string where =
-                $"{entity.ClrType.Name} [FormPageShowWhen] for page '{condition.PageId}'";
-            PlacedQuestion? onPage = placed.FirstOrDefault(x =>
-                x.Entity == entity
-                && string.Equals(x.PageId, condition.PageId, StringComparison.Ordinal)
+            ValidatePageCondition(
+                entity,
+                condition,
+                placed,
+                questions,
+                conditionalPageIds,
+                problems
             );
-            if (onPage is null)
-            {
-                // A page no layout declares, or that is in another form, is reported elsewhere.
-                if (
-                    entity.Questions.Any(q =>
-                        string.Equals(q.PageId, condition.PageId, StringComparison.Ordinal)
-                    )
-                )
-                {
-                    continue;
-                }
-
-                problems.Add($"{where} names a page that {entity.ClrType.Name} does not declare.");
-                continue;
-            }
-
-            if (!questions.TryGetValue(condition.QuestionId, out var trigger))
-            {
-                problems.Add($"{where} names unknown question '{condition.QuestionId}'.");
-                continue;
-            }
-
-            ValidateNotFirstInTask(where, onPage, questions, problems);
-            if (trigger.Position.CompareTo(onPage.Position) >= 0)
-            {
-                problems.Add(
-                    $"{where} names '{condition.QuestionId}', which must be on an earlier page."
-                );
-            }
-
-            ValidateTrigger(where, trigger.Question, condition.Values, problems);
         }
     }
 
-    /// <summary>The task list links to a task's first page, so it must always apply.</summary>
+    private static void ValidatePageCondition(
+        EntityDeclaration entity,
+        FormPageShowWhenAttribute condition,
+        PlacedQuestion[] placed,
+        Dictionary<string, PlacedQuestion> questions,
+        HashSet<string> conditionalPageIds,
+        List<string> problems
+    )
+    {
+        string where = $"{entity.ClrType.Name} [FormPageShowWhen] for page '{condition.PageId}'";
+        PlacedQuestion? onPage = placed.FirstOrDefault(x =>
+            x.Entity == entity
+            && string.Equals(x.PageId, condition.PageId, StringComparison.Ordinal)
+        );
+        if (onPage is null)
+        {
+            // A page no layout declares, or that is in another form, is reported elsewhere.
+            if (
+                !entity.Questions.Any(q =>
+                    string.Equals(q.PageId, condition.PageId, StringComparison.Ordinal)
+                )
+            )
+            {
+                problems.Add($"{where} names a page that {entity.ClrType.Name} does not declare.");
+            }
+
+            return;
+        }
+
+        if (!questions.TryGetValue(condition.QuestionId, out var trigger))
+        {
+            problems.Add($"{where} names unknown question '{condition.QuestionId}'.");
+            return;
+        }
+
+        ValidateNotFirstInTask(where, onPage, questions, conditionalPageIds, problems);
+        if (trigger.Position.CompareTo(onPage.Position) >= 0)
+        {
+            problems.Add(
+                $"{where} names '{condition.QuestionId}', which must be on an earlier page."
+            );
+        }
+
+        ValidateTrigger(where, trigger.Question, condition.Values, problems);
+    }
+
+    /// <summary>
+    /// The task list links to a task's first page, so it must always apply, unless every other
+    /// page of the task has a condition too: the whole task can then be hidden, and the task list
+    /// shows it as not applicable instead of linking to it.
+    /// </summary>
     private static void ValidateNotFirstInTask(
         string where,
         PlacedQuestion onPage,
         Dictionary<string, PlacedQuestion> questions,
+        HashSet<string> conditionalPageIds,
         List<string> problems
     )
     {
-        int firstPageOrder = questions
-            .Values.Where(x => string.Equals(x.TaskId, onPage.TaskId, StringComparison.Ordinal))
-            .Min(static x => x.Placement.Page.Order);
-        if (onPage.Placement.Page.Order == firstPageOrder)
+        PlacedQuestion[] taskQuestions =
+        [
+            .. questions.Values.Where(x =>
+                string.Equals(x.TaskId, onPage.TaskId, StringComparison.Ordinal)
+            ),
+        ];
+        int firstPageOrder = taskQuestions.Min(static x => x.Placement.Page.Order);
+        bool otherPagesConditional = taskQuestions
+            .Where(x => !string.Equals(x.PageId, onPage.PageId, StringComparison.Ordinal))
+            .All(x => conditionalPageIds.Contains(x.PageId));
+        if (onPage.Placement.Page.Order == firstPageOrder && !otherPagesConditional)
         {
             problems.Add(
-                $"{where} is on the first page of task '{onPage.TaskId}', which must always apply."
+                $"{where} is on the first page of task '{onPage.TaskId}', which must always apply unless every other page of the task has a condition too."
             );
         }
     }

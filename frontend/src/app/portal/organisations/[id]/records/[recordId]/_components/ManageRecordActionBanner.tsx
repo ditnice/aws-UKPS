@@ -53,7 +53,7 @@ const OnHoldRecordActionBanner = ({ record }: ManageRecordActionBannerProps) => 
     </ActionBanner>
   )
 }
-const ArchivedRecordActionBanner = ({ record }: ManageRecordActionBannerProps) => {
+const TimelineActionBanner = ({ record }: ManageRecordActionBannerProps) => {
   if (!record.actions.includes('ViewTimeline')) {
     return null
   }
@@ -93,10 +93,24 @@ export const ManageRecordActionBanner = ({
   )
 
   if (record.displayStatus === 'Archived' || record.displayStatus == 'QAReview') {
-    return <ArchivedRecordActionBanner record={record} />
+    return <TimelineActionBanner record={record} />
   }
   if (record.displayStatus === 'OnHold') {
+    if (!actions.includes('ChangeStatus') && !actions.includes('ConfirmOnHold')) {
+      return <TimelineActionBanner record={record} />
+    }
     return <OnHoldRecordActionBanner record={record} />
+  }
+
+  const canUpdate = actions.includes('Update') && updateRecordHref !== undefined
+  const canManage =
+    canUpdate ||
+    actions.includes('ChangeStatus') ||
+    actions.includes('ConfirmCurrent') ||
+    actions.includes('Discard')
+
+  if (!canManage) {
+    return <TimelineActionBanner record={record} />
   }
 
   return (
@@ -107,7 +121,7 @@ export const ManageRecordActionBanner = ({
         headingLevel={2}
         cta={
           <ButtonGroup>
-            {actions.includes('Update') && updateRecordHref && (
+            {canUpdate && (
               <Button elementType={Link} href={updateRecordHref} variant="cta">
                 Update record
               </Button>

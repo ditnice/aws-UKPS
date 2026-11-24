@@ -68,7 +68,7 @@ export type CompanyCodeSuggestionsDto = {
  * The kind of a condition that decides whether a question applies. Part of the HTTP API
  * contract: the member names are sent to the frontend, so never rename or remove one.
  */
-export const ConditionKind = { ANSWER_IN: 'AnswerIn' } as const;
+export const ConditionKind = { ANSWER_IN: 'AnswerIn', ANSWER_NOT_IN: 'AnswerNotIn' } as const;
 
 /**
  * The kind of a condition that decides whether a question applies. Part of the HTTP API
@@ -640,10 +640,10 @@ export type RecordAnswersQuestionDto = {
      */
     items: null | Array<RecordAnswersGroupItemDto>;
     /**
-     * For a group, the label of its add-another button, such as "Add another clinical trial";
-     * null for any other question.
+     * For a group, the text of the button that adds an item from check your answers, such as
+     * "Add clinical trial"; null for any other question.
      */
-    addAnotherLabel: null | string;
+    checkAnswersAddLabel: null | string;
 };
 
 /**
@@ -659,7 +659,13 @@ export type RecordAnswersSectionDto = {
      */
     title: string;
     /**
-     * The tasks with a question that applies, in order.
+     * The section is optional: its tasks are marked "(optional)", and no question in it is
+     * required, so an unanswered one raises no error and does not block submitting.
+     */
+    optional: boolean;
+    /**
+     * The section's tasks, in order. Check your answers also keeps tasks that do not apply;
+     * viewing a record leaves them out.
      */
     tasks: Array<RecordAnswersTaskDto>;
 };
@@ -678,8 +684,15 @@ export type RecordAnswersTaskDto = {
     title: string;
     /**
      * The questions that apply, in page order, including optional questions with no answer.
+     * Empty when bool RecordAnswersTaskDto.NotApplicable.
      */
     questions: Array<RecordAnswersQuestionDto>;
+    /**
+     * No question in the task applies to this record, for example Promising Innovative Medicine
+     * (PIM) and Early Access to Medicines Scheme (EAMS) on a biosimilar. Check your answers says
+     * why; the task list shows "Cannot start yet".
+     */
+    notApplicable: boolean;
 };
 
 /**
@@ -1004,12 +1017,14 @@ export type RecordPageQuestionDto = {
      */
     addAnotherLabel: null | string;
     /**
-     * The heading of each item of a group, numbered from 1, or the label of each entry of a text
-     * list, numbered from 1 once there are several; null for other controls.
+     * The heading of each item of a group or entry of a multi-value hierarchical select, numbered
+     * from 1, or the label of each entry of a text list, numbered from 1 once there are
+     * several; null for other controls.
      */
     itemLabel?: null | string;
     /**
-     * The button text that removes an item of a group or an entry of a text list.
+     * The button text that removes an item of a group, or an entry of a text list or multi-value
+     * hierarchical select.
      */
     removeLabel?: null | string;
     /**
@@ -1169,6 +1184,16 @@ export type RecordTaskListSectionDto = {
      */
     title: string;
     /**
+     * The section is optional: it is marked "(optional)" and does not count towards the tasks
+     * that must be completed before the record can be reviewed and submitted.
+     */
+    optional: boolean;
+    /**
+     * Text shown under the section heading, or null for none. A blank line starts a new
+     * paragraph.
+     */
+    subText: null | string;
+    /**
      * The ordered tasks in the section.
      */
     tasks: Array<RecordTaskListTaskDto>;
@@ -1187,6 +1212,10 @@ export type RecordTaskListTaskDto = {
      */
     title: string;
     /**
+     * Hint text shown under the task link, or null for none. A blank line starts a new paragraph.
+     */
+    hint: null | string;
+    /**
      * The task's status, derived from the saved answers.
      */
     status: RecordTaskStatus;
@@ -1203,7 +1232,9 @@ export type RecordTaskListTaskDto = {
 export const RecordTaskStatus = {
     NOT_STARTED: 'NotStarted',
     IN_PROGRESS: 'InProgress',
-    COMPLETED: 'Completed'
+    COMPLETED: 'Completed',
+    NOT_APPLICABLE: 'NotApplicable',
+    CANNOT_START: 'CannotStart'
 } as const;
 
 /**
@@ -2990,6 +3021,10 @@ export type DiscardRecordErrors = {
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but cannot discard it.
+     */
+    403: ProblemDetails;
     /**
      * The record was not found, has already been discarded, or is not accessible to the caller.
      */

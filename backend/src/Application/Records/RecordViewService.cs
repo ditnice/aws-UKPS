@@ -209,8 +209,20 @@ internal sealed class RecordViewService(
             Actions = Record.GetPermittedActions(
                 new(record.RecordStatus, record.LatestRevisionStatus),
                 record.HasSingleRevision,
-                organisationAuthoriser.CanPerformOperationOnOrganisation(
+                canUpdate: organisationAuthoriser.CanPerformOperationOnOrganisation(
+                    Operation.EditRecordContent,
+                    record.OrganisationId
+                ),
+                canChangeStatus: organisationAuthoriser.CanPerformOperationOnOrganisation(
                     Operation.ChangeRecordStatus,
+                    record.OrganisationId
+                ),
+                canConfirm: organisationAuthoriser.CanPerformOperationOnOrganisation(
+                    Operation.ConfirmRecord,
+                    record.OrganisationId
+                ),
+                canDiscard: organisationAuthoriser.CanPerformOperationOnOrganisation(
+                    Operation.DiscardRecord,
                     record.OrganisationId
                 )
             ),
@@ -244,7 +256,7 @@ internal sealed class RecordViewService(
         DateTime? NextUpdateDue
     );
 
-    /// <summary>A record the caller can read, with its latest revision.</summary>
+    /// <summary>A record the caller can read with its latest revision.</summary>
     private sealed record RecordHeader(
         int Id,
         int OrganisationId,

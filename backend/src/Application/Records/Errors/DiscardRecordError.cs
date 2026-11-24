@@ -16,10 +16,14 @@ public abstract record DiscardRecordError
     internal sealed record RecordNotFound() : DiscardRecordError;
 
     /// <summary>
-    /// Represents an error that occurs when the caller cannot discard records for the record's
-    /// organisation.
+    /// Represents an error that occurs when the caller cannot read the record.
     /// </summary>
     internal sealed record NotAllowed() : DiscardRecordError;
+
+    /// <summary>
+    /// Represents an error that occurs when the caller can read the record but cannot discard it.
+    /// </summary>
+    internal sealed record CannotDiscard() : DiscardRecordError;
 
     /// <summary>
     /// Represents an error that occurs when the record has been submitted, so cannot be discarded.

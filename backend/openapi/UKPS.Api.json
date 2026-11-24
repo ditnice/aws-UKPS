@@ -3218,6 +3218,26 @@
               }
             }
           },
+          "403": {
+            "description": "The caller can read the record but cannot discard it.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "The record was not found, has already been discarded, or is not accessible to the caller.",
             "content": {
@@ -6207,7 +6227,8 @@
       },
       "ConditionKind": {
         "enum": [
-          "AnswerIn"
+          "AnswerIn",
+          "AnswerNotIn"
         ],
         "type": "string",
         "description": "The kind of a condition that decides whether a question applies. Part of the HTTP API\ncontract: the member names are sent to the frontend, so never rename or remove one."
@@ -6922,7 +6943,7 @@
           "selectedOptions",
           "itemLabel",
           "items",
-          "addAnotherLabel"
+          "checkAnswersAddLabel"
         ],
         "type": "object",
         "properties": {
@@ -6980,12 +7001,12 @@
             },
             "description": "For a group, its items in order; null for any other question."
           },
-          "addAnotherLabel": {
+          "checkAnswersAddLabel": {
             "type": [
               "null",
               "string"
             ],
-            "description": "For a group, the label of its add-another button, such as \"Add another clinical trial\";\nnull for any other question."
+            "description": "For a group, the text of the button that adds an item from check your answers, such as\n\"Add clinical trial\"; null for any other question."
           }
         },
         "description": "A question that applies and its answer, shown as a summary row."
@@ -6994,6 +7015,7 @@
         "required": [
           "id",
           "title",
+          "optional",
           "tasks"
         ],
         "type": "object",
@@ -7006,12 +7028,16 @@
             "type": "string",
             "description": "The section title."
           },
+          "optional": {
+            "type": "boolean",
+            "description": "The section is optional: its tasks are marked \"(optional)\", and no question in it is\nrequired, so an unanswered one raises no error and does not block submitting."
+          },
           "tasks": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/RecordAnswersTaskDto"
             },
-            "description": "The tasks with a question that applies, in order."
+            "description": "The section's tasks, in order. Check your answers also keeps tasks that do not apply;\nviewing a record leaves them out."
           }
         },
         "description": "A section of a record's answers."
@@ -7020,7 +7046,8 @@
         "required": [
           "id",
           "title",
-          "questions"
+          "questions",
+          "notApplicable"
         ],
         "type": "object",
         "properties": {
@@ -7037,7 +7064,11 @@
             "items": {
               "$ref": "#/components/schemas/RecordAnswersQuestionDto"
             },
-            "description": "The questions that apply, in page order, including optional questions with no answer."
+            "description": "The questions that apply, in page order, including optional questions with no answer.\nEmpty when bool RecordAnswersTaskDto.NotApplicable."
+          },
+          "notApplicable": {
+            "type": "boolean",
+            "description": "No question in the task applies to this record, for example Promising Innovative Medicine\n(PIM) and Early Access to Medicines Scheme (EAMS) on a biosimilar. Check your answers says\nwhy; the task list shows \"Cannot start yet\"."
           }
         },
         "description": "A task of a record's answers."
@@ -7510,14 +7541,14 @@
               "null",
               "string"
             ],
-            "description": "The heading of each item of a group, numbered from 1, or the label of each entry of a text\nlist, numbered from 1 once there are several; null for other controls."
+            "description": "The heading of each item of a group or entry of a multi-value hierarchical select, numbered\nfrom 1, or the label of each entry of a text list, numbered from 1 once there are\nseveral; null for other controls."
           },
           "removeLabel": {
             "type": [
               "null",
               "string"
             ],
-            "description": "The button text that removes an item of a group or an entry of a text list."
+            "description": "The button text that removes an item of a group, or an entry of a text list or multi-value\nhierarchical select."
           },
           "children": {
             "type": [
@@ -7733,6 +7764,8 @@
         "required": [
           "id",
           "title",
+          "optional",
+          "subText",
           "tasks"
         ],
         "type": "object",
@@ -7744,6 +7777,17 @@
           "title": {
             "type": "string",
             "description": "The section title."
+          },
+          "optional": {
+            "type": "boolean",
+            "description": "The section is optional: it is marked \"(optional)\" and does not count towards the tasks\nthat must be completed before the record can be reviewed and submitted."
+          },
+          "subText": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Text shown under the section heading, or null for none. A blank line starts a new\nparagraph."
           },
           "tasks": {
             "type": "array",
@@ -7759,6 +7803,7 @@
         "required": [
           "id",
           "title",
+          "hint",
           "status",
           "firstPageId"
         ],
@@ -7771,6 +7816,13 @@
           "title": {
             "type": "string",
             "description": "The task title."
+          },
+          "hint": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Hint text shown under the task link, or null for none. A blank line starts a new paragraph."
           },
           "status": {
             "description": "The task's status, derived from the saved answers.",
@@ -7787,7 +7839,9 @@
         "enum": [
           "NotStarted",
           "InProgress",
-          "Completed"
+          "Completed",
+          "NotApplicable",
+          "CannotStart"
         ],
         "type": "string",
         "description": "Represents the status of a task in a record's task list, derived from the answers saved on the\nrecord's latest revision."

@@ -545,6 +545,33 @@ public class RecordServiceTests : DatabaseTestBase
         await ShouldBeUnchanged(record.Id, RecordStatus.Unpublished, cancellationToken);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task DiscardDraftRecord_SuperUser_ReturnsCannotDiscardErrorAndChangesNothing(
+        bool ownOrganisation
+    )
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        Organisation otherOrganisation = await AddEntity(
+            new OrganisationFaker().Generate(),
+            cancellationToken
+        );
+        (Record record, _) = await CreateRecordForDiscard(
+            userRole: UserRole.Super,
+            organisationId: ownOrganisation ? null : otherOrganisation.Id
+        );
+
+        Result<DiscardRecordError> result = await Service.DiscardDraftRecord(
+            record.Id,
+            cancellationToken
+        );
+
+        result.ShouldBeError();
+        result.Error.ShouldBeOfType<DiscardRecordError.CannotDiscard>();
+        await ShouldBeUnchanged(record.Id, RecordStatus.Unpublished, cancellationToken);
+    }
+
     [Fact]
     public async Task DiscardDraftRecord_WhenRevisionIsSubmittedBeforeSaving_ReturnsConcurrencyError()
     {

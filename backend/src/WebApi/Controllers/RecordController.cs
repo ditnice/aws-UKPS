@@ -272,6 +272,7 @@ public class RecordController(
     /// <returns>An <see cref="ActionResult"/> indicating whether the record was discarded.</returns>
     /// <response code="200">The record was discarded.</response>
     /// <response code="400">The record has been submitted, so cannot be discarded.</response>
+    /// <response code="403">The caller can read the record but cannot discard it.</response>
     /// <response code="404">
     /// The record was not found, has already been discarded, or is not accessible to the caller.
     /// </response>
@@ -279,6 +280,7 @@ public class RecordController(
     [HttpPatch("{recordId:int}/discard", Name = nameof(DiscardRecord))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> DiscardRecord(int recordId, CancellationToken cancellationToken)
@@ -301,6 +303,11 @@ public class RecordController(
                 statusCode: StatusCodes.Status404NotFound,
                 title: "Not Found",
                 detail: "Record not found."
+            ),
+            DiscardRecordError.CannotDiscard => Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Forbidden",
+                detail: "You are not authorised to discard this record."
             ),
             DiscardRecordError.InvalidDiscard => Problem(
                 statusCode: StatusCodes.Status400BadRequest,

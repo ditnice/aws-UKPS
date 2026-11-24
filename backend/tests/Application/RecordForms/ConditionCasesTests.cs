@@ -43,6 +43,10 @@ public class ConditionCasesTests
                 conditionCase.Condition.QuestionId,
                 conditionCase.Condition.Values
             ),
+            ConditionKind.AnswerNotIn => new AnswerNotInCondition(
+                conditionCase.Condition.QuestionId,
+                conditionCase.Condition.Values
+            ),
             _ => throw new InvalidOperationException(
                 $"Unsupported condition kind {conditionCase.Condition.Kind}."
             ),

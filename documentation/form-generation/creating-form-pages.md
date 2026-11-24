@@ -43,7 +43,7 @@ describes. You only touch the frontend to add a new control.
 | `FormLayout` subclass                               | class    | `RecordType`, sections, tasks, pages                                                                                                           | One per record type, such as `MedicineFormLayout`. Declares every section, task and page once: ID, title and order, and a page's `CommercialInConfidence` flag. Each page ID is a `const string` on the layout. See [Step 2](#step-2-add-the-page-to-the-layout-and-choose-the-row-source)                                                                                                                                                                                                                                                                                                                                                                                  |
 | `[FormEntity]`                                      | class    | `RowSource`                                                                                                                                    | Marks a content entity whose properties hold questions. All of its pages must be in one form                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `[FormPage(id)]`                                    | property |                                                                                                                                                | `id` is a page ID from the layout (the layout's constant). The page decides the question's task, section and form, and holds its title, order and `CommercialInConfidence` flag                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| `[FormField(id, label, control)]`                   | property | `Hint`, `Display`, `Width`, `Order`, `Placeholder`, `ChildLabel`, `ChildPlaceholder`, `AddAnotherLabel`, `ItemLabel`, `RemoveLabel`, `ItemKey` | `Order` only matters on pages with several questions. `Placeholder` is for `Select` and `HierarchicalSelect`; the `Child…` properties for `HierarchicalSelect` (`ChildLabel` is required); `AddAnotherLabel` for a multi-value `HierarchicalSelect`, a `Group` or a `TextList`; `ItemLabel` (required) and `ItemKey` for a `Group`; `RemoveLabel` for a `Group` or `TextList`; `Width` (a `FormInputWidth`) overrides the default two-thirds width of a `Text` input (a character count such as `Chars20` or a share of the container such as `Full`) or of each entry of a `TextList` (a share of the container only). See [Groups and text lists](#groups-and-text-lists) |
+| `[FormField(id, label, control)]`                   | property | `Hint`, `Display`, `Width`, `Order`, `Placeholder`, `ChildLabel`, `ChildPlaceholder`, `AddAnotherLabel`, `CheckAnswersAddLabel`, `ItemLabel`, `RemoveLabel`, `ItemKey` | `Order` only matters on pages with several questions. `Placeholder` is for `Select` and `HierarchicalSelect`; the `Child…` properties for `HierarchicalSelect` (`ChildLabel` is required); `AddAnotherLabel` for a multi-value `HierarchicalSelect`, a `Group` or a `TextList`; `CheckAnswersAddLabel` (the add button on check your answers), `ItemLabel` (required) and `ItemKey` for a `Group`; `RemoveLabel` for a `Group`, `TextList` or multi-value `HierarchicalSelect`, which also takes an `ItemLabel`; `Width` (a `FormInputWidth`) overrides the default two-thirds width of a `Text` input (a character count such as `Chars20` or a share of the container such as `Full`) or of each entry of a `TextList` (a share of the container only). See [Groups and text lists](#groups-and-text-lists) |
 | `[FormRequired(message)]`                           | property |                                                                                                                                                |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `[FormMaxLength(max, message)]`                     | property |                                                                                                                                                | `Text`, `Textarea`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `[FormMaxItems(max, message)]`                      | property |                                                                                                                                                | `Checkbox`, multi-value `HierarchicalSelect`, `TextList`, `Group`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -207,7 +207,9 @@ internal sealed class MedicinesIndicationDetail
         Placeholder = "Choose a therapeutic area",
         ChildLabel = "Select the disease or condition (optional)",
         ChildPlaceholder = "Choose a disease or condition",
-        AddAnotherLabel = "Add another therapy area")]
+        AddAnotherLabel = "Add another therapy area",
+        ItemLabel = "Therapeutic area",
+        RemoveLabel = "Remove therapeutic area")]
     [FormMaxItems(3, "Select up to 3 therapeutic areas")]
     public ICollection<MedicinesIndicationDetailTherapeuticArea> TherapeuticAreas { get; set; } = [];
 }
@@ -273,6 +275,11 @@ new FormLayoutSection(
 - **Section title**: the dataset's section name, such as "Provide indication and development
   information". It is the heading above the section's tasks in the task list. Each task's title
   is the dataset's sub-section name, and is also the caption above every page in the task.
+- **Section sub text** and **task hint** (optional): pass `SubText: "..."` to a
+  `FormLayoutSection` to show text under its heading in the task list, and `Hint: "..."` to a
+  `FormLayoutTask` to show a hint under its link. Both are plain text: a blank line starts a new
+  paragraph and lines starting `- ` make a list. They must not be blank when set, and they are
+  part of the form fingerprint, so changing one needs a version bump.
 - **Page title** and **`CommercialInConfidence`**: see [step 4](#step-4-add-the-page-and-the-field).
   Pass `CommercialInConfidence: true` to show the "Commercial in confidence" badge above the
   heading.
@@ -367,7 +374,9 @@ controls for the property type:
 
 `HierarchicalSelect` is for reference data with a `ParentId`: the user picks a parent, then
 optionally a child, and the answer is the most specific choice. It needs a tree provider (see
-step 5). On a junction it repeats, with an **Add another** button up to the `MaxItems` rule. See
+step 5). On a junction it repeats in the stacked add another layout (as a `Group` does): each entry is headed
+by its `ItemLabel` and number, with a remove button once there are several and an **Add another**
+button up to the `MaxItems` rule. See
 [Hierarchical selects](high-level-design.md#hierarchical-selects).
 
 `Display = "combobox"` asks the frontend for a searchable combobox. Until that is built, it is
@@ -423,6 +432,7 @@ is not supported. The worked example is the Clinical trials task:
     FormControl.Group,
     ItemLabel = "Clinical trial",
     AddAnotherLabel = "Add another clinical trial",
+    CheckAnswersAddLabel = "Add clinical trial",
     RemoveLabel = "Remove clinical trial")]
 [FormRequired("Add at least one clinical trial")]
 public ICollection<RecordClinicalTrial> ClinicalTrials { get; set; } = [];
@@ -492,6 +502,9 @@ it useful elsewhere. It must not be mapped by EF, which a getter-only property i
 ### Hints
 
 - Pass hint text with `Hint = "..."`. A blank line (`\n\n`) starts a new paragraph.
+- A `Checkbox` or `Radio` question hint can contain links, written `[link text](https://...)`. They open
+  in a new tab, and "(opens in a new tab)" is added to the link text. Only `https` URLs without spaces
+  or brackets become links. Hints on other controls and on options are plain text.
 - Hints are shown above the input and linked to it with `aria-describedby`.
 - A radio option can carry its own hint. Register the enum with the three-part overload of `AddEnum`, `(Value, Label, Hint)`; see the `BiomarkerType` provider in `MedicineOptionProviders`. The hint shows under that option, and it is part of the form fingerprint, so changing it needs a version bump.
 - On a single-question page, the label is visually hidden on the field because it is already
@@ -775,6 +788,21 @@ internal sealed class MedicinesDevelopmentBackground { ... }
 
 (Illustrative; the current design reveals the originator name on the same page.)
 
+Set `NoneOf = true` to invert it: the page applies when the trigger's answer includes **none** of
+the values. An unanswered trigger includes none, so the page applies until the trigger is
+answered. For example, PIM and EAMS apply unless the technology status includes `Biosimilar`:
+
+```csharp
+[FormPageShowWhen(
+    MedicineFormLayout.PimDesignation,
+    "medicines_indication_detail.medicine_technology_status",
+    MedicineTechnologyStatus.Biosimilar,
+    NoneOf = true
+)]
+```
+
+`NoneOf` is available on page conditions only, not on `[FormShowWhen]`.
+
 ### What happens to answers
 
 - An answer that no longer applies is **cleared when the trigger's page is saved**, including
@@ -799,7 +827,11 @@ internal sealed class MedicinesDevelopmentBackground { ... }
 - A `[FormShowWhen]` trigger is an earlier question on the **same page** (a lower
   `FormField.Order`).
 - A `[FormPageShowWhen]` trigger is on an **earlier page** in form order (section, task, then
-  page). The first page of a task can never be conditional, because the task list links to it.
+  page). The first page of a task can only be conditional when every other page of the task is
+  conditional too, so that the whole task can be hidden. The task list then shows it as not
+  applicable instead of linking to it. The validator does not check that the other pages depend on
+  the first page's trigger, so make sure the task cannot be left with a hidden first page while a
+  later page still applies, or the task list links to a page that returns 404.
 - Conditions may chain: a question revealed by a question that is itself hidden is also hidden.
 
 ## Step 7: Bump the form version
@@ -832,12 +864,12 @@ reports every problem in one exception.
 | Order        | Two sections, two tasks in a section, two pages in a task, or two questions on a page have the same `Order`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | Structure    | More than one `FormLayout` for a record type. A section, task or page title is blank. A `[FormPage]` names a page no layout declares. An entity has pages in more than one form, or has `[FormEntity]` but no questions                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Controls     | The control does not suit the property type (see the table in step 4). A non-nullable column has no `[FormRequired]`. A `PrecisionDate`, `ActualMonth` or `ActualDate` has no `[FormDateEvent]`, or another control has one. Two date questions in one form use the same `[FormDateEvent]`. A `PrecisionDate`'s or `ActualDate`'s `[FormDateEvent]` has no `Name`. A `TextList`'s child has no `int` key, not exactly one `string` column, or a `DisplayOrder` that is not an `int?`. `[FormListSource]` is on a mapped property or a control other than `TextList`, names an unknown navigation, or names a kind whose enum the child has no single column of |
-| Groups       | A group's question has a dotted ID, a control other than `Text`, `Textarea`, `PrefixedNumber` or `TextList`, `[FormPage]` or `[FormShowWhen]`; two of its questions share an ID or `Order`; `ItemKey` names no required, distinct, single-value question; a `TextList`'s entity has other than one string column; `ItemLabel` missing on a `Group` or set elsewhere; `RemoveLabel` or `ItemKey` on another control; `[FormDistinct]` on anything but a `TextList` or a group's single-value question                                                                                                                                                           |
+| Groups       | A group's question has a dotted ID, a control other than `Text`, `Textarea`, `PrefixedNumber` or `TextList`, `[FormPage]` or `[FormShowWhen]`; two of its questions share an ID or `Order`; `ItemKey` names no required, distinct, single-value question; a `TextList`'s entity has other than one string column; `ItemLabel` missing on a `Group`, or set on anything but a `Group`, `TextList` or multi-value `HierarchicalSelect`; `RemoveLabel` on anything but those, or `CheckAnswersAddLabel` or `ItemKey` on a control other than a `Group`; `[FormDistinct]` on anything but a `TextList` or a group's single-value question                                                                                                                                                           |
 | Presentation | `PrefixedNumber` without `[FormValuePrefixes]`, or the attribute on another control, with a blank prefix, a prefix ending in a digit, a repeated prefix, a prefix that starts another, a negative `Digits` or a blank `Name`; `Placeholder` on a control other than `Select`, `HierarchicalSelect` or `PrefixedNumber`; `ChildLabel` or `ChildPlaceholder` on a control other than `HierarchicalSelect`; `AddAnotherLabel` on anything but a multi-value `HierarchicalSelect`, a `Group` or a `TextList`; `Width` on a control other than `Text` or `TextList`, or a character-count `Width` on a `TextList`; a `HierarchicalSelect` without `ChildLabel`      |
 | Options      | A choice control has no provider registered for its type, or several and no `[FormOptions]`. A text control has `[FormOptions]`. The key is unknown. The enum provider's enum does not match the property, or the provider kind (enum, flat or tree) does not match the binding and control. A `HierarchicalSelect`'s reference entity has no `int? ParentId`                                                                                                                                                                                                                                                                                                  |
 | Rules        | A rule is on a control it does not apply to (including `[FormDistinct]` on anything but a `TextList`), or a rule kind appears twice                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | Rows         | The entity has no `int RevisionId` FK to `RecordRevision`. `RowSource = FirstSave` on an entity with other non-nullable columns                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Conditions   | The trigger question is unknown, is not earlier on the same page (`[FormShowWhen]`) or on an earlier page (`[FormPageShowWhen]`), or is not a `Radio`, `Select` or `Checkbox` on an enum or on reference data with a `string Code`, or a `PrecisionDate`. A value is not a member of the trigger's enum (or `DatePrecision`), is not a non-blank code, is repeated, or there are none. A `[FormShowWhen]` question is on a non-nullable column. A `[FormPageShowWhen]` names a page its entity does not declare or the first page of a task, or a page has more than one. `[FormPageShowWhen]` on a class without `[FormEntity]`                               |
+| Conditions   | The trigger question is unknown, is not earlier on the same page (`[FormShowWhen]`) or on an earlier page (`[FormPageShowWhen]`), or is not a `Radio`, `Select` or `Checkbox` on an enum or on reference data with a `string Code`, or a `PrecisionDate`. A value is not a member of the trigger's enum (or `DatePrecision`), is not a non-blank code, is repeated, or there are none. A `[FormShowWhen]` question is on a non-nullable column. A `[FormPageShowWhen]` names a page its entity does not declare, or the first page of a task unless every other page of that task has a condition too, or a page has more than one. `[FormPageShowWhen]` on a class without `[FormEntity]`                               |
 
 ## Step 8: Test
 

@@ -85,6 +85,27 @@ describe('SummaryCard', () => {
     expect(asFragment()).toMatchSnapshot()
   })
 
+  it('renders a tag between the title and the actions', () => {
+    render(
+      <SummaryCard
+        actions={
+          <SummaryListAction href="#edit" visuallyHiddenText="trial 1">
+            Edit
+          </SummaryListAction>
+        }
+        tag={<span>There is a problem</span>}
+        title="Trial 1"
+      >
+        <p>Not yet provided</p>
+      </SummaryCard>,
+    )
+
+    const tag = screen.getByText('There is a problem')
+    const link = screen.getByRole('link', { name: 'Edit trial 1' })
+    expect(isBefore(screen.getByRole('heading', { name: 'Trial 1' }), tag)).toBe(true)
+    expect(isBefore(tag, link)).toBe(true)
+  })
+
   it('does not render any actions when there are none', () => {
     render(
       <SummaryCard title="Pricing and budget impact">

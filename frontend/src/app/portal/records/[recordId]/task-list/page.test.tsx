@@ -39,10 +39,13 @@ const taskList = {
       {
         id: 'indication-and-development',
         title: 'Provide indication and development information',
+        optional: false,
+        subText: 'Tell us about the indication.',
         tasks: [
           {
             id: 'indication-details',
             title: 'Indication details',
+            hint: 'Includes the BNF chapter and therapeutic area.',
             status: 'InProgress',
             firstPageId: 'indication',
           },
@@ -51,10 +54,13 @@ const taskList = {
       {
         id: 'service-readiness',
         title: 'Provide service readiness information (optional)',
+        optional: true,
+        subText: null,
         tasks: [
           {
             id: 'laboratory-testing',
             title: 'Laboratory testing',
+            hint: null,
             status: 'NotStarted',
             firstPageId: 'diagnostic-test-required',
           },
@@ -101,6 +107,18 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('RecordTaskListPage', () => {
+  it('shows section sub text and task hints when they are set', async () => {
+    await renderPage()
+
+    expect(screen.getByText('Tell us about the indication.')).toBeInTheDocument()
+    expect(screen.getByText('Includes the BNF chapter and therapeutic area.')).toBeInTheDocument()
+
+    const optionalSection = screen
+      .getByRole('heading', { level: 2, name: 'Provide service readiness information (optional)' })
+      .closest('section')!
+    expect(optionalSection.querySelector('p')).toBeNull()
+  })
+
   it('renders the task list and links each task to its first page', async () => {
     await renderPage()
 
@@ -131,7 +149,7 @@ describe('RecordTaskListPage', () => {
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
       'href',
-      '/portal/organisations/7/records/42',
+      '/portal/organisations/7/records',
     )
     expect(screen.getByRole('link', { name: 'Indication details' })).toHaveAttribute(
       'href',
@@ -162,6 +180,59 @@ describe('RecordTaskListPage', () => {
     )
   })
 
+  describe('PIM and EAMS when they cannot be done', () => {
+    const withPimStatus = (status: 'NotApplicable' | 'CannotStart') =>
+      ({
+        ...mandatoryTasksCompleteTaskList,
+        data: {
+          ...mandatoryTasksCompleteTaskList.data,
+          sections: [
+            ...mandatoryTasksCompleteTaskList.data.sections,
+            {
+              id: 'special-designation',
+              title: 'Provide special designation information',
+              optional: false,
+              subText: null,
+              tasks: [
+                {
+                  id: 'pim-and-eams',
+                  title:
+                    'Promising Innovative Medicine (PIM) and Early Access to Medicines Scheme (EAMS)',
+                  hint: null,
+                  status,
+                  firstPageId: 'pim-designation',
+                },
+              ],
+            },
+          ],
+        },
+      }) satisfies GetRecordTaskListResult
+
+    it('shows a not applicable task as plain text with no link, and still lets the user submit', async () => {
+      vi.mocked(getRecordTaskList).mockResolvedValue(withPimStatus('NotApplicable'))
+
+      await renderPage()
+
+      expect(screen.getByText('Cannot start yet')).toBeInTheDocument()
+      expect(screen.getByText('You have completed 1 of 1 mandatory tasks')).toBeInTheDocument()
+      expect(screen.getByText(/Promising Innovative Medicine/)).toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: /Promising Innovative Medicine/ })).toBeNull()
+      expect(screen.getByRole('link', { name: 'Review and submit record' })).toBeInTheDocument()
+    })
+
+    it('shows a task that cannot start yet as plain text with no link, and holds back submission', async () => {
+      vi.mocked(getRecordTaskList).mockResolvedValue(withPimStatus('CannotStart'))
+
+      await renderPage()
+
+      expect(screen.getByText('Cannot start yet')).toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: /Promising Innovative Medicine/ })).toBeNull()
+      expect(
+        screen.queryByRole('link', { name: 'Review and submit record' }),
+      ).not.toBeInTheDocument()
+    })
+  })
+
   it('links back to the organisation records list', async () => {
     await renderPage()
 
@@ -177,6 +248,10 @@ describe('RecordTaskListPage', () => {
     expect(
       screen.getByRole('heading', { level: 3, name: 'Draft record saved' }),
     ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
+      'href',
+      '/portal/organisations/7/records',
+    )
   })
 
   it('does not show the draft saved alert without the draft-saved action', async () => {

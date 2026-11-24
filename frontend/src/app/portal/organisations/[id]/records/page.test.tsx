@@ -235,6 +235,23 @@ describe('OrganisationRecordsPage (direct invocation)', () => {
     expect(screen.getByTestId('create-record-action-banner')).toBeInTheDocument()
   })
 
+  it('displays the create record banner to a standard user', async () => {
+    mockCurrentUser('Standard')
+
+    await renderPage()
+
+    expect(screen.getByTestId('create-record-action-banner')).toBeInTheDocument()
+  })
+
+  it('does not display the create record banner to a super user', async () => {
+    mockCurrentUser('Super')
+
+    await renderPage()
+
+    expect(screen.queryByTestId('create-record-action-banner')).not.toBeInTheDocument()
+    expect(screen.getByTestId('records-table')).toBeInTheDocument()
+  })
+
   it('displays the records search and filter section', async () => {
     await renderPage()
 

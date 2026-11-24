@@ -47,7 +47,10 @@ export const fakeCompanyCodeSuggestionsDto = (options?: Options): CompanyCodeSug
     };
 };
 
-export const fakeConditionKind = (): ConditionKind => 'AnswerIn';
+export const fakeConditionKind = (options?: Options): ConditionKind => {
+    const f = options?.faker ?? faker;
+    return f.helpers.arrayElement(['AnswerIn', 'AnswerNotIn']);
+};
 
 export const fakeConfirmNewPasswordCommand = (options?: Options): ConfirmNewPasswordCommand => {
     const f = options?.faker ?? faker;
@@ -281,7 +284,7 @@ export const fakeRecordDisplayStatus = (options?: Options): RecordDisplayStatus 
 export const fakeRecordPageConditionDto = (options?: Options): RecordPageConditionDto => {
     const f = options?.faker ?? faker;
     return {
-        kind: fakeConditionKind(),
+        kind: fakeConditionKind(options),
         questionId: f.string.uuid(),
         values: f.helpers.multiple(() => f.string.sample())
     };
@@ -360,7 +363,9 @@ export const fakeRecordTaskStatus = (options?: Options): RecordTaskStatus => {
     return f.helpers.arrayElement([
         'NotStarted',
         'InProgress',
-        'Completed'
+        'Completed',
+        'NotApplicable',
+        'CannotStart'
     ]);
 };
 
@@ -369,6 +374,7 @@ export const fakeRecordTaskListTaskDto = (options?: Options): RecordTaskListTask
     return {
         id: f.string.uuid(),
         title: f.lorem.words(),
+        hint: f.datatype.boolean() ? f.string.sample() : null,
         status: fakeRecordTaskStatus(options),
         firstPageId: f.string.uuid()
     };
@@ -379,6 +385,8 @@ export const fakeRecordTaskListSectionDto = (options?: Options): RecordTaskListS
     return {
         id: f.string.uuid(),
         title: f.lorem.words(),
+        optional: f.datatype.boolean(),
+        subText: f.datatype.boolean() ? f.string.sample() : null,
         tasks: f.helpers.multiple(() => fakeRecordTaskListTaskDto(options))
     };
 };
@@ -913,7 +921,7 @@ export const fakeRecordAnswersQuestionDto = (options: Options = {}, _callDepth =
         selectedOptions: f.datatype.boolean() ? f.helpers.multiple(() => fakeRecordAnswersOptionDto(options)) : null,
         itemLabel: f.datatype.boolean() ? f.string.sample() : null,
         items: _callDepth > MAX_CALL_DEPTH ? null : f.datatype.boolean() ? _callDepth > MAX_CALL_DEPTH ? [] : f.helpers.multiple(() => fakeRecordAnswersGroupItemDto(options, _callDepth + 1)) : null,
-        addAnotherLabel: f.datatype.boolean() ? f.string.sample() : null
+        checkAnswersAddLabel: f.datatype.boolean() ? f.string.sample() : null
     };
 };
 
@@ -922,6 +930,7 @@ export const fakeRecordAnswersSectionDto = (options?: Options): RecordAnswersSec
     return {
         id: f.string.uuid(),
         title: f.lorem.words(),
+        optional: f.datatype.boolean(),
         tasks: f.helpers.multiple(() => fakeRecordAnswersTaskDto(options))
     };
 };
@@ -931,7 +940,8 @@ export const fakeRecordAnswersTaskDto = (options?: Options): RecordAnswersTaskDt
     return {
         id: f.string.uuid(),
         title: f.lorem.words(),
-        questions: f.helpers.multiple(() => fakeRecordAnswersQuestionDto(options))
+        questions: f.helpers.multiple(() => fakeRecordAnswersQuestionDto(options)),
+        notApplicable: f.datatype.boolean()
     };
 };
 
@@ -1366,6 +1376,8 @@ export const fakeDiscardRecordResponse200 = (): DiscardRecordResponses[200] => u
 export const fakeDiscardRecordResponse400 = (options?: Options): DiscardRecordErrors[400] => fakeProblemDetails(options);
 
 export const fakeDiscardRecordResponse401 = (options?: Options): DiscardRecordErrors[401] => fakeAuthenticationProblemDetails(options);
+
+export const fakeDiscardRecordResponse403 = (options?: Options): DiscardRecordErrors[403] => fakeProblemDetails(options);
 
 export const fakeDiscardRecordResponse404 = (options?: Options): DiscardRecordErrors[404] => fakeProblemDetails(options);
 

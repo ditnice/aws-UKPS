@@ -222,7 +222,7 @@ invalid model stops the API starting. It holds structure only: bindings receive 
 - **Form order** is section order, then task order, then page order. A user enters a task from
   the task list and steps through its pages: Back goes to the previous page in the task, and Save
   and continue goes to the next. On a task's first page, Back returns to the task list. On its last
-  page the button reads **Save and return to task list**, and saving returns to the task list. A
+  page the button reads **Save and continue to task list**, and saving returns to the task list. A
   page opened from check your answers (a link with `?returnTo=check-your-answers`) has one button,
   **Save and return to check your answers**: saving returns to check your answers, and Back goes
   there too, whether or not the task has another page.
@@ -233,7 +233,17 @@ invalid model stops the API starting. It holds structure only: bindings receive 
   one nested card per item, each with an
   **Edit** link to that item on the group's page (`#{questionId}-item-{index}`), then an **Add
   another** button that opens the page with `?add=group-item` and a new blank item after the saved
-  ones. Errors are not tagged per item. Return
+  ones. A group that applies but has no items shows one card instead, with a single
+  "Not yet provided" row and an **Edit** link to the blank first item on the group's page. Errors are
+  not tagged per item; a group's error is tagged once, above its cards, or beside **Edit** on the
+  empty card. A task in an optional section (`Optional` on the layout
+  section, flagged on the response) is titled "(optional)" and says it becomes mandatory within 12
+  months of the market authorisation date; while nothing in it is answered it shows one "Not yet
+  provided" row with an **Edit section** link instead of a row per question. No question in an
+  optional section is required: an unanswered one raises no error and does not block submitting,
+  even once the task is started, though an answer that was given is still checked. A task with no question that applies (`notApplicable`, for example PIM and EAMS
+  on a biosimilar) shows an explanation instead of rows. The record title row is tagged **Hidden**
+  by its question ID, as the response has no visibility flag yet. Return
   to my records is always shown; Submit is shown only when there are no errors. Selecting Submit sends the form version and revision hash the page loaded, and the API
   rechecks everything. A 422 refreshes the page with the current
   errors, and a 409 shows the API's message with a link to reload. If the record can't be
@@ -242,7 +252,7 @@ invalid model stops the API starting. It holds structure only: bindings receive 
   and question rows as check your answers, built by the same `RecordAnswersBuilder`, but for any
   status and any caller who can read the record, and without checking the answers. The record
   details page shows an accordion per section and a card per task, with groups as one card per
-  item, and no Change, Edit or Add another links. Pages that only need the record's status,
+  item (none if it has no items), and no Change, Edit or Add another links. Pages that only need the record's status,
   actions and title, such as discard and change status, use `GET /records/{id}/overview`, which
   loads no answers.
 - **No ties.** Two sections or pages with the same `Order`, or two questions on the same page
@@ -427,8 +437,11 @@ Some questions and pages only apply when an earlier question has a particular an
   frontend shows the question beneath each option that reveals it, while that option is chosen;
   for other triggers it is shown as the next question.
 - **A page shown by an earlier page.** `[FormPageShowWhen(pageId, questionId, values...)]` on the
-  entity that declares the page. The trigger must be on an earlier page, and the page must not
-  be the first of its task, which the task list links to. Back and Save and continue skip the
+  entity that declares the page. The trigger must be on an earlier page. The page may be the
+  first of its task, which the task list links to, only when every other page of the task has a
+  condition too; the task list then shows a hidden task as not applicable instead of linking to
+  it. `NoneOf = true` inverts the condition (the page applies when the answer includes none of
+  the values, so also while the trigger is unanswered). Back and Save and continue skip the
   page while it does not apply.
 
 ```csharp
@@ -597,7 +610,7 @@ sequenceDiagram
     participant F as FormPage (browser)
     participant B as Backend
     participant P as Postgres
-    U->>F: Save and continue (or Save and return to task list)
+    U->>F: Save and continue, Save and return to task list, or (last page) Save and continue to task list
     F->>F: Validate with Zod (same rules and messages)
     alt Client validation fails
         F-->>U: Errors shown against fields
@@ -653,6 +666,11 @@ revision:
 | `NotStarted` | No answer has been saved for the task |
 | `InProgress` | At least one answer is saved, but one or more required questions are unanswered |
 | `Completed` | Every required question has a saved answer; unanswered optional questions do not prevent completion |
+| `NotApplicable` | No question in the task applies to the record, for example PIM and EAMS on a biosimilar. The task has no page to open |
+| `CannotStart` | The task's first page depends on a question that is not answered yet, for example PIM and EAMS before the technology status is. The task has no page to open yet |
+
+Each section also has an `optional` flag. An optional section is marked "(optional)" and does not
+count towards the tasks that must be complete before the record can be reviewed and submitted.
 
 Only questions that apply count. A question hidden by its condition, or on a page that does not
 apply, is neither an answer nor a required question still to answer, so a required follow-up does
@@ -698,7 +716,7 @@ examples below use record 5, revision 7.
 | `recordId` | Used to build page URLs |
 | `section`, `task`, `page` | IDs and titles; the task title is the page caption |
 | `previousPageId` | Target of Back: the previous page in the task that applies, or `null` when there is none, where Back goes to the task list |
-| `nextPageId` | The next page in the task that applies given the saved answers, or one that depends on this page's own answers and so could apply once they are saved (`PossibleNextPage`). `null` when there is none, where the button reads **Save and return to task list**. The save response, not this value, decides where saving goes |
+| `nextPageId` | The next page in the task that applies given the saved answers, or one that depends on this page's own answers and so could apply once they are saved (`PossibleNextPage`). `null` when there is none, where the button reads **Save and continue to task list**. The save response, not this value, decides where saving goes |
 | `questions` | `id`, `type` (the `FormControl`), `multiple` (the answer is an array), `label`, `hint`, `display`, `placeholder`, `childLabel`, `childPlaceholder`, `addAnotherLabel`, `removeLabel` (a text list's remove button), `showWhen` (`kind`, `questionId`, `values`, or `null`), `rules` (`kind`, `value`, `message`), `options` (`value`, `label`, `children`) |
 | `answers` | Every page question: a string or `null`, or an array for multi-value questions |
 
@@ -887,7 +905,8 @@ One migration (`AddRecordContentForms`) adds:
 
 `Operation.EditRecordContent` is granted to Standard users in `OrganisationAuthoriser`, and
 Champion users already have every operation on their organisation. Super users are explicitly
-denied it, although they keep every other operation on every organisation.
+denied it, along with creating, discarding, confirming and changing the status of records. They
+keep every other operation on every organisation.
 
 The migration does not add any reference data. BNF chapters and therapeutic areas are already
 loaded by the synthetic data seeder; see [Reference data](reference-data.md).

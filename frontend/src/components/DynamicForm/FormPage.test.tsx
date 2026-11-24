@@ -80,6 +80,8 @@ const areasQuestion = question({
   childLabel: 'Select the disease or condition (optional)',
   childPlaceholder: 'Choose a disease or condition',
   addAnotherLabel: 'Add another therapy area',
+  itemLabel: 'Therapeutic area',
+  removeLabel: 'Remove therapeutic area',
   rules: [{ kind: 'MaxItems', value: 2, message: 'Select up to 2 therapeutic areas' }],
   options: tree,
 })
@@ -213,7 +215,7 @@ describe('FormPage', () => {
       cleanup()
       render(<FormPage page={page({ nextPageId: null })} />)
       expect(
-        screen.getByRole('button', { name: 'Save and return to task list' }),
+        screen.getByRole('button', { name: 'Save and continue to task list' }),
       ).toBeInTheDocument()
     })
 
@@ -351,7 +353,10 @@ describe('FormPage', () => {
           />,
         )
 
-        expect(label(areasQuestion.label).className).toMatch(/leadLabel/)
+        // The question label is the group's own heading; each entry's parent label is hidden.
+        expect(
+          screen.getByRole('heading', { level: 2, name: areasQuestion.label }),
+        ).toBeInTheDocument()
         expect(label('Select the disease or condition (optional)').className).toMatch(/leadLabel/)
       })
 
@@ -411,7 +416,7 @@ describe('FormPage', () => {
         />,
       )
 
-      fireEvent.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Save and continue to task list' }))
 
       await waitFor(() => {
         expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/task-list')
@@ -844,6 +849,35 @@ describe('FormPage', () => {
       )
     })
 
+    it.each(['Checkbox', 'Radio'] as const)('shows links in a %s hint', (type) => {
+      render(
+        <FormPage
+          page={page({
+            questions: [
+              question({
+                id: 'choices',
+                type,
+                multiple: type === 'Checkbox',
+                label: 'Choose',
+                hint: 'Read [the guide](https://example.com/guide).',
+                options: tree,
+              }),
+            ],
+            answers: { choices: type === 'Checkbox' ? [] : null },
+          })}
+        />,
+      )
+
+      expect(screen.getByRole('link', { name: 'the guide (opens in a new tab)' })).toHaveAttribute(
+        'href',
+        'https://example.com/guide',
+      )
+      const option = type === 'Checkbox' ? 'checkbox' : 'radio'
+      expect(screen.getByRole(option, { name: '1: Addiction' })).toHaveAccessibleDescription(
+        'Read the guide (opens in a new tab).',
+      )
+    })
+
     it('saves ticked checkboxes in selection insertion order', async () => {
       const user = userEvent.setup()
       render(
@@ -967,7 +1001,7 @@ describe('FormPage', () => {
       expect(child.className).not.toMatch(/fieldError/)
     })
 
-    it('describes every hierarchical select with the question hint', () => {
+    it('describes the group of hierarchical selects with the question hint', () => {
       render(
         <FormPage
           page={page({
@@ -978,9 +1012,9 @@ describe('FormPage', () => {
       )
 
       const hint = screen.getByText('Select up to 2 therapeutic areas.')
-      for (const select of screen.getAllByRole('combobox')) {
-        expect(select.getAttribute('aria-describedby')?.split(' ')).toContain(hint.id)
-      }
+      expect(hint.closest('fieldset')?.getAttribute('aria-describedby')?.split(' ')).toContain(
+        hint.id,
+      )
     })
 
     it('loads a saved child into its parent and child selects', () => {
@@ -1016,8 +1050,87 @@ describe('FormPage', () => {
         areas: ['2', '11'],
       })
 
-      fireEvent.click(screen.getByRole('button', { name: /^Remove\s*entry 2$/ }))
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Remove therapeutic area Therapeutic area 2' }),
+      )
       expect(screen.getAllByRole('combobox')).toHaveLength(1)
+    })
+
+    it('names every select of a multi-value hierarchical select after its entry', () => {
+      render(
+        <FormPage page={page({ questions: [areasQuestion], answers: { areas: ['13', '11'] } })} />,
+      )
+
+      for (const entry of ['Therapeutic area 1', 'Therapeutic area 2']) {
+        expect(screen.getByRole('group', { name: entry })).toBeInTheDocument()
+        expect(screen.getByRole('combobox', { name: entry })).toBeInTheDocument()
+        expect(
+          screen.getByRole('combobox', {
+            name: `Select the disease or condition (optional), ${entry}`,
+          }),
+        ).toBeInTheDocument()
+      }
+    })
+
+    it('adds an entry of a hierarchical select, focusing its parent select', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={page({ questions: [areasQuestion], answers: { areas: ['2'] } })} />)
+
+      expect(screen.queryByRole('button', { name: /Remove/ })).not.toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Add another therapy area' }))
+
+      expect(screen.getByRole('combobox', { name: 'Therapeutic area 2' })).toHaveFocus()
+    })
+
+    it('removes the first entry of a hierarchical select and focuses the new first heading', async () => {
+      const user = userEvent.setup()
+      render(
+        <FormPage page={page({ questions: [areasQuestion], answers: { areas: ['13', '2'] } })} />,
+      )
+
+      await user.click(
+        screen.getByRole('button', { name: 'Remove therapeutic area Therapeutic area 1' }),
+      )
+
+      expect(screen.getAllByRole('combobox')).toHaveLength(1)
+      expect(screen.getByRole('combobox', { name: 'Therapeutic area 1' })).toHaveValue('2')
+      expect(
+        screen.getByRole('heading', { name: 'Therapeutic area 1' }).closest('legend'),
+      ).toHaveFocus()
+      expect(screen.queryByRole('button', { name: /Remove/ })).not.toBeInTheDocument()
+    })
+
+    it('shows the error of a multi-value hierarchical select once, and clears it on removal', async () => {
+      const user = userEvent.setup()
+      render(
+        <FormPage page={page({ questions: [areasQuestion], answers: { areas: ['13', '13'] } })} />,
+      )
+
+      save()
+
+      // findBy fails if the message is shown more than once.
+      const message = await screen.findByText('You have selected the same option more than once')
+      expect(message.closest('fieldset')?.getAttribute('aria-describedby')?.split(' ')).toContain(
+        message.id,
+      )
+      const selects = screen.getAllByRole('combobox')
+      expect(selects).toHaveLength(4)
+      for (const select of selects) {
+        expect(select).toBeInvalid()
+        expect(select.getAttribute('aria-describedby')?.split(' ')).toContain(message.id)
+      }
+
+      await user.click(
+        screen.getByRole('button', { name: 'Remove therapeutic area Therapeutic area 2' }),
+      )
+
+      expect(
+        screen.queryByText('You have selected the same option more than once'),
+      ).not.toBeInTheDocument()
+      for (const select of screen.getAllByRole('combobox')) {
+        expect(select).toBeValid()
+        expect(select).not.toHaveAttribute('aria-describedby')
+      }
     })
 
     it('reports the same area chosen twice', async () => {
@@ -1404,7 +1517,7 @@ describe('FormPage', () => {
             question({
               id: 'global_date',
               type: 'ActualMonth',
-              label: 'Actual global first submission date',
+              label: 'Enter the date of GFS of this product',
               hint: null,
               rules: [],
             }),
@@ -1417,7 +1530,7 @@ describe('FormPage', () => {
         render(<FormPage page={monthPage()} />)
 
         expect(
-          screen.getByRole('group', { name: 'Actual global first submission date' }),
+          screen.getByRole('group', { name: 'Enter the date of GFS of this product' }),
         ).toBeInTheDocument()
         expect(screen.queryByRole('textbox', { name: 'Day' })).not.toBeInTheDocument()
         await user.type(screen.getByRole('textbox', { name: 'Month' }), '7')
@@ -1538,6 +1651,7 @@ describe('FormPage', () => {
         screen.getByRole('button', { name: 'Save and return to check your answers' }),
       ).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: 'Save and continue' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Save and continue to task list' })).toBeNull()
       expect(screen.queryByRole('button', { name: 'Save and return to task list' })).toBeNull()
     })
 
@@ -1994,7 +2108,7 @@ describe('FormPage names and identifiers', () => {
 
   // The task has one page, so its button returns to the task list.
   const saveAndReturn = () =>
-    fireEvent.click(screen.getByRole('button', { name: 'Save and return to task list' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save and continue to task list' }))
 
   const sentAnswers = () =>
     (mocks.saveRecordFormPage.mock.calls[0][0] as { body: { answers: Record<string, unknown> } })
