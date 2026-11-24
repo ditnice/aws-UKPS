@@ -18,7 +18,7 @@ const question = (overrides: Partial<RecordAnswersQuestionDto>): RecordAnswersQu
   selectedOptions: null,
   itemLabel: null,
   items: null,
-  addAnotherLabel: null,
+  checkAnswersAddLabel: null,
   ...overrides,
 })
 
@@ -102,6 +102,42 @@ describe('TaskAnswers', () => {
     const tag = screen.getByText('Problem with Enter clinical trial details')
     const firstTrial = screen.getByRole('heading', { level: 3, name: 'Clinical trial 1' })
     expect(tag.compareDocumentPosition(firstTrial)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
+  it('shows one empty card for a group with no items when asked to', () => {
+    render(
+      <TaskAnswers
+        questions={[{ ...trials, items: [] }]}
+        showEmptyGroupCard
+        groupItemHeadingLevel={3}
+        groupTag={() => <span>Problem</span>}
+        groupItemAction={(q, index, title) => (
+          <SummaryListAction href={`/${q.id}#${index}`} visuallyHiddenText={title}>
+            Edit
+          </SummaryListAction>
+        )}
+      />,
+    )
+
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(1)
+    expect(screen.getAllByText('Not yet provided')).toHaveLength(1)
+    // The tag is on the title line, between the title and Edit.
+    const tag = screen.getByText('Problem')
+    expect(screen.getByRole('heading', { level: 3 }).compareDocumentPosition(tag)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
+    expect(tag.compareDocumentPosition(screen.getByRole('link'))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
+    expect(screen.getByRole('link', { name: /Edit\s*Clinical trial 1/ }).getAttribute('href')).toBe(
+      '/trials#0',
+    )
+  })
+
+  it('shows no card for a group with no items by default', () => {
+    render(<TaskAnswers questions={[{ ...trials, items: [] }]} groupItemHeadingLevel={3} />)
+
+    expect(screen.queryByRole('heading')).toBeNull()
   })
 
   it('shows no actions when none are passed', () => {

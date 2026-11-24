@@ -66,7 +66,7 @@ const checkAnswers = {
                 values: ['GC22'],
                 selectedOptions: null,
                 itemLabel: null,
-                addAnotherLabel: null,
+                checkAnswersAddLabel: null,
                 items: null,
               },
               {
@@ -78,7 +78,7 @@ const checkAnswers = {
                 values: [],
                 selectedOptions: null,
                 itemLabel: null,
-                addAnotherLabel: null,
+                checkAnswersAddLabel: null,
                 items: null,
               },
             ],
@@ -110,7 +110,7 @@ const trialItem = (studyName: string): RecordAnswersGroupItemDto => ({
       values: [studyName],
       selectedOptions: null,
       itemLabel: null,
-      addAnotherLabel: null,
+      checkAnswersAddLabel: null,
       items: null,
     },
   ],
@@ -140,7 +140,7 @@ const trialsCheckAnswers = {
                 values: ['Yes'],
                 selectedOptions: null,
                 itemLabel: null,
-                addAnotherLabel: null,
+                checkAnswersAddLabel: null,
                 items: null,
               },
               {
@@ -152,7 +152,7 @@ const trialsCheckAnswers = {
                 values: [],
                 selectedOptions: null,
                 itemLabel: 'Clinical trial',
-                addAnotherLabel: 'Add another clinical trial',
+                checkAnswersAddLabel: 'Add clinical trial',
                 items: [trialItem('SURVEYOR-1'), trialItem('SURVEYOR-2')],
               },
             ],
@@ -176,7 +176,7 @@ const textQuestion = (id: string, pageId: string, label: string, values: string[
     values,
     selectedOptions: null,
     itemLabel: null,
-    addAnotherLabel: null,
+    checkAnswersAddLabel: null,
     items: null,
   }) satisfies Question
 
@@ -247,12 +247,12 @@ describe('CheckAnswersPage', () => {
     )
   })
 
-  it('offers to add another item, opening it after the saved ones', async () => {
+  it('offers to add an item, opening it after the saved ones', async () => {
     vi.mocked(getRecordCheckAnswers).mockResolvedValue(trialsCheckAnswers)
 
     await renderPage()
 
-    expect(screen.getByRole('link', { name: 'Add another clinical trial' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Add clinical trial' })).toHaveAttribute(
       'href',
       '/portal/records/42/clinical-trial-details?returnTo=check-your-answers&add=group-item#record_clinical_trial-item-2',
     )
@@ -442,7 +442,7 @@ describe('CheckAnswersPage', () => {
     expect(screen.getAllByText('There is a problem')).toHaveLength(2)
   })
 
-  it('leaves a group with no items untagged, its error only in the summary', async () => {
+  it('shows an empty card, with the problem tag beside Edit, for a group with no items', async () => {
     const [section] = trialsCheckAnswers.data.sections
     const [task] = section.tasks
     vi.mocked(getRecordCheckAnswers).mockResolvedValue({
@@ -476,8 +476,23 @@ describe('CheckAnswersPage', () => {
     await renderPage()
 
     expect(screen.getByRole('link', { name: 'Add at least one clinical trial' })).toBeVisible()
-    expect(screen.queryByText(/There is a problem with/)).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Add another clinical trial' })).toBeInTheDocument()
+    const card = screen.getByRole('heading', { level: 3, name: 'Clinical trial 1' })
+    const tags = screen.getAllByText(
+      (_, element) =>
+        element?.textContent === 'There is a problem with Enter clinical trial details' &&
+        element.tagName === 'SPAN',
+    )
+    expect(tags).toHaveLength(1)
+    expect(card.compareDocumentPosition(tags[0])).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(screen.getAllByText('Not yet provided')).toHaveLength(1)
+    expect(screen.queryByText('Study name')).not.toBeInTheDocument()
+    const edit = screen.getByRole('link', { name: /Edit\s*Clinical trial 1/ })
+    expect(tags[0].compareDocumentPosition(edit)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(edit).toHaveAttribute(
+      'href',
+      '/portal/records/42/clinical-trial-details?returnTo=check-your-answers#record_clinical_trial-item-0',
+    )
+    expect(screen.getByRole('link', { name: 'Add clinical trial' })).toBeInTheDocument()
   })
 
   it('shows no error summary or problem tags when there are no errors', async () => {

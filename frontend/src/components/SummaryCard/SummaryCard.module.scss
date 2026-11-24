@@ -53,7 +53,7 @@
   @include typography.font-size(2);
   font-family: typography.get-font-family(sans);
   font-weight: bold;
-  margin: 0;
+  margin: 0 auto 0 0;
 }
 
 // Several actions are a list, separated by borders like the summary list's row actions.
@@ -63,6 +63,30 @@
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+// Keeps a tag beside the actions when the title line wraps.
+.tagAndActions {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: utils.rem(spacing.$small spacing.$medium);
+
+  // From here the summary list has columns, so the tag lines up with the row tags of the wide-value
+  // list around this nested card. Its children become header items, so 100% is the header's width.
+  @include media-queries.mq($from: sm) {
+    display: contents;
+
+    // The outer list's actions column and value cell padding, less this card's inset and the gap.
+    > .actions {
+      --card-inset: calc(#{utils.rem(spacing.$medium)} + 1px);
+      justify-content: flex-end;
+      min-width: calc(
+        15% + 0.3 * var(--card-inset) + #{spacing.$medium * 1px} - var(--card-inset) -
+          #{utils.rem(spacing.$medium)}
+      );
+    }
+  }
 }
 
 .action {

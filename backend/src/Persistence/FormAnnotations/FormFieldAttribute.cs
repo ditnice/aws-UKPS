@@ -87,18 +87,27 @@ internal sealed class FormFieldAttribute(string id, string label, FormControl co
     public string? AddAnotherLabel { get; set; }
 
     /// <summary>
+    /// The text of the button that adds an item from check your answers, for example
+    /// <c>Add clinical trial</c>. Unlike <see cref="AddAnotherLabel"/>, it may be shown when there
+    /// are no items. Only a <see cref="FormControl.Group"/> may set it; defaults to <c>Add</c>.
+    /// </summary>
+    public string? CheckAnswersAddLabel { get; set; }
+
+    /// <summary>
     /// The heading of each item of a <see cref="FormControl.Group"/>, numbered from 1, for example
     /// <c>Clinical trial</c> gives "Clinical trial 1". Required on a group. A
     /// <see cref="FormControl.TextList"/> may also set it as the visible label of each entry: the
-    /// label alone while there is one entry, numbered from 1 once there are several. Not allowed
-    /// on any other control.
+    /// label alone while there is one entry, numbered from 1 once there are several. A
+    /// <see cref="FormControl.HierarchicalSelect"/> on a junction may set it as the numbered
+    /// heading of each entry; defaults to <c>Item</c>. Not allowed on any other control.
     /// </summary>
     public string? ItemLabel { get; set; }
 
     /// <summary>
-    /// The button text that removes an item of a <see cref="FormControl.Group"/> or an entry of a
-    /// <see cref="FormControl.TextList"/>, for example <c>Remove clinical trial</c>. Defaults to
-    /// <c>Remove</c>.
+    /// The button text that removes an item of a <see cref="FormControl.Group"/>, or an entry of a
+    /// <see cref="FormControl.TextList"/> or of a <see cref="FormControl.HierarchicalSelect"/> on
+    /// a junction, for example <c>Remove clinical trial</c>. Defaults to <c>Remove</c>. Not
+    /// allowed on any other control.
     /// </summary>
     public string? RemoveLabel { get; set; }
 

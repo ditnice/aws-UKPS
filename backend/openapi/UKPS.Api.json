@@ -6952,7 +6952,7 @@
           "selectedOptions",
           "itemLabel",
           "items",
-          "addAnotherLabel"
+          "checkAnswersAddLabel"
         ],
         "type": "object",
         "properties": {
@@ -7010,12 +7010,12 @@
             },
             "description": "For a group, its items in order; null for any other question."
           },
-          "addAnotherLabel": {
+          "checkAnswersAddLabel": {
             "type": [
               "null",
               "string"
             ],
-            "description": "For a group, the label of its add-another button, such as \"Add another clinical trial\";\nnull for any other question."
+            "description": "For a group, the text of the button that adds an item from check your answers, such as\n\"Add clinical trial\"; null for any other question."
           }
         },
         "description": "A question that applies and its answer, shown as a summary row."
@@ -7550,14 +7550,14 @@
               "null",
               "string"
             ],
-            "description": "The heading of each item of a group, numbered from 1, or the label of each entry of a text\nlist, numbered from 1 once there are several; null for other controls."
+            "description": "The heading of each item of a group or entry of a multi-value hierarchical select, numbered\nfrom 1, or the label of each entry of a text list, numbered from 1 once there are\nseveral; null for other controls."
           },
           "removeLabel": {
             "type": [
               "null",
               "string"
             ],
-            "description": "The button text that removes an item of a group or an entry of a text list."
+            "description": "The button text that removes an item of a group, or an entry of a text list or multi-value\nhierarchical select."
           },
           "children": {
             "type": [

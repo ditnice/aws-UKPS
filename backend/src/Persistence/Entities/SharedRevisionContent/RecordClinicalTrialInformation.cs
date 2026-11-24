@@ -61,6 +61,7 @@ internal sealed class RecordClinicalTrialInformation
         Hint = "Include all studies that support marketing authorisation and HTA submission.",
         ItemLabel = "Clinical trial",
         AddAnotherLabel = "Add another clinical trial",
+        CheckAnswersAddLabel = "Add clinical trial",
         RemoveLabel = "Remove clinical trial"
     )]
     [FormRequired("Add at least one clinical trial")]
