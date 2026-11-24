@@ -74,10 +74,14 @@ function getPageContent(
         detail: (
           <>
             <p>You have reached the maximum number of attempts to request a new link.</p>
-            <p>
-              You can contact the support team by email{' '}
-              <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
-            </p>
+            {supportEmail ? (
+              <p>
+                You can contact the support team by email{' '}
+                <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
+              </p>
+            ) : (
+              <p>Please contact the UKPS support team for assistance.</p>
+            )}
           </>
         ),
       }

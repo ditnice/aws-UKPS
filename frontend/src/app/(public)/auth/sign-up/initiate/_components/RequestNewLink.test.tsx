@@ -262,4 +262,25 @@ describe('RequestNewLink', () => {
     expect(getSupportEmailLink().getAttribute('href')).toBe(`mailto:${supportEmail}`)
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
   })
+
+  it('shows contact support text without an email link if no support email is configured', async () => {
+    vi.stubEnv('QA_SUPPORT_EMAIL', '')
+    vi.mocked(postAuthResendSetupToken).mockResolvedValue({
+      data: undefined,
+      error: { status: 403 },
+      response: new Response(null, { status: 403 }),
+    })
+
+    render(<RequestNewLink setupToken="test-token" />)
+
+    await user.click(getSendButton())
+
+    expect(
+      await screen.findByText('Please contact the UKPS support team for assistance.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/You have reached the maximum number of attempts to request a new link\./),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('link')).toBeNull()
+  })
 })
