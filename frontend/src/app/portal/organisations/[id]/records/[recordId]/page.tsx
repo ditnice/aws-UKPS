@@ -112,14 +112,6 @@ const RecordView = async ({ organisationId, recordId, recordType, alert }: Recor
     record.actions.includes('ConfirmCurrent') ||
     record.actions.includes('ConfirmOnHold')
 
-  const statusHeadings = {
-    Archived: 'Archived record details',
-    OnHold: 'Published record details',
-    QAReview: 'Published record details',
-    Published: 'View record details',
-    Draft: 'View record details',
-  }
-
   return (
     <>
       {alert && <RecordViewAlert action={alert} />}
@@ -149,7 +141,7 @@ const RecordView = async ({ organisationId, recordId, recordType, alert }: Recor
         }
       />
 
-      <h2>{statusHeadings[record.displayStatus]}</h2>
+      <h2>View record details</h2>
       <Button variant="secondary">Export record to PDF</Button>
       {sections.length > 0 ? (
         <RecordDetails sections={sections} />
