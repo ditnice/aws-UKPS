@@ -46,11 +46,14 @@ internal sealed class RecordCheckAnswersQueryService(
                 RecordId = form.Record.Id,
                 OrganisationId = form.Record.OrganisationId,
                 RevisionHash = revision.Hash,
+                // A task with no question that applies is kept, flagged as not applicable, so the
+                // page can say so.
                 Sections = new RecordAnswersBuilder(
                     form.Model,
                     revision.Answers,
                     revision.Applicability,
-                    check.Options
+                    check.Options,
+                    keepNotApplicableTasks: true
                 ).Build(),
                 Errors = check.Errors,
             }

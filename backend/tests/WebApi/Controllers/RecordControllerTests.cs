@@ -498,12 +498,14 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
                 {
                     Id = "section",
                     Title = "Section",
+                    Optional = false,
                     Tasks =
                     [
                         new RecordAnswersTaskDto
                         {
                             Id = "task",
                             Title = "Task",
+                            NotApplicable = false,
                             Questions =
                             [
                                 new RecordAnswersQuestionDto
@@ -517,7 +519,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
                                     SelectedOptions = null,
                                     ItemLabel = null,
                                     Items = null,
-                                    AddAnotherLabel = null,
+                                    CheckAnswersAddLabel = null,
                                 },
                             ],
                         },
@@ -708,6 +710,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
         {
             { new DiscardRecordError.RecordNotFound(), HttpStatusCode.NotFound },
             { new DiscardRecordError.NotAllowed(), HttpStatusCode.NotFound },
+            { new DiscardRecordError.CannotDiscard(), HttpStatusCode.Forbidden },
             { new DiscardRecordError.InvalidDiscard(), HttpStatusCode.BadRequest },
             { new DiscardRecordError.ConcurrencyError(), HttpStatusCode.Conflict },
         };

@@ -17,7 +17,7 @@ const question = (overrides: Partial<RecordAnswersQuestionDto>): RecordAnswersQu
   selectedOptions: null,
   itemLabel: null,
   items: null,
-  addAnotherLabel: null,
+  checkAnswersAddLabel: null,
   ...overrides,
 })
 
@@ -25,10 +25,12 @@ const sections: RecordAnswersSectionDto[] = [
   {
     id: 'product-record-details',
     title: 'Product record details',
+    optional: false,
     tasks: [
       {
         id: 'names-and-identifiers',
         title: 'Names and identifiers',
+        notApplicable: false,
         questions: [question({ id: 'company_code', label: 'Company code', values: ['ABC-123'] })],
       },
     ],
@@ -36,17 +38,19 @@ const sections: RecordAnswersSectionDto[] = [
   {
     id: 'clinical-trials',
     title: 'Clinical trials',
+    optional: false,
     tasks: [
       {
         id: 'clinical-trials',
         title: 'Clinical trial details',
+        notApplicable: false,
         questions: [
           question({
             id: 'record_clinical_trial',
             label: 'Enter clinical trial details',
             type: 'Group',
             itemLabel: 'Clinical trial',
-            addAnotherLabel: 'Add another clinical trial',
+            checkAnswersAddLabel: 'Add clinical trial',
             items: [
               {
                 questions: [
@@ -86,6 +90,6 @@ describe('RecordDetails', () => {
     render(<RecordDetails sections={sections} />)
 
     expect(screen.queryByRole('link', { hidden: true })).toBeNull()
-    expect(screen.queryByText('Add another clinical trial')).toBeNull()
+    expect(screen.queryByText('Add clinical trial')).toBeNull()
   })
 })

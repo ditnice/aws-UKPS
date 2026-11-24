@@ -13,7 +13,7 @@ const question = (overrides: Partial<RecordAnswersQuestionDto>): RecordAnswersQu
   values: [],
   selectedOptions: null,
   itemLabel: null,
-  addAnotherLabel: null,
+  checkAnswersAddLabel: null,
   items: null,
   ...overrides,
 })

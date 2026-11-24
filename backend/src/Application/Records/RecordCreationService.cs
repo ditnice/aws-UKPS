@@ -47,7 +47,7 @@ internal class RecordCreationService : IRecordCreationService
         _currentUserInfoService.ThrowIfOrganisationNotSelected(command.OrganisationId);
 
         bool isAuthorised = _organisationAuthoriser.CanPerformOperationOnOrganisation(
-            Operation.Create,
+            Operation.CreateRecord,
             command.OrganisationId
         );
         if (!isAuthorised)

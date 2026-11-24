@@ -103,7 +103,7 @@ internal sealed class MedicinesIndicationDetail
         "medicines_indication_detail.proposed_dose_regimen",
         "What is the proposed dose regimen for this product? (optional)",
         FormControl.Textarea,
-        Hint = "Enter the intended dosing schedule. You can include the dose amount, dose frequency, route and duration.\n\nIf in early stages of development, you can enter high-level or indicative information and update this later."
+        Hint = "Enter the intended dosing schedule. You can include the dose amount, dose frequency, route and duration. If in early stages of development, you can enter high-level or indicative information and update this later."
     )]
     public string? ProposedDoseRegimen { get; set; }
 
@@ -151,7 +151,9 @@ internal sealed class MedicinesIndicationDetail
         Placeholder = "Choose a therapeutic area",
         ChildLabel = "Select the disease or condition (optional)",
         ChildPlaceholder = "Choose a disease or condition",
-        AddAnotherLabel = "Add another therapy area"
+        AddAnotherLabel = "Add another therapy area",
+        ItemLabel = "Therapeutic area",
+        RemoveLabel = "Remove therapeutic area"
     )]
     [FormMaxItems(3, "Select up to 3 therapeutic areas")]
     public ICollection<MedicinesIndicationDetailTherapeuticArea> TherapeuticAreas { get; set; } =

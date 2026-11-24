@@ -16,6 +16,8 @@ type ValidSummaryListAction = ReactElement<SummaryListActionProps> | boolean | n
 export type SummaryListRowProps = {
   children?: ValidSummaryListAction | readonly ValidSummaryListAction[]
   label: ReactNode
+  /** Regular weight instead of bold, for a label that is a message rather than a field name. */
+  plainLabel?: boolean
   /** Shown at the right of the value cell, e.g. a "Hidden" tag. */
   tag?: ReactNode
   value: ReactNode
@@ -53,6 +55,7 @@ export function SummaryListAction({ children, href, visuallyHiddenText }: Summar
 export function SummaryListRow({
   children,
   label,
+  plainLabel = false,
   tag,
   listHasActions = false,
   variant = 'default',
@@ -71,7 +74,14 @@ export function SummaryListRow({
 
   return (
     <div className={rowClassName}>
-      <dt className={styles['summary-list__key']}>{label}</dt>
+      <dt
+        className={clsx(
+          styles['summary-list__key'],
+          plainLabel && styles['summary-list__key--plain'],
+        )}
+      >
+        {label}
+      </dt>
       <dd className={styles['summary-list__value']}>
         {tag ? (
           <div className={styles['summary-list__value-with-tag']}>
