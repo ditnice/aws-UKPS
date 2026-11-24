@@ -40,8 +40,8 @@ describe('validateServerEnv', () => {
     expect(validateServerEnv(ecsEnv)).toMatchObject(ecsEnv)
   })
 
-  it('requires Cognito unless auth mode is exactly DEV', () => {
-    expect(() => validateServerEnv({ ...composeEnv, AUTHENTICATION_MODE: 'dev' })).toThrow(
+  it('requires Cognito unless auth mode is DEV', () => {
+    expect(() => validateServerEnv({ ...composeEnv, AUTHENTICATION_MODE: undefined })).toThrow(
       /COGNITO_ISSUER:[^\n]*\nCOGNITO_CLIENT_ID:/,
     )
   })
@@ -51,6 +51,15 @@ describe('validateServerEnv', () => {
     ['BACKEND_API_BASE_URL', 'ftp://backend'],
     ['FRONTEND_PUBLIC_ORIGIN', ''],
     ['FRONTEND_PUBLIC_ORIGIN', 'https://app.example.test/path'],
+    ['COGNITO_ISSUER', 'https://cognito.example.test/pool/'],
+    ['COGNITO_ISSUER', 'https://cognito.example.test/pool?query=value'],
+    ['COGNITO_ISSUER', 'https://cognito.example.test/pool#fragment'],
+    ['AUTHENTICATION_MODE', 'dev'],
+    ['ROBOTS_NOINDEX', 'TRUE'],
+    ['BACKEND_API_TIMEOUT_MS', '0'],
+    ['BACKEND_API_TIMEOUT_MS', '-1'],
+    ['BACKEND_API_TIMEOUT_MS', '1.5'],
+    ['BACKEND_API_TIMEOUT_MS', '15s'],
     ['PAYLOAD_SECRET', ' '],
     ['DATABASE_URL', 'postgres:invalid'],
     ['QA_SUPPORT_EMAIL', 'not-an-email'],
@@ -71,17 +80,43 @@ describe('validateServerEnv', () => {
     )
   })
 
-  it.each(['', '0', '-1', '1.5', 'not-a-timeout'])('defaults an invalid timeout (%s)', (value) => {
+  it('treats empty optional settings as unset', () => {
     expect(
-      validateServerEnv({ ...composeEnv, BACKEND_API_TIMEOUT_MS: value }).BACKEND_API_TIMEOUT_MS,
-    ).toBe(15_000)
+      validateServerEnv({
+        ...ecsEnv,
+        AUTHENTICATION_MODE: '',
+        BACKEND_API_TIMEOUT_MS: '',
+        QA_SUPPORT_EMAIL: '',
+        ROBOTS_NOINDEX: '',
+      }),
+    ).toMatchObject({
+      AUTHENTICATION_MODE: undefined,
+      BACKEND_API_TIMEOUT_MS: 15_000,
+      QA_SUPPORT_EMAIL: undefined,
+      ROBOTS_NOINDEX: false,
+    })
   })
 
-  it('parses a configured timeout and only enables noindex for literal true', () => {
+  it('parses a configured timeout', () => {
     expect(
-      validateServerEnv({ ...composeEnv, BACKEND_API_TIMEOUT_MS: '2500', ROBOTS_NOINDEX: 'true' }),
-    ).toMatchObject({ BACKEND_API_TIMEOUT_MS: 2500, ROBOTS_NOINDEX: true })
-    expect(validateServerEnv({ ...composeEnv, ROBOTS_NOINDEX: 'TRUE' }).ROBOTS_NOINDEX).toBe(false)
+      validateServerEnv({ ...composeEnv, BACKEND_API_TIMEOUT_MS: '2500' }).BACKEND_API_TIMEOUT_MS,
+    ).toBe(2500)
+  })
+
+  it.each([
+    ['true', true],
+    ['false', false],
+  ])('parses ROBOTS_NOINDEX=%s', (value, expected) => {
+    expect(validateServerEnv({ ...composeEnv, ROBOTS_NOINDEX: value }).ROBOTS_NOINDEX).toBe(
+      expected,
+    )
+  })
+
+  it('accepts any support email that Terraform accepts', () => {
+    const email = 'q.@example.test'
+    expect(validateServerEnv({ ...composeEnv, QA_SUPPORT_EMAIL: email }).QA_SUPPORT_EMAIL).toBe(
+      email,
+    )
   })
 
   it('does not include raw values in validation diagnostics', () => {

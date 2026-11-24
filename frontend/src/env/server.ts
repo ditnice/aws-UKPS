@@ -9,6 +9,12 @@ const httpUrl = z.string().refine((value) => {
   return url && ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password
 }, 'Must be an HTTP(S) URL without credentials')
 
+// Must match the token `iss` claim exactly and be safe to append the JWKS path to.
+const issuerUrl = httpUrl.refine(
+  (value) => !/[?#]|\/$/.test(value),
+  'Must not contain a trailing slash, query or fragment',
+)
+
 const postgresUrl = z.string().refine((value) => {
   const url = URL.parse(value)
   return (
@@ -17,6 +23,10 @@ const postgresUrl = z.string().refine((value) => {
     (url.hostname.length > 0 || url.pathname.length > 1 || Boolean(url.searchParams.get('host')))
   )
 }, 'Must be a PostgreSQL connection URL')
+
+// Keep in step with the qa_support_email validation in infrastructure/environments, so a value
+// Terraform accepts cannot stop the server from starting.
+const supportEmail = z.string().regex(/^[^@\s]+@[^@\s]+\.[^@\s]+$/, 'Must be an email address')
 
 const splitDatabaseFields = [
   'DATABASE_HOST',
@@ -38,19 +48,17 @@ export function validateServerEnv(source: Record<string, string | undefined> = p
         .optional(),
       BACKEND_API_TIMEOUT_MS: z
         .string()
-        .optional()
-        .transform((value) => {
-          const timeout = Number(value)
-          return Number.isInteger(timeout) && timeout > 0 ? timeout : defaultUpstreamTimeoutMs
-        }),
+        .regex(/^0*[1-9]\d*$/, 'Must be a positive integer')
+        .transform(Number)
+        .default(defaultUpstreamTimeoutMs),
       ROBOTS_NOINDEX: z
-        .string()
-        .optional()
+        .enum(['true', 'false'], 'Must be true or false')
+        .default('false')
         .transform((value) => value === 'true'),
-      AUTHENTICATION_MODE: z.string().optional(),
-      COGNITO_ISSUER: httpUrl.optional(),
+      AUTHENTICATION_MODE: z.enum(['DEV'], 'Must be DEV or unset').optional(),
+      COGNITO_ISSUER: issuerUrl.optional(),
       COGNITO_CLIENT_ID: nonBlank.optional(),
-      QA_SUPPORT_EMAIL: z.email().optional(),
+      QA_SUPPORT_EMAIL: supportEmail.optional(),
       PAYLOAD_SECRET: nonBlank,
       DATABASE_URL: postgresUrl.optional(),
       DATABASE_HOST: z.string().optional(),
@@ -63,9 +71,9 @@ export function validateServerEnv(source: Record<string, string | undefined> = p
     runtimeEnv: {
       BACKEND_API_BASE_URL: source.BACKEND_API_BASE_URL,
       FRONTEND_PUBLIC_ORIGIN: source.FRONTEND_PUBLIC_ORIGIN,
-      BACKEND_API_TIMEOUT_MS: source.BACKEND_API_TIMEOUT_MS,
-      ROBOTS_NOINDEX: source.ROBOTS_NOINDEX,
-      AUTHENTICATION_MODE: source.AUTHENTICATION_MODE,
+      BACKEND_API_TIMEOUT_MS: source.BACKEND_API_TIMEOUT_MS || undefined,
+      ROBOTS_NOINDEX: source.ROBOTS_NOINDEX || undefined,
+      AUTHENTICATION_MODE: source.AUTHENTICATION_MODE || undefined,
       COGNITO_ISSUER: source.COGNITO_ISSUER || undefined,
       COGNITO_CLIENT_ID: source.COGNITO_CLIENT_ID || undefined,
       QA_SUPPORT_EMAIL: source.QA_SUPPORT_EMAIL || undefined,
