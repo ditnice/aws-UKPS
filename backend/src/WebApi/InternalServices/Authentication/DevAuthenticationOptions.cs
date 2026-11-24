@@ -10,7 +10,7 @@ public sealed record DevAuthenticationOptions
     /// <summary>
     /// Gets the configuration section name used to bind development authentication settings.
     /// </summary>
-    public const string SectionName = "DevAuthentication";
+    public static string SectionName => "DevAuthentication";
 
     /// <summary>
     /// Gets a value indicating whether development authentication is enabled.
