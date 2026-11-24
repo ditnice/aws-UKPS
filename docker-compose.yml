@@ -90,6 +90,9 @@ services:
       Email__QueueUrl: http://floci:4566/000000000000/ukps-e2e-email
       # Off, so queued emails stay on the queue rather than going to SES.
       Email__ListenerEnabled: "false"
+      # The origin of links in emails, such as email verification links, so tests can follow them.
+      # Matches the frontend's FRONTEND_PUBLIC_ORIGIN.
+      Hosting__HostUri: ${UKPS_FRONTEND_ORIGIN:-http://localhost:3000}
       # Dummy credentials stop the AWS SDK probing for real ones; Floci accepts them.
       AWS_ACCESS_KEY_ID: e2e
       AWS_SECRET_ACCESS_KEY: e2e
@@ -144,6 +147,8 @@ services:
       # Postgres and Floci reset on every start, so tests tagged @mutates-data or @visual may run.
       E2E_EPHEMERAL_STACK: "true"
       E2E_ORGANISATION_ID: "1"
+      # The backend's Email__QueueUrl, which tests read to check which emails were sent.
+      E2E_EMAIL_QUEUE_URL: http://floci:4566/000000000000/ukps-e2e-email
       # Playwright deletes and recreates its output folders, so they must sit inside the
       # mount rather than be mount points themselves.
       PLAYWRIGHT_OUTPUT_DIR: e2e-results/test-results

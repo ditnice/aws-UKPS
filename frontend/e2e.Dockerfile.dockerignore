@@ -10,5 +10,7 @@
 !tests/e2e/**
 !src/app/portal/organisations/*/_lib/userActionAlert.ts
 !src/app/portal/organisations/*/_lib/userLabels.ts
+!src/app/portal/user/me/navigation.ts
+!src/app/portal/user/me/edit-details/*/navigation.ts
 tests/e2e/.auth/
 **/.env*

@@ -33,6 +33,9 @@ COPY tests/e2e ./tests/e2e
 COPY src/app/portal/organisations/[[]id]/_lib/userActionAlert.ts ./src/app/portal/organisations/[id]/_lib/userActionAlert.ts
 # search-and-filter-users.authenticated.e2e.test.ts imports the last-active filter presets.
 COPY src/app/portal/organisations/[[]id]/_lib/userLabels.ts ./src/app/portal/organisations/[id]/_lib/userLabels.ts
+# my-details.page.ts and edit-email.page.ts import the user details href builders.
+COPY src/app/portal/user/me/navigation.ts ./src/app/portal/user/me/navigation.ts
+COPY src/app/portal/user/me/edit-details/[[]detail]/navigation.ts ./src/app/portal/user/me/edit-details/[detail]/navigation.ts
 
 RUN mkdir -p e2e-results && chmod a+rwx e2e-results
 

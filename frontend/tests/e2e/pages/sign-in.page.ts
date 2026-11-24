@@ -4,11 +4,13 @@ export class SignInPage {
   readonly email: Locator
   readonly password: Locator
   readonly submit: Locator
+  readonly emailVerifiedAlert: Locator
 
   constructor(private readonly page: Page) {
     this.email = page.getByLabel('Email address')
     this.password = page.getByLabel('Password', { exact: true })
     this.submit = page.getByRole('button', { name: 'Continue' })
+    this.emailVerifiedAlert = page.getByRole('heading', { name: 'New email address verified' })
   }
 
   async goto(returnTo?: string) {
