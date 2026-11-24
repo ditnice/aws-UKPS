@@ -6,6 +6,7 @@ using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Application.Authentication.SecurityNotification;
 using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Identity;
+using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Entities.Identity;
@@ -22,18 +23,21 @@ internal class LoginService : ILoginService
     private readonly IUserService _userService;
     private readonly AppDbContext _appDbContext;
     private readonly IEmailService _emailService;
+    private readonly IDateTimeProvider _dateTimeProvider;
 
     public LoginService(
         IIdentityService identityService,
         IUserService userService,
         AppDbContext appDbContext,
-        IEmailService emailService
+        IEmailService emailService,
+        IDateTimeProvider dateTimeProvider
     )
     {
         _identityService = identityService;
         _userService = userService;
         _appDbContext = appDbContext;
         _emailService = emailService;
+        _dateTimeProvider = dateTimeProvider;
     }
 
     public async Task<InitiateAuthenticationResult> Login(
@@ -182,7 +186,8 @@ internal class LoginService : ILoginService
                         throw new InvalidOperationException(
                             "Failed to update pending email address. Conflicting email occurred despite checks to ensure email/pending email uniqueness"
                         ),
-                    notVerified: () => new InitiateAuthenticationError.VerificationRequired()
+                    notVerified: () => new InitiateAuthenticationError.VerificationRequired(),
+                    pendingEmailExpired: () => new InitiateAuthenticationError.PendingEmailExpired()
                 );
                 return InitiateAuthenticationResult.Err(error);
             }
@@ -209,7 +214,8 @@ internal class LoginService : ILoginService
         {
             // Handles edge cases where there is a pending email that only changes in case.
             bool hasPendingEmailThatMatchesCase =
-                user.PendingEmail.TryGetData().TryGetSuccessValue(out var data)
+                user.PendingEmail.TryGetData(_dateTimeProvider.GetUtcNow())
+                    .TryGetSuccessValue(out var data)
                 && data.Verified
                 && string.Equals(
                     user.NormalisedPendingWorkEmail,

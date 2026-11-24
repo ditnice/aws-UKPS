@@ -21,6 +21,10 @@ vi.mock('../../../EmailVerificationRequiredAlert', () => ({
   default: () => <div data-testid="email-verification-required-alert" />,
 }))
 
+vi.mock('../../../PendingEmailExpiredAlert', () => ({
+  default: () => <div data-testid="pending-email-expired-alert" />,
+}))
+
 const exampleUserEmail = 'user@email.com'
 const exampleSession = 'session'
 
@@ -185,6 +189,22 @@ describe('SignInMfaForm', () => {
     await screen.findByTestId('email-verification-required-alert')
     expect(screen.queryByText('PendingEmailRequiredVerification')).toBeNull()
     expect(screen.queryByText(errorMessages.incorrectMfaCode)).toBeNull()
+  })
+
+  it('shows the pending email expired alert when the response error is PendingEmailExpired', async () => {
+    vi.mocked(respondToMultiFactorAuthenticationChallenge).mockResolvedValue({
+      error: { code: 'PendingEmailExpired' },
+      data: undefined,
+    })
+    renderValidForm()
+    await updateForm(validFormValues)
+    await submitForm()
+
+    expect(await screen.findByTestId('pending-email-expired-alert')).toBeInTheDocument()
+    expect(screen.queryByTestId('email-verification-required-alert')).toBeNull()
+    expect(screen.queryByText('PendingEmailExpired')).toBeNull()
+    expect(screen.queryByText(errorMessages.incorrectMfaCode)).toBeNull()
+    expect(mockPush).not.toHaveBeenCalled()
   })
 
   it('does not show the email verification alert on a successful authentication', async () => {

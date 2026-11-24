@@ -817,6 +817,16 @@ public class AuthenticationController : ControllerBase
             challenge: c =>
                 Unauthorized(
                     AuthenticationProblemDetails.Challenge(c.ChallengeType, c.AuthenticationSession)
+                ),
+            pendingEmailExpired: () =>
+                BadRequest(
+                    new AuthenticationProblemDetails()
+                    {
+                        Title = "Pending Email Expired",
+                        Detail = "The pending email change for the account provided has expired",
+                        Status = StatusCodes.Status400BadRequest,
+                        Code = AuthenticationFailCode.PendingEmailExpired,
+                    }
                 )
         );
     }

@@ -19,6 +19,10 @@ vi.mock('../../EmailVerificationRequiredAlert', () => ({
   default: () => <div data-testid="email-verification-required-alert" />,
 }))
 
+vi.mock('../../PendingEmailExpiredAlert', () => ({
+  default: () => <div data-testid="pending-email-expired-alert" />,
+}))
+
 let user: ReturnType<typeof userEvent.setup>
 
 beforeEach(() => {
@@ -285,6 +289,27 @@ describe('SignInForm', () => {
     })
 
     expect(await screen.findByTestId('email-verification-required-alert')).toBeInTheDocument()
+    expect(router.push).not.toHaveBeenCalled()
+  })
+
+  it('shows the pending email expired alert if the pending email has expired', async () => {
+    vi.mocked(postAuthLogin).mockResolvedValue({
+      error: {
+        code: 'PendingEmailExpired',
+      },
+      data: undefined,
+    })
+
+    render(<SignInForm />)
+
+    await fillInput(user, screen.getByLabelText('Email address'), 'name@example.com')
+    await fillInput(user, screen.getByLabelText('Password'), 'secure-password')
+
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect(await screen.findByTestId('pending-email-expired-alert')).toBeInTheDocument()
+    expect(screen.queryByTestId('email-verification-required-alert')).toBeNull()
+    expect(screen.queryByText('PendingEmailExpired')).toBeNull()
     expect(router.push).not.toHaveBeenCalled()
   })
 })

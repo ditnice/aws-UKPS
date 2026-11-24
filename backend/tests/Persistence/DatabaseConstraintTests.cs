@@ -100,7 +100,8 @@ public class DatabaseConstraintTests : DatabaseTestBase
             x => x.PendingEmail,
             f => new PendingEmailChange(
                 f.GetRandomlyCapitalisedString(duplicateEmail),
-                "verification-token"
+                "verification-token",
+                new DateTime(2020, 12, 11, 20, 12, 12, DateTimeKind.Utc)
             )
         );
         User user1 = userFaker.Generate();

@@ -148,7 +148,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         var existingUser = new UserFaker()
             .RuleFor(
                 x => x.PendingEmail,
-                _ => new PendingEmailChange(emailAddress, "verification-token")
+                _ => new PendingEmailChange(emailAddress, "verification-token", DateTime.UtcNow)
             )
             .Generate();
         await AddEntity(existingUser, Ct);

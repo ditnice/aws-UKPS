@@ -177,7 +177,7 @@ internal sealed class User
             return;
         }
 
-        PendingEmail = new PendingEmailChange(workEmail, verificationToken);
+        PendingEmail = new PendingEmailChange(workEmail, verificationToken, dateTime);
         UpdatedAt = dateTime;
         _events.Add(
             new PendingEmailUpdatedEvent()
@@ -192,7 +192,7 @@ internal sealed class User
         DateTime dateTime
     )
     {
-        var result = PendingEmail.TryComplete();
+        var result = PendingEmail.TryComplete(dateTime);
 
         if (result.TryGetSuccessValue(out string? newWorkEmail))
         {

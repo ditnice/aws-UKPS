@@ -40,13 +40,19 @@ public abstract record VerifyPendingEmailAddressError
     /// </summary>
     internal sealed record ConcurrentChangeDetected : VerifyPendingEmailAddressError;
 
+    /// <summary>
+    /// The pending email address has expired and can no longer be verified.
+    /// </summary>
+    internal sealed record PendingEmailExpired : VerifyPendingEmailAddressError;
+
     internal TResult Match<TResult>(
         Func<TResult> userNotFound,
         Func<TResult> unauthorised,
         Func<TResult> noPendingEmailToVerified,
         Func<TResult> emailAlreadyVerified,
         Func<TResult> invalidTokenProvided,
-        Func<TResult> concurrentChangeDetected
+        Func<TResult> concurrentChangeDetected,
+        Func<TResult> pendingEmailExpired
     )
     {
         return this switch
@@ -57,6 +63,7 @@ public abstract record VerifyPendingEmailAddressError
             EmailAlreadyVerified => emailAlreadyVerified(),
             InvalidTokenProvided => invalidTokenProvided(),
             ConcurrentChangeDetected => concurrentChangeDetected(),
+            PendingEmailExpired => pendingEmailExpired(),
             _ => throw new UnreachableException(
                 $"Unrecognised {nameof(VerifyPendingEmailAddressError)}"
             ),

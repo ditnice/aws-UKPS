@@ -728,6 +728,18 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async Task VerifyPendingEmailAddress_WhenPendingEmailExpired_ShouldReturn410()
+    {
+        MockVerifyPendingEmailAddressResponse(
+            Result<VerifyPendingEmailAddressError>.Err(
+                new VerifyPendingEmailAddressError.PendingEmailExpired()
+            )
+        );
+        HttpResponseMessage response = await SendVerifyPendingEmailAddressRequest();
+        response.StatusCode.ShouldBe(HttpStatusCode.Gone);
+    }
+
+    [Fact]
     public async Task VerifyPendingEmailAddress_WhenConcurrentChangeDetected_ShouldReturn409()
     {
         MockVerifyPendingEmailAddressResponse(

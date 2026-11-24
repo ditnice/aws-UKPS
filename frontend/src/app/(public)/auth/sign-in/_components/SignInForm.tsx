@@ -17,6 +17,7 @@ import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage, getFormErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import EmailVerificationRequiredAlert from '../../EmailVerificationRequiredAlert'
+import PendingEmailExpiredAlert from '../../PendingEmailExpiredAlert'
 import { createResetPasswordHref } from '../../reset-password/navigation'
 
 const signInSchema = z.object({
@@ -63,10 +64,13 @@ export function SignInForm({ returnTo }: SignInFormProps) {
         return
       }
 
-      if (result.error?.code === 'PendingEmailRequiredVerification') {
+      if (
+        result.error?.code === 'PendingEmailRequiredVerification' ||
+        result.error?.code === 'PendingEmailExpired'
+      ) {
         formApi.setErrorMap({
           onSubmit: {
-            form: 'PendingEmailRequiredVerification',
+            form: result.error.code,
             fields: {},
           },
         })
@@ -128,6 +132,7 @@ export function SignInForm({ returnTo }: SignInFormProps) {
             if (!formError) return null
             if (formError === 'PendingEmailRequiredVerification')
               return <EmailVerificationRequiredAlert />
+            if (formError === 'PendingEmailExpired') return <PendingEmailExpiredAlert />
             return <ErrorState>{formError}</ErrorState>
           }}
         </form.Subscribe>

@@ -70,7 +70,7 @@ internal partial class UserService(
 
         var mfaInformation = await GetUserMfaInformation(user.CognitoUsername, cancellationToken);
 
-        return MapUserToUserInformationDto(membership, mfaInformation);
+        return MapUserToUserInformationDto(membership, mfaInformation, timeProvider.GetUtcNow());
     }
 
     private async Task<MfaInformation> GetUserMfaInformation(
@@ -307,14 +307,15 @@ internal partial class UserService(
             membership.User!.CognitoUsername,
             cancellationToken
         );
-        var dto = MapUserToUserInformationDto(membership, mfaInformation);
+        var dto = MapUserToUserInformationDto(membership, mfaInformation, timeProvider.GetUtcNow());
 
         return GetUserInformationResult.Ok(dto);
     }
 
     private static UserInformationDto MapUserToUserInformationDto(
         UserOrgMembership membership,
-        MfaInformation mfaInformation
+        MfaInformation mfaInformation,
+        DateTime currentTime
     )
     {
         User user = membership.User!;
@@ -331,7 +332,9 @@ internal partial class UserService(
             Status = membership.Status.ConvertToUserOrgStatus(),
             HasMultipleOrganisations = user.HasMultipleSelectableOrganisations(),
             AllowedPharmaceuticalEntity = membership.AllowedPharmaceuticalEntity,
-            PendingWorkEmail = user.PendingEmail.TryGetData().TryGetSuccessValue(out var data)
+            PendingWorkEmail = user
+                .PendingEmail.TryGetData(currentTime)
+                .TryGetSuccessValue(out var data)
                 ? new() { Value = data.WorkEmail, VerifiedByEmail = data.Verified }
                 : null,
             MfaMethod = mfaInformation.MfaMethod,
@@ -752,8 +755,9 @@ internal partial class UserService(
     )
     {
         return err.Match<UpdateEmailToCompletePendingEmailError>(
-            _ => new UpdateEmailToCompletePendingEmailError.NotFound(),
-            _ => new UpdateEmailToCompletePendingEmailError.NotVerified()
+            noPendingEmailToComplete: _ => new UpdateEmailToCompletePendingEmailError.NotFound(),
+            notVerified: _ => new UpdateEmailToCompletePendingEmailError.NotVerified(),
+            pendingEmailTimedOut: _ => new UpdateEmailToCompletePendingEmailError.PendingEmailExpired()
         );
     }
 
@@ -810,8 +814,10 @@ internal partial class UserService(
     )
     {
         return err.Match<ResendVerificationEmailError>(
-            _ => new ResendVerificationEmailError.NoPendingVerification(),
-            _ => new ResendVerificationEmailError.PendingEmailAlreadyVerified()
+            noPendingEmailToRefresh: _ => new ResendVerificationEmailError.NoPendingVerification(),
+            alreadyVerified: _ => new ResendVerificationEmailError.PendingEmailAlreadyVerified(),
+            // An expired change can no longer be verified, so there is nothing to resend.
+            pendingEmailTimedOut: _ => new ResendVerificationEmailError.NoPendingVerification()
         );
     }
 
@@ -869,7 +875,8 @@ internal partial class UserService(
         return error.Match<VerifyPendingEmailAddressError>(
             noPendingEmailToVerify: _ => new VerifyPendingEmailAddressError.NoPendingEmailToVerify(),
             invalidVerificationToken: _ => new VerifyPendingEmailAddressError.InvalidTokenProvided(),
-            alreadyVerified: _ => new VerifyPendingEmailAddressError.EmailAlreadyVerified()
+            alreadyVerified: _ => new VerifyPendingEmailAddressError.EmailAlreadyVerified(),
+            pendingEmailTimedOut: _ => new VerifyPendingEmailAddressError.PendingEmailExpired()
         );
     }
 
@@ -905,9 +912,11 @@ internal partial class UserService(
                 },
                 async err =>
                 {
-                    return err.Match<Result<CancelPendingEmailChangeError>>(_ =>
-                        Result<CancelPendingEmailChangeError>.Err(
-                            new CancelPendingEmailChangeError.NoPendingEmailToCancel()
+                    // An expired change is no longer pending, so there is nothing to cancel.
+                    return Result<CancelPendingEmailChangeError>.Err(
+                        err.Match<CancelPendingEmailChangeError>(
+                            noPendingEmailToCancel: _ => new CancelPendingEmailChangeError.NoPendingEmailToCancel(),
+                            pendingEmailTimedOut: _ => new CancelPendingEmailChangeError.NoPendingEmailToCancel()
                         )
                     );
                 }
