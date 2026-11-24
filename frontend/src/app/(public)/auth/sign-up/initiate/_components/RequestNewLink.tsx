@@ -74,7 +74,10 @@ function getPageContent(
         detail: (
           <>
             <p>You have reached the maximum number of attempts to request a new link.</p>
-            {contactSupport}
+            <p>
+              You can contact the support team by email{' '}
+              <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
+            </p>
           </>
         ),
       }

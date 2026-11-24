@@ -237,6 +237,9 @@ describe('RequestNewLink', () => {
     expect(
       screen.getByText(/You have reached the maximum number of attempts to request a new link\./),
     ).toBeInTheDocument()
+    expect(getSupportEmailLink().closest('p')).toHaveTextContent(
+      `You can contact the support team by email ${supportEmail}.`,
+    )
     expect(getSupportEmailLink().getAttribute('href')).toBe(`mailto:${supportEmail}`)
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
   })
@@ -253,6 +256,9 @@ describe('RequestNewLink', () => {
     await user.click(getSendButton())
 
     expect(await screen.findByText('Contact the support team')).toBeInTheDocument()
+    expect(getSupportEmailLink().closest('p')).toHaveTextContent(
+      `You can contact the support team by email ${supportEmail}.`,
+    )
     expect(getSupportEmailLink().getAttribute('href')).toBe(`mailto:${supportEmail}`)
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
   })
