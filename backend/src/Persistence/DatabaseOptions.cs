@@ -1,3 +1,5 @@
+using UKPS.Api.WebApi.Configuration;
+
 namespace UKPS.Api.Persistence;
 
 internal sealed record DatabaseOptions : IAppOptions

@@ -1,4 +1,8 @@
-namespace UKPS.Api;
+using Microsoft.Extensions.Options;
+using UKPS.Api.WebApi.OpenApi;
+using UKPS.Api.WebApi.Validators;
+
+namespace UKPS.Api.WebApi.Configuration;
 
 /// <summary>
 /// Extension methods for registering strongly typed application options
@@ -23,6 +27,12 @@ internal static class OptionConfigurationExtensions
     /// configuration makes the application fail at startup with an
     /// <see cref="Microsoft.Extensions.Options.OptionsValidationException"/>. Without this, the
     /// error would only appear the first time the options are used.
+    /// <para>
+    /// Validation is skipped while the build generates the OpenAPI documents (see
+    /// <see cref="OpenApiDocumentGeneration"/>), because placeholder values such as
+    /// <see cref="RequiredConfigurationAttribute.FromEnvironmentVariable"/> are not replaced then,
+    /// and hosted services that read options still start during generation.
+    /// </para>
     /// </remarks>
     /// <example>
     /// <code>
@@ -33,11 +43,14 @@ internal static class OptionConfigurationExtensions
     public static WebApplicationBuilder BindAppOptions<T>(this WebApplicationBuilder builder)
         where T : class, IAppOptions
     {
-        builder
+        OptionsBuilder<T> options = builder
             .Services.AddOptions<T>()
-            .Bind(builder.Configuration.GetSection(T.SectionName))
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
+            .Bind(builder.Configuration.GetSection(T.SectionName));
+
+        if (!OpenApiDocumentGeneration.IsRunning)
+        {
+            options.ValidateDataAnnotations().ValidateOnStart();
+        }
 
         return builder;
     }

@@ -4,7 +4,6 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
-using UKPS.Api;
 using UKPS.Api.Application;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.InternalServices.Communication;
@@ -14,10 +13,12 @@ using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Seeding;
 using UKPS.Api.WebApi;
 using UKPS.Api.WebApi.Authorisation;
+using UKPS.Api.WebApi.Configuration;
 using UKPS.Api.WebApi.Controllers;
 using UKPS.Api.WebApi.InternalServices.Authentication;
 using UKPS.Api.WebApi.InternalServices.Hosting;
 using UKPS.Api.WebApi.InternalServices.Identity;
+using UKPS.Api.WebApi.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -145,11 +146,7 @@ app.MapControllers();
 
 app.MapHealthChecks("/health");
 
-var isOpenApiGeneration = Environment.CommandLine.Contains(
-    "getdocument",
-    StringComparison.OrdinalIgnoreCase
-);
-if (!isOpenApiGeneration)
+if (!OpenApiDocumentGeneration.IsRunning)
 {
     await app.SeedData();
     await app.MigrateDatabase();

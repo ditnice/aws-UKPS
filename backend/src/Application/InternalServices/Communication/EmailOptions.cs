@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using UKPS.Api.WebApi.Configuration;
+using UKPS.Api.WebApi.Validators;
 
 namespace UKPS.Api.Application.InternalServices.Communication;
 
@@ -13,10 +15,10 @@ internal record EmailOptions : IAppOptions
     [EmailAddress]
     public string? TestingEmailAddress { get; init; }
 
-    [Required]
+    [RequiredConfiguration]
     public required string FromAddress { get; init; }
 
-    [Required]
+    [RequiredConfiguration]
     public required string QueueUrl { get; init; }
 
     [Range(1, 10)]

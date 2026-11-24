@@ -1,4 +1,4 @@
-namespace UKPS.Api;
+namespace UKPS.Api.WebApi.Configuration;
 
 internal interface IAppOptions
 {

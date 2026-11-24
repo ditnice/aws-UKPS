@@ -1,4 +1,5 @@
-using System.ComponentModel.DataAnnotations;
+using UKPS.Api.WebApi.Configuration;
+using UKPS.Api.WebApi.Validators;
 
 namespace UKPS.Api.Application.Authentication;
 
@@ -25,26 +26,26 @@ public sealed record CognitoOptions : IAppOptions
     /// <summary>
     /// Gets the Cognito application client identifier.
     /// </summary>
-    [Required]
+    [RequiredConfiguration]
     public required string ClientId { get; init; }
 
     /// <summary>
     /// Gets the Cognito application client secret.
     /// This is used to authenticate confidential clients when communicating with Amazon Cognito.
     /// </summary>
-    [Required]
+    [RequiredConfiguration]
     public required string ClientSecret { get; init; }
 
     /// <summary>
     /// Gets the AWS region containing the Cognito user pool.
     /// </summary>
-    [Required]
+    [RequiredConfiguration]
     public required string Region { get; init; }
 
     /// <summary>
     /// Gets the identifier of the Cognito user pool.
     /// </summary>
-    [Required]
+    [RequiredConfiguration]
     public required string UserPoolId { get; init; }
 
     /// <summary>
