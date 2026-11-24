@@ -39,24 +39,26 @@ describe('ResendPasswordLinkSection', () => {
     ).toBeInTheDocument()
   })
 
-  it('displays the countdown and hides the resend form', () => {
+  it('displays the countdown and does not render the resend form', () => {
     render(<ResendPasswordLinkSection email="test@example.com" />)
 
     expect(screen.getByText('in 60 seconds')).toBeInTheDocument()
-
-    const formContainer = screen.getByTestId('reset-password-form').parentElement
-
-    expect(formContainer).toHaveClass('invisible')
-    expect(formContainer).toHaveAttribute('inert')
+    expect(screen.queryByTestId('reset-password-form')).not.toBeInTheDocument()
   })
 
   it('passes the email address and resend button content to the form', () => {
+    mockUseCountdown.mockReturnValue({
+      seconds: 0,
+      restart: mockRestart,
+    })
+
     render(<ResendPasswordLinkSection email="test@example.com" />)
 
     expect(mockResetPasswordForm).toHaveBeenCalledWith(
       expect.objectContaining({
         email: 'test@example.com',
         buttonContentOverride: 'Resend link',
+        buttonVariantOverride: 'primary',
         onSuccess: expect.any(Function),
       }),
       undefined,
@@ -64,6 +66,11 @@ describe('ResendPasswordLinkSection', () => {
   })
 
   it('restarts the countdown and focuses the message after a successful resend', () => {
+    mockUseCountdown.mockReturnValue({
+      seconds: 0,
+      restart: mockRestart,
+    })
+
     render(<ResendPasswordLinkSection email="test@example.com" />)
 
     const message = screen.getByText(
@@ -87,11 +94,7 @@ describe('ResendPasswordLinkSection', () => {
     render(<ResendPasswordLinkSection email="test@example.com" />)
 
     expect(screen.queryByText(/in \d+ seconds/)).not.toBeInTheDocument()
-
-    const formContainer = screen.getByTestId('reset-password-form').parentElement
-
-    expect(formContainer).not.toHaveClass('invisible')
-    expect(formContainer).not.toHaveAttribute('inert')
+    expect(screen.getByTestId('reset-password-form')).toBeInTheDocument()
   })
 
   it('announces that another link can be requested when the countdown expires', () => {

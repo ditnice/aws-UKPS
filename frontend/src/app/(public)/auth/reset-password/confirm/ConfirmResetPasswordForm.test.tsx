@@ -143,7 +143,7 @@ describe('ConfirmResetPasswordForm', () => {
     it('renders an enabled submit button', () => {
       setup()
 
-      const button = screen.getByRole('button', { name: /Confirm password reset/i })
+      const button = screen.getByRole('button', { name: /Reset password/i })
 
       expect(button).toHaveAttribute('type', 'submit')
       expect(button).toBeEnabled()
