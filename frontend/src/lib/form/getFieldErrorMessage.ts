@@ -31,7 +31,7 @@ export function getFormErrorMessage(submitError: unknown): string | undefined {
 
 /**
  * The question-level message of the first error. An error flagged `itemsOnly` in its `params` is
- * about a text list's entries or a group's items alone, so it has no message of its own: zod has
+ * about a text list's or hierarchical select's entries or a group's items alone, so it has no message of its own: zod has
  * filled the empty message with "Invalid input", which is dropped here so only the item errors show
  * (see buildZodSchema in lib/dynamic-form).
  */
@@ -57,7 +57,7 @@ export function getFieldErrorParts(errors: unknown[]): string[] | undefined {
 }
 
 /**
- * The errors of a text list's entries or a group's items, when the first error names them in its
+ * The errors of a text list's or hierarchical select's entries or a group's items, when the first error names them in its
  * `params`, keyed as in `QuestionError.items` (lib/dynamic-form/answers.ts).
  */
 export function getFieldErrorItems(errors: unknown[]): Record<string, string> | undefined {

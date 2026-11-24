@@ -23,7 +23,7 @@ export const buildZodSchema = (questions: Question[]) =>
         const error = questionError(question, values[fieldName(index)])
         if (error) {
           // The parts let a date question highlight only the inputs at fault, and the items let a
-          // text list or group show each entry's error beside it. An error with items but no message
+          // text list, hierarchical select or group show each entry's error beside it. An error with items but no message
           // is about the items alone; zod would otherwise fill the empty message with "Invalid input".
           ctx.addIssue({
             code: 'custom',

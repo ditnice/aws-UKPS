@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { RecordPageDto, RecordPageQuestionDto } from '@/client/generated'
+import { emptyEntryMessage } from '@/lib/dynamic-form/answers'
 
 import { FormPage } from './FormPage'
 
@@ -1113,11 +1114,12 @@ describe('FormPage', () => {
       expect(message.closest('fieldset')?.getAttribute('aria-describedby')?.split(' ')).toContain(
         message.id,
       )
+      // The error is about the question as a whole, so it sits on the group and not on any select.
       const selects = screen.getAllByRole('combobox')
       expect(selects).toHaveLength(4)
       for (const select of selects) {
-        expect(select).toBeInvalid()
-        expect(select.getAttribute('aria-describedby')?.split(' ')).toContain(message.id)
+        expect(select).toBeValid()
+        expect(select).not.toHaveAttribute('aria-describedby')
       }
 
       await user.click(
@@ -1131,6 +1133,40 @@ describe('FormPage', () => {
         expect(select).toBeValid()
         expect(select).not.toHaveAttribute('aria-describedby')
       }
+    })
+
+    it('saves a single blank entry of a hierarchical select', async () => {
+      render(<FormPage page={page({ questions: [areasQuestion], answers: { areas: [] } })} />)
+
+      save()
+
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({ areas: [] })
+    })
+
+    it('reports a blank added entry against its own select, and saves once it is removed', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={page({ questions: [areasQuestion], answers: { areas: ['2'] } })} />)
+
+      await user.click(screen.getByRole('button', { name: 'Add another therapy area' }))
+      save()
+
+      // findBy fails if the message is shown more than once.
+      const message = await screen.findByText(emptyEntryMessage)
+      const blank = screen.getByRole('combobox', { name: 'Therapeutic area 2' })
+      expect(blank).toBeInvalid()
+      expect(blank).toHaveAttribute('aria-describedby', message.id)
+      expect(screen.getByRole('combobox', { name: 'Therapeutic area 1' })).toBeValid()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+
+      await user.click(
+        screen.getByRole('button', { name: 'Remove therapeutic area Therapeutic area 2' }),
+      )
+      expect(screen.queryByText(emptyEntryMessage)).not.toBeInTheDocument()
+      save()
+
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({ areas: ['2'] })
     })
 
     it('reports the same area chosen twice', async () => {

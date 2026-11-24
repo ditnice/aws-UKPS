@@ -51,10 +51,9 @@ function HierarchicalEntrySelects({
   // On a page of several questions each question's label is lead text, and the child's label
   // matches it rather than standing out above it.
   const labelClass = labelStyle === 'lead' ? styles.leadLabel : styles.childLabel
-  // The question's error is shown once: by the group, or otherwise above the parent select (which
-  // then describes itself by it). Every select is styled as invalid and described by that message.
-  const sharedErrorId = inGroup ? `${name}-error` : `${parentId}-error`
-  const errorId = error ? sharedErrorId : undefined
+  // The error is shown once, above the parent select, which describes itself by it. The child
+  // select, styled as invalid too, is described by that same message.
+  const errorId = error ? `${parentId}-error` : undefined
 
   return (
     <div className={styles.entry}>
@@ -62,9 +61,9 @@ function HierarchicalEntrySelects({
         {entryLabel ?? question.label}
       </label>
       <Select
-        aria-describedby={describedBy([hintId, inGroup ? errorId : undefined])}
+        aria-describedby={describedBy([hintId])}
         error={Boolean(error)}
-        errorMessage={inGroup ? undefined : error}
+        errorMessage={error}
         id={parentId}
         label={null}
         name={`${name}[${index}].parent`}
@@ -119,7 +118,8 @@ function HierarchicalEntrySelects({
 /**
  * A two-level choice: a parent dropdown, then an optional child dropdown. The answer is the most
  * specific option chosen. Multi-value questions repeat the pair in the MoJ add another stacked
- * layout (as for clinical trials), up to the MaxItems rule.
+ * layout (as for clinical trials), up to the MaxItems rule. Each entry shows its own error (a blank
+ * entry once there are several); the question's own errors (such as MaxItems) show on the group.
  */
 export function HierarchicalSelectQuestion({
   question,
@@ -128,6 +128,7 @@ export function HierarchicalSelectQuestion({
   onChange,
   onBlur,
   error,
+  errorItems,
   clearError,
   labelStyle,
 }: QuestionProps<HierarchicalEntry | HierarchicalEntry[]>) {
@@ -142,7 +143,7 @@ export function HierarchicalSelectQuestion({
     <HierarchicalEntrySelects
       entry={entries[index]}
       entryLabel={question.multiple ? entryLabel(index) : undefined}
-      error={error}
+      error={question.multiple ? errorItems?.[String(index)] : error}
       hintId={hintId}
       index={index}
       labelStyle={labelStyle}
