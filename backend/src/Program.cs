@@ -63,6 +63,12 @@ builder
     .ValidateOnStart();
 
 builder
+    .Services.AddOptions<AccountRecoveryOptions>()
+    .Bind(builder.Configuration.GetSection(AccountRecoveryOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder
     .Services.AddOptions<UserOnboardingOptions>()
     .Bind(builder.Configuration.GetSection(UserOnboardingOptions.SectionName))
     .ValidateDataAnnotations()

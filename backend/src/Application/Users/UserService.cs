@@ -3,6 +3,8 @@ using System.Linq.Expressions;
 using Amazon.Runtime;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Options;
+using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.SecurityNotification;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
@@ -50,9 +52,13 @@ internal partial class UserService(
     ICurrentUserInfoService currentUserInfoService,
     IEmailService emailService,
     IEmailVerificationLinkCreator emailVerificationLinkCreator,
+    IOptions<AccountRecoveryOptions> accountRecoveryOptions,
     ILogger<UserService> logger
 ) : IUserService
 {
+    private TimeSpan PendingEmailChangeTimeout =>
+        accountRecoveryOptions.Value.PendingEmailChangeTimeout;
+
     public async Task<UserInformationDto> GetCurrentUser(CancellationToken cancellationToken)
     {
         CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
@@ -70,7 +76,12 @@ internal partial class UserService(
 
         var mfaInformation = await GetUserMfaInformation(user.CognitoUsername, cancellationToken);
 
-        return MapUserToUserInformationDto(membership, mfaInformation, timeProvider.GetUtcNow());
+        return MapUserToUserInformationDto(
+            membership,
+            mfaInformation,
+            timeProvider.GetUtcNow(),
+            PendingEmailChangeTimeout
+        );
     }
 
     private async Task<MfaInformation> GetUserMfaInformation(
@@ -307,7 +318,12 @@ internal partial class UserService(
             membership.User!.CognitoUsername,
             cancellationToken
         );
-        var dto = MapUserToUserInformationDto(membership, mfaInformation, timeProvider.GetUtcNow());
+        var dto = MapUserToUserInformationDto(
+            membership,
+            mfaInformation,
+            timeProvider.GetUtcNow(),
+            PendingEmailChangeTimeout
+        );
 
         return GetUserInformationResult.Ok(dto);
     }
@@ -315,7 +331,8 @@ internal partial class UserService(
     private static UserInformationDto MapUserToUserInformationDto(
         UserOrgMembership membership,
         MfaInformation mfaInformation,
-        DateTime currentTime
+        DateTime currentTime,
+        TimeSpan pendingEmailChangeTimeout
     )
     {
         User user = membership.User!;
@@ -333,7 +350,7 @@ internal partial class UserService(
             HasMultipleOrganisations = user.HasMultipleSelectableOrganisations(),
             AllowedPharmaceuticalEntity = membership.AllowedPharmaceuticalEntity,
             PendingWorkEmail = user
-                .PendingEmail.TryGetData(currentTime)
+                .PendingEmail.TryGetData(currentTime, pendingEmailChangeTimeout)
                 .TryGetSuccessValue(out var data)
                 ? new() { Value = data.WorkEmail, VerifiedByEmail = data.Verified }
                 : null,
@@ -722,7 +739,10 @@ internal partial class UserService(
                 );
             }
 
-            var result = user.CompletePendingEmail(timeProvider.GetUtcNow());
+            var result = user.CompletePendingEmail(
+                timeProvider.GetUtcNow(),
+                PendingEmailChangeTimeout
+            );
 
             return await result.Match(
                 async _ =>
@@ -779,7 +799,11 @@ internal partial class UserService(
         }
 
         var token = VerificationTokenGenerator.Generate();
-        var result = user.PendingEmail.TryRefreshVerificationToken(token, timeProvider.GetUtcNow());
+        var result = user.PendingEmail.TryRefreshVerificationToken(
+            token,
+            timeProvider.GetUtcNow(),
+            PendingEmailChangeTimeout
+        );
 
         return await result.Match<Task<ResendVerificationEmailResult>>(
             async (pendingWorkEmail) =>
@@ -839,7 +863,8 @@ internal partial class UserService(
 
             var result = user!.PendingEmail.TryMarkPendingEmailAsVerified(
                 command.VerificationToken,
-                timeProvider.GetUtcNow()
+                timeProvider.GetUtcNow(),
+                PendingEmailChangeTimeout
             );
             return await result.Match<Task<VerifyPendingEmailAddressResult>>(
                 async () =>
@@ -903,7 +928,10 @@ internal partial class UserService(
                 );
             }
 
-            var result = user.PendingEmail.TryCancelPendingEmailChange(timeProvider.GetUtcNow());
+            var result = user.PendingEmail.TryCancelPendingEmailChange(
+                timeProvider.GetUtcNow(),
+                PendingEmailChangeTimeout
+            );
             return await result.Match(
                 async () =>
                 {

@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using UKPS.Api.Application.Authentication.Dtos;
 using UKPS.Api.Application.Authentication.Errors;
 using UKPS.Api.Application.Authentication.SecurityNotification;
@@ -24,13 +25,15 @@ internal class LoginService : ILoginService
     private readonly AppDbContext _appDbContext;
     private readonly IEmailService _emailService;
     private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly AccountRecoveryOptions _accountRecoveryOptions;
 
     public LoginService(
         IIdentityService identityService,
         IUserService userService,
         AppDbContext appDbContext,
         IEmailService emailService,
-        IDateTimeProvider dateTimeProvider
+        IDateTimeProvider dateTimeProvider,
+        IOptions<AccountRecoveryOptions> accountRecoveryOptions
     )
     {
         _identityService = identityService;
@@ -38,6 +41,7 @@ internal class LoginService : ILoginService
         _appDbContext = appDbContext;
         _emailService = emailService;
         _dateTimeProvider = dateTimeProvider;
+        _accountRecoveryOptions = accountRecoveryOptions.Value;
     }
 
     public async Task<InitiateAuthenticationResult> Login(
@@ -214,7 +218,10 @@ internal class LoginService : ILoginService
         {
             // Handles edge cases where there is a pending email that only changes in case.
             bool hasPendingEmailThatMatchesCase =
-                user.PendingEmail.TryGetData(_dateTimeProvider.GetUtcNow())
+                user.PendingEmail.TryGetData(
+                        _dateTimeProvider.GetUtcNow(),
+                        _accountRecoveryOptions.PendingEmailChangeTimeout
+                    )
                     .TryGetSuccessValue(out var data)
                 && data.Verified
                 && string.Equals(

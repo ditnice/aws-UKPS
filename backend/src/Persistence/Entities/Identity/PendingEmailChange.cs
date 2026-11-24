@@ -6,16 +6,11 @@ namespace UKPS.Api.Persistence.Entities.Identity;
 /// <summary>
 /// A requested change to a user's work email that has not yet been completed.
 /// Mapped as an optional complex property on <see cref="User"/>, stored in the <c>app_user</c> table.
-/// A pending change expires <see cref="Timeout"/> after it was requested; once expired every
-/// operation fails with a timed-out error.
+/// A pending change expires once the timeout passed to each operation has elapsed since it was
+/// requested; once expired every operation fails with a timed-out error.
 /// </summary>
 internal sealed record PendingEmailChange
 {
-    /// <summary>
-    /// How long after being requested a pending email change remains usable.
-    /// </summary>
-    public static readonly TimeSpan Timeout = TimeSpan.FromMinutes(120);
-
     private string? _workEmail;
     private string? _verificationToken;
     private DateTime? _verifiedAt;
@@ -30,13 +25,13 @@ internal sealed record PendingEmailChange
 
     private PendingEmailChange() { }
 
-    internal Result<Data, PendingEmailError> TryGetData(DateTime currentTime)
+    internal Result<Data, PendingEmailError> TryGetData(DateTime currentTime, TimeSpan timeout)
     {
         if (_workEmail is null)
         {
             return Result<Data, PendingEmailError>.Err(new PendingEmailError.NoPendingEmail());
         }
-        if (HasTimedOut(currentTime))
+        if (HasTimedOut(currentTime, timeout))
         {
             return Result<Data, PendingEmailError>.Err(
                 new PendingEmailError.PendingEmailTimedOut()
@@ -48,10 +43,11 @@ internal sealed record PendingEmailChange
 
     internal Result<string, RefreshVerificationTokenError> TryRefreshVerificationToken(
         string verificationToken,
-        DateTime dateTime
+        DateTime dateTime,
+        TimeSpan timeout
     )
     {
-        var dataResult = TryGetData(dateTime);
+        var dataResult = TryGetData(dateTime, timeout);
         if (!dataResult.TryGetSuccessValue(out var data))
         {
             return Result<string, RefreshVerificationTokenError>.Err(
@@ -75,10 +71,11 @@ internal sealed record PendingEmailChange
 
     internal Result<VerificationError> TryMarkPendingEmailAsVerified(
         string verificationToken,
-        DateTime dateTime
+        DateTime dateTime,
+        TimeSpan timeout
     )
     {
-        var dataResult = TryGetData(dateTime);
+        var dataResult = TryGetData(dateTime, timeout);
         if (!dataResult.TryGetSuccessValue(out var data))
         {
             return Result<VerificationError>.Err(
@@ -108,9 +105,12 @@ internal sealed record PendingEmailChange
         return Result<VerificationError>.Ok();
     }
 
-    internal Result<PendingEmailCancellationError> TryCancelPendingEmailChange(DateTime dateTime)
+    internal Result<PendingEmailCancellationError> TryCancelPendingEmailChange(
+        DateTime dateTime,
+        TimeSpan timeout
+    )
     {
-        var dataResult = TryGetData(dateTime);
+        var dataResult = TryGetData(dateTime, timeout);
         if (!dataResult.TryGetSuccessValue(out _))
         {
             return Result<PendingEmailCancellationError>.Err(
@@ -126,9 +126,9 @@ internal sealed record PendingEmailChange
         return Result<PendingEmailCancellationError>.Ok();
     }
 
-    internal Result<string, CompletionError> TryComplete(DateTime dateTime)
+    internal Result<string, CompletionError> TryComplete(DateTime dateTime, TimeSpan timeout)
     {
-        var dataResult = TryGetData(dateTime);
+        var dataResult = TryGetData(dateTime, timeout);
         if (!dataResult.TryGetSuccessValue(out var data))
         {
             return Result<string, CompletionError>.Err(
@@ -154,8 +154,8 @@ internal sealed record PendingEmailChange
     }
 
     // A pending change with no request time predates the timeout and is treated as expired.
-    private bool HasTimedOut(DateTime currentTime) =>
-        _requestedAt is not { } requestedAt || currentTime - requestedAt >= Timeout;
+    private bool HasTimedOut(DateTime currentTime, TimeSpan timeout) =>
+        _requestedAt is not { } requestedAt || currentTime - requestedAt >= timeout;
 
     private void Clear()
     {

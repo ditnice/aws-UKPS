@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Shouldly;
+using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.SecurityNotification;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
@@ -62,7 +63,7 @@ public class UserServiceTests : DatabaseTestBase
         DateTimeKind.Utc
     );
 
-    private static readonly TimeSpan PendingEmailTimeout = TimeSpan.FromMinutes(120);
+    private static readonly TimeSpan PendingEmailTimeout = TimeSpan.FromMinutes(30);
 
     private readonly GetUsersQueryDto _getAllUserQuery = new GetUsersQueryDto() { PageSize = 1000 };
     private readonly Faker _faker = new Faker();
@@ -85,6 +86,12 @@ public class UserServiceTests : DatabaseTestBase
             .UpdateCurrentTime(_currentDateTime)
             .ConfigureServices(services =>
             {
+                services
+                    .AddOptions<AccountRecoveryOptions>()
+                    .Configure(options =>
+                        options.PendingEmailChangeTimeoutSeconds = (int)
+                            PendingEmailTimeout.TotalSeconds
+                    );
                 return services.AddSingleton(_mockEmailVerificationLinkCreator);
             });
 
@@ -1292,7 +1299,8 @@ public class UserServiceTests : DatabaseTestBase
 
         var verificationResult = pendingEmail.TryMarkPendingEmailAsVerified(
             email.EmailVerificationLink.Host,
-            _currentDateTime.Add(TimeSpan.FromMinutes(5))
+            _currentDateTime.Add(TimeSpan.FromMinutes(5)),
+            PendingEmailTimeout
         );
         verificationResult.ShouldBeSuccess();
     }
@@ -1423,7 +1431,7 @@ public class UserServiceTests : DatabaseTestBase
 
         updatedUser
             .ShouldNotBeNull()
-            .PendingEmail.TryGetData(_currentDateTime)
+            .PendingEmail.TryGetData(_currentDateTime, PendingEmailTimeout)
             .TryGetSuccessValue(out var pendingEmail)
             .ShouldBeTrue();
         pendingEmail.Verified.ShouldBeTrue();
@@ -1584,7 +1592,9 @@ public class UserServiceTests : DatabaseTestBase
             .GetClearedContext()
             .Users.FindAsync([currentUser.Id], TestContext.Current.CancellationToken);
         databaseUser.ShouldNotBeNull();
-        databaseUser.PendingEmail.TryGetData(_currentDateTime).IsErr.ShouldBeTrue();
+        databaseUser
+            .PendingEmail.TryGetData(_currentDateTime, PendingEmailTimeout)
+            .IsErr.ShouldBeTrue();
     }
 
     [Fact]
@@ -1667,7 +1677,9 @@ public class UserServiceTests : DatabaseTestBase
 
         updatedUser.ShouldNotBeNull();
         updatedUser.WorkEmail.ShouldBe(updateEmail);
-        updatedUser.PendingEmail.TryGetData(_currentDateTime).IsErr.ShouldBeTrue();
+        updatedUser
+            .PendingEmail.TryGetData(_currentDateTime, PendingEmailTimeout)
+            .IsErr.ShouldBeTrue();
     }
 
     [Fact]

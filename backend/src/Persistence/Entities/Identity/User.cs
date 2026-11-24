@@ -189,10 +189,11 @@ internal sealed class User
     }
 
     internal Result<string, PendingEmailChange.CompletionError> CompletePendingEmail(
-        DateTime dateTime
+        DateTime dateTime,
+        TimeSpan timeout
     )
     {
-        var result = PendingEmail.TryComplete(dateTime);
+        var result = PendingEmail.TryComplete(dateTime, timeout);
 
         if (result.TryGetSuccessValue(out string? newWorkEmail))
         {
@@ -293,10 +294,15 @@ internal sealed class User
 
     internal Result<PendingEmailChange.VerificationError> TryMarkPendingEmailAsVerified(
         string verificationToken,
-        DateTime dateTime
+        DateTime dateTime,
+        TimeSpan timeout
     )
     {
-        var result = PendingEmail.TryMarkPendingEmailAsVerified(verificationToken, dateTime);
+        var result = PendingEmail.TryMarkPendingEmailAsVerified(
+            verificationToken,
+            dateTime,
+            timeout
+        );
         if (result.IsOk)
         {
             UpdatedAt = dateTime;
@@ -305,11 +311,12 @@ internal sealed class User
     }
 
     internal Result<PendingEmailChange.PendingEmailCancellationError> TryCancelPendingEmailChange(
-        DateTime dateTime
+        DateTime dateTime,
+        TimeSpan timeout
     )
     {
         Result<PendingEmailChange.PendingEmailCancellationError> result =
-            PendingEmail.TryCancelPendingEmailChange(dateTime);
+            PendingEmail.TryCancelPendingEmailChange(dateTime, timeout);
         if (result.IsOk)
         {
             UpdatedAt = dateTime;
