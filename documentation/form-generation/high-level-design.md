@@ -610,7 +610,7 @@ sequenceDiagram
     participant F as FormPage (browser)
     participant B as Backend
     participant P as Postgres
-    U->>F: Save and continue (or Save and continue to task list)
+    U->>F: Save and continue, Save and return to task list, or (last page) Save and continue to task list
     F->>F: Validate with Zod (same rules and messages)
     alt Client validation fails
         F-->>U: Errors shown against fields
