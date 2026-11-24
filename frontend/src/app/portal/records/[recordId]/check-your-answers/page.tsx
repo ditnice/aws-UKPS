@@ -86,7 +86,7 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
         <Alert type="error">
           <h2>There is a problem</h2>
           <p>
-            Change the information before you submit the record for quality assurance (QA) review:
+            Change the information before you submit the record for Quality Assurance (QA) review:
           </p>
           <ul>
             {data.errors.map((error) => (
