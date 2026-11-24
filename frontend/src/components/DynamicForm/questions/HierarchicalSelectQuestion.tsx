@@ -20,7 +20,13 @@ type EntryProps = {
   entry: HierarchicalEntry
   onChange: (entry: HierarchicalEntry) => void
   onBlur: () => void
+  /** The message for this entry, shown above its parent select. */
   error?: string
+  /**
+   * Whether the question as a whole has an error, which `FormGroup` shows. Styles every select as
+   * invalid and describes it by that message.
+   */
+  groupError?: boolean
   /** The ID of the question's hint, which every select is described by. */
   hintId?: string
   /** The entry's heading in a group, such as "Therapeutic area 2"; not set when there is no group. */
@@ -37,6 +43,7 @@ function HierarchicalEntrySelects({
   onChange,
   onBlur,
   error,
+  groupError,
   hintId,
   entryLabel,
   labelStyle,
@@ -51,9 +58,11 @@ function HierarchicalEntrySelects({
   // On a page of several questions each question's label is lead text, and the child's label
   // matches it rather than standing out above it.
   const labelClass = labelStyle === 'lead' ? styles.leadLabel : styles.childLabel
-  // The error is shown once, above the parent select, which describes itself by it. The child
-  // select, styled as invalid too, is described by that same message.
-  const errorId = error ? `${parentId}-error` : undefined
+  // The entry's own error is shown above its parent select, which describes itself by it. The
+  // question's error is shown by the group, so every select is described by that instead.
+  const invalid = Boolean(error) || Boolean(groupError)
+  const entryErrorId = error ? `${parentId}-error` : undefined
+  const groupErrorId = groupError ? `${name}-error` : undefined
 
   return (
     <div className={styles.entry}>
@@ -61,8 +70,8 @@ function HierarchicalEntrySelects({
         {entryLabel ?? question.label}
       </label>
       <Select
-        aria-describedby={describedBy([hintId])}
-        error={Boolean(error)}
+        aria-describedby={describedBy([hintId, groupErrorId])}
+        error={invalid}
         errorMessage={error}
         id={parentId}
         label={null}
@@ -92,8 +101,8 @@ function HierarchicalEntrySelects({
             {inGroup && <span className="visually-hidden">, {entryLabel}</span>}
           </label>
           <Select
-            aria-describedby={describedBy([hintId, errorId])}
-            error={Boolean(error)}
+            aria-describedby={describedBy([hintId, groupErrorId, entryErrorId])}
+            error={invalid}
             id={childId}
             label={null}
             name={`${name}[${index}].child`}
@@ -119,7 +128,8 @@ function HierarchicalEntrySelects({
  * A two-level choice: a parent dropdown, then an optional child dropdown. The answer is the most
  * specific option chosen. Multi-value questions repeat the pair in the MoJ add another stacked
  * layout (as for clinical trials), up to the MaxItems rule. Each entry shows its own error (a blank
- * entry once there are several); the question's own errors (such as MaxItems) show on the group.
+ * entry once there are several). The question's own errors (such as MaxItems) show on the group
+ * and mark every select as invalid.
  */
 export function HierarchicalSelectQuestion({
   question,
@@ -144,6 +154,7 @@ export function HierarchicalSelectQuestion({
       entry={entries[index]}
       entryLabel={question.multiple ? entryLabel(index) : undefined}
       error={question.multiple ? errorItems?.[String(index)] : error}
+      groupError={question.multiple && Boolean(error)}
       hintId={hintId}
       index={index}
       labelStyle={labelStyle}

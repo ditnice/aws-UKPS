@@ -1114,12 +1114,11 @@ describe('FormPage', () => {
       expect(message.closest('fieldset')?.getAttribute('aria-describedby')?.split(' ')).toContain(
         message.id,
       )
-      // The error is about the question as a whole, so it sits on the group and not on any select.
       const selects = screen.getAllByRole('combobox')
       expect(selects).toHaveLength(4)
       for (const select of selects) {
-        expect(select).toBeValid()
-        expect(select).not.toHaveAttribute('aria-describedby')
+        expect(select).toBeInvalid()
+        expect(select.getAttribute('aria-describedby')?.split(' ')).toContain(message.id)
       }
 
       await user.click(
