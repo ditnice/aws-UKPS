@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-import { postAuthResendSetupToken } from '@/client/generated'
+import { resendSetupToken } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 
 import styles from '../page.module.scss'
@@ -135,7 +135,7 @@ export function RequestNewLink({ setupToken, supportEmail }: RequestNewLinkProps
     setRemainingSeconds(resendCooldownSeconds)
 
     try {
-      const result = await postAuthResendSetupToken({
+      const result = await resendSetupToken({
         body: correlationId ? { correlationId } : { setupToken },
       })
 
