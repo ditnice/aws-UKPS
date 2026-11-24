@@ -133,7 +133,7 @@ describe('ArchiveConfirmPage', () => {
     expect(screen.getByTestId('preheading').textContent).toBe(publishedRecord.recordTitle)
     expect(
       screen.getByRole('heading', {
-        level: 2,
+        level: 3,
         name: 'If you continue, this record will be archived',
       }),
     ).toBeInTheDocument()
