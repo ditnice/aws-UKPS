@@ -24,12 +24,14 @@ After you click the `Deploy` button above, you'll want to have standalone copy o
 
 ### Configuration
 
-The following environment variables can be set:
+The Next.js server validates its environment at startup. Set these variables in your
+local `.env` file or inject them into the running container. They are not required
+when building the standalone image or generating Payload types or import maps.
 
 | Variable                 | Required | Example                                                           | Description                                                                                                                                                                                                                                                             |
 | ------------------------ | -------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `BACKEND_API_BASE_URL`   | Yes      | `https://localhost:7180`                                          | Base URL of the backend API. All API requests are sent to this endpoint.                                                                                                                                                                                                |
-| `BACKEND_API_TIMEOUT_MS` | No       | `60000`                                                           | Maximum time, in milliseconds, to wait for a backend API response before timing out.                                                                                                                                                                                    |
+| `BACKEND_API_TIMEOUT_MS` | No       | `15000`                                                           | Maximum time, in milliseconds, to wait for a backend API response. Defaults to 15000 if unset or invalid.                                                                                                                                                               |
 | `COGNITO_ISSUER`         | Yes*     | `https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_89h3f298h` | AWS Cognito User Pool issuer URL used to validate authentication tokens.                                                                                                                                                                                                |
 | `COGNITO_CLIENT_ID`      | Yes*     | `ioihsfd49fj09wj3f`                                               | AWS Cognito App Client ID used during authentication and authorization flows.                                                                                                                                                                                           |
 | `AUTHENTICATION_MODE`    | No       | `DEV`                                                             | Controls how authentication is handled by the application. `DEV` means that you will be allowed to access all routes without authentication and is intended for local development and testing only. If this is enabled you will not be able to use the login processes. |
@@ -37,11 +39,20 @@ The following environment variables can be set:
 
 > \* Unless AUTHENTICATION_MODE=DEV
 
+`PAYLOAD_SECRET` and database configuration are required at startup, including in
+`DEV` mode. Set `DATABASE_URL` or all of `DATABASE_HOST`, `DATABASE_NAME`,
+`DATABASE_PASSWORD`, `DATABASE_PORT`, and `DATABASE_USERNAME`. `DATABASE_URL`
+takes precedence. See [`.env.example`](.env.example) for local values.
+
+`FRONTEND_PUBLIC_ORIGIN` is optional (for example `https://app.example.com`, without
+a trailing slash); when unset, the proxy uses the request URL's origin.
+`QA_SUPPORT_EMAIL` is an optional support email address.
+
 #### Example Configuration
 
 ```env
 BACKEND_API_BASE_URL=https://localhost:7180
-BACKEND_API_TIMEOUT_MS=60000
+BACKEND_API_TIMEOUT_MS=15000
 COGNITO_ISSUER=https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_89h3f298h
 COGNITO_CLIENT_ID=ioihsfd49fj09wj3f
 AUTHENTICATION_MODE=DEV
