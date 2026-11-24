@@ -135,14 +135,20 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
     ) =>
         condition switch
         {
-            AnswerInCondition answerIn => new RecordPageConditionDto
-            {
-                Kind = answerIn.Kind,
-                QuestionId = answerIn.QuestionId,
-                Values = model.FindQuestion(answerIn.QuestionId)?.ReferenceType is { } type
-                    ? [.. codes.IdsOf(type, answerIn.Values)]
-                    : answerIn.Values,
-            },
+            AnswerInCondition answerIn => ValueConditionDto(
+                answerIn.Kind,
+                answerIn.QuestionId,
+                answerIn.Values,
+                model,
+                codes
+            ),
+            AnswerNotInCondition answerNotIn => ValueConditionDto(
+                answerNotIn.Kind,
+                answerNotIn.QuestionId,
+                answerNotIn.Values,
+                model,
+                codes
+            ),
             _ => throw new InvalidOperationException(
                 $"Unsupported condition kind {condition.Kind}."
             ),
@@ -155,5 +161,21 @@ internal sealed class RecordFormQueryService(RecordFormPageLoader loader) : IRec
             Label = option.Label,
             Hint = option.Hint,
             Children = option.Children.Count == 0 ? null : option.Children.Select(ToDto).ToArray(),
+        };
+
+    private static RecordPageConditionDto ValueConditionDto(
+        ConditionKind kind,
+        string questionId,
+        IReadOnlyList<string> values,
+        FormModel model,
+        ReferenceCodes codes
+    ) =>
+        new()
+        {
+            Kind = kind,
+            QuestionId = questionId,
+            Values = model.FindQuestion(questionId)?.ReferenceType is { } type
+                ? [.. codes.IdsOf(type, values)]
+                : values,
         };
 }

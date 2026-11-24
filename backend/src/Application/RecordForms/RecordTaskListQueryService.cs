@@ -67,24 +67,34 @@ internal sealed class RecordTaskListQueryService(
                 CompanyCode = productDetail?.CompanyCode,
                 RecordTitle = productDetail?.RecordTitle,
                 Sections = form
-                    .Model.Sections.Select(section => new RecordTaskListSectionDto
-                    {
-                        Id = section.Id,
-                        Title = section.Title,
-                        Tasks = section
-                            .Tasks.Select(task => new RecordTaskListTaskDto
-                            {
-                                Id = task.Id,
-                                Title = task.Title,
-                                Status = GetStatus(task, answered, applicability),
-                                FirstPageId = task.FirstPage.Id,
-                            })
-                            .ToArray(),
-                    })
+                    .Model.Sections.Select(section => ToDto(section, answered, applicability))
                     .ToArray(),
             }
         );
     }
+
+    private static RecordTaskListSectionDto ToDto(
+        FormSection section,
+        HashSet<string> answered,
+        Applicability applicability
+    ) =>
+        new()
+        {
+            Id = section.Id,
+            Title = section.Title,
+            Optional = section.Optional,
+            SubText = section.SubText,
+            Tasks = section
+                .Tasks.Select(task => new RecordTaskListTaskDto
+                {
+                    Id = task.Id,
+                    Title = task.Title,
+                    Hint = task.Hint,
+                    Status = GetStatus(task, answered, applicability),
+                    FirstPageId = task.FirstPage.Id,
+                })
+                .ToArray(),
+        };
 
     /// <summary>
     /// The task's status, counting only the questions that apply: a hidden question is neither an
@@ -96,7 +106,20 @@ internal sealed class RecordTaskListQueryService(
         Applicability applicability
     )
     {
+        // A task whose first page depends on an unanswered question cannot start yet (PIM and EAMS
+        // before the technology status is answered). Once it is answered, the task is either not
+        // applicable or startable.
+        if (task.FirstPage.ShowWhen?.TriggerQuestionIds.Any(id => !answered.Contains(id)) == true)
+        {
+            return RecordTaskStatus.CannotStart;
+        }
+
         FormQuestion[] applying = task.Questions.Where(applicability.Applies).ToArray();
+        if (applying.Length == 0)
+        {
+            return RecordTaskStatus.NotApplicable;
+        }
+
         bool hasAnyAnswer = applying.Any(question => answered.Contains(question.Id));
         FormQuestion[] required = applying.Where(static q => q.IsRequired).ToArray();
         bool requiredAnswersComplete = required.All(question => answered.Contains(question.Id));

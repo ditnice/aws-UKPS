@@ -88,4 +88,17 @@ describe('ManageRecordActionBanner', () => {
       },
     )
   })
+
+  describe('when the user cannot manage the record', () => {
+    it.each(['Draft', 'Published', 'OnHold'] as const)(
+      'only offers the timeline when status is %s',
+      (displayStatus) => {
+        renderBanner({ displayStatus, actions: ['ViewTimeline'] })
+
+        expectVisibleButtons(['View record timeline'])
+        expect(screen.getByRole('heading', { name: 'View record timeline' })).toBeVisible()
+        expect(screen.queryByRole('heading', { name: 'Manage record' })).not.toBeInTheDocument()
+      },
+    )
+  })
 })

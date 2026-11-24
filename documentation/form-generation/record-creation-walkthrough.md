@@ -286,7 +286,7 @@ The content table stores the enum's integer; the audit stores its name.
 `{ "medicines_indication_detail.indication_is_rare_disease": "No" }`.
 
 **Response:** `{ "nextPageId": null }`. This is the last page of the task, so its button reads
-**Save and return to task list**, and the browser goes back to `/portal/records/5/task-list`.
+**Save and continue to task list**, and the browser goes back to `/portal/records/5/task-list`.
 The Development background task is started from the task list (see
 [Conditional answers](#conditional-answers-development-background)).
 

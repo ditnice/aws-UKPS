@@ -4,6 +4,7 @@ import {
   SummaryListAction,
   SummaryListRow,
 } from '@/components/SummaryList/SummaryList'
+import { Tag } from '@/components/Tag/Tag'
 
 import { Example } from '../../_components/Example'
 
@@ -49,6 +50,23 @@ export function Examples() {
         >
           <SummaryList variant="wide-value">
             <SummaryListRow label="Study name" value="Lorem ipsum dolor sit amet" />
+          </SummaryList>
+        </SummaryCard>
+      </Example>
+
+      <Example title="Tag beside an action">
+        <SummaryCard
+          actions={
+            <SummaryListAction href="#edit-empty-trial" visuallyHiddenText="trial 1">
+              Edit
+            </SummaryListAction>
+          }
+          tag={<Tag colour="red">There is a problem</Tag>}
+          title="Trial 1"
+          titleHeadingLevel={3}
+        >
+          <SummaryList variant="wide-value">
+            <SummaryListRow label="Not yet provided" value="" />
           </SummaryList>
         </SummaryCard>
       </Example>

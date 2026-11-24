@@ -49,7 +49,9 @@ internal sealed class ValidEntity
         "Areas",
         FormControl.HierarchicalSelect,
         ChildLabel = "Condition",
-        AddAnotherLabel = "Add another"
+        AddAnotherLabel = "Add another",
+        ItemLabel = "Area",
+        RemoveLabel = "Remove area"
     )]
     [FormOptions(OptionKeys.TherapeuticAreas)]
     [FormMaxItems(3, "Up to 3")]
@@ -333,6 +335,11 @@ internal sealed class BrokenConditionEntity
     [FormShowWhen("broken_condition_entity.trigger", YesNoUnknown.Yes)]
     public string? OtherPage { get; set; }
 
+    // The only page of the task without a condition, so the conditional first page is reported.
+    [FormPage("third")]
+    [FormField("broken_condition_entity.third", "Third", FormControl.Text, Order = 10)]
+    public string? Third { get; set; }
+
     public RecordRevision? Revision { get; set; }
 }
 
@@ -558,9 +565,11 @@ internal sealed class VaccineTestLayout()
                             new FormLayoutPage("areas", "Areas", 30),
                             new FormLayoutPage("split-vaccine", "Split vaccine", 40),
                             new FormLayoutPage("unplaced-gate", "Gate", 50),
-                        ]
+                        ],
+                        Hint: "Valid task hint"
                     ),
-                ]
+                ],
+                SubText: "Valid sub text"
             ),
             new FormLayoutSection(
                 "broken",
@@ -623,6 +632,7 @@ internal sealed class VaccineTestLayout()
                         [
                             new FormLayoutPage("first", "First", 10),
                             new FormLayoutPage("second", "Second", 20),
+                            new FormLayoutPage("third", "Third", 30),
                         ]
                     ),
                 ]
@@ -791,7 +801,8 @@ internal sealed class BrokenTestLayout()
                         [
                             new FormLayoutPage("Bad Page", " ", 10),
                             new FormLayoutPage("task-list", "Task list", 20),
-                        ]
+                        ],
+                        Hint: " "
                     ),
                     new FormLayoutTask(
                         "tied-task",
@@ -802,7 +813,8 @@ internal sealed class BrokenTestLayout()
                             new FormLayoutPage("tied-second", "Tied second", 10),
                         ]
                     ),
-                ]
+                ],
+                SubText: " "
             ),
             new FormLayoutSection(
                 "repeated",
@@ -976,10 +988,26 @@ internal sealed class BrokenGroupEntity
         FormControl.Text,
         Order = 10,
         ItemLabel = "Not a group",
-        RemoveLabel = "Not a list"
+        RemoveLabel = "Not a list",
+        CheckAnswersAddLabel = "Not a group"
     )]
     [FormDistinct("Not a list")]
     public string? Text { get; set; }
+
+    [FormPage("broken-items")]
+    [FormField(
+        "broken_group_entity.chapter_id",
+        "Chapter",
+        FormControl.HierarchicalSelect,
+        Order = 20,
+        ChildLabel = "Sub",
+        AddAnotherLabel = "Not repeated",
+        ItemLabel = "Not repeated",
+        RemoveLabel = "Not repeated"
+    )]
+    public int? ChapterId { get; set; }
+
+    public BnfChapter? Chapter { get; set; }
 }
 
 [SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]

@@ -1,5 +1,6 @@
 import { Checkbox, Checkboxes } from '@/components/Checkboxes/Checkboxes'
 
+import { HintText } from '../HintText'
 import { labelSizeFor } from '../labelStyle'
 
 import type { QuestionProps } from '../types'
@@ -16,7 +17,7 @@ export function CheckboxQuestion({
   return (
     <Checkboxes
       error={error}
-      hint={question.hint ?? undefined}
+      hint={question.hint ? <HintText text={question.hint} /> : undefined}
       legend={question.label}
       legendSize={labelSizeFor(labelStyle)}
       name={name}

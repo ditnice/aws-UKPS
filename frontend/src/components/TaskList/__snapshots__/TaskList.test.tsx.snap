@@ -41,6 +41,7 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
           <div>
             <div>
               <a
+                aria-describedby="task-1-status"
                 href="/task-1"
               >
                 Task 1
@@ -53,6 +54,7 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
             <span
               class="tag"
               data-component="tag"
+              id="task-1-status"
               style="background-color: rgb(207, 228, 220); color: rgb(8, 61, 41);"
             >
               Completed
@@ -66,6 +68,7 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
           <div>
             <div>
               <a
+                aria-describedby="task-2-status"
                 href="/task-2"
               >
                 Task 2
@@ -78,6 +81,7 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
             <span
               class="tag"
               data-component="tag"
+              id="task-2-status"
               style="background-color: rgb(255, 238, 128); color: rgb(122, 60, 28);"
             >
               In progress
@@ -110,6 +114,7 @@ exports[`TaskList > renders sections and tasks inside the task list 1`] = `
             <span
               class="tag"
               data-component="tag"
+              id="task-3-status"
               style="background-color: rgb(210, 226, 241); color: rgb(15, 56, 92);"
             >
               Not yet started
@@ -132,6 +137,7 @@ exports[`TaskListTask > renders a task link and status 1`] = `
       <div>
         <div>
           <a
+            aria-describedby="task-3-status"
             href="/review"
           >
             Review evidence
@@ -144,6 +150,7 @@ exports[`TaskListTask > renders a task link and status 1`] = `
         <span
           class="tag"
           data-component="tag"
+          id="task-3-status"
           style="background-color: rgb(255, 238, 128); color: rgb(122, 60, 28);"
         >
           In progress
@@ -159,6 +166,7 @@ exports[`TaskListTask > renders the cannot-start status as plain text 1`] = `
   <ul>
     <li
       class="_task-list__task_b29161"
+      id="task-4"
     >
       <div>
         <div>
@@ -167,6 +175,7 @@ exports[`TaskListTask > renders the cannot-start status as plain text 1`] = `
       </div>
       <span
         class="_task-list__status_b29161"
+        id="task-4-status"
       >
         Cannot start yet
       </span>
@@ -180,6 +189,7 @@ exports[`TaskListTask > renders the not-applicable status as plain text 1`] = `
   <ul>
     <li
       class="_task-list__task_b29161"
+      id="task-4"
     >
       <div>
         <div>
@@ -188,6 +198,7 @@ exports[`TaskListTask > renders the not-applicable status as plain text 1`] = `
       </div>
       <span
         class="_task-list__status_b29161"
+        id="task-4-status"
       >
         Not applicable
       </span>

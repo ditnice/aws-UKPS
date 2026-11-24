@@ -107,6 +107,10 @@
   }
 }
 
+.summary-list__key--plain {
+  font-weight: normal;
+}
+
 // The value's content is the cell's children, or the content wrapper's when the row has a tag.
 .summary-list__value,
 .summary-list__value-content {
