@@ -1247,7 +1247,13 @@ public class UserServiceTests : DatabaseTestBase
             .GetClearedContext()
             .Users.FindAsync([currentUser.Id], TestContext.Current.CancellationToken);
 
-        email.EmailVerificationLink.Host.ShouldBe(user!.PendingEmailVerificationToken);
+        var pendingEmail = user.ShouldNotBeNull().PendingEmail;
+
+        var verificationResult = pendingEmail.TryMarkPendingEmailAsVerified(
+            email.EmailVerificationLink.Host,
+            _currentDateTime.Add(TimeSpan.FromMinutes(5))
+        );
+        verificationResult.ShouldBeSuccess();
     }
 
     [Fact]
@@ -1360,7 +1366,12 @@ public class UserServiceTests : DatabaseTestBase
             .GetClearedContext()
             .Users.FindAsync([currentUser.Id], TestContext.Current.CancellationToken);
 
-        updatedUser.ShouldNotBeNull().PendingEmailVerifiedAt.ShouldBe(_currentDateTime);
+        updatedUser
+            .ShouldNotBeNull()
+            .PendingEmail.TryGetData()
+            .TryGetSuccessValue(out var pendingEmail)
+            .ShouldBeTrue();
+        pendingEmail.Verified.ShouldBeTrue();
     }
 
     [Fact]
@@ -1484,9 +1495,7 @@ public class UserServiceTests : DatabaseTestBase
             .GetClearedContext()
             .Users.FindAsync([currentUser.Id], TestContext.Current.CancellationToken);
         databaseUser.ShouldNotBeNull();
-        databaseUser.PendingWorkEmail.ShouldBeNull();
-        databaseUser.PendingEmailVerifiedAt.ShouldBeNull();
-        databaseUser.PendingEmailVerificationToken.ShouldBeNull();
+        databaseUser.PendingEmail.TryGetData().IsErr.ShouldBeTrue();
     }
 
     [Fact]
@@ -1552,8 +1561,7 @@ public class UserServiceTests : DatabaseTestBase
 
         updatedUser.ShouldNotBeNull();
         updatedUser.WorkEmail.ShouldBe(updateEmail);
-        updatedUser.PendingEmailVerifiedAt.ShouldBeNull();
-        updatedUser.PendingEmailVerifiedAt.ShouldBeNull();
+        updatedUser.PendingEmail.TryGetData().IsErr.ShouldBeTrue();
     }
 
     [Fact]

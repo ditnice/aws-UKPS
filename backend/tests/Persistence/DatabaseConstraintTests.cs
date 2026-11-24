@@ -97,8 +97,11 @@ public class DatabaseConstraintTests : DatabaseTestBase
     {
         var duplicateEmail = "duplicate@example.com";
         var userFaker = _userFaker.RuleFor(
-            x => x.PendingWorkEmail,
-            f => f.GetRandomlyCapitalisedString(duplicateEmail)
+            x => x.PendingEmail,
+            f => new PendingEmailChange(
+                f.GetRandomlyCapitalisedString(duplicateEmail),
+                "verification-token"
+            )
         );
         User user1 = userFaker.Generate();
         User user2 = userFaker.Generate();

@@ -146,7 +146,10 @@ public class UserAdministrationServiceTests : DatabaseTestBase
     {
         var emailAddress = "test@email.com";
         var existingUser = new UserFaker()
-            .RuleFor(x => x.PendingWorkEmail, _ => emailAddress)
+            .RuleFor(
+                x => x.PendingEmail,
+                _ => new PendingEmailChange(emailAddress, "verification-token")
+            )
             .Generate();
         await AddEntity(existingUser, Ct);
         OnboardUserCommandDto command = await GenerateValidOnboardingCommand() with
