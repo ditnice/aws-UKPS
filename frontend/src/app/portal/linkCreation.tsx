@@ -6,34 +6,19 @@ export const createLinks = (me: UserOrganisationContext | undefined) => {
   return [
     {
       href: `/portal/organisations/${me.organisationId}/records`,
-      label: (
-        <>
-          View and <br />
-          manage records
-        </>
-      ),
+      label: 'View and\nmanage records',
     },
     ...(me.userRole === 'Standard'
       ? []
       : [
           {
             href: `/portal/organisations/${me.organisationId}`,
-            label: (
-              <>
-                Manage my <br />
-                organisation
-              </>
-            ),
+            label: 'Manage my\norganisation',
           },
         ]),
     {
       href: '/portal/user/me',
-      label: (
-        <>
-          Manage my <br />
-          details
-        </>
-      ),
+      label: 'Manage my\ndetails',
     },
   ]
 }

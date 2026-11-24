@@ -1,4 +1,3 @@
-import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 
 import { UserOrganisationContext } from '@/components/Layout/Header/Header'
@@ -17,12 +16,8 @@ const buildContext = (
   ...overrides,
 })
 
-// Labels contain <br /> elements and trailing whitespace; flatten them for comparison.
-const labelText = (label: React.ReactNode) =>
-  renderToStaticMarkup(<>{label}</>)
-    .replace(/<br\s*\/?>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
+// Labels break across two lines with "\n"; flatten them for comparison.
+const labelText = (label: string) => label.replace(/\s+/g, ' ')
 
 describe('createLinks', () => {
   it('returns no links when there is no user context', () => {

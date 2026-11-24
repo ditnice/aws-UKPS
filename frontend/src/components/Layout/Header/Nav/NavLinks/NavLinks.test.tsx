@@ -14,7 +14,7 @@ vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 type StringLabelledNavLinkItem = NavLinkItem & { stringLabel: string }
 
 const links: StringLabelledNavLinkItem[] = [
-  { href: '/', label: <>Home</>, stringLabel: 'Home' },
+  { href: '/', label: 'Home', stringLabel: 'Home' },
   { href: '/about-us', label: 'About', stringLabel: 'About' },
   { href: '/portal', label: 'Dashboard', stringLabel: 'Dashboard' },
   { href: '/portal/components', label: 'Components', stringLabel: 'Components' },
@@ -117,5 +117,16 @@ describe('NavLinks', () => {
     expect(getLinkByLabel('Settings')).toHaveAttribute('aria-current', 'page')
     expect(getLinkByLabel('Settings')).toHaveAttribute('href', '/portal/settings')
     expect(getLinkByLabel('Profile')).not.toHaveAttribute('aria-current')
+  })
+
+  it('keeps a label that breaks across two lines as one run of text', () => {
+    navigationState.pathname = '/'
+
+    render(<NavLinks links={[{ href: '/portal/records', label: 'View and\nmanage records' }]} />)
+
+    // Screen readers read the whole label, not one line at a time.
+    const link = screen.getByRole('link', { name: /^View and\s+manage records$/ })
+    expect(link.childNodes).toHaveLength(1)
+    expect(link.firstChild?.nodeType).toBe(Node.TEXT_NODE)
   })
 })
