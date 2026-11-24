@@ -27,7 +27,7 @@ import type {
 /** Server message for a multi-value answer that repeats a value; mirrors RecordFormMessages.Duplicate. */
 export const duplicateMessage = 'You have selected the same option more than once'
 
-/** Placeholder for now, shown on a blank entry once there are several. */
+/** Shown on a blank entry of a multi-value hierarchical select once there are several. */
 export const emptyEntryMessage = 'Select a therapeutic area or remove this one'
 
 const emptyEntry: HierarchicalEntry = { parent: '', child: '' }

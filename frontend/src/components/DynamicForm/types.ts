@@ -19,8 +19,7 @@ export type QuestionProps<TValue extends FormValue = FormValue> = {
   errorParts?: string[]
   /**
    * The errors of a text list's or hierarchical select's entries or a group's items, keyed as in
-   * `QuestionError.items`
-   * (lib/dynamic-form/answers.ts), such as `0.study_name`.
+   * `QuestionError.items` (lib/dynamic-form/answers.ts), such as `0.study_name`.
    */
   errorItems?: Record<string, string>
   /** Removes the question's error until it is next validated, such as when the user starts over. */
