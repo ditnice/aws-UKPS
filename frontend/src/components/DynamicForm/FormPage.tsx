@@ -255,7 +255,7 @@ export function FormPage({
                     onClick={() => void form.handleSubmit({ returnToTaskList: true })}
                     variant="primary"
                   >
-                    Save and continue to task list
+                    Save and return to task list
                   </Button>
                 )}
               </>
