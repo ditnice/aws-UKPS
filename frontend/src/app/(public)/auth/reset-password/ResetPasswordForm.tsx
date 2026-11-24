@@ -3,7 +3,7 @@
 import { initialFormState, mergeForm, useForm, useTransform } from '@tanstack/react-form-nextjs'
 import { ChangeEvent, startTransition, useActionState, useEffect, useRef } from 'react'
 
-import { Button } from '@/components/Button/Button'
+import { Button, ButtonVariant } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import FormLevelErrors from '@/lib/form/FormLevelErrors'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
@@ -14,10 +14,16 @@ import { passwordRestFormOptions } from './resetPasswordShared'
 type ResetPasswordFormProps = {
   email?: string
   buttonContentOverride?: string
+  buttonVariantOverride?: ButtonVariant
   onSuccess?: () => void
 }
 
-const ResetPasswordForm = ({ email, buttonContentOverride, onSuccess }: ResetPasswordFormProps) => {
+const ResetPasswordForm = ({
+  email,
+  buttonContentOverride,
+  buttonVariantOverride,
+  onSuccess,
+}: ResetPasswordFormProps) => {
   const boundAction = resetPasswordAction.bind(null, !email)
   const [state, action, isPending] = useActionState(boundAction, initialFormState)
 
@@ -93,7 +99,7 @@ const ResetPasswordForm = ({ email, buttonContentOverride, onSuccess }: ResetPas
           )
         }}
       </form.Field>
-      <Button type="submit" variant="cta" disabled={isPending}>
+      <Button type="submit" variant={buttonVariantOverride ?? 'cta'} disabled={isPending}>
         {buttonContentOverride ?? <>Send link</>}
       </Button>
     </form>

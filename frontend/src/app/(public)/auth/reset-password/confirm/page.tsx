@@ -21,9 +21,8 @@ const Page = async () => {
 
   return (
     <>
-      <PageHeader heading="Reset your password" />
       <ResendPasswordLinkSection email={emailCookie.value} />
-      <hr />
+      <PageHeader heading="Reset your password" />
       <ConfirmResetPasswordForm email={emailCookie.value} />
     </>
   )

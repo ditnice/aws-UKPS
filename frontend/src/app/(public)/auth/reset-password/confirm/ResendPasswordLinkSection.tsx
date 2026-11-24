@@ -2,6 +2,8 @@
 
 import { useCallback, useRef } from 'react'
 
+import { Alert } from '@/components/Alert/Alert'
+
 import ResetPasswordForm from '../ResetPasswordForm'
 
 import { useCountdown } from './countdown'
@@ -23,27 +25,31 @@ const ResendPasswordLinkSection = ({ email }: ResendPasswordLinkSectionProps) =>
 
   return (
     <>
-      <div ref={messageRef} tabIndex={-1}>
-        <p>An email containing a confirmation code has been sent to {email}.</p>
-        <p>
-          If you cannot find the email, check your spam or junk folder. If you still do not receive
-          it, you can request another link
-          {isCountingDown && <strong> in {seconds} seconds</strong>}.
-        </p>
-      </div>
+      <Alert type="success">
+        <h2>Password reset link sent</h2>
+        <div ref={messageRef} tabIndex={-1}>
+          <p>An email containing a confirmation code has been sent to {email}.</p>
+          <p>
+            If you cannot find the email, check your spam or junk folder. If you still do not
+            receive it, you can request another link
+            {isCountingDown && <strong> in {seconds} seconds</strong>}.
+          </p>
+        </div>
 
-      {/* Always mounted so changes are reliably announced */}
-      <div role="status" className="visually-hidden">
-        {!isCountingDown && 'You can now request another link.'}
-      </div>
+        {/* Always mounted so changes are reliably announced */}
+        <div role="status" className="visually-hidden">
+          {!isCountingDown && 'You can now request another link.'}
+        </div>
 
-      <div className={isCountingDown ? 'invisible' : undefined} inert={isCountingDown || undefined}>
-        <ResetPasswordForm
-          email={email}
-          buttonContentOverride="Resend link"
-          onSuccess={handleSuccess}
-        />
-      </div>
+        {!isCountingDown && (
+          <ResetPasswordForm
+            email={email}
+            buttonContentOverride="Resend link"
+            buttonVariantOverride="primary"
+            onSuccess={handleSuccess}
+          />
+        )}
+      </Alert>
     </>
   )
 }

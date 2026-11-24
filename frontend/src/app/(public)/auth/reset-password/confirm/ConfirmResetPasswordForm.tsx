@@ -86,7 +86,7 @@ const ConfirmResetPasswordForm = ({ email }: ConfirmResetPasswordFormProps) => {
         }}
       </form.Field>
       <Button type="submit" variant="cta" disabled={isPending}>
-        Confirm password reset
+        Reset password
       </Button>
     </form>
   )
