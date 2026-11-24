@@ -6309,10 +6309,12 @@
             "format": "int32"
           },
           "companyCode": {
+            "maxLength": 2000,
             "type": "string",
             "description": "Gets the company's internal code or working name for the product, e.g. ABC-123."
           },
           "brandedName": {
+            "maxLength": 2000,
             "type": [
               "null",
               "string"

@@ -23,7 +23,8 @@ internal static class RuleEvaluator
         return rule.Kind switch
         {
             RuleKind.Required => !answer.IsEmpty,
-            RuleKind.MaxLength => answer.Value is null || answer.Value.Length <= rule.Value,
+            RuleKind.MaxLength => IsShortEnough(rule, answer.Value)
+                && answer.Values.All(v => IsShortEnough(rule, v)),
             RuleKind.MaxItems => ItemCount(answer) <= rule.Value,
             RuleKind.Distinct => answer
                 .Values.GroupBy(static v => v, StringComparer.OrdinalIgnoreCase)
@@ -31,6 +32,10 @@ internal static class RuleEvaluator
             _ => throw new InvalidOperationException($"Unsupported rule kind {rule.Kind}."),
         };
     }
+
+    /// <summary>Whether a value, or one text list entry, is within a MaxLength rule.</summary>
+    public static bool IsShortEnough(FormRule rule, string? value) =>
+        value is null || value.Length <= rule.Value;
 
     private static int ItemCount(FormAnswer answer) =>
         answer.Shape == AnswerShape.Group ? answer.Items.Count : answer.Values.Count;

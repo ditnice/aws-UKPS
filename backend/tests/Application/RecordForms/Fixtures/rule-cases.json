@@ -11,6 +11,8 @@
     { "name": "max length checked after trimming", "multiple": false, "rules": [{ "kind": "MaxLength", "value": 5, "message": "Too long" }], "answer": "  abcde  ", "error": null },
     { "name": "max length counts UTF-16 code units", "multiple": false, "rules": [{ "kind": "MaxLength", "value": 2, "message": "Too long" }], "answer": "😀", "error": null },
     { "name": "max length passes when unanswered", "multiple": false, "rules": [{ "kind": "MaxLength", "value": 5, "message": "Too long" }], "answer": null, "error": null },
+    { "name": "max length list at limit after trimming", "multiple": true, "list": true, "rules": [{ "kind": "MaxLength", "value": 5, "message": "Too long" }], "answer": ["abc", " abcde "], "error": null },
+    { "name": "max length list entry over limit", "multiple": true, "list": true, "rules": [{ "kind": "MaxLength", "value": 5, "message": "Too long" }], "answer": ["abc", "abcdef"], "error": "Too long" },
     { "name": "required reported before max length", "multiple": false, "rules": [{ "kind": "MaxLength", "value": 5, "message": "Too long" }, { "kind": "Required", "value": null, "message": "Enter a value" }], "answer": "   ", "error": "Enter a value" },
     { "name": "only the first failing rule is reported", "multiple": false, "rules": [{ "kind": "Required", "value": null, "message": "Enter a value" }, { "kind": "MaxLength", "value": 2, "message": "Too long" }], "answer": "abc", "error": "Too long" },
     { "name": "required choice answered", "multiple": false, "rules": [{ "kind": "Required", "value": null, "message": "Select an option" }], "answer": "Yes", "error": null },

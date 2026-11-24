@@ -1,9 +1,13 @@
 namespace UKPS.Api.Persistence.FormAnnotations;
 
-/// <summary>Text must be at most <see cref="Max"/> UTF-16 code units after trimming.</summary>
+/// <summary>
+/// Text, or each entry of a text list, must be at most <see cref="Max"/> UTF-16 code units after
+/// trimming. Replaces the control's default limit.
+/// </summary>
 /// <param name="max">
 /// The most UTF-16 code units allowed after trimming. Must be positive. Only a
-/// <see cref="FormControl.Text"/> or <see cref="FormControl.Textarea"/> question may have it.
+/// <see cref="FormControl.Text"/>, <see cref="FormControl.Textarea"/> or
+/// <see cref="FormControl.TextList"/> question may have it.
 /// </param>
 /// <param name="message">
 /// The error shown against the question when the text is too long, for example

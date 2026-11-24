@@ -38,6 +38,10 @@ export const errorMessages = {
   passwordWhitespace: 'Your password cannot contain spaces',
 
   genericNamesDistinct: 'Generic names must be distinct',
+  companyCodeTooLong: 'Company code must be 2000 characters or fewer',
+  brandedNameTooLong: 'Branded name must be 2000 characters or fewer',
+  genericNameTooLong: 'Generic name must be 2000 characters or fewer',
+  otherIdentifierTooLong: 'Identifier must be 2000 characters or fewer',
   recordTitleTooLong: 'Record title must be between 1 and 100 characters',
 
   // Data retrieval

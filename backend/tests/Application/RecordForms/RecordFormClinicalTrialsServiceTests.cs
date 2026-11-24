@@ -347,6 +347,35 @@ public class RecordFormClinicalTrialsServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task SavePage_TextTooLong_ReportsEachEntryAgainstItsItem()
+    {
+        await SaveOk(GatePage, Answer(HasTrials, "Yes"));
+        string longNumber = new('a', 2001);
+
+        IReadOnlyDictionary<string, string> errors = await SaveInvalid(
+            DetailsPage,
+            TrialsAnswer(
+                Trial(new string('a', 2000), "NCT00000001", new string('b', 2000), longNumber),
+                Trial(new string('a', 2001), "NCT00000002", longNumber, longNumber)
+            )
+        );
+
+        errors.ShouldBe(
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                [$"{Trials}[0].other_registry_numbers[1]"] =
+                    "Each entry must be 2000 characters or fewer",
+                [$"{Trials}[1].study_name"] = "Answer must be 2000 characters or fewer",
+                [$"{Trials}[1].other_registry_numbers[0]"] =
+                    "Each entry must be 2000 characters or fewer",
+                [$"{Trials}[1].other_registry_numbers[1]"] =
+                    "Each entry must be 2000 characters or fewer",
+            },
+            ignoreOrder: true
+        );
+    }
+
+    [Fact]
     public async Task SavePage_NoTrials_AsksForAtLeastOne()
     {
         await SaveOk(GatePage, Answer(HasTrials, "Yes"));

@@ -50,6 +50,21 @@ internal static class ControlRules
                 or FormControl.PrefixedNumber
                 or FormControl.TextList;
 
+    /// <summary>Whether the control takes free text, so its answer has a maximum length.</summary>
+    public static bool IsFreeText(FormControl control) => DefaultMaxLength(control) is not null;
+
+    /// <summary>
+    /// The most UTF-16 code units a free text answer (each entry, for a text list) may have when
+    /// its question has no <see cref="FormMaxLengthAttribute"/>; null for other controls.
+    /// </summary>
+    public static int? DefaultMaxLength(FormControl control) =>
+        control switch
+        {
+            FormControl.Text or FormControl.TextList => 2000,
+            FormControl.Textarea => 20000,
+            _ => null,
+        };
+
     public static bool IsChoice(FormControl control) =>
         control
             is FormControl.Radio

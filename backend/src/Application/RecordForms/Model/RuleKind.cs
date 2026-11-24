@@ -10,7 +10,7 @@ public enum RuleKind
     /// <summary>The question must be answered.</summary>
     Required = 0,
 
-    /// <summary>Text must be at most a number of characters after trimming.</summary>
+    /// <summary>Text, or each entry of a text list, must be at most a number of characters after trimming.</summary>
     MaxLength = 1,
 
     /// <summary>At most a number of options may be chosen.</summary>

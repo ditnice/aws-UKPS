@@ -1,3 +1,5 @@
+using UKPS.Api.Persistence.FormAnnotations;
+
 namespace UKPS.Api.Application.RecordForms.Rules;
 
 /// <summary>Server messages for problems the rule attributes do not describe.</summary>
@@ -34,4 +36,8 @@ internal static class RecordFormMessages
 
     public static string EstimatedDateInPast(string name) =>
         $"Estimated date of {name} must be in the future";
+
+    // Used where a question has the default limit of its control rather than FormMaxLengthAttribute.
+    public static string TooLong(FormControl control, int max) =>
+        $"{(control == FormControl.TextList ? "Each entry" : "Answer")} must be {max} characters or fewer";
 }

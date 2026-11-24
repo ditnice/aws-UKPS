@@ -25,19 +25,34 @@ const inputWidth = 'two-thirds'
 const isDistinctIgnoringCase = (values: string[]) =>
   new Set(values.map((value) => value.toLowerCase())).size === values.length
 
+// The default limit of a single-line record form answer; mirrors ControlRules.DefaultMaxLength.
+const maxTextLength = 2000
+
 export const createRecordCommandSchema = z.object({
   organisationId: z.number(),
-  companyCode: z.string().trim().min(1, errorMessages.companyCodeRequired),
+  companyCode: z
+    .string()
+    .trim()
+    .min(1, errorMessages.companyCodeRequired)
+    .max(maxTextLength, errorMessages.companyCodeTooLong),
   // Other identifiers are optional, so blank entries are dropped rather than rejected.
   otherIdentifiers: z
-    .array(z.string())
-    .transform((values) => values.map((value) => value.trim()).filter(Boolean)),
+    .array(z.string().trim().max(maxTextLength, errorMessages.otherIdentifierTooLong))
+    .transform((values) => values.filter(Boolean)),
   brandedName: z
     .string()
+    .trim()
+    .max(maxTextLength, errorMessages.brandedNameTooLong)
     .nullish()
-    .transform((value) => value?.trim() || null),
+    .transform((value) => value || null),
   genericNames: z
-    .array(z.string().trim().min(1, errorMessages.genericNameRequired))
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1, errorMessages.genericNameRequired)
+        .max(maxTextLength, errorMessages.genericNameTooLong),
+    )
     .min(1, errorMessages.genericNameRequired)
     .refine(isDistinctIgnoringCase, errorMessages.genericNamesDistinct),
   recordTitle: z
