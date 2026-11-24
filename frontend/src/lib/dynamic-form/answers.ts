@@ -243,8 +243,8 @@ export const firstFailure = (rules: Rule[], answer: Answer): string | undefined 
  * fault, and the errors of a text list's entries, a group's items or a hierarchical select's
  * entries. Item errors are keyed by position and child ID joined with dots, as in `1` (a text list
  * or hierarchical select entry), `0.study_name` (a group item's question) or
- * `0.other_registry_numbers.1` (an entry of a text list in a group item). The
- * message is empty when only items are at fault.
+ * `0.other_registry_numbers.1` (an entry of a text list in a group item). The message is empty
+ * when only items are at fault.
  */
 export type QuestionError = { message: string; parts?: DatePart[]; items?: Record<string, string> }
 

@@ -376,9 +376,9 @@ controls for the property type:
 optionally a child, and the answer is the most specific choice. It needs a tree provider (see
 step 5). On a junction it repeats in the stacked add another layout (as a `Group` does): each entry is headed
 by its `ItemLabel` and number, with a remove button once there are several and an **Add another**
-button up to the `MaxItems` rule. A single blank entry is fine (the question is optional), but once
-there are several the page flags each blank entry, so blank entries are never sent to the server.
-See [Hierarchical selects](high-level-design.md#hierarchical-selects).
+button up to the `MaxItems` rule. A single blank entry is fine (the question is optional); once
+there are several, the page flags each blank entry instead of silently dropping it. See
+[Hierarchical selects](high-level-design.md#hierarchical-selects).
 
 `Display = "combobox"` asks the frontend for a searchable combobox. Until that is built, it is
 ignored and the control renders as plain dropdowns or checkboxes.
