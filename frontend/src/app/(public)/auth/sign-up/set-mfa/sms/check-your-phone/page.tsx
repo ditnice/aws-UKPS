@@ -14,6 +14,8 @@ import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
+import { useMfaSetupStore } from '../../../_lib/mfaSetupStorage'
+import { useSmsMfaSetupStore } from '../../../_lib/mfaSmsSetupStorage'
 import { useSignUpPassword } from '../../../_lib/SignUpPasswordContext'
 
 const codeSchema = z.object({
@@ -39,20 +41,13 @@ export default function CheckYourPhone() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  let authenticationSession = ''
-  let setupToken = ''
-  let hasSetup = false
-  try {
-    const stored = sessionStorage.getItem('signUpSmsSetup')
-    if (stored) {
-      const parsed = JSON.parse(stored)
-      authenticationSession = parsed.authenticationSession ?? ''
-      setupToken = parsed.setupToken ?? ''
-      hasSetup = Boolean(authenticationSession && setupToken)
-    }
-  } catch {
-    hasSetup = false
-  }
+  const mfaSetup = useMfaSetupStore()
+  const smsMfaSetup = useSmsMfaSetupStore()
+
+  const setupToken = mfaSetup.status === 'ready' ? (mfaSetup.data.setupToken ?? '') : ''
+  const authenticationSession =
+    smsMfaSetup.status === 'ready' ? (smsMfaSetup.data.authenticationSession ?? '') : ''
+  const hasSetup = Boolean(authenticationSession && setupToken)
 
   const form = useForm({
     defaultValues: { securityCode: '' } satisfies FormValues,
@@ -74,9 +69,7 @@ export default function CheckYourPhone() {
 
         if (!result.error) {
           setSuccess(true)
-          try {
-            sessionStorage.removeItem('signUpSmsSetup')
-          } catch {}
+          smsMfaSetup.clear()
 
           clearPassword()
           router.push('/portal')
@@ -102,6 +95,10 @@ export default function CheckYourPhone() {
       }
     },
   })
+
+  if (!success && (mfaSetup.status === 'loading' || smsMfaSetup.status === 'loading')) {
+    return null
+  }
 
   if (!success && !hasSetup) {
     return (
