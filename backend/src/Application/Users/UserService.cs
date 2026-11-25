@@ -53,7 +53,7 @@ internal partial class UserService(
     ILogger<UserService> logger
 ) : IUserService
 {
-    public async Task<UserInformationDto> GetCurrentUser(CancellationToken cancellationToken)
+    public async Task<CurrentUserInformationDto> GetCurrentUser(CancellationToken cancellationToken)
     {
         CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
         User user = await currentDbUserEntityService.GetCurrentUser(
@@ -70,7 +70,18 @@ internal partial class UserService(
 
         var mfaInformation = await GetUserMfaInformation(user.CognitoUsername, cancellationToken);
 
-        return MapUserToUserInformationDto(membership, mfaInformation);
+        // The current user's email and role come from the session token claims,
+        // as those are what the backend authorises against.
+        var userInformationDto = MapUserToUserInformationDto(membership) with
+        {
+            WorkEmail = currentUser.Email,
+            UserRole = currentUser.UserRole,
+        };
+        return new CurrentUserInformationDto(
+            mfaInformation.MfaMethod,
+            mfaInformation.MfaPhoneNumber,
+            userInformationDto
+        );
     }
 
     private async Task<MfaInformation> GetUserMfaInformation(
@@ -303,19 +314,12 @@ internal partial class UserService(
             );
         }
 
-        var mfaInformation = await GetUserMfaInformation(
-            membership.User!.CognitoUsername,
-            cancellationToken
-        );
-        var dto = MapUserToUserInformationDto(membership, mfaInformation);
+        var dto = MapUserToUserInformationDto(membership);
 
         return GetUserInformationResult.Ok(dto);
     }
 
-    private static UserInformationDto MapUserToUserInformationDto(
-        UserOrgMembership membership,
-        MfaInformation mfaInformation
-    )
+    private static UserInformationDto MapUserToUserInformationDto(UserOrgMembership membership)
     {
         User user = membership.User!;
         return new UserInformationDto
@@ -334,8 +338,6 @@ internal partial class UserService(
             PendingWorkEmail = user.PendingEmail.TryGetData().TryGetSuccessValue(out var data)
                 ? new() { Value = data.WorkEmail, VerifiedByEmail = data.Verified }
                 : null,
-            MfaMethod = mfaInformation.MfaMethod,
-            MfaPhoneNumber = mfaInformation.MfaPhoneNumber,
         };
     }
 
@@ -776,7 +778,7 @@ internal partial class UserService(
         }
 
         var token = VerificationTokenGenerator.Generate();
-        var result = user.PendingEmail.TryRefreshVerificationToken(token, timeProvider.GetUtcNow());
+        var result = user.TryRefreshVerificationToken(token, timeProvider.GetUtcNow());
 
         return await result.Match<Task<ResendVerificationEmailResult>>(
             async (pendingWorkEmail) =>
@@ -832,7 +834,7 @@ internal partial class UserService(
                 return VerifyPendingEmailAddressResult.Err(error);
             }
 
-            var result = user!.PendingEmail.TryMarkPendingEmailAsVerified(
+            var result = user!.TryMarkPendingEmailAsVerified(
                 command.VerificationToken,
                 timeProvider.GetUtcNow()
             );
@@ -897,7 +899,7 @@ internal partial class UserService(
                 );
             }
 
-            var result = user.PendingEmail.TryCancelPendingEmailChange(timeProvider.GetUtcNow());
+            var result = user.TryCancelPendingEmailChange(timeProvider.GetUtcNow());
             return await result.Match(
                 async () =>
                 {

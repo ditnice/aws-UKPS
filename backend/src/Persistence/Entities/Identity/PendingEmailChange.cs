@@ -3,129 +3,11 @@ using UKPS.Api.Application.Common;
 
 namespace UKPS.Api.Persistence.Entities.Identity;
 
-/// <summary>
-/// A requested change to a user's work email that has not yet been completed.
-/// Mapped as an optional complex property on <see cref="User"/>, stored in the <c>app_user</c> table.
-/// </summary>
-internal sealed record PendingEmailChange
+internal abstract record PendingEmailChange
 {
-    private string? _workEmail;
-    private string? _verificationToken;
-    private DateTime? _verifiedAt;
+    internal abstract Result<Data, PendingEmailError> TryGetData();
 
-    public PendingEmailChange(string workEmail, string verificationToken)
-    {
-        _workEmail = workEmail;
-        _verificationToken = verificationToken;
-    }
-
-    private PendingEmailChange() { }
-
-    internal Result<Data, PendingEmailError> TryGetData()
-    {
-        if (_workEmail is null)
-        {
-            return Result<Data, PendingEmailError>.Err(new PendingEmailError.NoPendingEmail());
-        }
-
-        return Result<Data, PendingEmailError>.Ok(new Data(_workEmail, _verifiedAt is not null));
-    }
-
-    internal Result<string, RefreshVerificationTokenError> TryRefreshVerificationToken(
-        string verificationToken,
-        DateTime dateTime
-    )
-    {
-        if (!TryGetData().TryGetSuccessValue(out var data))
-        {
-            return Result<string, RefreshVerificationTokenError>.Err(
-                new RefreshVerificationTokenError.NoPendingEmailToRefresh()
-            );
-        }
-        if (data.Verified)
-        {
-            return Result<string, RefreshVerificationTokenError>.Err(
-                new RefreshVerificationTokenError.AlreadyVerified()
-            );
-        }
-
-        _verificationToken = verificationToken;
-
-        return Result<string, RefreshVerificationTokenError>.Ok(data.WorkEmail);
-    }
-
-    internal Result<VerificationError> TryMarkPendingEmailAsVerified(
-        string verificationToken,
-        DateTime dateTime
-    )
-    {
-        if (!TryGetData().TryGetSuccessValue(out var data))
-        {
-            return Result<VerificationError>.Err(new VerificationError.NoPendingEmailToVerify());
-        }
-        if (data.Verified)
-        {
-            return Result<VerificationError>.Err(new VerificationError.AlreadyVerified());
-        }
-        var verificationTokensMatch = string.Equals(
-            verificationToken,
-            _verificationToken,
-            StringComparison.Ordinal
-        );
-        if (!verificationTokensMatch)
-        {
-            return Result<VerificationError>.Err(new VerificationError.InvalidVerificationToken());
-        }
-
-        _verifiedAt = dateTime;
-        _verificationToken = null;
-
-        return Result<VerificationError>.Ok();
-    }
-
-    internal Result<PendingEmailCancellationError> TryCancelPendingEmailChange(DateTime dateTime)
-    {
-        if (TryGetData().IsErr)
-        {
-            return Result<PendingEmailCancellationError>.Err(
-                new PendingEmailCancellationError.NoPendingEmailToCancel()
-            );
-        }
-
-        _workEmail = null;
-        _verificationToken = null;
-        _verifiedAt = null;
-
-        return Result<PendingEmailCancellationError>.Ok();
-    }
-
-    internal Result<string, CompletionError> TryComplete()
-    {
-        if (!TryGetData().TryGetSuccessValue(out var data))
-        {
-            return Result<string, CompletionError>.Err(
-                new CompletionError.NoPendingEmailToComplete()
-            );
-        }
-        if (!data.Verified)
-        {
-            return Result<string, CompletionError>.Err(new CompletionError.NotVerified());
-        }
-
-        _workEmail = null;
-        _verificationToken = null;
-        _verifiedAt = null;
-
-        return Result<string, CompletionError>.Ok(data.WorkEmail);
-    }
-
-    public static PendingEmailChange Empty()
-    {
-        return new PendingEmailChange();
-    }
-
-    public record Data(string WorkEmail, bool Verified);
-
+    /// <summary>Why <see cref="TryGetData"/> could not return the change.</summary>
     public abstract record PendingEmailError
     {
         protected PendingEmailError() { }
@@ -139,9 +21,11 @@ internal sealed record PendingEmailChange
                 ),
             };
 
+        /// <summary>No work email change has been requested.</summary>
         public sealed record NoPendingEmail : PendingEmailError;
     }
 
+    /// <summary>Why the requested work email could not be marked as verified.</summary>
     public abstract record VerificationError
     {
         protected VerificationError() { }
@@ -161,10 +45,13 @@ internal sealed record PendingEmailChange
                 ),
             };
 
+        /// <summary>No work email change has been requested.</summary>
         public sealed record NoPendingEmailToVerify : VerificationError;
 
+        /// <summary>The token does not match the one issued for the change.</summary>
         public sealed record InvalidVerificationToken : VerificationError;
 
+        /// <summary>The requested work email has already been verified.</summary>
         public sealed record AlreadyVerified : VerificationError;
     }
 
@@ -183,6 +70,7 @@ internal sealed record PendingEmailChange
                 ),
             };
 
+        /// <summary>No work email change has been requested.</summary>
         public sealed record NoPendingEmailToCancel : PendingEmailCancellationError;
     }
 
@@ -203,8 +91,10 @@ internal sealed record PendingEmailChange
                 ),
             };
 
+        /// <summary>No work email change has been requested.</summary>
         public sealed record NoPendingEmailToRefresh : RefreshVerificationTokenError;
 
+        /// <summary>The requested work email has already been verified, so needs no new token.</summary>
         public sealed record AlreadyVerified : RefreshVerificationTokenError;
     }
 
@@ -225,8 +115,12 @@ internal sealed record PendingEmailChange
                 ),
             };
 
+        /// <summary>No work email change has been requested.</summary>
         public sealed record NoPendingEmailToComplete : CompletionError;
 
+        /// <summary>The requested work email has not been verified yet.</summary>
         public sealed record NotVerified : CompletionError;
     }
+
+    public record Data(string WorkEmail, bool Verified);
 }

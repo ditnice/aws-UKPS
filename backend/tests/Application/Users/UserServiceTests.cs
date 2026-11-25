@@ -132,11 +132,11 @@ public class UserServiceTests : DatabaseTestBase
                     CognitoUsername = currentUser.CognitoUsername,
                 }
             );
-            UserInformationDto result = await Service.GetCurrentUser(
+            CurrentUserInformationDto result = await Service.GetCurrentUser(
                 TestContext.Current.CancellationToken
             );
             result.ShouldBe(
-                new UserInformationDto()
+                new CurrentUserInformationDto()
                 {
                     UserId = currentUser.Id,
                     FullName = currentUser.FullName,
@@ -154,6 +154,34 @@ public class UserServiceTests : DatabaseTestBase
                 }
             );
         }
+    }
+
+    [Fact]
+    public async Task GetCurrentUser_ShouldReturnTheRoleAndEmailFromTheSessionClaims()
+    {
+        (User user, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
+            1,
+            organisationStatus: UserOrgStatus.Active
+        );
+        UserRole claimRole =
+            memberships[0].UserRole == UserRole.Champion ? UserRole.Standard : UserRole.Champion;
+        const string claimEmail = "claim.email@example.com";
+        _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                OrganisationId = memberships[0].OrganisationId,
+                UserRole = claimRole,
+                Email = claimEmail,
+                CognitoUsername = user.CognitoUsername,
+            }
+        );
+
+        CurrentUserInformationDto result = await Service.GetCurrentUser(
+            TestContext.Current.CancellationToken
+        );
+
+        result.UserRole.ShouldBe(claimRole);
+        result.WorkEmail.ShouldBe(claimEmail);
     }
 
     [Theory]
@@ -1247,12 +1275,11 @@ public class UserServiceTests : DatabaseTestBase
             .GetClearedContext()
             .Users.FindAsync([currentUser.Id], TestContext.Current.CancellationToken);
 
-        var pendingEmail = user.ShouldNotBeNull().PendingEmail;
-
-        var verificationResult = pendingEmail.TryMarkPendingEmailAsVerified(
-            email.EmailVerificationLink.Host,
-            _currentDateTime.Add(TimeSpan.FromMinutes(5))
-        );
+        var verificationResult = user.ShouldNotBeNull()
+            .TryMarkPendingEmailAsVerified(
+                email.EmailVerificationLink.Host,
+                _currentDateTime.Add(TimeSpan.FromMinutes(5))
+            );
         verificationResult.ShouldBeSuccess();
     }
 
@@ -1785,8 +1812,6 @@ public class UserServiceTests : DatabaseTestBase
                 OrganisationName = membership.Organisation!.OrganisationName,
                 UserRole = membership.UserRole,
                 Status = (UserOrgStatus)membership.Status,
-                MfaMethod = "Unknown",
-                MfaPhoneNumber = string.Empty,
                 AllowedPharmaceuticalEntity = membership.AllowedPharmaceuticalEntity,
             }
         );

@@ -2,7 +2,11 @@ import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getUserDetailsWithinOrganisation, getUsersMe } from '@/client/generated/sdk.gen'
-import { PharmaceuticalEntity, type UserInformationDto } from '@/client/generated/types.gen'
+import {
+  type CurrentUserInformationDto,
+  PharmaceuticalEntity,
+  type UserInformationDto,
+} from '@/client/generated/types.gen'
 import { notFound, notFoundError } from '@/test-utils/nextNavigation'
 
 import RemoveUser from './page'
@@ -40,6 +44,10 @@ const user: UserInformationDto = {
   status: 'Active',
   hasMultipleOrganisations: false,
   allowedPharmaceuticalEntity: PharmaceuticalEntity.BOTH,
+}
+
+const currentUser: CurrentUserInformationDto = {
+  ...user,
   mfaMethod: 'Unknown',
   mfaPhoneNumber: '',
 }
@@ -63,7 +71,7 @@ const params = Promise.resolve({ id: '2', userId: '4' })
 
 beforeEach(() => {
   vi.mocked(getUsersMe).mockResolvedValue({
-    data: { ...user, userId: 1, userRole: 'Super' },
+    data: { ...currentUser, userId: 1, userRole: 'Super' },
     error: undefined,
   })
   mockResponse()
@@ -120,7 +128,10 @@ describe('RemoveUser (direct invocation)', () => {
   })
 
   it.each(['Standard', 'Champion'] as const)('rejects a %s caller', async (userRole) => {
-    vi.mocked(getUsersMe).mockResolvedValue({ data: { ...user, userRole }, error: undefined })
+    vi.mocked(getUsersMe).mockResolvedValue({
+      data: { ...currentUser, userRole },
+      error: undefined,
+    })
 
     await expect(RemoveUser({ params })).rejects.toBe(notFoundError)
 
@@ -152,7 +163,7 @@ describe('RemoveUser (direct invocation)', () => {
 
   it('rejects self-removal', async () => {
     vi.mocked(getUsersMe).mockResolvedValue({
-      data: { ...user, userRole: 'Super' },
+      data: { ...currentUser, userRole: 'Super' },
       error: undefined,
     })
     await expect(RemoveUser({ params })).rejects.toBe(notFoundError)

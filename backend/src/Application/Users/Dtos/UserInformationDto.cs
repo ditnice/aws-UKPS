@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Application.Users.Dtos;
@@ -5,7 +6,7 @@ namespace UKPS.Api.Application.Users.Dtos;
 /// <summary>
 /// Represents information about a user and their membership within an organisation.
 /// </summary>
-public sealed record UserInformationDto
+public record UserInformationDto
 {
     /// <summary>
     /// Gets the unique identifier of the user.
@@ -69,12 +70,34 @@ public sealed record UserInformationDto
     public PendingWorkEmailChangeDto? PendingWorkEmail { get; init; }
 
     /// <summary>
-    /// Gets the MFA method in use for the current user.
+    /// Initialises a new instance of the <see cref="UserInformationDto"/> record.
     /// </summary>
-    public required string MfaMethod { get; init; }
+    public UserInformationDto() { }
 
     /// <summary>
-    /// Gets the obfuscated phone number used for SMS MFA, if applicable.
+    /// Initialises a new instance of the <see cref="UserInformationDto"/> record by copying
+    /// the values from an existing instance.
     /// </summary>
-    public required string MfaPhoneNumber { get; init; }
+    /// <param name="userInformation">The user information to copy.</param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="userInformation"/> is <see langword="null"/>.
+    /// </exception>
+    [SetsRequiredMembers]
+    public UserInformationDto(UserInformationDto userInformation)
+    {
+        ArgumentNullException.ThrowIfNull(userInformation);
+
+        UserId = userInformation.UserId;
+        FullName = userInformation.FullName;
+        WorkTelephone = userInformation.WorkTelephone;
+        WorkEmail = userInformation.WorkEmail;
+        OrganisationMembershipId = userInformation.OrganisationMembershipId;
+        OrganisationId = userInformation.OrganisationId;
+        OrganisationName = userInformation.OrganisationName;
+        UserRole = userInformation.UserRole;
+        Status = userInformation.Status;
+        HasMultipleOrganisations = userInformation.HasMultipleOrganisations;
+        AllowedPharmaceuticalEntity = userInformation.AllowedPharmaceuticalEntity;
+        PendingWorkEmail = userInformation.PendingWorkEmail;
+    }
 }
