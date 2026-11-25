@@ -6,6 +6,7 @@ import { Alert as NdsAlert } from '@nice-digital/nds-alert'
 import { Button } from '@/components/Button/Button'
 
 import styles from './Alert.module.scss'
+import { ClearBannerParams } from './ClearBannerParams'
 
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 
@@ -48,6 +49,7 @@ export function Alert({
           </Button>
         )}
       </NdsAlert>
+      {type === 'success' && <ClearBannerParams />}
     </div>
   )
 }
