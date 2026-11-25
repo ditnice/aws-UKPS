@@ -41,7 +41,7 @@ export function NavLinks({ links }: NavLinksProps) {
             className={styles.link}
             aria-current={href === activeHref ? 'page' : undefined}
           >
-            {label}
+            <span className={styles.label}>{label}</span>
           </Link>
         </li>
       ))}

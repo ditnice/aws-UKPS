@@ -16,9 +16,6 @@ const buildContext = (
   ...overrides,
 })
 
-// Labels break across two lines with "\n"; flatten them for comparison.
-const labelText = (label: string) => label.replace(/\s+/g, ' ')
-
 describe('createLinks', () => {
   it('returns no links when there is no user context', () => {
     expect(createLinks(undefined)).toEqual([])
@@ -32,7 +29,7 @@ describe('createLinks', () => {
       `/portal/organisations/${defaultOrganisationId}`,
       '/portal/user/me',
     ])
-    expect(links.map((l) => labelText(l.label))).toEqual([
+    expect(links.map((l) => l.label)).toEqual([
       'View and manage records',
       'Manage my organisation',
       'Manage my details',
@@ -46,7 +43,7 @@ describe('createLinks', () => {
       `/portal/organisations/${defaultOrganisationId}/records`,
       '/portal/user/me',
     ])
-    expect(links.map((l) => labelText(l.label))).not.toContain('Manage my organisation')
+    expect(links.map((l) => l.label)).not.toContain('Manage my organisation')
   })
 
   it('builds hrefs from the organisation id', () => {

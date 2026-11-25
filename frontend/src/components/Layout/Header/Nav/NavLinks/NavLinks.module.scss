@@ -8,12 +8,15 @@
   @extend %menu-list;
 }
 
+// Wraps the label with CSS only: a line break in the content makes NVDA read it as separate lines.
+.label {
+  max-inline-size: 13ch;
+}
+
 a.link {
   @extend %link-styling;
   column-gap: utils.rem(spacing.$small);
   padding: utils.rem(spacing.$small);
-  // Shows a "\n" in the label as a line break while it stays one run of text.
-  white-space: pre-line;
 
   &:visited {
     color: colours.$text-inverse !important;

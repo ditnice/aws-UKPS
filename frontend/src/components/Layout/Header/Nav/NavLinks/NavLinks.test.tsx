@@ -118,15 +118,4 @@ describe('NavLinks', () => {
     expect(getLinkByLabel('Settings')).toHaveAttribute('href', '/portal/settings')
     expect(getLinkByLabel('Profile')).not.toHaveAttribute('aria-current')
   })
-
-  it('keeps a label that breaks across two lines as one run of text', () => {
-    navigationState.pathname = '/'
-
-    render(<NavLinks links={[{ href: '/portal/records', label: 'View and\nmanage records' }]} />)
-
-    // Screen readers read the whole label, not one line at a time.
-    const link = screen.getByRole('link', { name: /^View and\s+manage records$/ })
-    expect(link.childNodes).toHaveLength(1)
-    expect(link.firstChild?.nodeType).toBe(Node.TEXT_NODE)
-  })
 })

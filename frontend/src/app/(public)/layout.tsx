@@ -16,7 +16,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
         <ApplicationLayout
           links={[
             { href: '/', label: 'Home' },
-            { href: '/register', label: 'Request a user\naccount' },
+            { href: '/register', label: 'Request a user account' },
           ]}
         >
           {children}
