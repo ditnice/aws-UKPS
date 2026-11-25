@@ -2,7 +2,6 @@
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
@@ -11,6 +10,7 @@ import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
+import { navigateOnSuccessfulAuth } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
@@ -36,7 +36,6 @@ function normaliseSecurityCode(value: string) {
 }
 
 export default function CheckYourPhone() {
-  const router = useRouter()
   const { clearPassword } = useSignUpPassword()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -70,9 +69,10 @@ export default function CheckYourPhone() {
         if (!result.error) {
           setSuccess(true)
           smsMfaSetup.clear()
+          mfaSetup.clear()
 
           clearPassword()
-          router.push('/portal')
+          navigateOnSuccessfulAuth()
           return
         }
 
@@ -96,11 +96,13 @@ export default function CheckYourPhone() {
     },
   })
 
-  if (!success && (mfaSetup.status === 'loading' || smsMfaSetup.status === 'loading')) {
+  // Once verified the setup stores are cleared and a full page load is in progress, so render
+  // nothing rather than a form that could be resubmitted with empty setup details.
+  if (success || mfaSetup.status === 'loading' || smsMfaSetup.status === 'loading') {
     return null
   }
 
-  if (!success && !hasSetup) {
+  if (!hasSetup) {
     return (
       <>
         <PageHeader heading="There is a problem setting up two-factor authentication" />
