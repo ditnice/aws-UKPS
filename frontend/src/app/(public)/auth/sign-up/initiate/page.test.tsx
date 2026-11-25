@@ -8,6 +8,12 @@ import SignUpInitiate from './page'
 
 vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
+const publicClient = {}
+vi.mock('@/client/server-api', () => ({ createPublicServerApiClient: () => publicClient }))
+vi.mock('@/env/server', () => ({
+  getServerEnv: () => ({ QA_SUPPORT_EMAIL: 'support@example.com' }),
+}))
+
 vi.mock('@/client/generated/sdk.gen', () => ({
   getAuthValidateSetupToken: vi.fn(),
 }))
@@ -36,6 +42,7 @@ describe('SignUpInitiate (direct invocation)', () => {
     ).rejects.toThrow('NEXT_REDIRECT')
 
     expect(getAuthValidateSetupToken).toHaveBeenCalledWith({
+      client: publicClient,
       query: { setupToken: 'test-token' },
     })
     expect(redirect).toHaveBeenCalledWith(
@@ -49,6 +56,7 @@ describe('SignUpInitiate (direct invocation)', () => {
     ).rejects.toThrow('NEXT_REDIRECT')
 
     expect(getAuthValidateSetupToken).toHaveBeenCalledWith({
+      client: publicClient,
       query: { setupToken: 'test-token' },
     })
     expect(redirect).toHaveBeenCalledWith(

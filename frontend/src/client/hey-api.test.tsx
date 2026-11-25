@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { createClient, createConfig } from './generated/client'
 import { createClientConfig } from './hey-api'
 
 const protectedUrl = '/backend-api/widgets'
@@ -25,25 +26,15 @@ afterEach(() => {
 })
 
 describe('createClientConfig', () => {
-  it('uses the environment base URL and native fetch on the server without a fallback', () => {
-    const nativeFetch = globalThis.fetch
-    const previousBaseUrl = process.env.BACKEND_API_BASE_URL
+  it('rejects server requests that do not use an explicit server client', async () => {
+    const nativeFetch = vi.fn<typeof fetch>()
+    vi.stubGlobal('fetch', nativeFetch)
     vi.stubGlobal('window', undefined)
 
-    process.env.BACKEND_API_BASE_URL = 'https://api.example.test'
-    expect(createClientConfig({})).toMatchObject({
-      baseUrl: 'https://api.example.test',
-      fetch: nativeFetch,
-    })
-
-    delete process.env.BACKEND_API_BASE_URL
     expect(createClientConfig({}).baseUrl).toBeUndefined()
-
-    if (previousBaseUrl === undefined) {
-      delete process.env.BACKEND_API_BASE_URL
-    } else {
-      process.env.BACKEND_API_BASE_URL = previousBaseUrl
-    }
+    const client = createClient(createClientConfig(createConfig()))
+    await expect(client.get({ url: '/widgets' })).rejects.toThrow('createServerApiClient')
+    expect(nativeFetch).not.toHaveBeenCalled()
   })
 
   it('uses the backend proxy and refreshes a protected 401 before one retry', async () => {

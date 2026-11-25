@@ -1,4 +1,5 @@
-import { devRoleCookieName, isDevAuthenticationMode } from '@/lib/auth/cookies'
+import { getServerEnv } from '@/env/server'
+import { devRoleCookieName } from '@/lib/auth/cookies'
 
 import type { NextRequest } from 'next/server'
 
@@ -48,17 +49,13 @@ const responseHeaderAllowlist = [
 
 const allowedCookies = new Set(['access_token', 'refresh_token', 'csrf_token'])
 const unsafeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
-const defaultUpstreamTimeoutMs = 15_000
 const privateNoStore = 'private, no-store'
 
 async function proxyRequest(request: NextRequest, context: RouteContext): Promise<Response> {
-  const backendApiBaseUrl = process.env.BACKEND_API_BASE_URL
+  const env = getServerEnv()
+  const backendApiBaseUrl = env.BACKEND_API_BASE_URL
 
-  if (!backendApiBaseUrl) {
-    return errorResponse(500, 'BACKEND_API_BASE_URL is not configured.')
-  }
-
-  if (unsafeMethods.has(request.method) && !hasSameOrigin(request)) {
+  if (unsafeMethods.has(request.method) && !hasSameOrigin(request, env.FRONTEND_PUBLIC_ORIGIN)) {
     logOriginRejection(request)
     return errorResponse(403, 'Request origin is not allowed.')
   }
@@ -68,13 +65,7 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
     return errorResponse(400, 'The requested backend path is invalid.')
   }
 
-  let targetUrl: URL
-
-  try {
-    targetUrl = buildTargetUrl(backendApiBaseUrl, path, new URL(request.url).search)
-  } catch {
-    return errorResponse(500, 'BACKEND_API_BASE_URL is invalid.')
-  }
+  const targetUrl = buildTargetUrl(backendApiBaseUrl, path, new URL(request.url).search)
 
   const requestHeaders = new Headers()
   for (const name of requestHeaderAllowlist) {
@@ -82,10 +73,13 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
     if (value !== null) requestHeaders.set(name, value)
   }
 
-  const cookie = filterRequestCookies(request.headers.get('cookie'))
+  const cookie = filterRequestCookies(
+    request.headers.get('cookie'),
+    env.AUTHENTICATION_MODE === 'DEV',
+  )
   if (cookie) requestHeaders.set('cookie', cookie)
 
-  const timeoutSignal = AbortSignal.timeout(getUpstreamTimeoutMs())
+  const timeoutSignal = AbortSignal.timeout(env.BACKEND_API_TIMEOUT_MS)
   const init: RequestInit = {
     cache: 'no-store',
     headers: requestHeaders,
@@ -135,13 +129,6 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
 
 function buildTargetUrl(baseUrl: string, path: string[], search: string): URL {
   const targetUrl = new URL(baseUrl)
-  if (
-    !['http:', 'https:'].includes(targetUrl.protocol) ||
-    targetUrl.username ||
-    targetUrl.password
-  ) {
-    throw new TypeError('Invalid backend URL')
-  }
   const basePath = targetUrl.pathname.endsWith('/') ? targetUrl.pathname : `${targetUrl.pathname}/`
   targetUrl.pathname = `${basePath}${path.map(encodeURIComponent).join('/')}`
   targetUrl.search = search
@@ -149,12 +136,12 @@ function buildTargetUrl(baseUrl: string, path: string[], search: string): URL {
   return targetUrl
 }
 
-function hasSameOrigin(request: NextRequest): boolean {
+function hasSameOrigin(request: NextRequest, frontendPublicOrigin?: string): boolean {
   const origin = request.headers.get('origin')
   if (!origin) return false
 
   try {
-    const expectedOrigin = process.env.FRONTEND_PUBLIC_ORIGIN ?? new URL(request.url).origin
+    const expectedOrigin = frontendPublicOrigin ?? new URL(request.url).origin
     return new URL(origin).origin === expectedOrigin
   } catch {
     return false
@@ -181,26 +168,21 @@ function logOriginRejection(request: NextRequest): void {
   })
 }
 
-function getUpstreamTimeoutMs(): number {
-  const configuredTimeout = Number(process.env.BACKEND_API_TIMEOUT_MS)
-  return Number.isInteger(configuredTimeout) && configuredTimeout > 0
-    ? configuredTimeout
-    : defaultUpstreamTimeoutMs
-}
-
-function filterRequestCookies(cookieHeader: string | null): string {
+function filterRequestCookies(cookieHeader: string | null, devAuth: boolean): string {
   if (!cookieHeader) return ''
 
   return cookieHeader
     .split(';')
     .map((cookie) => cookie.trim())
-    .filter((cookie) => isAllowedRequestCookie(cookie.slice(0, cookie.indexOf('=')).trim()))
+    .filter((cookie) =>
+      isAllowedRequestCookie(cookie.slice(0, cookie.indexOf('=')).trim(), devAuth),
+    )
     .join('; ')
 }
 
 // The dev role cookie is only sent on to the backend, never set by it.
-function isAllowedRequestCookie(name: string): boolean {
-  return allowedCookies.has(name) || (name === devRoleCookieName && isDevAuthenticationMode())
+function isAllowedRequestCookie(name: string, devAuth: boolean): boolean {
+  return allowedCookies.has(name) || (name === devRoleCookieName && devAuth)
 }
 
 function filterResponseCookie(cookieHeader: string): string | null {

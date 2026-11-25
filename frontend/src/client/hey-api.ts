@@ -20,11 +20,17 @@ export const createClientConfig: CreateClientConfig = (config) => {
 
   return {
     ...config,
-    baseUrl: isBrowser ? browserBaseUrl : process.env.BACKEND_API_BASE_URL,
-    // TODO: Server Components cannot persist refreshed cookies. Until a renewal layer exists,
-    // server-side 401 responses should redirect to authentication.
-    fetch: isBrowser ? browserFetch : globalThis.fetch,
+    baseUrl: isBrowser ? browserBaseUrl : undefined,
+    fetch: isBrowser ? browserFetch : rejectServerFetch,
+    // The client otherwise returns errors, which callers could mistake for a failed response.
+    ...(!isBrowser && { throwOnError: true }),
   }
+}
+
+const rejectServerFetch: typeof fetch = async () => {
+  throw new Error(
+    'The default API client cannot be used on the server. Pass a client from createServerApiClient or createPublicServerApiClient.',
+  )
 }
 
 const browserFetch: typeof fetch = async (input, init) => {

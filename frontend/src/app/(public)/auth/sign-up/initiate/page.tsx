@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 
 import { getAuthValidateSetupToken } from '@/client/generated/sdk.gen'
+import { createPublicServerApiClient } from '@/client/server-api'
+import { getServerEnv } from '@/env/server'
 
 import { RequestNewLink } from './_components/RequestNewLink'
 import { SignUpInitiateError } from './_components/SignUpInitiateError'
@@ -23,6 +25,7 @@ export default async function SignUpInitiate({ searchParams }: SignUpInitiatePro
 
   try {
     result = await getAuthValidateSetupToken({
+      client: createPublicServerApiClient(),
       query: { setupToken },
     })
   } catch {
@@ -34,7 +37,7 @@ export default async function SignUpInitiate({ searchParams }: SignUpInitiatePro
   }
 
   if (result.response?.status === 410) {
-    return <RequestNewLink setupToken={setupToken} supportEmail={process.env.QA_SUPPORT_EMAIL} />
+    return <RequestNewLink setupToken={setupToken} supportEmail={getServerEnv().QA_SUPPORT_EMAIL} />
   }
 
   return (

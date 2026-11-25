@@ -1,8 +1,8 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
-    const { validateServerEnv } = await import('./env/server')
+    const { getServerEnv } = await import('./env/server')
     try {
-      validateServerEnv()
+      getServerEnv()
     } catch (error) {
       // Next.js can log a rejected hook without stopping the standalone process.
       const message = error instanceof Error ? error.message : 'Invalid frontend environment'

@@ -8,6 +8,7 @@ const composeEnv = {
   AUTHENTICATION_MODE: 'DEV',
   BACKEND_API_BASE_URL: 'http://backend:8080/v1',
   PAYLOAD_SECRET: 'test-secret',
+  QA_SUPPORT_EMAIL: 'support@example.test',
   DATABASE_URL: 'postgres://postgres:postgres@postgres:5432/payload',
 }
 
@@ -49,6 +50,8 @@ describe('validateServerEnv', () => {
   it.each([
     ['BACKEND_API_BASE_URL', undefined],
     ['BACKEND_API_BASE_URL', 'ftp://backend'],
+    ['BACKEND_API_BASE_URL', 'https://backend.test/v1?query=value'],
+    ['BACKEND_API_BASE_URL', 'https://backend.test/v1#fragment'],
     ['FRONTEND_PUBLIC_ORIGIN', ''],
     ['FRONTEND_PUBLIC_ORIGIN', 'https://app.example.test/path'],
     ['COGNITO_ISSUER', 'https://cognito.example.test/pool/'],
@@ -60,8 +63,13 @@ describe('validateServerEnv', () => {
     ['BACKEND_API_TIMEOUT_MS', '-1'],
     ['BACKEND_API_TIMEOUT_MS', '1.5'],
     ['BACKEND_API_TIMEOUT_MS', '15s'],
+    ['BACKEND_API_TIMEOUT_MS', '2147483648'],
+    ['BACKEND_API_TIMEOUT_MS', '9'.repeat(400)],
+    ['PAYLOAD_SECRET', ''],
     ['PAYLOAD_SECRET', ' '],
     ['DATABASE_URL', 'postgres:invalid'],
+    ['QA_SUPPORT_EMAIL', undefined],
+    ['QA_SUPPORT_EMAIL', ''],
     ['QA_SUPPORT_EMAIL', 'not-an-email'],
   ])('rejects invalid %s', (key, value) => {
     expect(() => validateServerEnv({ ...composeEnv, [key]: value })).toThrow(`${key}:`)
@@ -71,6 +79,12 @@ describe('validateServerEnv', () => {
     expect(() => validateServerEnv({ ...ecsEnv, DATABASE_URL: '', DATABASE_PASSWORD: '' })).toThrow(
       'DATABASE_PASSWORD:',
     )
+  })
+
+  it('rejects a split database host containing URL syntax', () => {
+    expect(() =>
+      validateServerEnv({ ...ecsEnv, DATABASE_HOST: 'db/other?sslmode=disable#' }),
+    ).toThrow('DATABASE_HOST:')
   })
 
   it('validates the split database port only when DATABASE_URL is unset', () => {
@@ -86,15 +100,20 @@ describe('validateServerEnv', () => {
         ...ecsEnv,
         AUTHENTICATION_MODE: '',
         BACKEND_API_TIMEOUT_MS: '',
-        QA_SUPPORT_EMAIL: '',
         ROBOTS_NOINDEX: '',
       }),
     ).toMatchObject({
       AUTHENTICATION_MODE: undefined,
       BACKEND_API_TIMEOUT_MS: 15_000,
-      QA_SUPPORT_EMAIL: undefined,
       ROBOTS_NOINDEX: false,
     })
+  })
+
+  it('allows a trailing slash on the backend base URL', () => {
+    const url = 'https://backend.test/v1/'
+    expect(
+      validateServerEnv({ ...composeEnv, BACKEND_API_BASE_URL: url }).BACKEND_API_BASE_URL,
+    ).toBe(url)
   })
 
   it('parses a configured timeout', () => {

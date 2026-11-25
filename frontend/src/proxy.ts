@@ -1,15 +1,10 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { NextRequest, NextResponse } from 'next/server'
 
+import { getServerEnv } from '@/env/server'
 import { signInPath } from '@/lib/auth/routing'
 
-const cognitoIssuer = process.env.COGNITO_ISSUER
-const cognitoClientId = process.env.COGNITO_CLIENT_ID
-const authenticationMode = process.env.AUTHENTICATION_MODE
-const robotsNoIndex = process.env.ROBOTS_NOINDEX === 'true'
-const cognitoJwks = cognitoIssuer
-  ? createRemoteJWKSet(new URL(`${cognitoIssuer}/.well-known/jwks.json`))
-  : undefined
+let cognitoJwks: ReturnType<typeof createRemoteJWKSet> | undefined
 
 export const config = {
   matcher: ['/:path*'],
@@ -18,26 +13,33 @@ export const config = {
 const portalPathPattern = /^\/portal(\/|$)/
 
 export async function proxy(req: NextRequest) {
+  const env = getServerEnv()
   const response = portalPathPattern.test(req.nextUrl.pathname)
-    ? await authorisePortalRequest(req)
+    ? await authorisePortalRequest(req, env)
     : NextResponse.next()
 
-  if (robotsNoIndex) {
+  if (env.ROBOTS_NOINDEX) {
     response.headers.set('X-Robots-Tag', 'noindex, nofollow')
   }
 
   return response
 }
 
-async function authorisePortalRequest(req: NextRequest) {
+async function authorisePortalRequest(req: NextRequest, env: ReturnType<typeof getServerEnv>) {
+  const {
+    AUTHENTICATION_MODE,
+    COGNITO_ISSUER: cognitoIssuer,
+    COGNITO_CLIENT_ID: cognitoClientId,
+  } = env
   const accessToken = req.cookies.get('access_token')?.value
 
-  if (authenticationMode === 'DEV') {
+  if (AUTHENTICATION_MODE === 'DEV') {
     return NextResponse.next()
   }
 
   if (accessToken) {
     try {
+      // Env validation guarantees both outside DEV mode, but its types cannot express that.
       if (!cognitoIssuer) {
         throw Error('Cognito issuer is not configured')
       }
@@ -46,9 +48,7 @@ async function authorisePortalRequest(req: NextRequest) {
         throw Error('Cognito client ID is not configured')
       }
 
-      if (!cognitoJwks) {
-        throw Error('Cognito JWKS is not configured')
-      }
+      cognitoJwks ??= createRemoteJWKSet(new URL(`${cognitoIssuer}/.well-known/jwks.json`))
       const { payload } = await jwtVerify(accessToken, cognitoJwks, {
         issuer: cognitoIssuer,
       })
