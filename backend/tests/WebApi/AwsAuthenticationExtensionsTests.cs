@@ -273,6 +273,7 @@ public sealed class AwsAuthenticationExtensionsTests
             ? cognitoOptionsModifier(fakeOptions)
             : fakeOptions;
         var builder = WebApplication.CreateBuilder();
+        builder.Configuration.Sources.Clear();
 
         var devAuthConfig = new Dictionary<string, string?>(StringComparer.Ordinal)
         {

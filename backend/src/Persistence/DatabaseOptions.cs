@@ -1,8 +1,10 @@
+using UKPS.Api.WebApi.Configuration;
+
 namespace UKPS.Api.Persistence;
 
-internal sealed record DatabaseOptions
+internal sealed record DatabaseOptions : IAppOptions
 {
-    public const string SectionName = "Database";
+    public static string SectionName => "Database";
     public bool MigrateOnStartup { get; init; }
     public string? Host { get; init; }
     public string? Name { get; init; }

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
-import { postAuthSetupSmsMfa } from '@/client/generated/sdk.gen'
+import { setupSmsMfa } from '@/client/generated/sdk.gen'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
@@ -58,7 +58,7 @@ export default function EnterPhoneNumber() {
       setSubmitError(null)
 
       try {
-        const result = await postAuthSetupSmsMfa({
+        const result = await setupSmsMfa({
           body: { setupToken, phoneNumber, password: submittedPassword },
           credentials: 'include',
         })

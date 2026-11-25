@@ -2,14 +2,14 @@ import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { postAuthResendSetupToken } from '@/client/generated'
+import { resendSetupToken } from '@/client/generated'
 
 import { RequestNewLink } from './RequestNewLink'
 
 const supportEmail = 'support@example.com'
 
 vi.mock('@/client/generated', () => ({
-  postAuthResendSetupToken: vi.fn(),
+  resendSetupToken: vi.fn(),
 }))
 
 beforeEach(() => {
@@ -18,7 +18,7 @@ beforeEach(() => {
 
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
-  vi.mocked(postAuthResendSetupToken).mockResolvedValue({
+  vi.mocked(resendSetupToken).mockResolvedValue({
     data: { correlationId: 'correlation-id-1' },
     error: undefined,
   })
@@ -67,7 +67,7 @@ describe('RequestNewLink', () => {
 
     await user.click(getSendButton())
 
-    expect(postAuthResendSetupToken).toHaveBeenCalledWith({
+    expect(resendSetupToken).toHaveBeenCalledWith({
       body: { setupToken: 'test-token' },
     })
 
@@ -82,14 +82,14 @@ describe('RequestNewLink', () => {
   })
 
   it('sends the returned correlation id, instead of the stale setup token, on a subsequent click', async () => {
-    vi.mocked(postAuthResendSetupToken)
+    vi.mocked(resendSetupToken)
       .mockResolvedValueOnce({ data: { correlationId: 'correlation-id-1' }, error: undefined })
       .mockResolvedValueOnce({ data: { correlationId: 'correlation-id-2' }, error: undefined })
 
     render(<RequestNewLink setupToken="test-token" />)
 
     await clickSend()
-    expect(postAuthResendSetupToken).toHaveBeenNthCalledWith(1, {
+    expect(resendSetupToken).toHaveBeenNthCalledWith(1, {
       body: { setupToken: 'test-token' },
     })
 
@@ -98,7 +98,7 @@ describe('RequestNewLink', () => {
     })
     await user.click(getSendButton())
 
-    expect(postAuthResendSetupToken).toHaveBeenNthCalledWith(2, {
+    expect(resendSetupToken).toHaveBeenNthCalledWith(2, {
       body: { correlationId: 'correlation-id-1' },
     })
   })
@@ -142,7 +142,7 @@ describe('RequestNewLink', () => {
   })
 
   it('shows a contact-support message with a working email link for an unexpected failure status', async () => {
-    vi.mocked(postAuthResendSetupToken).mockResolvedValue({
+    vi.mocked(resendSetupToken).mockResolvedValue({
       data: undefined,
       error: { status: 500 },
       response: new Response(null, { status: 500 }),
@@ -161,7 +161,7 @@ describe('RequestNewLink', () => {
   })
 
   it('shows a contact-support message for a 404 response', async () => {
-    vi.mocked(postAuthResendSetupToken).mockResolvedValue({
+    vi.mocked(resendSetupToken).mockResolvedValue({
       data: undefined,
       error: { status: 404 },
       response: new Response(null, { status: 404 }),
@@ -177,7 +177,7 @@ describe('RequestNewLink', () => {
   })
 
   it('shows a contact-support message for a 400 response', async () => {
-    vi.mocked(postAuthResendSetupToken).mockResolvedValue({
+    vi.mocked(resendSetupToken).mockResolvedValue({
       data: undefined,
       error: { status: 400 },
       response: new Response(null, { status: 400 }),
@@ -191,7 +191,7 @@ describe('RequestNewLink', () => {
   })
 
   it('shows a contact-support message if the request throws, e.g. a network failure', async () => {
-    vi.mocked(postAuthResendSetupToken).mockRejectedValue(new Error('Network error'))
+    vi.mocked(resendSetupToken).mockRejectedValue(new Error('Network error'))
 
     render(<RequestNewLink setupToken="test-token" />)
 
@@ -210,7 +210,7 @@ describe('RequestNewLink', () => {
       })
     }
 
-    expect(postAuthResendSetupToken).toHaveBeenCalledTimes(3)
+    expect(resendSetupToken).toHaveBeenCalledTimes(3)
     expect(screen.getByText('Check your email')).toBeInTheDocument()
     expect(getSendButton()).toBeEnabled()
   })
@@ -225,7 +225,7 @@ describe('RequestNewLink', () => {
       })
     }
 
-    vi.mocked(postAuthResendSetupToken).mockResolvedValue({
+    vi.mocked(resendSetupToken).mockResolvedValue({
       data: undefined,
       error: { status: 403 },
       response: new Response(null, { status: 403 }),
@@ -237,12 +237,15 @@ describe('RequestNewLink', () => {
     expect(
       screen.getByText(/You have reached the maximum number of attempts to request a new link\./),
     ).toBeInTheDocument()
+    expect(getSupportEmailLink().closest('p')).toHaveTextContent(
+      `You can contact the support team by email ${supportEmail}.`,
+    )
     expect(getSupportEmailLink().getAttribute('href')).toBe(`mailto:${supportEmail}`)
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
   })
 
   it('shows contact support text if the backend reports the resend limit has been reached', async () => {
-    vi.mocked(postAuthResendSetupToken).mockResolvedValue({
+    vi.mocked(resendSetupToken).mockResolvedValue({
       data: undefined,
       error: { status: 403 },
       response: new Response(null, { status: 403 }),
@@ -253,7 +256,31 @@ describe('RequestNewLink', () => {
     await user.click(getSendButton())
 
     expect(await screen.findByText('Contact the support team')).toBeInTheDocument()
+    expect(getSupportEmailLink().closest('p')).toHaveTextContent(
+      `You can contact the support team by email ${supportEmail}.`,
+    )
     expect(getSupportEmailLink().getAttribute('href')).toBe(`mailto:${supportEmail}`)
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
+  })
+
+  it('shows contact support text without an email link if no support email is configured', async () => {
+    vi.stubEnv('QA_SUPPORT_EMAIL', '')
+    vi.mocked(postAuthResendSetupToken).mockResolvedValue({
+      data: undefined,
+      error: { status: 403 },
+      response: new Response(null, { status: 403 }),
+    })
+
+    render(<RequestNewLink setupToken="test-token" />)
+
+    await user.click(getSendButton())
+
+    expect(
+      await screen.findByText('Please contact the UKPS support team for assistance.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/You have reached the maximum number of attempts to request a new link\./),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('link')).toBeNull()
   })
 })

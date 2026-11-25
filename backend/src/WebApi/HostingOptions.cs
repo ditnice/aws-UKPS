@@ -1,11 +1,12 @@
-using System.ComponentModel.DataAnnotations;
+using UKPS.Api.WebApi.Configuration;
+using UKPS.Api.WebApi.Validators;
 
 namespace UKPS.Api.WebApi;
 
-internal sealed record HostingOptions
+internal sealed record HostingOptions : IAppOptions
 {
-    public const string SectionName = "Hosting";
+    public static string SectionName => "Hosting";
 
-    [Required]
+    [RequiredConfiguration]
     public required Uri HostUri { get; init; }
 }

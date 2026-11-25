@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
-import { postAuthVerifySmsMfa } from '@/client/generated/sdk.gen'
+import { verifySmsMultiFactorAuthentication } from '@/client/generated/sdk.gen'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
@@ -63,7 +63,7 @@ export default function CheckYourPhone() {
       setSubmitError(null)
 
       try {
-        const result = await postAuthVerifySmsMfa({
+        const result = await verifySmsMultiFactorAuthentication({
           body: {
             authenticationSession,
             code: normaliseSecurityCode(securityCode),

@@ -4,7 +4,7 @@ import { isValidPhoneNumber } from 'libphonenumber-js/max'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-import { postAuthSetupSmsMfa } from '@/client/generated/sdk.gen'
+import { setupSmsMfa } from '@/client/generated/sdk.gen'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
 import { Details } from '@/components/Details/Details'
@@ -63,7 +63,7 @@ export default function RequestNewCode() {
     setIsSubmitting(true)
 
     try {
-      const result = await postAuthSetupSmsMfa({
+      const result = await setupSmsMfa({
         body: { setupToken, phoneNumber: phoneNumber.trim(), password: submittedPassword },
         credentials: 'include',
       })

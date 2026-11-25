@@ -7,10 +7,11 @@ format-check:
     dotnet csharpier check .
 
 # Applies the .editorconfig code-style and analyzer fixes that the pre-commit build
-# (dotnet build -p:EnforceCodeStyle=true) checks for.
+# (dotnet build -p:EnforceCodeStyle=true) checks for. CSharpier runs last because it owns layout.
 fix-style:
     dotnet format style UKPS.Api.slnx
     dotnet format analyzers UKPS.Api.slnx
+    dotnet csharpier format .
 
 build:
     dotnet build
