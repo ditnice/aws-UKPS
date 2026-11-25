@@ -101,6 +101,41 @@ public class EmailServiceTests
         AssertUserEmailNotLogged(_validEmailCommand.RecipientAddress);
     }
 
+    [Fact]
+    public async Task SendEmails_ShouldQueueOneMessagePerCommandInASingleBatch()
+    {
+        List<SendEmailCommand> commands = new SendEmailCommandFaker().Generate(3);
+
+        await _sut.SendEmails(commands, TestContext.Current.CancellationToken);
+
+        _mockAwsSqs.BatchRequestCount.ShouldBe(1);
+        _mockAwsSqs.Messages.Count().ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task SendEmails_WhenThereAreMoreThanTenCommands_ShouldSendSeveralBatches()
+    {
+        List<SendEmailCommand> commands = new SendEmailCommandFaker().Generate(25);
+
+        await _sut.SendEmails(commands, TestContext.Current.CancellationToken);
+
+        _mockAwsSqs.BatchRequestCount.ShouldBe(3);
+        _mockAwsSqs.Messages.Count().ShouldBe(25);
+    }
+
+    [Fact]
+    public async Task SendEmails_WhenSqsReportsFailedEntries_ShouldThrow()
+    {
+        _mockAwsSqs.FailBatchEntries = true;
+        List<SendEmailCommand> commands = new SendEmailCommandFaker().Generate(3);
+
+        await Should.ThrowAsync<InvalidOperationException>(() =>
+            _sut.SendEmails(commands, TestContext.Current.CancellationToken)
+        );
+
+        _mockAwsSqs.Messages.ShouldBeEmpty();
+    }
+
     private void AssertUserEmailNotLogged(string userEmail)
     {
         foreach (var logMessage in Logs.Entries)

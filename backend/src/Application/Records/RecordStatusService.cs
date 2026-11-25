@@ -122,18 +122,18 @@ internal sealed class RecordStatusService(
             .Select(m => m.User!)
             .ToListAsync(cancellationToken);
 
-        foreach (User recipient in champions.Append(archiver).DistinctBy(u => u.Id))
-        {
-            await emailService.SendEmail(
-                new SendEmailCommand()
-                {
-                    PersonIdentifier = recipient.CognitoUsername,
-                    RecipientAddress = recipient.WorkEmail,
-                    Email = new RecordArchivedNotificationEmail() { RecordId = record.Id },
-                },
-                cancellationToken
-            );
-        }
+        List<SendEmailCommand> commands = champions
+            .Append(archiver)
+            .DistinctBy(u => u.Id)
+            .Select(recipient => new SendEmailCommand()
+            {
+                PersonIdentifier = recipient.CognitoUsername,
+                RecipientAddress = recipient.WorkEmail,
+                Email = new RecordArchivedNotificationEmail() { RecordId = record.Id },
+            })
+            .ToList();
+
+        await emailService.SendEmails(commands, cancellationToken);
     }
 
     /// <summary>

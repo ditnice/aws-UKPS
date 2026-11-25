@@ -65,6 +65,17 @@ internal sealed partial class SesEmailService : IEmailService
         }
     }
 
+    public async Task SendEmails(
+        IReadOnlyCollection<SendEmailCommand> commands,
+        CancellationToken cancellationToken
+    )
+    {
+        foreach (SendEmailCommand command in commands)
+        {
+            await SendEmail(command, cancellationToken);
+        }
+    }
+
     private static string WrapHtml(string v)
     {
         return $"""<!DOCTYPE html><html lang="en"><body>{v}</body></html>""";
