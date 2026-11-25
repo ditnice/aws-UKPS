@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { submitForm } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import styles from './SetupMfaForm.module.scss'
@@ -84,7 +85,7 @@ const SetupMfaForm = ({
     } satisfies SignUpSetMfaFormValues,
     validationLogic: revalidateLogic({
       mode: 'submit',
-      modeAfterSubmission: 'blur',
+      modeAfterSubmission: 'submit',
     }),
     validators: {
       onDynamic: signUpSetMfaSchema,
@@ -140,7 +141,7 @@ const SetupMfaForm = ({
         onSubmit={(event) => {
           event.preventDefault()
           event.stopPropagation()
-          void form.handleSubmit()
+          void submitForm(form)
         }}
       >
         <form.Field name="securityCode">

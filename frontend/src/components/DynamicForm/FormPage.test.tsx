@@ -560,6 +560,28 @@ describe('FormPage', () => {
       expect(mocks.push).not.toHaveBeenCalled()
     })
 
+    it('saves a corrected answer after the server rejected the earlier one', async () => {
+      mocks.saveRecordFormPage.mockResolvedValueOnce({
+        error: { errors: { 'medicines_indication_detail.indication': ['Server says no'] } },
+        response: { ok: false, status: 400 },
+      })
+      render(
+        <FormPage page={page({ answers: { 'medicines_indication_detail.indication': 'x' } })} />,
+      )
+
+      save()
+
+      expect(await screen.findByText('Server says no')).toBeInTheDocument()
+
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Hepatitis C' } })
+      save()
+
+      await waitFor(() => {
+        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/bnf-chapter')
+      })
+      expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(2)
+    })
+
     it('offers a reload when the page has changed since it was loaded', async () => {
       mocks.saveRecordFormPage.mockResolvedValue({
         error: {
@@ -1480,7 +1502,7 @@ describe('FormPage', () => {
       }
     })
 
-    it('clears the error when another precision is chosen until focus leaves the question', async () => {
+    it('clears the error when another precision is chosen, and asks again on the next save', async () => {
       const user = userEvent.setup()
       render(<FormPage page={datePage()} />)
 
@@ -1495,15 +1517,16 @@ describe('FormPage', () => {
         screen.queryByText('Actual date of submission must be a real date'),
       ).not.toBeInTheDocument()
 
-      // Moving into and between the parts does not revalidate.
+      // Moving into, between and out of the parts does not revalidate.
       await user.click(screen.getByRole('textbox', { name: 'Month' }))
       await user.keyboard('7')
+      await user.tab()
       await user.tab()
       expect(screen.queryByText('Enter the estimated submission date')).not.toBeInTheDocument()
       expect(invalidParts()).toEqual([])
 
-      // Leaving the question does, marking only the blank year.
-      await user.tab()
+      // The next save does, marking only the blank year.
+      save()
       expect(await screen.findByText('Enter the estimated submission date')).toBeInTheDocument()
       expect(invalidParts()).toEqual(['Year'])
     })

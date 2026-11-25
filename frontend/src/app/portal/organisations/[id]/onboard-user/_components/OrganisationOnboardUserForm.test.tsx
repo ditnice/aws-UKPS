@@ -144,7 +144,8 @@ describe('OrganisationOnboardUserForm', () => {
     expect(postUsersOnboard).not.toHaveBeenCalled()
   })
 
-  it('revalidates fields on blur after a failed submit', async () => {
+  it('keeps validation errors until the next submit, which then submits the fixed values', async () => {
+    mockSuccessfulOnboardResponse(456)
     renderForm()
 
     await user.click(screen.getByRole('button', { name: 'Send invite' }))
@@ -160,10 +161,15 @@ describe('OrganisationOnboardUserForm', () => {
     await fillInput(user, screen.getByLabelText('Contact number'), '01234567890')
     await user.tab()
 
+    expect(screen.getByText('Enter their full name')).toBeInTheDocument()
+    expect(screen.getByText('Enter an email address')).toBeInTheDocument()
+    expect(screen.getByText('Enter their contact number')).toBeInTheDocument()
+    expect(postUsersOnboard).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Send invite' }))
+
     await waitFor(() => {
-      expect(screen.queryByText('Enter their full name')).toBeNull()
-      expect(screen.queryByText('Enter an email address')).toBeNull()
-      expect(screen.queryByText('Enter their contact number')).toBeNull()
+      expect(postUsersOnboard).toHaveBeenCalledOnce()
     })
   })
 

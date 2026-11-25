@@ -180,7 +180,7 @@ describe('SignUpSetMfa', () => {
     })
   })
 
-  it('revalidates fields on blur after a failed submit', async () => {
+  it('keeps the validation error until the next submit, which then submits the fixed code', async () => {
     renderPage()
 
     await submitForm()
@@ -190,9 +190,13 @@ describe('SignUpSetMfa', () => {
     await enterSecurityCode('123 456')
     await user.tab()
 
+    expect(screen.getByText('Enter your security code')).toBeInTheDocument()
+    expect(verifyMultiFactorAuthentication).not.toHaveBeenCalled()
+
+    await submitForm()
+
     await waitFor(() => {
-      expect(screen.queryByText('Enter your security code')).toBeNull()
-      expect(screen.queryByText('Enter a 6-digit security code')).toBeNull()
+      expect(verifyMultiFactorAuthentication).toHaveBeenCalledOnce()
     })
   })
 

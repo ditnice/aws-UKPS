@@ -14,7 +14,7 @@ import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { Textarea } from '@/components/Textarea/Textarea'
 import { getCompanyCodeSuggestions } from '@/lib/form/companyCodeSuggestions'
 import { errorMessages } from '@/lib/form/errorMessages'
-import { updateFormApiErrors } from '@/lib/form/formErrorHandling'
+import { submitForm, updateFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 
@@ -93,7 +93,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
     },
     validationLogic: revalidateLogic({
       mode: 'submit',
-      modeAfterSubmission: 'blur',
+      modeAfterSubmission: 'submit',
     }),
     validators: {
       onDynamic: createRecordCommandSchema,
@@ -106,7 +106,7 @@ const CreateMedicineRecordForm = ({ organisationId }: CreateMedicineRecordFormPr
       onSubmit={(event) => {
         event.preventDefault()
         event.stopPropagation()
-        void form.handleSubmit()
+        void submitForm(form)
       }}
     >
       {error && <ErrorState>{errorMessages.creatingNewRecordError}</ErrorState>}

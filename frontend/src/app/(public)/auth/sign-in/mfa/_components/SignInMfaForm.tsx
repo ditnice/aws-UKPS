@@ -11,6 +11,7 @@ import { Input } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { buildSelectOrganisationHref } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { submitForm } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage, getFormErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import EmailVerificationRequiredAlert from '../../../EmailVerificationRequiredAlert'
@@ -49,7 +50,7 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
     } satisfies SignInMfaFormValues,
     validationLogic: revalidateLogic({
       mode: 'submit',
-      modeAfterSubmission: 'blur',
+      modeAfterSubmission: 'submit',
     }),
     validators: {
       onDynamic: signInMfaSchema,
@@ -96,7 +97,7 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
       onSubmit={(event) => {
         event.preventDefault()
         event.stopPropagation()
-        void form.handleSubmit()
+        void submitForm(form)
       }}
     >
       <form.Subscribe selector={(state) => getFormErrorMessage(state.errorMap.onSubmit)}>

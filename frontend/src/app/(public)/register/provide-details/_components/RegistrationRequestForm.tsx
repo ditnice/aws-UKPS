@@ -15,6 +15,7 @@ import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { Select, SelectOption } from '@/components/Select/Select'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { submitForm } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 const RegistrationRequest = z.object({
@@ -55,7 +56,7 @@ export function RegistrationRequestForm() {
     } satisfies RegistrationRequestValues,
     validationLogic: revalidateLogic({
       mode: 'submit',
-      modeAfterSubmission: 'blur',
+      modeAfterSubmission: 'submit',
     }),
     validators: {
       onDynamic: RegistrationRequest,
@@ -89,7 +90,7 @@ export function RegistrationRequestForm() {
         onSubmit={(event) => {
           event.preventDefault()
           event.stopPropagation()
-          form.handleSubmit()
+          void submitForm(form)
         }}
       >
         <form.Field name="organisationId">

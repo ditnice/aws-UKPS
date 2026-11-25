@@ -9,6 +9,7 @@ import { Button, ButtonGroup } from '@/components/Button/Button'
 import { FormGroup } from '@/components/FormGroup/FormGroup'
 import { Input } from '@/components/Input/Input'
 import { Textarea } from '@/components/Textarea/Textarea'
+import { submitForm } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import { OrganisationAction } from '../../_lib/organisationActionsAlert'
@@ -44,7 +45,7 @@ export function EditOrganisationDetailsForm({
     } satisfies EditOrganisationDetailsFormValues,
     validationLogic: revalidateLogic({
       mode: 'submit',
-      modeAfterSubmission: 'blur',
+      modeAfterSubmission: 'submit',
     }),
     validators: {
       onDynamic: editOrganisationDetailsSchema,
@@ -75,7 +76,7 @@ export function EditOrganisationDetailsForm({
       onSubmit={(event) => {
         event.preventDefault()
         event.stopPropagation()
-        void form.handleSubmit()
+        void submitForm(form)
       }}
     >
       {formError && <p role="alert">{formError}</p>}

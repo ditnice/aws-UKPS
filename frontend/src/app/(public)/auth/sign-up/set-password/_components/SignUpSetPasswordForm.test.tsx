@@ -154,7 +154,7 @@ describe('SignUpSetPasswordForm', () => {
     })
   })
 
-  it('revalidates the password on blur after a failed submit', async () => {
+  it('keeps the validation error until the next submit, which then submits the fixed password', async () => {
     renderForm()
 
     await enterPassword('short')
@@ -167,8 +167,13 @@ describe('SignUpSetPasswordForm', () => {
     await enterPassword('fourteen-chars')
     await user.tab()
 
+    expect(screen.getByText('Password must be at least 8 characters long')).toBeInTheDocument()
+    expect(setupUser).not.toHaveBeenCalled()
+
+    await submitForm()
+
     await waitFor(() => {
-      expect(screen.queryByText('Password must be at least 8 characters long')).toBeNull()
+      expect(setupUser).toHaveBeenCalledOnce()
     })
   })
 

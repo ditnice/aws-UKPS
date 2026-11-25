@@ -83,7 +83,7 @@ describe('SignInForm', () => {
     })
   })
 
-  it('revalidates fields on blur after a failed submit', async () => {
+  it('keeps validation errors until the next submit, which then submits the fixed values', async () => {
     render(<SignInForm />)
 
     await user.click(screen.getByRole('button', { name: 'Continue' }))
@@ -97,9 +97,14 @@ describe('SignInForm', () => {
     await fillInput(user, screen.getByLabelText('Password'), 'secure-password')
     await user.tab()
 
+    expect(screen.getByText('Enter your email address')).toBeInTheDocument()
+    expect(screen.getByText('Enter your password')).toBeInTheDocument()
+    expect(login).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
     await waitFor(() => {
-      expect(screen.queryByText('Enter your email address')).toBeNull()
-      expect(screen.queryByText('Enter your password')).toBeNull()
+      expect(login).toHaveBeenCalledOnce()
     })
   })
 

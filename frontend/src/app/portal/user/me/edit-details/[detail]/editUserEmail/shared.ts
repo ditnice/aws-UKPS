@@ -21,7 +21,7 @@ export const updateUserEmailOptions = formOptions({
   defaultValues: defaultValues,
   validationLogic: revalidateLogic({
     mode: 'submit',
-    modeAfterSubmission: 'blur',
+    modeAfterSubmission: 'submit',
   }),
   validators: {
     onDynamic: formSchema,

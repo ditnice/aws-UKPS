@@ -9,6 +9,7 @@ import { setupUser } from '@/client/generated/sdk.gen'
 import { Button } from '@/components/Button/Button'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { submitForm } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import { signUpMfaSetupStorageKey } from '../../_lib/mfaSetupStorage'
@@ -39,7 +40,7 @@ export function SignUpSetPasswordForm({ setupToken }: SignUpSetPasswordFormProps
     } satisfies SignUpSetPasswordFormValues,
     validationLogic: revalidateLogic({
       mode: 'submit',
-      modeAfterSubmission: 'blur',
+      modeAfterSubmission: 'submit',
     }),
     validators: {
       onDynamic: signUpSetPasswordSchema,
@@ -108,7 +109,7 @@ export function SignUpSetPasswordForm({ setupToken }: SignUpSetPasswordFormProps
       onSubmit={(event) => {
         event.preventDefault()
         event.stopPropagation()
-        void form.handleSubmit()
+        void submitForm(form)
       }}
     >
       <p>Your password must:</p>
