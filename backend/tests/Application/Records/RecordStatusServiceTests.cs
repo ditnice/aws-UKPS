@@ -265,13 +265,26 @@ public class RecordStatusServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task ChangeStatus_WhenArchived_DoesNotEmailChampionsWhoAreNotEnabledOrInAnotherOrganisation()
+    public async Task ChangeStatus_WhenArchived_DoesNotEmailADeactivatedChampion()
+    {
+        await AddChampion(_organisation.Id, UserOrgMembershipStatus.Deactivated);
+        Record record = await AddRecord(RecordStatus.Published, [WorkflowStatus.Published]);
+
+        Result<ChangeRecordStatusError> result = await Archive(record.Id);
+
+        result.IsOk.ShouldBeTrue();
+        _harness
+            .Emails.SentCommands.ShouldHaveSingleItem()
+            .RecipientAddress.ShouldBe(_user.WorkEmail);
+    }
+
+    [Fact]
+    public async Task ChangeStatus_WhenArchived_DoesNotEmailAChampionInAnotherOrganisation()
     {
         Organisation otherOrganisation = await AddEntity(
             new OrganisationFaker().Generate(),
             TestContext.Current.CancellationToken
         );
-        await AddChampion(_organisation.Id, UserOrgMembershipStatus.Deactivated);
         await AddChampion(otherOrganisation.Id);
         Record record = await AddRecord(RecordStatus.Published, [WorkflowStatus.Published]);
 

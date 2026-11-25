@@ -20,7 +20,8 @@ public interface IEmailService
     Task SendEmail(SendEmailCommand command, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Sends several email messages, each to its own recipient.
+    /// Sends several email messages, each to its own recipient. Throws if any message could not be
+    /// queued; messages in earlier batches may have already been queued.
     /// </summary>
     /// <param name="commands">The commands, each with a recipient address and email message.</param>
     /// <param name="cancellationToken">

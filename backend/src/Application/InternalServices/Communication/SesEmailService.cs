@@ -65,6 +65,8 @@ internal sealed partial class SesEmailService : IEmailService
         }
     }
 
+    // Required by IEmailService. Emails are only batched when queued; the queue processir
+    // send them through SES one at a time.
     public async Task SendEmails(
         IReadOnlyCollection<SendEmailCommand> commands,
         CancellationToken cancellationToken

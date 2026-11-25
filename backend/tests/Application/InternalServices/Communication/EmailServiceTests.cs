@@ -124,15 +124,16 @@ public class EmailServiceTests
     }
 
     [Fact]
-    public async Task SendEmails_WhenSqsReportsFailedEntries_ShouldThrow()
+    public async Task SendEmails_WhenSqsReportsFailedEntries_ShouldThrowAfterTryingEveryBatch()
     {
         _mockAwsSqs.FailBatchEntries = true;
-        List<SendEmailCommand> commands = new SendEmailCommandFaker().Generate(3);
+        List<SendEmailCommand> commands = new SendEmailCommandFaker().Generate(25);
 
         await Should.ThrowAsync<InvalidOperationException>(() =>
             _sut.SendEmails(commands, TestContext.Current.CancellationToken)
         );
 
+        _mockAwsSqs.BatchRequestCount.ShouldBe(3);
         _mockAwsSqs.Messages.ShouldBeEmpty();
     }
 
