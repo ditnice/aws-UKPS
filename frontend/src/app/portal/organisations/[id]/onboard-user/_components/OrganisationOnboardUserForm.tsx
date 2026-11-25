@@ -110,6 +110,7 @@ export function OrganisationOnboardUserForm({ organisationId }: OrganisationOnbo
 
   return (
     <form
+      method="post"
       noValidate
       onSubmit={(event) => {
         event.preventDefault()

@@ -106,6 +106,7 @@ export function SignInForm({ returnTo }: SignInFormProps) {
   return (
     <>
       <form
+        method="post"
         noValidate
         onSubmit={(event) => {
           event.preventDefault()

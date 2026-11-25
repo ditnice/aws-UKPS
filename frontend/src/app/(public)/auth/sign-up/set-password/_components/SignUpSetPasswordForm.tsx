@@ -103,6 +103,7 @@ export function SignUpSetPasswordForm({ setupToken }: SignUpSetPasswordFormProps
 
   return (
     <form
+      method="post"
       noValidate
       onSubmit={(event) => {
         event.preventDefault()

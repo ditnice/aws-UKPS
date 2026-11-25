@@ -164,6 +164,7 @@ export function FormPage({
       )}
 
       <form
+        method="post"
         noValidate
         onSubmit={(event) => {
           event.preventDefault()

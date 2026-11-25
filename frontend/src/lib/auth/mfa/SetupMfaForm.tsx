@@ -135,6 +135,7 @@ const SetupMfaForm = ({
       </p>
       <hr></hr>
       <form
+        method="post"
         noValidate
         onSubmit={(event) => {
           event.preventDefault()
