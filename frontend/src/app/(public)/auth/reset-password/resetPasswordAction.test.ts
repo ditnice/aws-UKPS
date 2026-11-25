@@ -56,7 +56,9 @@ const makeFormData = () => {
   return formData
 }
 
-const run = () => resetPasswordAction(undefined, makeFormData())
+/** Runs the action as the form does. Redirects on success unless told otherwise. */
+const run = (redirectOnSuccess = true) =>
+  resetPasswordAction(redirectOnSuccess, undefined, makeFormData())
 
 /** Configure what the API call resolves with. Defaults to a successful response. */
 const givenApiResult = (
@@ -89,7 +91,9 @@ describe('resetPasswordAction', () => {
     it('calls the API with the validated values and a server client', async () => {
       await run()
 
-      expect(mocks.serverValidate).toHaveBeenCalledWith(expect.any(FormData))
+      expect(mocks.serverValidate).toHaveBeenCalledExactlyOnceWith(expect.any(FormData))
+      const [formData] = mocks.serverValidate.mock.calls[0] as [globalThis.FormData]
+      expect(formData.get('email')).toBe(values.email)
       expect(mocks.initiateForgottenPasswordProcedure).toHaveBeenCalledWith({
         client: apiClient,
         body: values,
@@ -115,6 +119,28 @@ describe('resetPasswordAction', () => {
       expect(mocks.cookieSet.mock.invocationCallOrder[0]).toBeLessThan(
         mocks.redirect.mock.invocationCallOrder[0],
       )
+    })
+  })
+
+  describe('on success without redirecting (e.g. resending the link)', () => {
+    it('still stores the email in the cookie', async () => {
+      await run(false)
+
+      expect(mocks.cookieSet).toHaveBeenCalledExactlyOnceWith(
+        resetEmailCookieName,
+        values.email,
+        expect.objectContaining({ httpOnly: true, secure: true }),
+      )
+    })
+
+    it('does not redirect', async () => {
+      await run(false)
+
+      expect(mocks.redirect).not.toHaveBeenCalled()
+    })
+
+    it('returns a success state', async () => {
+      expect(await run(false)).toEqual({ success: true, ...initialFormState })
     })
   })
 

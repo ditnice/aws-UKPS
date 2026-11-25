@@ -79,7 +79,7 @@ internal sealed class RecordAnswersBuilder(
                 ? null
                 : SelectedOptions(answer, questionOptions),
             ItemLabel = isGroup ? question.ItemLabel : null,
-            AddAnotherLabel = isGroup ? question.AddAnotherLabel : null,
+            CheckAnswersAddLabel = isGroup ? question.CheckAnswersAddLabel : null,
             Items = isGroup
                 ? [.. answer.Items.Select(item => ToGroupItem(question, page, item))]
                 : null,

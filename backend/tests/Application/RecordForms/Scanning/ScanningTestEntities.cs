@@ -49,7 +49,9 @@ internal sealed class ValidEntity
         "Areas",
         FormControl.HierarchicalSelect,
         ChildLabel = "Condition",
-        AddAnotherLabel = "Add another"
+        AddAnotherLabel = "Add another",
+        ItemLabel = "Area",
+        RemoveLabel = "Remove area"
     )]
     [FormOptions(OptionKeys.TherapeuticAreas)]
     [FormMaxItems(3, "Up to 3")]
@@ -986,10 +988,26 @@ internal sealed class BrokenGroupEntity
         FormControl.Text,
         Order = 10,
         ItemLabel = "Not a group",
-        RemoveLabel = "Not a list"
+        RemoveLabel = "Not a list",
+        CheckAnswersAddLabel = "Not a group"
     )]
     [FormDistinct("Not a list")]
     public string? Text { get; set; }
+
+    [FormPage("broken-items")]
+    [FormField(
+        "broken_group_entity.chapter_id",
+        "Chapter",
+        FormControl.HierarchicalSelect,
+        Order = 20,
+        ChildLabel = "Sub",
+        AddAnotherLabel = "Not repeated",
+        ItemLabel = "Not repeated",
+        RemoveLabel = "Not repeated"
+    )]
+    public int? ChapterId { get; set; }
+
+    public BnfChapter? Chapter { get; set; }
 }
 
 [SuppressMessage("Minor Code Smell", "S1144", Justification = "Read by EF.")]

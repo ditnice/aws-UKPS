@@ -43,6 +43,9 @@ jobs:
           dotnet tool restore --tool-manifest dotnet-tools.json
           dotnet restore UKPS.Api.slnx
 
+      - name: Check CSharpier formatting
+        run: dotnet csharpier check .
+
       # Match pre-commit: the build checks analyzers and .editorconfig code style;
       # CSharpier owns whitespace/layout formatting.
       - name: Build backend, check code style and regenerate OpenAPI
@@ -86,9 +89,6 @@ jobs:
             backend/tests/TestResults/CoverageReport/
           if-no-files-found: error
           retention-days: 14
-
-      - name: Check CSharpier formatting
-        run: dotnet csharpier check .
 
       # pnpm/action-setup v6.1.1 (Node 24).
       # Pinned to a commit SHA so a moved tag can't change what runs.

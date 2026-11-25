@@ -17,7 +17,7 @@ const question = (overrides: Partial<RecordAnswersQuestionDto>): RecordAnswersQu
   selectedOptions: null,
   itemLabel: null,
   items: null,
-  addAnotherLabel: null,
+  checkAnswersAddLabel: null,
   ...overrides,
 })
 
@@ -50,7 +50,7 @@ const sections: RecordAnswersSectionDto[] = [
             label: 'Enter clinical trial details',
             type: 'Group',
             itemLabel: 'Clinical trial',
-            addAnotherLabel: 'Add another clinical trial',
+            checkAnswersAddLabel: 'Add clinical trial',
             items: [
               {
                 questions: [
@@ -90,6 +90,6 @@ describe('RecordDetails', () => {
     render(<RecordDetails sections={sections} />)
 
     expect(screen.queryByRole('link', { hidden: true })).toBeNull()
-    expect(screen.queryByText('Add another clinical trial')).toBeNull()
+    expect(screen.queryByText('Add clinical trial')).toBeNull()
   })
 })

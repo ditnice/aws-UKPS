@@ -4,7 +4,7 @@ import { isValidPhoneNumber } from 'libphonenumber-js/max'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-import { postAuthSetupSmsMfa } from '@/client/generated/sdk.gen'
+import { setupSmsMfa } from '@/client/generated/sdk.gen'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
 import { Details } from '@/components/Details/Details'
@@ -13,27 +13,23 @@ import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 import { errorMessages } from '@/lib/form/errorMessages'
 
+import { useMfaSetupStore } from '../../../_lib/mfaSetupStorage'
+import { useSmsMfaSetupStore } from '../../../_lib/mfaSmsSetupStorage'
 import { useSignUpPassword } from '../../../_lib/SignUpPasswordContext'
 
 export default function RequestNewCode() {
   const router = useRouter()
+  const mfaSetup = useMfaSetupStore()
+  const smsMfaSetup = useSmsMfaSetupStore()
   const { clearPassword, password, setPassword } = useSignUpPassword()
-  const [phoneNumber, setPhoneNumber] = useState(() => {
-    try {
-      const stored = sessionStorage.getItem('signUpSmsSetup')
-      return stored ? (JSON.parse(stored).phoneNumber ?? '') : ''
-    } catch {
-      return ''
-    }
-  })
-  const [setupToken] = useState(() => {
-    try {
-      const stored = sessionStorage.getItem('signUpSmsSetup')
-      return stored ? (JSON.parse(stored).setupToken ?? '') : ''
-    } catch {
-      return ''
-    }
-  })
+
+  const setupToken = mfaSetup.status === 'ready' ? (mfaSetup.data.setupToken ?? '') : ''
+  const storedPhoneNumber = smsMfaSetup.status === 'ready' ? smsMfaSetup.data.phoneNumber : ''
+
+  // null until the user edits the field, so it shows the stored number once the store has loaded.
+  const [phoneNumberInput, setPhoneNumberInput] = useState<string | null>(null)
+  const phoneNumber = phoneNumberInput ?? storedPhoneNumber
+
   const [enteredPassword, setEnteredPassword] = useState('')
   const [error, setError] = useState('')
   const [passwordError, setPasswordError] = useState('')
@@ -63,7 +59,7 @@ export default function RequestNewCode() {
     setIsSubmitting(true)
 
     try {
-      const result = await postAuthSetupSmsMfa({
+      const result = await setupSmsMfa({
         body: { setupToken, phoneNumber: phoneNumber.trim(), password: submittedPassword },
         credentials: 'include',
       })
@@ -82,20 +78,10 @@ export default function RequestNewCode() {
         return
       }
 
-      try {
-        const stored = sessionStorage.getItem('signUpSmsSetup')
-        const data = stored ? JSON.parse(stored) : {}
-        sessionStorage.setItem(
-          'signUpSmsSetup',
-          JSON.stringify({
-            ...data,
-            phoneNumber: phoneNumber.trim(),
-            authenticationSession:
-              (result.data as { authenticationSession?: string } | undefined)
-                ?.authenticationSession ?? data.authenticationSession,
-          }),
-        )
-      } catch {}
+      smsMfaSetup.set({
+        phoneNumber: phoneNumber.trim(),
+        authenticationSession: result.data.authenticationSession,
+      })
 
       setPassword(submittedPassword)
       router.push('/auth/sign-up/set-mfa/sms/check-your-phone')
@@ -104,6 +90,10 @@ export default function RequestNewCode() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (mfaSetup.status === 'loading' || smsMfaSetup.status === 'loading') {
+    return null
   }
 
   return (
@@ -122,7 +112,7 @@ export default function RequestNewCode() {
           label="Mobile number"
           width="one-third"
           value={phoneNumber}
-          onChange={(event) => setPhoneNumber(event.target.value)}
+          onChange={(event) => setPhoneNumberInput(event.target.value)}
           error={Boolean(error)}
           errorMessage={error}
         />

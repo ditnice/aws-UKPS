@@ -519,7 +519,7 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
                                     SelectedOptions = null,
                                     ItemLabel = null,
                                     Items = null,
-                                    AddAnotherLabel = null,
+                                    CheckAnswersAddLabel = null,
                                 },
                             ],
                         },

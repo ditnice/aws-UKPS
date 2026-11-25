@@ -112,7 +112,7 @@ internal static class FormModelFingerprint
 
     /// <summary>
     /// The prefixes of a prefixed number, the width of a text input, and the item labels of a
-    /// group or text list.
+    /// group, text list or hierarchical select.
     /// </summary>
     private static void AppendPresentation(StringBuilder text, FormQuestion question)
     {
@@ -132,11 +132,16 @@ internal static class FormModelFingerprint
             text.AppendLine(CultureInfo.InvariantCulture, $"      width {question.Width}");
         }
 
-        if (question.Control is FormControl.Group or FormControl.TextList)
+        if (
+            question.Control
+            is FormControl.Group
+                or FormControl.TextList
+                or FormControl.HierarchicalSelect
+        )
         {
             text.AppendLine(
                 CultureInfo.InvariantCulture,
-                $"      items {question.ItemLabel} | {question.RemoveLabel} | {question.ItemKey}"
+                $"      items {question.ItemLabel} | {question.RemoveLabel} | {question.ItemKey} | {question.CheckAnswersAddLabel}"
             );
         }
     }

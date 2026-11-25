@@ -111,7 +111,7 @@ export default function ManageUserAccessActions({
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form method="post" onSubmit={handleSubmit}>
       <Radios
         headingLevel={2}
         legend="What would you like to do with this user's access?"

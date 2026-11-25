@@ -1,61 +1,23 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useSyncExternalStore } from 'react'
+import { useState } from 'react'
 
 import { PageHeader } from '@/components/PageHeader/PageHeader'
-import SetupMfaForm, { SignUpMfaSetup, signUpMfaSetupSchema } from '@/lib/auth/mfa/SetupMfaForm'
+import SetupMfaForm from '@/lib/auth/mfa/SetupMfaForm'
 import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
 
-import { signUpMfaSetupStorageKey } from '../_lib/mfaSetupStorage'
+import { useMfaSetupStore } from '../_lib/mfaSetupStorage'
 import { useSignUpPassword } from '../_lib/SignUpPasswordContext'
-
-type SetupState =
-  { setup: SignUpMfaSetup; status: 'ready' } | { status: 'error' } | { status: 'loading' }
-
-const loadingSetupState: SetupState = { status: 'loading' }
-const errorSetupState: SetupState = { status: 'error' }
-let cachedStoredSetup: null | string | undefined
-let cachedSetupState: SetupState | undefined
-
-function loadSignUpMfaSetup(): SetupState {
-  let storedSetup: string | null
-
-  try {
-    storedSetup = sessionStorage.getItem(signUpMfaSetupStorageKey)
-  } catch {
-    return errorSetupState
-  }
-
-  if (cachedSetupState && storedSetup === cachedStoredSetup) return cachedSetupState
-  cachedStoredSetup = storedSetup
-
-  if (!storedSetup) return (cachedSetupState = errorSetupState)
-
-  try {
-    const parsedSetup = signUpMfaSetupSchema.parse(JSON.parse(storedSetup))
-    new URL(parsedSetup.otpAuthUri)
-
-    return (cachedSetupState = { setup: parsedSetup, status: 'ready' })
-  } catch {
-    return (cachedSetupState = errorSetupState)
-  }
-}
-
-function subscribeToSetupStorage() {
-  return () => {}
-}
 
 export default function SignUpSetMfa() {
   const router = useRouter()
   const { clearPassword } = useSignUpPassword()
-  const setupState = useSyncExternalStore(
-    subscribeToSetupStorage,
-    loadSignUpMfaSetup,
-    () => loadingSetupState,
-  )
+  const setupState = useMfaSetupStore()
 
-  if (setupState.status === 'loading') return null
+  const [success, setSuccess] = useState(false)
+
+  if (setupState.status === 'loading' || success) return null
 
   if (setupState.status === 'error') {
     return (
@@ -69,7 +31,7 @@ export default function SignUpSetMfa() {
     )
   }
 
-  const { setup } = setupState
+  const { data: setup, clear: clearSetup } = setupState
 
   return (
     <>
@@ -82,10 +44,8 @@ export default function SignUpSetMfa() {
         setup={{ type: 'initialise', ...setup }}
         alternativeHref="/auth/sign-up/set-mfa/sms/enter-phone-number"
         onSuccess={() => {
-          try {
-            sessionStorage.removeItem(signUpMfaSetupStorageKey)
-          } catch {}
-
+          setSuccess(true)
+          clearSetup()
           clearPassword()
           router.push(routeOnSuccessfulAuth)
         }}

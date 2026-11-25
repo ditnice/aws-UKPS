@@ -672,6 +672,7 @@ internal partial class UserService(
 
                 await dbContext.SaveChangesAsync(cancellationToken);
                 await HandleUserEvents(user, cancellationToken);
+
                 await transaction.CommitAsync(cancellationToken);
 
                 return Result<UpdateUserEmailError>.Ok();

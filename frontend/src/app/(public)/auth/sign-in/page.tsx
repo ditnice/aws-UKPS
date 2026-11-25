@@ -20,7 +20,7 @@ export default async function SignIn({ searchParams }: SignInProps) {
       <PageHeader heading="Sign-in"></PageHeader>
       {emailVerified === String(true) ? (
         <Alert type="success" title="New email address verified">
-          <h2>New email address verified</h2>
+          <h3>New email address verified</h3>
           <p>
             Your new email address has been verified. To complete the change, sign in using your new
             email address and complete multi-factor authentication.

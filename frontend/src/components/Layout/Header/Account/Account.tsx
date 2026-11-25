@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSyncExternalStore } from 'react'
 
-import { postAuthSignOut } from '@/client/generated'
+import { signOut as sendSignOutRequest } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 import { csrfCookieName, csrfHeaderName, getCookie } from '@/lib/auth/cookies'
 import { buildSignInHref } from '@/lib/auth/routing'
@@ -32,7 +32,7 @@ function getServerSnapshot(): boolean {
 // (scoped to /backend-api/auth) and receives the backend's cookie-clearing Set-Cookie headers.
 async function signOut(): Promise<boolean> {
   try {
-    const { error } = await postAuthSignOut({
+    const { error } = await sendSignOutRequest({
       credentials: 'include',
       headers: { [csrfHeaderName]: getCookie(csrfCookieName) ?? '' },
     })

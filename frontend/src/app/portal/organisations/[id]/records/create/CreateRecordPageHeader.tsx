@@ -18,7 +18,7 @@ export const CreateRecordPageHeader = ({ backHref }: CreateRecordPageHeaderProps
     <>
       {showExitWarning && (
         <Alert type="caution">
-          <h2>If you continue, this record will not be saved</h2>
+          <h3>If you continue, this record will not be saved</h3>
           <p>
             You must enter the company code, generic name, and record title for this record to be
             saved as a draft. You can update these answers later.

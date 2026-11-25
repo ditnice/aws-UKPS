@@ -256,7 +256,7 @@ internal sealed class RecordViewService(
         DateTime? NextUpdateDue
     );
 
-    /// <summary>A record the caller can read, with its latest revision.</summary>
+    /// <summary>A record the caller can read with its latest revision.</summary>
     private sealed record RecordHeader(
         int Id,
         int OrganisationId,
