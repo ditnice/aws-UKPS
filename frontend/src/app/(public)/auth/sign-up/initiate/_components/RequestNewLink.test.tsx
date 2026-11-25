@@ -265,7 +265,7 @@ describe('RequestNewLink', () => {
 
   it('shows contact support text without an email link if no support email is configured', async () => {
     vi.stubEnv('QA_SUPPORT_EMAIL', '')
-    vi.mocked(postAuthResendSetupToken).mockResolvedValue({
+    vi.mocked(resendSetupToken).mockResolvedValue({
       data: undefined,
       error: { status: 403 },
       response: new Response(null, { status: 403 }),

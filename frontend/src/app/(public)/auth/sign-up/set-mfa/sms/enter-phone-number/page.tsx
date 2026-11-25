@@ -15,7 +15,7 @@ import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
-import { signUpMfaSetupStorageKey } from '../../../_lib/mfaSetupStorage'
+import { useMfaSetupStore } from '../../../_lib/mfaSetupStorage'
 import { useSignUpPassword } from '../../../_lib/SignUpPasswordContext'
 
 const phoneSchema = z.object({
@@ -34,17 +34,8 @@ export default function EnterPhoneNumber() {
   const { clearPassword, password, setPassword } = useSignUpPassword()
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  let setupToken = ''
-  let hasSetup = false
-  try {
-    const stored = sessionStorage.getItem(signUpMfaSetupStorageKey)
-    if (stored) {
-      setupToken = JSON.parse(stored).setupToken ?? ''
-      hasSetup = Boolean(setupToken)
-    }
-  } catch {
-    hasSetup = false
-  }
+  const mfaSetup = useMfaSetupStore()
+  const setupToken = mfaSetup.status === 'ready' ? (mfaSetup.data.setupToken ?? '') : ''
 
   const form = useForm({
     defaultValues: { phoneNumber: '', password: password ?? '' } satisfies FormValues,
@@ -120,7 +111,11 @@ export default function EnterPhoneNumber() {
     },
   })
 
-  if (!hasSetup) {
+  if (mfaSetup.status === 'loading') {
+    return null
+  }
+
+  if (!setupToken) {
     return (
       <>
         <PageHeader heading="There is a problem setting up two-factor authentication" />
