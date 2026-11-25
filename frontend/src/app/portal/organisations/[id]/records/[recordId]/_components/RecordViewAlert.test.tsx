@@ -19,7 +19,7 @@ describe('RecordViewAlert', () => {
   ] as const)('confirms the record was %s', (action, heading, body) => {
     render(<RecordViewAlert action={action} />)
 
-    expect(screen.getByRole('heading', { level: 2, name: heading })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 3, name: heading })).toBeInTheDocument()
     expect(screen.getByText(new RegExp(body))).toBeInTheDocument()
   })
 })

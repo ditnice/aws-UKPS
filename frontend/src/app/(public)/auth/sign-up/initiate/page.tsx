@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 
-import { getAuthValidateSetupToken } from '@/client/generated/sdk.gen'
+import { validateSetupToken } from '@/client/generated/sdk.gen'
 import { createPublicServerApiClient } from '@/client/server-api'
 import { getServerEnv } from '@/env/server'
 
@@ -21,10 +21,10 @@ export default async function SignUpInitiate({ searchParams }: SignUpInitiatePro
     return <SignUpInitiateError detail="This sign-up link is missing a setup token." />
   }
 
-  let result: Awaited<ReturnType<typeof getAuthValidateSetupToken>>
+  let result: Awaited<ReturnType<typeof validateSetupToken>>
 
   try {
-    result = await getAuthValidateSetupToken({
+    result = await validateSetupToken({
       client: createPublicServerApiClient(),
       query: { setupToken },
     })

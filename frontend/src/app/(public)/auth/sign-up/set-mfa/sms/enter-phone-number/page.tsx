@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
-import { postAuthSetupSmsMfa } from '@/client/generated/sdk.gen'
+import { setupSmsMfa } from '@/client/generated/sdk.gen'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
@@ -15,7 +15,8 @@ import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
-import { signUpMfaSetupStorageKey } from '../../../_lib/mfaSetupStorage'
+import { useMfaSetupStore } from '../../../_lib/mfaSetupStorage'
+import { useSmsMfaSetupStore } from '../../../_lib/mfaSmsSetupStorage'
 import { useSignUpPassword } from '../../../_lib/SignUpPasswordContext'
 
 const phoneSchema = z.object({
@@ -34,17 +35,9 @@ export default function EnterPhoneNumber() {
   const { clearPassword, password, setPassword } = useSignUpPassword()
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  let setupToken = ''
-  let hasSetup = false
-  try {
-    const stored = sessionStorage.getItem(signUpMfaSetupStorageKey)
-    if (stored) {
-      setupToken = JSON.parse(stored).setupToken ?? ''
-      hasSetup = Boolean(setupToken)
-    }
-  } catch {
-    hasSetup = false
-  }
+  const mfaSetup = useMfaSetupStore()
+  const smsMfaSetup = useSmsMfaSetupStore()
+  const setupToken = mfaSetup.status === 'ready' ? (mfaSetup.data.setupToken ?? '') : ''
 
   const form = useForm({
     defaultValues: { phoneNumber: '', password: password ?? '' } satisfies FormValues,
@@ -58,24 +51,18 @@ export default function EnterPhoneNumber() {
       setSubmitError(null)
 
       try {
-        const result = await postAuthSetupSmsMfa({
+        const result = await setupSmsMfa({
           body: { setupToken, phoneNumber, password: submittedPassword },
           credentials: 'include',
         })
 
         if (!result.error) {
-          try {
-            sessionStorage.setItem(
-              'signUpSmsSetup',
-              JSON.stringify({
-                phoneNumber,
-                setupToken,
-                authenticationSession: (
-                  result.data as { authenticationSession?: string } | undefined
-                )?.authenticationSession,
-              }),
-            )
-          } catch {
+          const saved = smsMfaSetup.set({
+            phoneNumber,
+            authenticationSession: result.data.authenticationSession,
+          })
+
+          if (!saved) {
             setSubmitError(
               'Your phone number was saved, but we could not continue. Return to your sign-up link and try again.',
             )
@@ -120,7 +107,11 @@ export default function EnterPhoneNumber() {
     },
   })
 
-  if (!hasSetup) {
+  if (mfaSetup.status === 'loading') {
+    return null
+  }
+
+  if (!setupToken) {
     return (
       <>
         <PageHeader heading="There is a problem setting up two-factor authentication" />
@@ -144,6 +135,7 @@ export default function EnterPhoneNumber() {
         part of keeping you account secure.
       </p>
       <form
+        method="post"
         noValidate
         onSubmit={(event) => {
           event.preventDefault()

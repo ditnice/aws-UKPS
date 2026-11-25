@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getAuthValidateSetupToken } from '@/client/generated/sdk.gen'
+import { validateSetupToken } from '@/client/generated/sdk.gen'
 import { redirect } from '@/test-utils/nextNavigation'
 
 import SignUpInitiate from './page'
@@ -15,11 +15,11 @@ vi.mock('@/env/server', () => ({
 }))
 
 vi.mock('@/client/generated/sdk.gen', () => ({
-  getAuthValidateSetupToken: vi.fn(),
+  validateSetupToken: vi.fn(),
 }))
 
 beforeEach(() => {
-  vi.mocked(getAuthValidateSetupToken).mockResolvedValue({
+  vi.mocked(validateSetupToken).mockResolvedValue({
     data: undefined,
     error: undefined,
   })
@@ -32,7 +32,7 @@ describe('SignUpInitiate (direct invocation)', () => {
 
     expect(screen.getByText('There is a problem with your sign-up link')).toBeInTheDocument()
     expect(screen.getByText('This sign-up link is missing a setup token.')).toBeInTheDocument()
-    expect(getAuthValidateSetupToken).not.toHaveBeenCalled()
+    expect(validateSetupToken).not.toHaveBeenCalled()
     expect(redirect).not.toHaveBeenCalled()
   })
 
@@ -41,7 +41,7 @@ describe('SignUpInitiate (direct invocation)', () => {
       SignUpInitiate({ searchParams: Promise.resolve({ setupToken: 'test-token' }) }),
     ).rejects.toThrow('NEXT_REDIRECT')
 
-    expect(getAuthValidateSetupToken).toHaveBeenCalledWith({
+    expect(validateSetupToken).toHaveBeenCalledWith({
       client: publicClient,
       query: { setupToken: 'test-token' },
     })
@@ -55,7 +55,7 @@ describe('SignUpInitiate (direct invocation)', () => {
       SignUpInitiate({ searchParams: Promise.resolve({ setupToken: ' test-token ' }) }),
     ).rejects.toThrow('NEXT_REDIRECT')
 
-    expect(getAuthValidateSetupToken).toHaveBeenCalledWith({
+    expect(validateSetupToken).toHaveBeenCalledWith({
       client: publicClient,
       query: { setupToken: 'test-token' },
     })
@@ -65,7 +65,7 @@ describe('SignUpInitiate (direct invocation)', () => {
   })
 
   it('renders a dedicated expired-link message and a resend action for an expired setup token', async () => {
-    vi.mocked(getAuthValidateSetupToken).mockResolvedValue({
+    vi.mocked(validateSetupToken).mockResolvedValue({
       data: undefined,
       error: {
         detail: 'The setup token has expired and can no longer be used.',
@@ -88,7 +88,7 @@ describe('SignUpInitiate (direct invocation)', () => {
   })
 
   it('renders backend content for a consumed setup token', async () => {
-    vi.mocked(getAuthValidateSetupToken).mockResolvedValue({
+    vi.mocked(validateSetupToken).mockResolvedValue({
       data: undefined,
       error: {
         detail: 'The setup token has already been consumed and cannot be used again.',
@@ -108,7 +108,7 @@ describe('SignUpInitiate (direct invocation)', () => {
   })
 
   it('renders backend content for a setup token that cannot be found', async () => {
-    vi.mocked(getAuthValidateSetupToken).mockResolvedValue({
+    vi.mocked(validateSetupToken).mockResolvedValue({
       data: undefined,
       error: {
         detail: 'The supplied setup token does not exist.',
@@ -126,7 +126,7 @@ describe('SignUpInitiate (direct invocation)', () => {
   })
 
   it('renders a fallback error for an invalid setup token request', async () => {
-    vi.mocked(getAuthValidateSetupToken).mockResolvedValue({
+    vi.mocked(validateSetupToken).mockResolvedValue({
       data: undefined,
       error: {
         status: 400,
@@ -142,7 +142,7 @@ describe('SignUpInitiate (direct invocation)', () => {
   })
 
   it('renders a generic fallback if validation fails without a response', async () => {
-    vi.mocked(getAuthValidateSetupToken).mockResolvedValue({
+    vi.mocked(validateSetupToken).mockResolvedValue({
       data: undefined,
       error: { status: 500 },
     })
@@ -157,7 +157,7 @@ describe('SignUpInitiate (direct invocation)', () => {
   })
 
   it('renders a fallback error if validation fails unexpectedly', async () => {
-    vi.mocked(getAuthValidateSetupToken).mockRejectedValue(new Error('Network error'))
+    vi.mocked(validateSetupToken).mockRejectedValue(new Error('Network error'))
 
     render(await SignUpInitiate({ searchParams: Promise.resolve({ setupToken: 'test-token' }) }))
 

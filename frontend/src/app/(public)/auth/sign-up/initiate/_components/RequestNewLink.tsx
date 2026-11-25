@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-import { postAuthResendSetupToken } from '@/client/generated'
+import { resendSetupToken } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 
 import styles from '../page.module.scss'
@@ -72,7 +72,10 @@ function getPageContent(
         detail: (
           <>
             <p>You have reached the maximum number of attempts to request a new link.</p>
-            {contactSupport}
+            <p>
+              You can contact the support team by email{' '}
+              <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
+            </p>
           </>
         ),
       }
@@ -125,7 +128,7 @@ export function RequestNewLink({ setupToken, supportEmail }: RequestNewLinkProps
     setRemainingSeconds(resendCooldownSeconds)
 
     try {
-      const result = await postAuthResendSetupToken({
+      const result = await resendSetupToken({
         body: correlationId ? { correlationId } : { setupToken },
       })
 
