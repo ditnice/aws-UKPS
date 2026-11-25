@@ -16,6 +16,7 @@ import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import { useMfaSetupStore } from '../../../_lib/mfaSetupStorage'
+import { useSmsMfaSetupStore } from '../../../_lib/mfaSmsSetupStorage'
 import { useSignUpPassword } from '../../../_lib/SignUpPasswordContext'
 
 const phoneSchema = z.object({
@@ -35,6 +36,7 @@ export default function EnterPhoneNumber() {
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   const mfaSetup = useMfaSetupStore()
+  const smsMfaSetup = useSmsMfaSetupStore()
   const setupToken = mfaSetup.status === 'ready' ? (mfaSetup.data.setupToken ?? '') : ''
 
   const form = useForm({
@@ -55,18 +57,12 @@ export default function EnterPhoneNumber() {
         })
 
         if (!result.error) {
-          try {
-            sessionStorage.setItem(
-              'signUpSmsSetup',
-              JSON.stringify({
-                phoneNumber,
-                setupToken,
-                authenticationSession: (
-                  result.data as { authenticationSession?: string } | undefined
-                )?.authenticationSession,
-              }),
-            )
-          } catch {
+          const saved = smsMfaSetup.set({
+            phoneNumber,
+            authenticationSession: result.data.authenticationSession,
+          })
+
+          if (!saved) {
             setSubmitError(
               'Your phone number was saved, but we could not continue. Return to your sign-up link and try again.',
             )
