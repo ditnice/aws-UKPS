@@ -258,10 +258,11 @@ describe('RecordPage', () => {
   })
 
   it.each([
+    ['Draft', 'View record details'],
     ['Published', 'View record details'],
-    ['Archived', 'Archived record details'],
-    ['OnHold', 'Published record details'],
-    ['QAReview', 'Published record details'],
+    ['Archived', 'View record details'],
+    ['OnHold', 'View record details'],
+    ['QAReview', 'View record details'],
   ] as const)('displays "%s" record with heading "%s"', async (status, expectedHeading) => {
     mockRecord({
       data: {

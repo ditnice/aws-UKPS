@@ -27,7 +27,7 @@ const ArchiveConfirmPage = async (props: StatusChangeRouteProps) => {
           )}
           banner={
             <Alert type="caution">
-              <h2>If you continue, this record will be archived</h2>
+              <h3>If you continue, this record will be archived</h3>
               <p>
                 The record status will change as development has ended and is not expected to
                 resume. You cannot undo this and this record cannot be updated in the future.

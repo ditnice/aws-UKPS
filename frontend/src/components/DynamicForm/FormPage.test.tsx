@@ -1674,6 +1674,24 @@ describe('FormPage', () => {
         expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/check-your-answers'),
       )
     })
+
+    it('keeps the way back to check your answers when the page is reloaded after a conflict', async () => {
+      mocks.saveRecordFormPage.mockResolvedValue({
+        error: {
+          code: 'page_answers_changed',
+          detail: 'This record has changed since the page was loaded.',
+        },
+        response: { ok: false, status: 409 },
+      })
+      fromCheckAnswers()
+
+      fireEvent.click(screen.getByRole('button', { name: 'Save and return to check your answers' }))
+
+      expect(await screen.findByRole('link', { name: 'Reload this page' })).toHaveAttribute(
+        'href',
+        '/portal/records/5/indication?returnTo=check-your-answers',
+      )
+    })
   })
 })
 
