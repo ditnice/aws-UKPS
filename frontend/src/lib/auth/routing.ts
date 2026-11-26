@@ -84,7 +84,14 @@ export function getOrganisationLandingHref(
   return safeReturnTo
 }
 
-// A fixed base, so the check behaves the same in the browser and on the server.
+// The base getSafeReturnTo parses against. It is only compared with the parsed origin and is never
+// navigated to or returned: the result is the path, query and fragment alone.
+// - Fixed rather than location.origin, so the check behaves the same on the server, where there is
+//   no location.
+// - The scheme must be http(s). Browsers only treat "\" as "/" and "//x" as a host for these
+//   "special" schemes, so with a base such as "x:/", "/\evil.com" would parse as a harmless path
+//   here but still reach the browser as "//evil.com".
+// - .invalid is reserved (RFC 6761) and never resolves, so the base cannot name a real site.
 const returnToBase = 'http://return-to.invalid'
 
 // Browsers treat a backslash as a slash and strip tabs and newlines inside URLs, so a prefix check
