@@ -13,10 +13,12 @@ using UKPS.Api.Persistence;
 using UKPS.Api.Persistence.Data.Seeding;
 using UKPS.Api.WebApi;
 using UKPS.Api.WebApi.Authorisation;
+using UKPS.Api.WebApi.Configuration;
 using UKPS.Api.WebApi.Controllers;
 using UKPS.Api.WebApi.InternalServices.Authentication;
 using UKPS.Api.WebApi.InternalServices.Hosting;
 using UKPS.Api.WebApi.InternalServices.Identity;
+using UKPS.Api.WebApi.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,36 +45,13 @@ builder.Services.AddTransient<IDatabaseMigrator, DatabaseMigrator>();
 
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
 
-builder.Services.Configure<CognitoOptions>(
-    builder.Configuration.GetSection(CognitoOptions.SectionName)
-);
-builder.Services.Configure<DatabaseOptions>(
-    builder.Configuration.GetSection(DatabaseOptions.SectionName)
-);
-
 builder
-    .Services.AddOptions<EmailOptions>()
-    .Bind(builder.Configuration.GetSection(EmailOptions.SectionName))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
-
-builder
-    .Services.AddOptions<HostingOptions>()
-    .Bind(builder.Configuration.GetSection(HostingOptions.SectionName))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
-
-builder
-    .Services.AddOptions<AccountRecoveryOptions>()
-    .Bind(builder.Configuration.GetSection(AccountRecoveryOptions.SectionName))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
-
-builder
-    .Services.AddOptions<UserOnboardingOptions>()
-    .Bind(builder.Configuration.GetSection(UserOnboardingOptions.SectionName))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
+    .BindAppOptions<CognitoOptions>()
+    .BindAppOptions<DatabaseOptions>()
+    .BindAppOptions<EmailOptions>()
+    .BindAppOptions<HostingOptions>()
+    .BindAppOptions<AccountRecoveryOptions>()
+    .BindAppOptions<UserOnboardingOptions>();
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -168,11 +147,7 @@ app.MapControllers();
 
 app.MapHealthChecks("/health");
 
-var isOpenApiGeneration = Environment.CommandLine.Contains(
-    "getdocument",
-    StringComparison.OrdinalIgnoreCase
-);
-if (!isOpenApiGeneration)
+if (!OpenApiDocumentGeneration.IsRunning)
 {
     await app.SeedData();
     await app.MigrateDatabase();

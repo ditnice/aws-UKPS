@@ -151,7 +151,9 @@ internal sealed class MedicinesIndicationDetail
         Placeholder = "Choose a therapeutic area",
         ChildLabel = "Select the disease or condition (optional)",
         ChildPlaceholder = "Choose a disease or condition",
-        AddAnotherLabel = "Add another therapy area"
+        AddAnotherLabel = "Add another therapy area",
+        ItemLabel = "Therapeutic area",
+        RemoveLabel = "Remove therapeutic area"
     )]
     [FormMaxItems(3, "Select up to 3 therapeutic areas")]
     public ICollection<MedicinesIndicationDetailTherapeuticArea> TherapeuticAreas { get; set; } =

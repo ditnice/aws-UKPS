@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 
-import { postAuthLogin } from '@/client/generated'
+import { login } from '@/client/generated'
 import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
 
@@ -12,7 +12,7 @@ import { SignInForm } from './SignInForm'
 vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@/client/generated', () => ({
-  postAuthLogin: vi.fn(),
+  login: vi.fn(),
 }))
 
 vi.mock('../../EmailVerificationRequiredAlert', () => ({
@@ -25,8 +25,11 @@ vi.mock('../../PendingEmailExpiredAlert', () => ({
 
 let user: ReturnType<typeof userEvent.setup>
 
+const replace = vi.fn()
+
 beforeEach(() => {
-  vi.mocked(postAuthLogin).mockResolvedValue({ error: undefined, data: undefined })
+  vi.stubGlobal('location', { ...globalThis.location, replace })
+  vi.mocked(login).mockResolvedValue({ error: undefined, data: undefined })
   user = userEvent.setup()
 })
 
@@ -116,7 +119,7 @@ describe('SignInForm', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => {
-      expect(postAuthLogin).toHaveBeenCalledWith({
+      expect(login).toHaveBeenCalledWith({
         body: {
           username: 'name@example.com',
           password: 'secure-password',
@@ -124,7 +127,7 @@ describe('SignInForm', () => {
         credentials: 'include',
       })
 
-      expect(router.push).toHaveBeenCalledWith('/portal/organisations/select')
+      expect(replace).toHaveBeenCalledWith('/portal/organisations/select')
     })
   })
 
@@ -137,7 +140,7 @@ describe('SignInForm', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => {
-      expect(router.push).toHaveBeenCalledWith(
+      expect(replace).toHaveBeenCalledWith(
         '/portal/organisations/select?returnTo=%2Fportal%2Forganisations%2F1%3Ftab%3Dusers',
       )
     })
@@ -163,7 +166,7 @@ describe('SignInForm', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => {
-      expect(postAuthLogin).toHaveBeenCalledWith({
+      expect(login).toHaveBeenCalledWith({
         body: {
           username: 'autofilled@example.com',
           password: 'autofilled-password',
@@ -177,7 +180,7 @@ describe('SignInForm', () => {
   })
 
   it('sets and shows an error message if the response is a 401', async () => {
-    vi.mocked(postAuthLogin).mockResolvedValue({
+    vi.mocked(login).mockResolvedValue({
       error: {
         status: 401,
         challengeType: undefined,
@@ -198,7 +201,7 @@ describe('SignInForm', () => {
 
     expect(errors).toHaveLength(2)
 
-    expect(postAuthLogin).toHaveBeenCalledWith({
+    expect(login).toHaveBeenCalledWith({
       body: {
         username: 'name@example.com',
         password: 'incorrect-password',
@@ -207,10 +210,11 @@ describe('SignInForm', () => {
     })
 
     expect(router.push).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
   })
 
   it('redirects to the MFA page if there is an MFA challenge', async () => {
-    vi.mocked(postAuthLogin).mockResolvedValue({
+    vi.mocked(login).mockResolvedValue({
       error: {
         challengeType: 'MultiFactorAuthenticationRequired',
         authenticationSession: 'test-authentication-session',
@@ -226,7 +230,7 @@ describe('SignInForm', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => {
-      expect(postAuthLogin).toHaveBeenCalledWith({
+      expect(login).toHaveBeenCalledWith({
         body: {
           username: 'name@example.com',
           password: 'secure-password',
@@ -241,7 +245,7 @@ describe('SignInForm', () => {
   })
 
   it('passes returnTo to the MFA page if there is an MFA challenge', async () => {
-    vi.mocked(postAuthLogin).mockResolvedValue({
+    vi.mocked(login).mockResolvedValue({
       error: {
         challengeType: 'MultiFactorAuthenticationRequired',
         authenticationSession: 'test-authentication-session',
@@ -264,7 +268,7 @@ describe('SignInForm', () => {
   })
 
   it('shows the email verification required alert if the email is pending verification', async () => {
-    vi.mocked(postAuthLogin).mockResolvedValue({
+    vi.mocked(login).mockResolvedValue({
       error: {
         code: 'PendingEmailRequiredVerification',
       },
@@ -279,7 +283,7 @@ describe('SignInForm', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => {
-      expect(postAuthLogin).toHaveBeenCalledWith({
+      expect(login).toHaveBeenCalledWith({
         body: {
           username: 'name@example.com',
           password: 'secure-password',
@@ -290,6 +294,7 @@ describe('SignInForm', () => {
 
     expect(await screen.findByTestId('email-verification-required-alert')).toBeInTheDocument()
     expect(router.push).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
   })
 
   it('shows the pending email expired alert if the pending email has expired', async () => {

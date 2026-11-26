@@ -84,9 +84,9 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
     <>
       {data.errors.length > 0 && (
         <Alert type="error">
-          <h2>There is a problem</h2>
+          <h3>There is a problem</h3>
           <p>
-            Change the information before you submit the record for quality assurance (QA) review:
+            Change the information before you submit the record for Quality Assurance (QA) review:
           </p>
           <ul>
             {data.errors.map((error) => (
@@ -150,6 +150,7 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
                 <TaskAnswers
                   questions={task.questions}
                   groupItemHeadingLevel={3}
+                  showEmptyGroupCard
                   rowTag={(question) => {
                     const hidden = hiddenQuestionIds.has(question.id)
                     const problem = errorsByQuestionId.has(question.id)
@@ -162,10 +163,9 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
                       )
                     )
                   }}
-                  // With no items there is nothing to tag: the error is in the summary at the top.
+                  // A group with no items shows an empty card, so there is always a card to tag.
                   groupTag={(question) =>
-                    errorsByQuestionId.has(question.id) &&
-                    (question.items?.length ?? 0) > 0 && (
+                    errorsByQuestionId.has(question.id) && (
                       <Tag colour="red">
                         There is a problem
                         <span className="visually-hidden"> with {question.label}</span>
@@ -201,7 +201,7 @@ const CheckAnswersPage = async ({ params }: CheckAnswersPageProps) => {
                   })}
                   key={question.id}
                 >
-                  {question.addAnotherLabel ?? 'Add another'}
+                  {question.checkAnswersAddLabel ?? 'Add'}
                 </Button>
               ))}
             </SummaryCard>

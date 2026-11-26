@@ -351,7 +351,7 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("work_telephone");
 
-                    b.ComplexProperty(typeof(Dictionary<string, object>), "PendingEmail", "UKPS.Api.Persistence.Entities.Identity.User.PendingEmail#PendingEmailChange", b1 =>
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "PendingEmailHandler", "UKPS.Api.Persistence.Entities.Identity.User.PendingEmailHandler#PendingEmailChangeHandler", b1 =>
                         {
                             b1.IsRequired();
 

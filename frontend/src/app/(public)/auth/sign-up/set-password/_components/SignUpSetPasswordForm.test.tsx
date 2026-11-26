@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { postAuthSetupUser } from '@/client/generated/sdk.gen'
+import { setupUser } from '@/client/generated/sdk.gen'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
@@ -18,11 +18,11 @@ const setupToken = 'test-setup-token'
 vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@/client/generated/sdk.gen', () => ({
-  postAuthSetupUser: vi.fn(),
+  setupUser: vi.fn(),
 }))
 
 beforeEach(() => {
-  vi.mocked(postAuthSetupUser).mockResolvedValue({
+  vi.mocked(setupUser).mockResolvedValue({
     data: {
       authenticationSession: 'test-authentication-session',
       otpAuthUri: 'otpauth://totp/test',
@@ -91,7 +91,7 @@ describe('SignUpSetPasswordForm', () => {
     expect(
       await screen.findByText('Password must be at least 8 characters long'),
     ).toBeInTheDocument()
-    expect(postAuthSetupUser).not.toHaveBeenCalled()
+    expect(setupUser).not.toHaveBeenCalled()
   })
 
   it('accepts a password at the minimum length', async () => {
@@ -103,7 +103,7 @@ describe('SignUpSetPasswordForm', () => {
     await waitFor(() => {
       expect(screen.queryByText('Enter your password')).toBeNull()
       expect(screen.queryByText('Password must be at least 8 characters long')).toBeNull()
-      expect(postAuthSetupUser).toHaveBeenCalledOnce()
+      expect(setupUser).toHaveBeenCalledOnce()
     })
   })
 
@@ -114,7 +114,7 @@ describe('SignUpSetPasswordForm', () => {
     await submitForm()
 
     await waitFor(() => {
-      expect(postAuthSetupUser).toHaveBeenCalledOnce()
+      expect(setupUser).toHaveBeenCalledOnce()
     })
   })
 
@@ -125,7 +125,7 @@ describe('SignUpSetPasswordForm', () => {
     await submitForm()
 
     expect(await screen.findByText(errorMessages.passwordTooLong)).toBeInTheDocument()
-    expect(postAuthSetupUser).not.toHaveBeenCalled()
+    expect(setupUser).not.toHaveBeenCalled()
   })
 
   it.each([
@@ -140,7 +140,7 @@ describe('SignUpSetPasswordForm', () => {
     await submitForm()
 
     expect(await screen.findByText(errorMessages.passwordWhitespace)).toBeInTheDocument()
-    expect(postAuthSetupUser).not.toHaveBeenCalled()
+    expect(setupUser).not.toHaveBeenCalled()
   })
 
   it('accepts special characters', async () => {
@@ -150,7 +150,7 @@ describe('SignUpSetPasswordForm', () => {
     await submitForm()
 
     await waitFor(() => {
-      expect(postAuthSetupUser).toHaveBeenCalledOnce()
+      expect(setupUser).toHaveBeenCalledOnce()
     })
   })
 
@@ -179,7 +179,7 @@ describe('SignUpSetPasswordForm', () => {
     await submitForm()
 
     await waitFor(() => {
-      expect(postAuthSetupUser).toHaveBeenCalledWith({
+      expect(setupUser).toHaveBeenCalledWith({
         body: {
           newPassword: 'fourteen-chars',
           setupToken,
@@ -216,7 +216,7 @@ describe('SignUpSetPasswordForm', () => {
   })
 
   it('shows a password error for a 400 response', async () => {
-    vi.mocked(postAuthSetupUser).mockResolvedValue({
+    vi.mocked(setupUser).mockResolvedValue({
       data: undefined,
       error: { status: 400 },
       response: new Response(null, { status: 400 }),
@@ -234,7 +234,7 @@ describe('SignUpSetPasswordForm', () => {
   })
 
   it('shows a setup link error for a 410 response', async () => {
-    vi.mocked(postAuthSetupUser).mockResolvedValue({
+    vi.mocked(setupUser).mockResolvedValue({
       data: undefined,
       error: {
         detail: 'The setup token has expired and can no longer be used.',
@@ -255,7 +255,7 @@ describe('SignUpSetPasswordForm', () => {
   })
 
   it('shows a setup link error for a 409 response', async () => {
-    vi.mocked(postAuthSetupUser).mockResolvedValue({
+    vi.mocked(setupUser).mockResolvedValue({
       data: undefined,
       error: {
         detail: 'The setup token has already been consumed and cannot be used again.',
@@ -278,7 +278,7 @@ describe('SignUpSetPasswordForm', () => {
   })
 
   it('shows a setup link error for a 404 response', async () => {
-    vi.mocked(postAuthSetupUser).mockResolvedValue({
+    vi.mocked(setupUser).mockResolvedValue({
       data: undefined,
       error: {
         detail: 'The supplied setup token does not exist.',
@@ -304,7 +304,7 @@ describe('SignUpSetPasswordForm', () => {
   ] as const)(
     'shows the fallback for a %i response without backend detail',
     async (status, message) => {
-      vi.mocked(postAuthSetupUser).mockResolvedValue({
+      vi.mocked(setupUser).mockResolvedValue({
         data: undefined,
         error: { status },
         response: new Response(null, { status }),
@@ -321,7 +321,7 @@ describe('SignUpSetPasswordForm', () => {
   )
 
   it('preserves backend detail for a 500 response', async () => {
-    vi.mocked(postAuthSetupUser).mockResolvedValue({
+    vi.mocked(setupUser).mockResolvedValue({
       data: undefined,
       error: { detail: 'Backend explanation.', status: 500 },
       response: new Response(null, { status: 500 }),
@@ -337,7 +337,7 @@ describe('SignUpSetPasswordForm', () => {
   })
 
   it('shows a generic error if password setup fails without a response', async () => {
-    vi.mocked(postAuthSetupUser).mockResolvedValue({
+    vi.mocked(setupUser).mockResolvedValue({
       data: undefined,
       error: { status: 500 },
     })
@@ -357,7 +357,7 @@ describe('SignUpSetPasswordForm', () => {
     { authenticationSession: 'test-authentication-session', otpAuthUri: '' },
     { authenticationSession: '', otpAuthUri: 'otpauth://totp/test' },
   ])('shows a generic error when successful response data is incomplete', async (data) => {
-    vi.mocked(postAuthSetupUser).mockResolvedValue({ data, error: undefined })
+    vi.mocked(setupUser).mockResolvedValue({ data, error: undefined })
     renderForm()
 
     await enterPassword('fourteen-chars')
@@ -371,7 +371,7 @@ describe('SignUpSetPasswordForm', () => {
   })
 
   it('shows a generic error if password setup fails unexpectedly', async () => {
-    vi.mocked(postAuthSetupUser).mockRejectedValue(new Error('Network error'))
+    vi.mocked(setupUser).mockRejectedValue(new Error('Network error'))
     renderForm()
 
     await enterPassword('fourteen-chars')

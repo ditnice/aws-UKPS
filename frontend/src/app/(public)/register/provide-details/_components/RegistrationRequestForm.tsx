@@ -84,6 +84,7 @@ export function RegistrationRequestForm() {
   return (
     <>
       <form
+        method="post"
         noValidate
         onSubmit={(event) => {
           event.preventDefault()

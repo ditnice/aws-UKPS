@@ -14,7 +14,7 @@ beforeEach(() => {
 })
 
 const getBackLink = () => screen.getByRole('link', { name: 'Back' })
-const queryExitWarning = () => screen.queryByRole('heading', { name: exitWarningHeading })
+const queryExitWarning = () => screen.queryByRole('heading', { level: 3, name: exitWarningHeading })
 
 // Records whether the next click on the page was default-prevented once handlers have run.
 const recordClicks = () => {

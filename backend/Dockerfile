@@ -14,7 +14,7 @@ ADD --checksum=sha256:17c557502061c4879b844fff983288a2fb07d520f4cf2a5de60f5cda80
 
 # .NET 10 SDK on Ubuntu 24.04 "noble". Keep its .NET patch version in step with the chiseled
 # runtime below.
-FROM --platform=${ECS_PLATFORM} mcr.microsoft.com/dotnet/sdk:10.0.404-noble@sha256:bef136a371963aaa46ec97882845ef6f54dec15728bb4b128b1c2a400ffbc9b4 AS restore
+FROM --platform=${ECS_PLATFORM} mcr.microsoft.com/dotnet/sdk:10.0.404-noble@sha256:8c6edfb26c85153f236d26efebd9ad349aec403583f343f201ee67838b23658d AS restore
 
 WORKDIR /src
 
@@ -37,7 +37,7 @@ RUN apt-get update \
 
 # ASP.NET Core 10 runtime on Ubuntu 24.04 "noble" chiseled (extra: includes ICU and tzdata).
 # checkov:skip=CKV_DOCKER_2: Distroless/chiseled base image has no shell or HTTP client, so a container-level HEALTHCHECK isn't feasible; the ALB target group already health-checks the service over HTTP (see infrastructure/modules/alb/main.tf).
-FROM --platform=${ECS_PLATFORM} mcr.microsoft.com/dotnet/aspnet:10.0.15-noble-chiseled-extra@sha256:cae5b962bfb786606def03d250c6a645cc98839095c89e806e4bd8978a68115b AS runtime
+FROM --platform=${ECS_PLATFORM} mcr.microsoft.com/dotnet/aspnet:10.0.15-noble-chiseled-extra@sha256:c8dd08a50d8ffd19bd8da72edee05a7ac15b486a5b1869cf46fdb370bf1fbc76 AS runtime
 
 WORKDIR /app
 

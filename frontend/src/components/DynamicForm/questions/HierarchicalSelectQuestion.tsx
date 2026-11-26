@@ -1,5 +1,6 @@
 import { RuleKind } from '@/client/generated'
-import { Button } from '@/components/Button/Button'
+import { AddAnotherGroup } from '@/components/AddAnother/AddAnotherGroup'
+import { FormGroup } from '@/components/FormGroup/FormGroup'
 import { Select, SelectOption } from '@/components/Select/Select'
 import type { HierarchicalEntry, Question } from '@/lib/dynamic-form/types'
 
@@ -22,6 +23,8 @@ type EntryProps = {
   error?: string
   /** The ID of the question's hint, which every select is described by. */
   hintId?: string
+  /** The entry's heading in a group, such as "Therapeutic area 2"; not set when there is no group. */
+  entryLabel?: string
   labelStyle: LabelStyle
 }
 
@@ -35,33 +38,33 @@ function HierarchicalEntrySelects({
   onBlur,
   error,
   hintId,
+  entryLabel,
   labelStyle,
 }: EntryProps) {
   const parentId = `${name}-${index}-parent`
   const childId = `${name}-${index}-child`
   const children = question.options?.find((o) => o.value === entry.parent)?.children ?? []
-  // Repeated entries need distinct accessible names.
-  const entrySuffix = question.multiple && index > 0 ? ` (${index + 1})` : ''
-  const showParentLabel = labelStyle !== 'heading' || entrySuffix !== ''
+  // A multi-value question's entries sit in a group that shows the question's label, hint and
+  // error. Each entry's visible heading names its parent select, so that label is hidden.
+  const inGroup = entryLabel !== undefined
+  const showParentLabel = !inGroup && labelStyle !== 'heading'
   // On a page of several questions each question's label is lead text, and the child's label
   // matches it rather than standing out above it.
   const labelClass = labelStyle === 'lead' ? styles.leadLabel : styles.childLabel
-  // The question's error is shown once, above the first parent select; every select is styled
-  // as invalid and described by that one message (the first parent select adds it itself).
-  // Every select is also described by the question's hint.
-  const ownsError = Boolean(error) && index === 0
-  const errorId = error ? `${name}-0-parent-error` : undefined
+  // The question's error is shown once: by the group, or otherwise above the parent select (which
+  // then describes itself by it). Every select is styled as invalid and described by that message.
+  const sharedErrorId = inGroup ? `${name}-error` : `${parentId}-error`
+  const errorId = error ? sharedErrorId : undefined
 
   return (
     <div className={styles.entry}>
       <label className={showParentLabel ? labelClass : 'visually-hidden'} htmlFor={parentId}>
-        {question.label}
-        {entrySuffix}
+        {entryLabel ?? question.label}
       </label>
       <Select
-        aria-describedby={describedBy([hintId, ownsError ? undefined : errorId])}
+        aria-describedby={describedBy([hintId, inGroup ? errorId : undefined])}
         error={Boolean(error)}
-        errorMessage={ownsError ? error : undefined}
+        errorMessage={inGroup ? undefined : error}
         id={parentId}
         label={null}
         name={`${name}[${index}].parent`}
@@ -87,7 +90,7 @@ function HierarchicalEntrySelects({
         <>
           <label className={labelClass} htmlFor={childId}>
             {question.childLabel}
-            {entrySuffix && <span className="visually-hidden">{entrySuffix}</span>}
+            {inGroup && <span className="visually-hidden">, {entryLabel}</span>}
           </label>
           <Select
             aria-describedby={describedBy([hintId, errorId])}
@@ -115,7 +118,8 @@ function HierarchicalEntrySelects({
 
 /**
  * A two-level choice: a parent dropdown, then an optional child dropdown. The answer is the most
- * specific option chosen. Multi-value questions repeat the pair, up to the MaxItems rule.
+ * specific option chosen. Multi-value questions repeat the pair in the MoJ add another stacked
+ * layout (as for clinical trials), up to the MaxItems rule.
  */
 export function HierarchicalSelectQuestion({
   question,
@@ -124,52 +128,73 @@ export function HierarchicalSelectQuestion({
   onChange,
   onBlur,
   error,
+  clearError,
   labelStyle,
 }: QuestionProps<HierarchicalEntry | HierarchicalEntry[]>) {
   const entries = Array.isArray(value) ? value : [value]
-  const hintId = question.hint ? `${name}-hint` : undefined
-  const maxItems =
-    question.rules.find((rule) => rule.kind === RuleKind.MAX_ITEMS)?.value ?? Infinity
+  const maxItems = question.rules.find((rule) => rule.kind === RuleKind.MAX_ITEMS)?.value
 
   const update = (next: HierarchicalEntry[]) => onChange(question.multiple ? next : next[0])
   const replace = (index: number, entry: HierarchicalEntry) =>
     update(entries.map((current, i) => (i === index ? entry : current)))
+  const entryLabel = (index: number) => `${question.itemLabel ?? 'Item'} ${index + 1}`
+  const renderEntry = (index: number, hintId?: string) => (
+    <HierarchicalEntrySelects
+      entry={entries[index]}
+      entryLabel={question.multiple ? entryLabel(index) : undefined}
+      error={error}
+      hintId={hintId}
+      index={index}
+      labelStyle={labelStyle}
+      name={name}
+      onBlur={onBlur}
+      onChange={(next) => replace(index, next)}
+      question={question}
+    />
+  )
+
+  if (!question.multiple) {
+    const hintId = question.hint ? `${name}-hint` : undefined
+    return (
+      <div>
+        {question.hint && (
+          <p className="input__hint" id={hintId}>
+            {question.hint}
+          </p>
+        )}
+        {renderEntry(0, hintId)}
+      </div>
+    )
+  }
+
+  // On a single-question page the label is the page heading, so the legend is hidden visually
+  // (see DynamicForm.module.scss) and is not a heading itself; the items are then h2s. Otherwise
+  // the legend is an h2 of its own and the items are h3s.
+  const labelAsHeading = labelStyle === 'heading'
 
   return (
-    <div>
-      {question.hint && (
-        <p className="input__hint" id={hintId}>
-          {question.hint}
-        </p>
-      )}
-      {entries.map((entry, index) => (
-        // Entries have no stable identity of their own; position is what the user edits.
-
-        <div key={index}>
-          <HierarchicalEntrySelects
-            entry={entry}
-            error={error}
-            hintId={hintId}
-            index={index}
-            labelStyle={labelStyle}
-            name={name}
-            onBlur={onBlur}
-            onChange={(next) => replace(index, next)}
-            question={question}
-          />
-          {question.multiple && index > 0 && (
-            <Button onClick={() => update(entries.filter((_, i) => i !== index))} variant="link">
-              Remove
-              <span className="visually-hidden"> entry {index + 1}</span>
-            </Button>
-          )}
-        </div>
-      ))}
-      {question.multiple && entries.length < maxItems && (
-        <Button onClick={() => update([...entries, emptyEntry])} variant="primary">
-          {question.addAnotherLabel ?? 'Add another'}
-        </Button>
-      )}
-    </div>
+    <FormGroup
+      error={error || undefined}
+      headingLevel={labelAsHeading ? undefined : 2}
+      hint={question.hint ?? undefined}
+      identifier={name}
+      legend={question.label}
+    >
+      <AddAnotherGroup
+        addItemLabel={question.addAnotherLabel ?? 'Add another'}
+        count={entries.length}
+        itemHeading={entryLabel}
+        itemHeadingLevel={labelAsHeading ? 2 : 3}
+        maxItems={maxItems ?? undefined}
+        onAdd={() => update([...entries, emptyEntry])}
+        onRemove={(index) => {
+          update(entries.filter((_, i) => i !== index))
+          // Positions have moved, so an error shown against them no longer lines up.
+          clearError()
+        }}
+        removeItemLabel={question.removeLabel ?? 'Remove'}
+        renderItem={(index) => renderEntry(index)}
+      />
+    </FormGroup>
   )
 }

@@ -1,9 +1,12 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
+import {
+  fakeCurrentUserInformationDto,
+  fakeUserInformationDto,
+} from '@/client/generated/@faker-js/faker.gen'
 import { getUserDetailsWithinOrganisation, getUsersMe } from '@/client/generated/sdk.gen'
-import type { UserInformationDto } from '@/client/generated/types.gen'
+import type { CurrentUserInformationDto, UserInformationDto } from '@/client/generated/types.gen'
 import { notFound, notFoundError } from '@/test-utils/nextNavigation'
 
 import ManageUserAccess from './page'
@@ -23,10 +26,9 @@ const user: UserInformationDto = {
   workEmail: 'julie.brooks@example.com',
   userRole: 'Standard',
   status: 'Active',
-  hasMultipleOrganisations: false,
 }
-const currentUser: UserInformationDto = {
-  ...fakeUserInformationDto(),
+const currentUser: CurrentUserInformationDto = {
+  ...fakeCurrentUserInformationDto(),
   userRole: 'Super',
 }
 
@@ -37,7 +39,7 @@ function mockUserResponse(overrides: Partial<UserInformationDto> = {}) {
   })
 }
 
-function mockCurrentUserResponse(overrides: Partial<UserInformationDto> = {}) {
+function mockCurrentUserResponse(overrides: Partial<CurrentUserInformationDto> = {}) {
   vi.mocked(getUsersMe).mockResolvedValue({
     data: { ...currentUser, ...overrides },
     error: undefined,

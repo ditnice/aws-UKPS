@@ -3,170 +3,14 @@ using UKPS.Api.Application.Common;
 
 namespace UKPS.Api.Persistence.Entities.Identity;
 
-/// <summary>
-/// A requested change to a user's work email that has not yet been completed.
-/// Mapped as an optional complex property on <see cref="User"/>, stored in the <c>app_user</c> table.
-/// A pending change expires once the timeout passed to each operation has elapsed since it was
-/// requested; once expired every operation fails with a timed-out error.
-/// </summary>
-internal sealed record PendingEmailChange
+internal abstract record PendingEmailChange
 {
-    private string? _workEmail;
-    private string? _verificationToken;
-    private DateTime? _verifiedAt;
-    private DateTime? _requestedAt;
-
-    public PendingEmailChange(string workEmail, string verificationToken, DateTime requestedAt)
-    {
-        _workEmail = workEmail;
-        _verificationToken = verificationToken;
-        _requestedAt = requestedAt;
-    }
-
-    private PendingEmailChange() { }
-
-    internal Result<Data, PendingEmailError> TryGetData(DateTime currentTime, TimeSpan timeout)
-    {
-        if (_workEmail is null)
-        {
-            return Result<Data, PendingEmailError>.Err(new PendingEmailError.NoPendingEmail());
-        }
-        if (HasTimedOut(currentTime, timeout))
-        {
-            return Result<Data, PendingEmailError>.Err(
-                new PendingEmailError.PendingEmailTimedOut()
-            );
-        }
-
-        return Result<Data, PendingEmailError>.Ok(new Data(_workEmail, _verifiedAt is not null));
-    }
-
-    internal Result<string, RefreshVerificationTokenError> TryRefreshVerificationToken(
-        string verificationToken,
-        DateTime dateTime,
+    internal abstract Result<Data, PendingEmailError> TryGetData(
+        DateTime currentTime,
         TimeSpan timeout
-    )
-    {
-        var dataResult = TryGetData(dateTime, timeout);
-        if (!dataResult.TryGetSuccessValue(out var data))
-        {
-            return Result<string, RefreshVerificationTokenError>.Err(
-                dataResult.Error!.Match<RefreshVerificationTokenError>(
-                    noPendingEmail: _ => new RefreshVerificationTokenError.NoPendingEmailToRefresh(),
-                    pendingEmailTimedOut: _ => new RefreshVerificationTokenError.PendingEmailTimedOut()
-                )
-            );
-        }
-        if (data.Verified)
-        {
-            return Result<string, RefreshVerificationTokenError>.Err(
-                new RefreshVerificationTokenError.AlreadyVerified()
-            );
-        }
+    );
 
-        _verificationToken = verificationToken;
-
-        return Result<string, RefreshVerificationTokenError>.Ok(data.WorkEmail);
-    }
-
-    internal Result<VerificationError> TryMarkPendingEmailAsVerified(
-        string verificationToken,
-        DateTime dateTime,
-        TimeSpan timeout
-    )
-    {
-        var dataResult = TryGetData(dateTime, timeout);
-        if (!dataResult.TryGetSuccessValue(out var data))
-        {
-            return Result<VerificationError>.Err(
-                dataResult.Error!.Match<VerificationError>(
-                    noPendingEmail: _ => new VerificationError.NoPendingEmailToVerify(),
-                    pendingEmailTimedOut: _ => new VerificationError.PendingEmailTimedOut()
-                )
-            );
-        }
-        if (data.Verified)
-        {
-            return Result<VerificationError>.Err(new VerificationError.AlreadyVerified());
-        }
-        var verificationTokensMatch = string.Equals(
-            verificationToken,
-            _verificationToken,
-            StringComparison.Ordinal
-        );
-        if (!verificationTokensMatch)
-        {
-            return Result<VerificationError>.Err(new VerificationError.InvalidVerificationToken());
-        }
-
-        _verifiedAt = dateTime;
-        _verificationToken = null;
-
-        return Result<VerificationError>.Ok();
-    }
-
-    internal Result<PendingEmailCancellationError> TryCancelPendingEmailChange(
-        DateTime dateTime,
-        TimeSpan timeout
-    )
-    {
-        var dataResult = TryGetData(dateTime, timeout);
-        if (!dataResult.TryGetSuccessValue(out _))
-        {
-            return Result<PendingEmailCancellationError>.Err(
-                dataResult.Error!.Match<PendingEmailCancellationError>(
-                    noPendingEmail: _ => new PendingEmailCancellationError.NoPendingEmailToCancel(),
-                    pendingEmailTimedOut: _ => new PendingEmailCancellationError.PendingEmailTimedOut()
-                )
-            );
-        }
-
-        Clear();
-
-        return Result<PendingEmailCancellationError>.Ok();
-    }
-
-    internal Result<string, CompletionError> TryComplete(DateTime dateTime, TimeSpan timeout)
-    {
-        var dataResult = TryGetData(dateTime, timeout);
-        if (!dataResult.TryGetSuccessValue(out var data))
-        {
-            return Result<string, CompletionError>.Err(
-                dataResult.Error!.Match<CompletionError>(
-                    noPendingEmail: _ => new CompletionError.NoPendingEmailToComplete(),
-                    pendingEmailTimedOut: _ => new CompletionError.PendingEmailTimedOut()
-                )
-            );
-        }
-        if (!data.Verified)
-        {
-            return Result<string, CompletionError>.Err(new CompletionError.NotVerified());
-        }
-
-        Clear();
-
-        return Result<string, CompletionError>.Ok(data.WorkEmail);
-    }
-
-    public static PendingEmailChange Empty()
-    {
-        return new PendingEmailChange();
-    }
-
-    // A pending change with no request time predates the timeout and is treated as expired.
-    private bool HasTimedOut(DateTime currentTime, TimeSpan timeout) =>
-        _requestedAt is not { } requestedAt || currentTime - requestedAt >= timeout;
-
-    private void Clear()
-    {
-        _workEmail = null;
-        _verificationToken = null;
-        _verifiedAt = null;
-        _requestedAt = null;
-    }
-
-    public record Data(string WorkEmail, bool Verified);
-
+    /// <summary>Why <see cref="TryGetData"/> could not return the change.</summary>
     public abstract record PendingEmailError
     {
         protected PendingEmailError() { }
@@ -189,6 +33,7 @@ internal sealed record PendingEmailChange
         public sealed record PendingEmailTimedOut : PendingEmailError;
     }
 
+    /// <summary>Why the requested work email could not be marked as verified.</summary>
     public abstract record VerificationError
     {
         protected VerificationError() { }
@@ -292,4 +137,6 @@ internal sealed record PendingEmailChange
 
         public sealed record PendingEmailTimedOut : CompletionError;
     }
+
+    public record Data(string WorkEmail, bool Verified);
 }

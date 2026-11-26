@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { resetEmailCookieName } from '../resetPasswordShared'
 
 import ConfirmResetPasswordForm from './ConfirmResetPasswordForm'
+import ResendPasswordLinkSection from './ResendPasswordLinkSection'
 
 const Page = async () => {
   const myCookies = await cookies()
@@ -20,8 +21,8 @@ const Page = async () => {
 
   return (
     <>
+      <ResendPasswordLinkSection email={emailCookie.value} />
       <PageHeader heading="Reset your password" />
-      <p>An email containing a confirmation code has been sent to {emailCookie.value}.</p>
       <ConfirmResetPasswordForm email={emailCookie.value} />
     </>
   )

@@ -129,14 +129,14 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task GetCurrentUser_ShouldReturnUserFromTheUserService()
     {
-        UserInformationDto expectedValue = new UserInformationDtoFaker().Generate();
+        CurrentUserInformationDto expectedValue = new CurrentUserInformationDtoFaker().Generate();
         _mockUserService.GetCurrentUser(Arg.Any<CancellationToken>()).Returns(expectedValue);
 
         var url = new Uri($"{UsersUrl}/me", UriKind.Relative);
         var response = await _client.GetAsync(url, TestContext.Current.CancellationToken);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var data = await response.Content.ReadFromJsonAsync<UserInformationDto>(
+        var data = await response.Content.ReadFromJsonAsync<CurrentUserInformationDto>(
             TestJsonOptions.Default,
             TestContext.Current.CancellationToken
         );
@@ -1220,6 +1220,46 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         }
     }
 
+    /// <summary>
+    /// Generates fake <see cref="CurrentUserInformationDto"/> instances for testing.
+    /// </summary>
+    private sealed class CurrentUserInformationDtoFaker : Faker<CurrentUserInformationDto>
+    {
+        public const string SmsMfaMethod = "Sms";
+
+        private static readonly string[] _mfaMethods = [SmsMfaMethod, "Authenticator", "Email"];
+
+        public CurrentUserInformationDtoFaker()
+            : this(new UserInformationDtoFaker()) { }
+
+        public CurrentUserInformationDtoFaker(Faker<UserInformationDto> userInformationDtoFaker)
+        {
+            ArgumentNullException.ThrowIfNull(userInformationDtoFaker);
+
+            // Copy the base user information through the copy constructor; the
+            // current-user-only members are placeholders here and are set by the rules below.
+            CustomInstantiator(_ => new CurrentUserInformationDto(
+                mfaMethod: string.Empty,
+                mfaPhoneNumber: string.Empty,
+                hasMultipleOrganisations: false,
+                userInformationDto: userInformationDtoFaker.Generate()
+            ));
+
+            RuleFor(x => x.HasMultipleOrganisations, f => f.Random.Bool());
+
+            RuleFor(x => x.MfaMethod, f => f.PickRandom(_mfaMethods));
+
+            // Rules run in order, so MfaMethod is already set here.
+            RuleFor(
+                x => x.MfaPhoneNumber,
+                (f, x) =>
+                    x.MfaMethod.Equals(SmsMfaMethod, StringComparison.Ordinal)
+                        ? $"*******{f.Random.ReplaceNumbers("####")}"
+                        : string.Empty
+            );
+        }
+    }
+
     private sealed class UserInformationDtoFaker : Faker<UserInformationDto>
     {
         public UserInformationDtoFaker()
@@ -1233,9 +1273,6 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             RuleFor(x => x.OrganisationId, f => f.Random.Int(1, 1000));
             RuleFor(x => x.OrganisationName, f => f.Company.CompanyName());
             RuleFor(x => x.UserRole, f => f.PickRandom<UserRole>());
-            RuleFor(x => x.HasMultipleOrganisations, f => f.Random.Bool());
-            RuleFor(x => x.MfaMethod, f => f.PickRandom("Sms", "AuthenticatorApp", "Unknown"));
-            RuleFor(x => x.MfaPhoneNumber, f => f.Phone.PhoneNumber("07#########"));
             RuleFor(x => x.AllowedPharmaceuticalEntity, f => f.PickRandom<PharmaceuticalEntity>());
             RuleFor(
                 x => x.Status,

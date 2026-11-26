@@ -15,9 +15,9 @@ namespace UKPS.Api.Tests.Application.RecordForms;
 public class MedicineFormModelTests
 {
     // Bump FormVersions.Medicine whenever this changes, then update both values.
-    private const string ExpectedVersion = "2026.11.23.4";
+    private const string ExpectedVersion = "2026.11.23.5";
     private const string ExpectedFingerprint =
-        "f627b762f67329bb90b9426bfb6eda5354ee6967771b6b8eeb2b4e57c0f04eb9";
+        "3c1607940ce9dbc8dc7587d4f75dd5128b85fb402e4c704b951e8684e2d777ec";
 
     private static readonly OptionProviderRegistry _options =
         OptionProviderRegistry.CreateDefault();
@@ -344,6 +344,7 @@ public class MedicineFormModelTests
         (trials.ItemLabel, trials.AddAnotherLabel, trials.RemoveLabel, trials.ItemKey).ShouldBe(
             ("Clinical trial", "Add another clinical trial", "Remove clinical trial", null)
         );
+        trials.CheckAnswersAddLabel.ShouldBe("Add clinical trial");
         trials
             .Children.Select(static c => (c.Id, c.Control))
             .ShouldBe([

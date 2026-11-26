@@ -2,14 +2,14 @@
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { z } from 'zod'
 
 import { respondToMultiFactorAuthenticationChallenge } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
-import { buildSelectOrganisationHref } from '@/lib/auth/routing'
+import { navigateOnSuccessfulAuth } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage, getFormErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
@@ -43,7 +43,10 @@ type SignInFormProps = {
   session: string
 }
 export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) {
-  const router = useRouter()
+  // The authentication session is single-use, so once it has been accepted the form stays disabled
+  // while the full page load to the portal is in progress.
+  const [succeeded, setSucceeded] = useState(false)
+
   const form = useForm({
     defaultValues: {
       securityCode: '',
@@ -66,7 +69,9 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
         credentials: 'include',
       })
       if (!response.error) {
-        router.push(buildSelectOrganisationHref(returnTo))
+        setSucceeded(true)
+        navigateOnSuccessfulAuth(returnTo)
+        return
       }
       if (
         response.error?.code === 'PendingEmailRequiredVerification' ||
@@ -95,10 +100,12 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
 
   return (
     <form
+      method="post"
       noValidate
       onSubmit={(event) => {
         event.preventDefault()
         event.stopPropagation()
+        if (succeeded) return
         void form.handleSubmit()
       }}
     >
@@ -136,7 +143,7 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
         }}
       </form.Field>
 
-      <Button type="submit" variant="cta">
+      <Button disabled={succeeded} type="submit" variant="cta">
         Continue
       </Button>
 

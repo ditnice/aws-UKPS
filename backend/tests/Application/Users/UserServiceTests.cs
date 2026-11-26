@@ -63,7 +63,7 @@ public class UserServiceTests : DatabaseTestBase
         DateTimeKind.Utc
     );
 
-    private static readonly TimeSpan PendingEmailTimeout = TimeSpan.FromMinutes(30);
+    private static readonly TimeSpan _pendingEmailTimeout = TimeSpan.FromMinutes(30);
 
     private readonly GetUsersQueryDto _getAllUserQuery = new GetUsersQueryDto() { PageSize = 1000 };
     private readonly Faker _faker = new Faker();
@@ -90,7 +90,7 @@ public class UserServiceTests : DatabaseTestBase
                     .AddOptions<AccountRecoveryOptions>()
                     .Configure(options =>
                         options.PendingEmailChangeTimeoutSeconds = (int)
-                            PendingEmailTimeout.TotalSeconds
+                            _pendingEmailTimeout.TotalSeconds
                     );
                 return services.AddSingleton(_mockEmailVerificationLinkCreator);
             });
@@ -141,11 +141,11 @@ public class UserServiceTests : DatabaseTestBase
                     CognitoUsername = currentUser.CognitoUsername,
                 }
             );
-            UserInformationDto result = await Service.GetCurrentUser(
+            CurrentUserInformationDto result = await Service.GetCurrentUser(
                 TestContext.Current.CancellationToken
             );
             result.ShouldBe(
-                new UserInformationDto()
+                new CurrentUserInformationDto()
                 {
                     UserId = currentUser.Id,
                     FullName = currentUser.FullName,
@@ -163,6 +163,34 @@ public class UserServiceTests : DatabaseTestBase
                 }
             );
         }
+    }
+
+    [Fact]
+    public async Task GetCurrentUser_ShouldReturnTheRoleAndEmailFromTheSessionClaims()
+    {
+        (User user, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
+            1,
+            organisationStatus: UserOrgStatus.Active
+        );
+        UserRole claimRole =
+            memberships[0].UserRole == UserRole.Champion ? UserRole.Standard : UserRole.Champion;
+        const string claimEmail = "claim.email@example.com";
+        _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                OrganisationId = memberships[0].OrganisationId,
+                UserRole = claimRole,
+                Email = claimEmail,
+                CognitoUsername = user.CognitoUsername,
+            }
+        );
+
+        CurrentUserInformationDto result = await Service.GetCurrentUser(
+            TestContext.Current.CancellationToken
+        );
+
+        result.UserRole.ShouldBe(claimRole);
+        result.WorkEmail.ShouldBe(claimEmail);
     }
 
     [Theory]
@@ -186,7 +214,7 @@ public class UserServiceTests : DatabaseTestBase
             }
         );
 
-        UserInformationDto result = await Service.GetCurrentUser(
+        CurrentUserInformationDto result = await Service.GetCurrentUser(
             TestContext.Current.CancellationToken
         );
 
@@ -215,7 +243,7 @@ public class UserServiceTests : DatabaseTestBase
             }
         );
 
-        UserInformationDto result = await Service.GetCurrentUser(
+        CurrentUserInformationDto result = await Service.GetCurrentUser(
             TestContext.Current.CancellationToken
         );
 
@@ -1295,13 +1323,12 @@ public class UserServiceTests : DatabaseTestBase
             .GetClearedContext()
             .Users.FindAsync([currentUser.Id], TestContext.Current.CancellationToken);
 
-        var pendingEmail = user.ShouldNotBeNull().PendingEmail;
-
-        var verificationResult = pendingEmail.TryMarkPendingEmailAsVerified(
-            email.EmailVerificationLink.Host,
-            _currentDateTime.Add(TimeSpan.FromMinutes(5)),
-            PendingEmailTimeout
-        );
+        var verificationResult = user.ShouldNotBeNull()
+            .TryMarkPendingEmailAsVerified(
+                email.EmailVerificationLink.Host,
+                _currentDateTime.Add(TimeSpan.FromMinutes(5)),
+                _pendingEmailTimeout
+            );
         verificationResult.ShouldBeSuccess();
     }
 
@@ -1431,7 +1458,7 @@ public class UserServiceTests : DatabaseTestBase
 
         updatedUser
             .ShouldNotBeNull()
-            .PendingEmail.TryGetData(_currentDateTime, PendingEmailTimeout)
+            .PendingEmail.TryGetData(_currentDateTime, _pendingEmailTimeout)
             .TryGetSuccessValue(out var pendingEmail)
             .ShouldBeTrue();
         pendingEmail.Verified.ShouldBeTrue();
@@ -1543,7 +1570,7 @@ public class UserServiceTests : DatabaseTestBase
         User currentUser = await CreateExistingCurrentUser();
         var token = await RequestEmailUpdate(currentUser);
         _harness.UpdateCurrentTime(
-            _currentDateTime + PendingEmailTimeout - TimeSpan.FromSeconds(1)
+            _currentDateTime + _pendingEmailTimeout - TimeSpan.FromSeconds(1)
         );
 
         var result = await Service.VerifyPendingEmailAddress(
@@ -1593,7 +1620,7 @@ public class UserServiceTests : DatabaseTestBase
             .Users.FindAsync([currentUser.Id], TestContext.Current.CancellationToken);
         databaseUser.ShouldNotBeNull();
         databaseUser
-            .PendingEmail.TryGetData(_currentDateTime, PendingEmailTimeout)
+            .PendingEmail.TryGetData(_currentDateTime, _pendingEmailTimeout)
             .IsErr.ShouldBeTrue();
     }
 
@@ -1678,7 +1705,7 @@ public class UserServiceTests : DatabaseTestBase
         updatedUser.ShouldNotBeNull();
         updatedUser.WorkEmail.ShouldBe(updateEmail);
         updatedUser
-            .PendingEmail.TryGetData(_currentDateTime, PendingEmailTimeout)
+            .PendingEmail.TryGetData(_currentDateTime, _pendingEmailTimeout)
             .IsErr.ShouldBeTrue();
     }
 
@@ -1775,7 +1802,7 @@ public class UserServiceTests : DatabaseTestBase
 
     private void AdvanceTimeToPendingEmailTimeout()
     {
-        _harness.UpdateCurrentTime(_currentDateTime + PendingEmailTimeout);
+        _harness.UpdateCurrentTime(_currentDateTime + _pendingEmailTimeout);
     }
 
     private async Task RequestAndVerifyEmailUpdate(User currentUser, string? updateEmail = null)
@@ -1902,8 +1929,6 @@ public class UserServiceTests : DatabaseTestBase
                 OrganisationName = membership.Organisation!.OrganisationName,
                 UserRole = membership.UserRole,
                 Status = (UserOrgStatus)membership.Status,
-                MfaMethod = "Unknown",
-                MfaPhoneNumber = string.Empty,
                 AllowedPharmaceuticalEntity = membership.AllowedPharmaceuticalEntity,
             }
         );

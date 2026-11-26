@@ -1,10 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using UKPS.Api.WebApi.Configuration;
 
 namespace UKPS.Api.Application.Authentication;
 
-internal sealed record AccountRecoveryOptions
+internal sealed record AccountRecoveryOptions : IAppOptions
 {
-    public const string SectionName = "AccountRecovery";
+    public static string SectionName => "AccountRecovery";
 
     /// <summary>
     /// How long after being requested a pending email change remains usable. Defaults to 2 hours.

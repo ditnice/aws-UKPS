@@ -30,6 +30,7 @@ export function ChangePermissionsForm({
 
   return (
     <form
+      method="post"
       noValidate
       onSubmit={async (event) => {
         event.preventDefault()

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace UKPS.Api.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class AddPendingEmailRequestedAt : Migration
+    public partial class AddPendingRequestedAtColumn : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
