@@ -24,7 +24,7 @@ import {
   TaskListTask,
   type TaskStatus,
 } from '@/components/TaskList/TaskList'
-import { checkAnswersHref } from '@/lib/dynamic-form/links'
+import { checkAnswersHref, pageHref } from '@/lib/dynamic-form/links'
 import { parsePositiveInteger } from '@/lib/valueParsing'
 
 const taskStatuses: Record<RecordTaskStatus, TaskStatus> = {
@@ -121,7 +121,7 @@ const RecordTaskListPage = async ({ params, searchParams }: RecordTaskListPagePr
                 href={
                   task.status === 'NotApplicable' || task.status === 'CannotStart'
                     ? undefined
-                    : `/portal/records/${recordId}/${task.firstPageId}`
+                    : pageHref({ recordId }, task.firstPageId)
                 }
                 status={taskStatuses[task.status]}
               />

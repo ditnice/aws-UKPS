@@ -11,7 +11,7 @@ import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
-import { signUpMfaSetupStorageKey } from '../../_lib/mfaSetupStorage'
+import { useMfaSetupStore } from '../../_lib/mfaSetupStorage'
 import { useSignUpPassword } from '../../_lib/SignUpPasswordContext'
 
 const signUpSetPasswordSchema = z.object({
@@ -30,6 +30,7 @@ type SignUpSetPasswordFormProps = {
 }
 
 export function SignUpSetPasswordForm({ setupToken }: SignUpSetPasswordFormProps) {
+  const mfaSetupStorage = useMfaSetupStore()
   const router = useRouter()
   const { setPassword } = useSignUpPassword()
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -62,16 +63,13 @@ export function SignUpSetPasswordForm({ setupToken }: SignUpSetPasswordFormProps
             throw new Error('Expected multi-factor authentication setup data.')
           }
 
-          try {
-            sessionStorage.setItem(
-              signUpMfaSetupStorageKey,
-              JSON.stringify({
-                authenticationSession: result.data.authenticationSession,
-                otpAuthUri: result.data.otpAuthUri,
-                setupToken,
-              }),
-            )
-          } catch {
+          const saved = mfaSetupStorage.set({
+            authenticationSession: result.data.authenticationSession,
+            otpAuthUri: result.data.otpAuthUri,
+            setupToken,
+          })
+
+          if (!saved) {
             setSubmitError(
               'Your password was created, but we could not continue to two-factor authentication setup. Return to your sign-up link and try again.',
             )

@@ -4,12 +4,11 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 
 import { respondToMultiFactorAuthenticationChallenge } from '@/client/generated'
 import { errorMessages } from '@/lib/form/errorMessages'
-import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
 
 import { SignInMfaForm } from './SignInMfaForm'
 
-const { push: mockPush } = router
+const replace = vi.fn()
 
 vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
@@ -43,6 +42,7 @@ const updateForm = async (formValues: FormValues) => {
 let user: ReturnType<typeof userEvent.setup>
 
 beforeEach(() => {
+  vi.stubGlobal('location', { ...globalThis.location, replace })
   vi.mocked(respondToMultiFactorAuthenticationChallenge).mockResolvedValue({
     error: undefined,
     data: undefined,
@@ -73,7 +73,7 @@ describe('SignInMfaForm', () => {
         },
         credentials: 'include',
       })
-      expect(mockPush).toHaveBeenCalledWith('/portal/organisations/select')
+      expect(replace).toHaveBeenCalledWith('/portal/organisations/select')
     })
   })
   it('redirects to the organisation selection page with the returnTo path on successful authentication', async () => {
@@ -87,7 +87,7 @@ describe('SignInMfaForm', () => {
     await updateForm(validFormValues)
     await submitForm()
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith(
+      expect(replace).toHaveBeenCalledWith(
         '/portal/organisations/select?returnTo=%2Fportal%2Forganisations%2F1%3Ftab%3Dusers',
       )
     })
@@ -170,7 +170,7 @@ describe('SignInMfaForm', () => {
     await submitForm()
 
     expect(await screen.findByTestId('email-verification-required-alert')).toBeInTheDocument()
-    expect(mockPush).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
   })
 
   it('does not show the raw error code or a security code error when email verification is required', async () => {
@@ -193,7 +193,7 @@ describe('SignInMfaForm', () => {
     await submitForm()
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalled()
+      expect(replace).toHaveBeenCalled()
     })
     expect(screen.queryByTestId('email-verification-required-alert')).toBeNull()
   })
