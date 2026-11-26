@@ -1,4 +1,4 @@
-import { UserInformationDto } from '@/client/generated'
+import { CurrentUserInformationDto } from '@/client/generated'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import {
   SummaryList,
@@ -12,7 +12,7 @@ import { buildUpdateUserMfaLink } from '../update-mfa/navigate'
 export const UserAuthenticationDetails = ({
   currentUser,
 }: {
-  currentUser: UserInformationDto | undefined
+  currentUser: CurrentUserInformationDto | undefined
 }) => {
   if (!currentUser)
     return (

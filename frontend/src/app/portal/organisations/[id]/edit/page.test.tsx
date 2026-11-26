@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getOrganisationById, getUsersMe } from '@/client/generated/sdk.gen'
 import {
   PharmaceuticalEntity,
-  type UserInformationDto,
+  type CurrentUserInformationDto,
   type UserRole,
 } from '@/client/generated/types.gen'
 
@@ -27,7 +27,7 @@ vi.mock('./_components/EditOrganisationDetailsForm', () => ({
   ),
 }))
 
-const currentUser: UserInformationDto = {
+const currentUser: CurrentUserInformationDto = {
   userId: 1,
   fullName: 'Julie Brooks',
   workTelephone: '01234 567890',

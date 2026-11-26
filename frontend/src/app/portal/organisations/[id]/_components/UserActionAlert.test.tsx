@@ -27,7 +27,6 @@ const user: UserInformationDto = {
   workEmail: 'julie.brooks@example.com',
   userRole: 'Standard',
   status: 'Active',
-  hasMultipleOrganisations: false,
 }
 
 const registration = {

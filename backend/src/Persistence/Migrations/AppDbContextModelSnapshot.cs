@@ -324,18 +324,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasColumnName("normalised_work_email")
                         .HasComputedColumnSql("ukps.normalise_email(work_email)", true);
 
-                    b.Property<string>("PendingEmailVerificationToken")
-                        .HasColumnType("text")
-                        .HasColumnName("pending_email_verification_token");
-
-                    b.Property<DateTime?>("PendingEmailVerifiedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("pending_email_verified_at");
-
-                    b.Property<string>("PendingWorkEmail")
-                        .HasColumnType("text")
-                        .HasColumnName("pending_work_email");
-
                     b.Property<string>("Title")
                         .HasColumnType("text")
                         .HasColumnName("title");
@@ -362,6 +350,23 @@ namespace UKPS.Api.Persistence.Migrations
                     b.Property<string>("WorkTelephone")
                         .HasColumnType("text")
                         .HasColumnName("work_telephone");
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "PendingEmailHandler", "UKPS.Api.Persistence.Entities.Identity.User.PendingEmailHandler#PendingEmailChangeHandler", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<string>("_verificationToken")
+                                .HasColumnType("text")
+                                .HasColumnName("pending_email_verification_token");
+
+                            b1.Property<DateTime?>("_verifiedAt")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("pending_email_verified_at");
+
+                            b1.Property<string>("_workEmail")
+                                .HasColumnType("text")
+                                .HasColumnName("pending_work_email");
+                        });
 
                     b.HasKey("Id")
                         .HasName("pk_app_user");
