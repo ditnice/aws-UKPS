@@ -23,6 +23,31 @@ describe('auth routing', () => {
     expect(getSafeReturnTo('')).toBeUndefined()
   })
 
+  it.each([
+    ['backslash', '/\\example.com/portal'],
+    ['double backslash', '\\\\example.com/portal'],
+    ['slash then backslash', '/\\/example.com'],
+    ['embedded tab', '/\t/example.com'],
+    ['embedded newline', '/\n/example.com'],
+    ['embedded carriage return', '/\r/example.com'],
+    ['dot segment', '/.//example.com'],
+    ['parent segment', '/portal/..//example.com'],
+    ['javascript scheme', 'javascript:alert(1)'],
+    ['protocol-relative with whitespace', '  //example.com'],
+  ])('rejects a returnTo that resolves off-origin (%s)', (_, returnTo) => {
+    expect(getSafeReturnTo(returnTo)).toBeUndefined()
+  })
+
+  it('keeps encoded slashes as a path on this origin', () => {
+    expect(getSafeReturnTo('/%2F%2Fexample.com')).toBe('/%2F%2Fexample.com')
+  })
+
+  it('keeps the query and fragment of a safe returnTo', () => {
+    expect(getSafeReturnTo('/portal/records/1?page=2#answers')).toBe(
+      '/portal/records/1?page=2#answers',
+    )
+  })
+
   it('builds a sign-in href with an encoded returnTo', () => {
     expect(buildSignInHref('/portal/organisations/1?tab=users')).toBe(
       '/auth/sign-in?returnTo=%2Fportal%2Forganisations%2F1%3Ftab%3Dusers',
