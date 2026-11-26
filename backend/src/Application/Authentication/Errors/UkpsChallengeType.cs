@@ -17,4 +17,10 @@ public enum UkpsChallengeType
     /// and must complete the setup process before authentication can continue.
     /// </summary>
     MultiFactorAuthenticationSetupRequired = 1,
+
+    /// <summary>
+    /// Indicates that the user must enter the security code sent to their phone by text
+    /// message before authentication can continue.
+    /// </summary>
+    SmsMultiFactorAuthenticationRequired = 2,
 }

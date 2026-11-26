@@ -1601,7 +1601,11 @@ export type SubmitRecordCommand = {
     revisionHash: string;
 };
 
-export const UkpsChallengeType = { MULTI_FACTOR_AUTHENTICATION_REQUIRED: 'MultiFactorAuthenticationRequired', MULTI_FACTOR_AUTHENTICATION_SETUP_REQUIRED: 'MultiFactorAuthenticationSetupRequired' } as const;
+export const UkpsChallengeType = {
+    MULTI_FACTOR_AUTHENTICATION_REQUIRED: 'MultiFactorAuthenticationRequired',
+    MULTI_FACTOR_AUTHENTICATION_SETUP_REQUIRED: 'MultiFactorAuthenticationSetupRequired',
+    SMS_MULTI_FACTOR_AUTHENTICATION_REQUIRED: 'SmsMultiFactorAuthenticationRequired'
+} as const;
 
 export type UkpsChallengeType = typeof UkpsChallengeType[keyof typeof UkpsChallengeType];
 

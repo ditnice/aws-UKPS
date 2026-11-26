@@ -666,7 +666,11 @@ export const fakeSubmitRecordCommand = (options?: Options): SubmitRecordCommand 
 
 export const fakeUkpsChallengeType = (options?: Options): UkpsChallengeType => {
     const f = options?.faker ?? faker;
-    return f.helpers.arrayElement(['MultiFactorAuthenticationRequired', 'MultiFactorAuthenticationSetupRequired']);
+    return f.helpers.arrayElement([
+        'MultiFactorAuthenticationRequired',
+        'MultiFactorAuthenticationSetupRequired',
+        'SmsMultiFactorAuthenticationRequired'
+    ]);
 };
 
 export const fakeAuthenticationProblemDetails = (options?: Options): AuthenticationProblemDetails => {
