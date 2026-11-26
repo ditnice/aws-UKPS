@@ -57,7 +57,7 @@ const nextConfig: NextConfig = {
 
     return webpackConfig
   },
-  transpilePackages: [...niceDesignSystemPackages, '@t3-oss/env-nextjs', '@t3-oss/env-core'],
+  transpilePackages: niceDesignSystemPackages,
 }
 
 export default withPayload(nextConfig, { devBundleServerPackages: false })

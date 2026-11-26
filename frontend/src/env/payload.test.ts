@@ -25,6 +25,11 @@ describe('getPayloadEnv', () => {
     )
   })
 
+  it('accepts a PostgreSQL URL scheme in any case', () => {
+    const url = 'PostgreSQL://db.example.test/other'
+    expect(getPayloadEnv({ DATABASE_URL: url }).connectionString).toBe(url)
+  })
+
   it('prefers DATABASE_URL over split settings', () => {
     expect(
       getPayloadEnv({

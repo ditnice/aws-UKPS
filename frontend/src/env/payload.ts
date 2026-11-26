@@ -13,7 +13,7 @@ const postgresUrl = z.string().refine((value) => {
   const url = URL.parse(value)
   return (
     url &&
-    /^postgres(?:ql)?:\/\//.test(value) &&
+    /^postgres(?:ql)?:\/\//i.test(value) &&
     (url.hostname.length > 0 || url.pathname.length > 1 || Boolean(url.searchParams.get('host')))
   )
 }, 'Must be a PostgreSQL connection URL')

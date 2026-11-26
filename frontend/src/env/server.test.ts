@@ -52,7 +52,6 @@ describe('validateServerEnv', () => {
     ['BACKEND_API_BASE_URL', 'ftp://backend'],
     ['BACKEND_API_BASE_URL', 'https://backend.test/v1?query=value'],
     ['BACKEND_API_BASE_URL', 'https://backend.test/v1#fragment'],
-    ['FRONTEND_PUBLIC_ORIGIN', ''],
     ['FRONTEND_PUBLIC_ORIGIN', 'https://app.example.test/path'],
     ['COGNITO_ISSUER', 'https://cognito.example.test/pool/'],
     ['COGNITO_ISSUER', 'https://cognito.example.test/pool?query=value'],
@@ -95,18 +94,18 @@ describe('validateServerEnv', () => {
   })
 
   it('treats empty optional settings as unset', () => {
-    expect(
-      validateServerEnv({
-        ...ecsEnv,
-        AUTHENTICATION_MODE: '',
-        BACKEND_API_TIMEOUT_MS: '',
-        ROBOTS_NOINDEX: '',
-      }),
-    ).toMatchObject({
-      AUTHENTICATION_MODE: undefined,
-      BACKEND_API_TIMEOUT_MS: 15_000,
-      ROBOTS_NOINDEX: false,
+    const env = validateServerEnv({
+      ...ecsEnv,
+      AUTHENTICATION_MODE: '',
+      BACKEND_API_TIMEOUT_MS: '',
+      FRONTEND_PUBLIC_ORIGIN: '',
+      ROBOTS_NOINDEX: '',
     })
+
+    expect(env.AUTHENTICATION_MODE).toBeUndefined()
+    expect(env.FRONTEND_PUBLIC_ORIGIN).toBeUndefined()
+    expect(env.BACKEND_API_TIMEOUT_MS).toBe(15_000)
+    expect(env.ROBOTS_NOINDEX).toBe(false)
   })
 
   it('allows a trailing slash on the backend base URL', () => {

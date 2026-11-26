@@ -62,14 +62,16 @@ export function validateServerEnv(source: Record<string, string | undefined> = p
     runtimeEnv: {
       BACKEND_API_BASE_URL: source.BACKEND_API_BASE_URL,
       FRONTEND_PUBLIC_ORIGIN: source.FRONTEND_PUBLIC_ORIGIN,
-      BACKEND_API_TIMEOUT_MS: source.BACKEND_API_TIMEOUT_MS || undefined,
-      ROBOTS_NOINDEX: source.ROBOTS_NOINDEX || undefined,
-      AUTHENTICATION_MODE: source.AUTHENTICATION_MODE || undefined,
-      COGNITO_ISSUER: source.COGNITO_ISSUER || undefined,
-      COGNITO_CLIENT_ID: source.COGNITO_CLIENT_ID || undefined,
+      BACKEND_API_TIMEOUT_MS: source.BACKEND_API_TIMEOUT_MS,
+      ROBOTS_NOINDEX: source.ROBOTS_NOINDEX,
+      AUTHENTICATION_MODE: source.AUTHENTICATION_MODE,
+      COGNITO_ISSUER: source.COGNITO_ISSUER,
+      COGNITO_CLIENT_ID: source.COGNITO_CLIENT_ID,
       QA_SUPPORT_EMAIL: source.QA_SUPPORT_EMAIL,
       ...readPayloadEnv(source),
     },
+    // An empty value, such as `KEY=` in .env, means unset, so optional settings take defaults.
+    emptyStringAsUndefined: true,
     createFinalSchema: (shape) =>
       z.object(shape).superRefine((env, ctx) => {
         if (env.AUTHENTICATION_MODE !== 'DEV') {
