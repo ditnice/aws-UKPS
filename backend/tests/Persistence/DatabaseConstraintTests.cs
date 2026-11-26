@@ -96,9 +96,13 @@ public class DatabaseConstraintTests : DatabaseTestBase
     public async Task SaveChangesAsync_DuplicatePendingWorkEmail_ThrowsDbUpdateException()
     {
         var duplicateEmail = "duplicate@example.com";
-        var userFaker = _userFaker.RuleFor(
-            x => x.PendingWorkEmail,
-            f => f.GetRandomlyCapitalisedString(duplicateEmail)
+        var userFaker = _userFaker.FinishWith(
+            (f, user) =>
+                user.UpdateEmail(
+                    f.GetRandomlyCapitalisedString(duplicateEmail),
+                    "verification-token",
+                    DateTime.UtcNow
+                )
         );
         User user1 = userFaker.Generate();
         User user2 = userFaker.Generate();

@@ -123,7 +123,10 @@ describe('DiscardRecordPage', () => {
       }),
     )
     expect(
-      screen.getByRole('heading', { name: 'If you confirm, this record will be discarded' }),
+      screen.getByRole('heading', {
+        level: 3,
+        name: 'If you confirm, this record will be discarded',
+      }),
     ).toBeDefined()
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
       'Confirm decision to discard record',

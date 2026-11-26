@@ -29,9 +29,9 @@ public class UserController(IUserService userService) : ControllerBase
     /// <returns>
     /// The current user's information.
     /// </returns>
-    [ProducesResponseType<UserInformationDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<CurrentUserInformationDto>(StatusCodes.Status200OK)]
     [HttpGet("me")]
-    public async Task<ActionResult<UserInformationDto>> GetCurrentUser(
+    public async Task<ActionResult<CurrentUserInformationDto>> GetCurrentUser(
         CancellationToken cancellationToken
     )
     {

@@ -3,7 +3,7 @@
 import type { Faker } from '@faker-js/faker';
 import { faker } from '@faker-js/faker/locale/en_GB';
 
-import type { ApproveData, ApproveErrors, ApproveResponses, ArchiveRecordData, ArchiveRecordErrors, ArchiveRecordResponses, AuthenticationFailCode, AuthenticationProblemDetails, CancelPendingEmailChangeData, CancelPendingEmailChangeErrors, CancelPendingEmailChangeResponses, ChangeRecordStatusCommand, CompanyCodeSuggestionsDto, ConditionKind, ConfirmNewPasswordCommand, ConfirmNewPasswordData, ConfirmNewPasswordErrors, ConfirmNewPasswordResponses, CreateOrganisationDto, CreateRecordCommand, CreateRecordData, CreateRecordDto, CreateRecordErrors, CreateRecordResponses, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, DiscardRecordData, DiscardRecordErrors, DiscardRecordResponses, EditableUserDetail, FormControl, FormInputWidth, GetAuthValidateSetupTokenData, GetAuthValidateSetupTokenErrors, GetAuthValidateSetupTokenResponses, GetCurrentOrganisationChampionsErrors, GetCurrentOrganisationChampionsResponses, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationCompanyCodesData, GetOrganisationCompanyCodesErrors, GetOrganisationCompanyCodesResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsResponse, GetRecordCheckAnswersData, GetRecordCheckAnswersErrors, GetRecordCheckAnswersResponses, GetRecordDetailData, GetRecordDetailErrors, GetRecordDetailResponses, GetRecordFormPageData, GetRecordFormPageErrors, GetRecordFormPageResponses, GetRecordOverviewData, GetRecordOverviewErrors, GetRecordOverviewResponses, GetRecordsQuerySortValue, GetRecordTaskListData, GetRecordTaskListErrors, GetRecordTaskListResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeErrors, GetUsersMeResponses, GetUsersQuerySortValue, GetUsersResponses, InitiateForgottenPasswordProcedureCommand, InitiateForgottenPasswordProcedureData, InitiateForgottenPasswordProcedureErrors, InitiateForgottenPasswordProcedureResponses, InitiateUpdateMultiFactorAuthenticationErrors, InitiateUpdateMultiFactorAuthenticationResponses, InvalidRecordProblemDetails, LoginRequest, MultiFactorAuthenticationSetupDto, MultiFactorAuthenticationUpdateDto, OnboardedUserDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationListDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfRecordListItemDto, PaginatedResponseDtoOfUserListItemDto, PendingWorkEmailChangeDto, PharmaceuticalEntity, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthRefreshErrors, PostAuthRefreshResponses, PostAuthResendSetupTokenData, PostAuthResendSetupTokenErrors, PostAuthResendSetupTokenResponses, PostAuthSetupSmsMfaData, PostAuthSetupSmsMfaErrors, PostAuthSetupSmsMfaResponses, PostAuthSetupUserData, PostAuthSetupUserErrors, PostAuthSetupUserResponses, PostAuthSignOutErrors, PostAuthSignOutResponses, PostAuthVerifyMfaData, PostAuthVerifyMfaErrors, PostAuthVerifyMfaResponses, PostAuthVerifySmsMfaData, PostAuthVerifySmsMfaErrors, PostAuthVerifySmsMfaResponses, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ProblemDetails, PutRecordOnHoldData, PutRecordOnHoldErrors, PutRecordOnHoldResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RecordAction, RecordAnswersGroupItemDto, RecordAnswersOptionDto, RecordAnswersQuestionDto, RecordAnswersSectionDto, RecordAnswersTaskDto, RecordCheckAnswersDto, RecordDetailDto, RecordDisplayStatus, RecordListItemDto, RecordOverviewDto, RecordPageConditionDto, RecordPageDto, RecordPageOptionDto, RecordPagePageDto, RecordPageQuestionDto, RecordPageRuleDto, RecordPageSectionDto, RecordPageTaskDto, RecordStatus, RecordStatusChangeReason, RecordTaskListDto, RecordTaskListSectionDto, RecordTaskListTaskDto, RecordTaskStatus, RecordType, RegisterUserCommandDto, RegisterUserConfirmationDto, RegisterUserData, RegisterUserDetailsDto, RegisterUserErrors, RegisterUserResponses, RejectData, RejectErrors, RejectResponses, RemovedUserDto, RemoveUserData, RemoveUserErrors, RemoveUserResponses, ResendSetupTokenCommand, ResendSetupTokenResponse, ResendVerificationEmailData, ResendVerificationEmailErrors, ResendVerificationEmailResponses, RespondToMultiFactorAuthenticationChallengeCommand, RespondToMultiFactorAuthenticationChallengeData, RespondToMultiFactorAuthenticationChallengeErrors, RespondToMultiFactorAuthenticationChallengeResponses, ResumeRecordData, ResumeRecordErrors, ResumeRecordResponses, RuleKind, SaveRecordFormPageData, SaveRecordFormPageErrors, SaveRecordFormPageResponses, SaveRecordPageCommand, SaveRecordPageDto, SetupSmsMfaCommand, SetupUserCommand, SmsMultiFactorAuthenticationSetupDto, SortDirection, SubmissionConflictProblemDetails, SubmissionErrorDto, SubmitRecordCommand, SubmitRecordData, SubmitRecordErrors, UkpsChallengeType, UpdateCurrentOrganisationCommand, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateStatus, UpdateUserDetailsCommand, UpdateUserDetailsData, UpdateUserDetailsErrors, UpdateUserDetailsResponses, UpdateUserEmailCommand, UpdateUserEmailData, UpdateUserEmailErrors, UpdateUserEmailResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserMembershipAction, UserOrgStatus, UserRole, UserType, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand, VerifyMultiFactorAuthenticationUpdateCommand, VerifyMultiFactorAuthenticationUpdateData, VerifyMultiFactorAuthenticationUpdateErrors, VerifyMultiFactorAuthenticationUpdateResponses, VerifyPendingEmailAddressCommand, VerifyPendingEmailAddressData, VerifyPendingEmailAddressErrors, VerifyPendingEmailAddressResponses, VerifySmsMultiFactorAuthenticationCommand } from '../types.gen';
+import type { ApproveData, ApproveErrors, ApproveResponses, ArchiveRecordData, ArchiveRecordErrors, ArchiveRecordResponses, AuthenticationFailCode, AuthenticationProblemDetails, CancelPendingEmailChangeData, CancelPendingEmailChangeErrors, CancelPendingEmailChangeResponses, ChangeRecordStatusCommand, CompanyCodeSuggestionsDto, ConditionKind, ConfirmNewPasswordCommand, ConfirmNewPasswordData, ConfirmNewPasswordErrors, ConfirmNewPasswordResponses, CreateOrganisationDto, CreateRecordCommand, CreateRecordData, CreateRecordDto, CreateRecordErrors, CreateRecordResponses, CurrentUserInformationDto, DeactivateMembershipData, DeactivateMembershipErrors, DeactivateMembershipResponses, DiscardRecordData, DiscardRecordErrors, DiscardRecordResponses, EditableUserDetail, FormControl, FormInputWidth, GetCurrentOrganisationChampionsErrors, GetCurrentOrganisationChampionsResponses, GetCurrentUserOrganisationsErrors, GetCurrentUserOrganisationsResponses, GetOrganisationByIdData, GetOrganisationByIdErrors, GetOrganisationByIdResponses, GetOrganisationCompanyCodesData, GetOrganisationCompanyCodesErrors, GetOrganisationCompanyCodesResponses, GetOrganisationRecordsData, GetOrganisationRecordsErrors, GetOrganisationRecordsResponses, GetOrganisationsPublicOptionsResponse, GetRecordCheckAnswersData, GetRecordCheckAnswersErrors, GetRecordCheckAnswersResponses, GetRecordDetailData, GetRecordDetailErrors, GetRecordDetailResponses, GetRecordFormPageData, GetRecordFormPageErrors, GetRecordFormPageResponses, GetRecordOverviewData, GetRecordOverviewErrors, GetRecordOverviewResponses, GetRecordsQuerySortValue, GetRecordTaskListData, GetRecordTaskListErrors, GetRecordTaskListResponses, GetUserDetailsWithinOrganisationData, GetUserDetailsWithinOrganisationErrors, GetUserDetailsWithinOrganisationResponses, GetUserRegistrationByIdData, GetUserRegistrationByIdErrors, GetUserRegistrationByIdResponses, GetUsersData, GetUsersErrors, GetUsersMeErrors, GetUsersMeResponses, GetUsersQuerySortValue, GetUsersResponses, InitiateForgottenPasswordProcedureCommand, InitiateForgottenPasswordProcedureData, InitiateForgottenPasswordProcedureErrors, InitiateForgottenPasswordProcedureResponses, InitiateUpdateMultiFactorAuthenticationErrors, InitiateUpdateMultiFactorAuthenticationResponses, InvalidRecordProblemDetails, LoginData, LoginErrors, LoginRequest, LoginResponses, MultiFactorAuthenticationSetupDto, MultiFactorAuthenticationUpdateDto, OnboardedUserDto, OnboardUserCommandDto, OrganisationDetailsDto, OrganisationListDto, OrganisationMembershipDto, OrganisationType, PaginatedResponseDtoOfRecordListItemDto, PaginatedResponseDtoOfUserListItemDto, PendingWorkEmailChangeDto, PharmaceuticalEntity, PostOrganisationsData, PostOrganisationsErrors, PostOrganisationsResponses, PostUsersOnboardData, PostUsersOnboardErrors, PostUsersOnboardResponses, ProblemDetails, PutRecordOnHoldData, PutRecordOnHoldErrors, PutRecordOnHoldResponses, ReactivateMembershipData, ReactivateMembershipErrors, ReactivateMembershipResponses, RecordAction, RecordAnswersGroupItemDto, RecordAnswersOptionDto, RecordAnswersQuestionDto, RecordAnswersSectionDto, RecordAnswersTaskDto, RecordCheckAnswersDto, RecordDetailDto, RecordDisplayStatus, RecordListItemDto, RecordOverviewDto, RecordPageConditionDto, RecordPageDto, RecordPageOptionDto, RecordPagePageDto, RecordPageQuestionDto, RecordPageRuleDto, RecordPageSectionDto, RecordPageTaskDto, RecordStatus, RecordStatusChangeReason, RecordTaskListDto, RecordTaskListSectionDto, RecordTaskListTaskDto, RecordTaskStatus, RecordType, RefreshTokenErrors, RefreshTokenResponses, RegisterUserCommandDto, RegisterUserConfirmationDto, RegisterUserData, RegisterUserDetailsDto, RegisterUserErrors, RegisterUserResponses, RejectData, RejectErrors, RejectResponses, RemovedUserDto, RemoveUserData, RemoveUserErrors, RemoveUserResponses, ResendSetupTokenCommand, ResendSetupTokenData, ResendSetupTokenErrors, ResendSetupTokenResponse, ResendSetupTokenResponses, ResendVerificationEmailData, ResendVerificationEmailErrors, ResendVerificationEmailResponses, RespondToMultiFactorAuthenticationChallengeCommand, RespondToMultiFactorAuthenticationChallengeData, RespondToMultiFactorAuthenticationChallengeErrors, RespondToMultiFactorAuthenticationChallengeResponses, ResumeRecordData, ResumeRecordErrors, ResumeRecordResponses, RuleKind, SaveRecordFormPageData, SaveRecordFormPageErrors, SaveRecordFormPageResponses, SaveRecordPageCommand, SaveRecordPageDto, SetupSmsMfaCommand, SetupSmsMfaData, SetupSmsMfaErrors, SetupSmsMfaResponses, SetupUserCommand, SetupUserData, SetupUserErrors, SetupUserResponses, SignOutErrors, SignOutResponses, SmsMultiFactorAuthenticationSetupDto, SortDirection, SubmissionConflictProblemDetails, SubmissionErrorDto, SubmitRecordCommand, SubmitRecordData, SubmitRecordErrors, UkpsChallengeType, UpdateCurrentOrganisationCommand, UpdateCurrentOrganisationData, UpdateCurrentOrganisationErrors, UpdateCurrentOrganisationResponses, UpdateOrganisationDetailsData, UpdateOrganisationDetailsDto, UpdateOrganisationDetailsErrors, UpdateOrganisationDetailsResponses, UpdateOrgMembershipUserRoleCommandDto, UpdateStatus, UpdateUserDetailsCommand, UpdateUserDetailsData, UpdateUserDetailsErrors, UpdateUserDetailsResponses, UpdateUserEmailCommand, UpdateUserEmailData, UpdateUserEmailErrors, UpdateUserEmailResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses, UserDetailsDto, UserInformationDto, UserListItemDto, UserMembershipAction, UserOrgStatus, UserRole, UserType, ValidateSetupTokenData, ValidateSetupTokenErrors, ValidateSetupTokenResponses, ValidationProblemDetails, VerifyMultiFactorAuthenticationCommand, VerifyMultiFactorAuthenticationData, VerifyMultiFactorAuthenticationErrors, VerifyMultiFactorAuthenticationResponses, VerifyMultiFactorAuthenticationUpdateCommand, VerifyMultiFactorAuthenticationUpdateData, VerifyMultiFactorAuthenticationUpdateErrors, VerifyMultiFactorAuthenticationUpdateResponses, VerifyPendingEmailAddressCommand, VerifyPendingEmailAddressData, VerifyPendingEmailAddressErrors, VerifyPendingEmailAddressResponses, VerifySmsMultiFactorAuthenticationCommand, VerifySmsMultiFactorAuthenticationData, VerifySmsMultiFactorAuthenticationErrors, VerifySmsMultiFactorAuthenticationResponses } from '../types.gen';
 
 export type Options = {
     faker?: Faker;
@@ -773,6 +773,26 @@ export const fakeUserRole = (options?: Options): UserRole => {
     ]);
 };
 
+export const fakeCurrentUserInformationDto = (options?: Options): CurrentUserInformationDto => {
+    const f = options?.faker ?? faker;
+    return {
+        mfaMethod: f.string.sample(),
+        mfaPhoneNumber: f.string.sample(),
+        hasMultipleOrganisations: f.datatype.boolean(),
+        userId: f.number.int(),
+        fullName: f.person.fullName(),
+        workTelephone: f.string.sample(),
+        workEmail: f.internet.email(),
+        organisationMembershipId: f.number.int(),
+        organisationId: f.number.int(),
+        organisationName: f.string.sample(),
+        userRole: fakeUserRole(options),
+        status: fakeUserOrgStatus(options),
+        allowedPharmaceuticalEntity: fakePharmaceuticalEntity(options),
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { pendingWorkEmail: f.datatype.boolean() ? fakePendingWorkEmailChangeDto(options) : null }
+    };
+};
+
 export const fakeOrganisationMembershipDto = (options?: Options): OrganisationMembershipDto => {
     const f = options?.faker ?? faker;
     return {
@@ -802,11 +822,8 @@ export const fakeUserInformationDto = (options?: Options): UserInformationDto =>
         organisationName: f.string.sample(),
         userRole: fakeUserRole(options),
         status: fakeUserOrgStatus(options),
-        hasMultipleOrganisations: f.datatype.boolean(),
         allowedPharmaceuticalEntity: fakePharmaceuticalEntity(options),
-        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { pendingWorkEmail: f.datatype.boolean() ? fakePendingWorkEmailChangeDto(options) : null },
-        mfaMethod: f.string.sample(),
-        mfaPhoneNumber: f.string.sample()
+        ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { pendingWorkEmail: f.datatype.boolean() ? fakePendingWorkEmailChangeDto(options) : null }
     };
 };
 
@@ -965,25 +982,25 @@ export const fakeRecordDetailDto = (options?: Options): RecordDetailDto => {
     };
 };
 
-export const fakePostAuthLoginRequest = (options?: Options): Omit<PostAuthLoginData, 'url'> => ({
+export const fakeLoginRequest2 = (options?: Options): Omit<LoginData, 'url'> => ({
     body: fakeLoginRequest(options)
 });
 
-export const fakePostAuthLoginResponse200 = (): PostAuthLoginResponses[200] => undefined;
+export const fakeLoginResponse200 = (): LoginResponses[200] => undefined;
 
-export const fakePostAuthLoginResponse400 = (options?: Options): PostAuthLoginErrors[400] => fakeAuthenticationProblemDetails(options);
+export const fakeLoginResponse400 = (options?: Options): LoginErrors[400] => fakeAuthenticationProblemDetails(options);
 
-export const fakePostAuthLoginResponse401 = (options?: Options): PostAuthLoginErrors[401] => fakeAuthenticationProblemDetails(options);
+export const fakeLoginResponse401 = (options?: Options): LoginErrors[401] => fakeAuthenticationProblemDetails(options);
 
-export const fakePostAuthRefreshResponse200 = (): PostAuthRefreshResponses[200] => undefined;
+export const fakeRefreshTokenResponse200 = (): RefreshTokenResponses[200] => undefined;
 
-export const fakePostAuthRefreshResponse400 = (options?: Options): PostAuthRefreshErrors[400] => fakeAuthenticationProblemDetails(options);
+export const fakeRefreshTokenResponse400 = (options?: Options): RefreshTokenErrors[400] => fakeAuthenticationProblemDetails(options);
 
-export const fakePostAuthRefreshResponse401 = (options?: Options): PostAuthRefreshErrors[401] => fakeAuthenticationProblemDetails(options);
+export const fakeRefreshTokenResponse401 = (options?: Options): RefreshTokenErrors[401] => fakeAuthenticationProblemDetails(options);
 
-export const fakePostAuthSignOutResponse200 = (): PostAuthSignOutResponses[200] => undefined;
+export const fakeSignOutResponse200 = (): SignOutResponses[200] => undefined;
 
-export const fakePostAuthSignOutResponse401 = (options?: Options): PostAuthSignOutErrors[401] => fakeProblemDetails(options);
+export const fakeSignOutResponse401 = (options?: Options): SignOutErrors[401] => fakeProblemDetails(options);
 
 export const fakeRespondToMultiFactorAuthenticationChallengeRequest = (options?: Options): Omit<RespondToMultiFactorAuthenticationChallengeData, 'url'> => ({
     body: fakeRespondToMultiFactorAuthenticationChallengeCommand(options)
@@ -995,31 +1012,31 @@ export const fakeRespondToMultiFactorAuthenticationChallengeResponse400 = (optio
 
 export const fakeRespondToMultiFactorAuthenticationChallengeResponse401 = (options?: Options): RespondToMultiFactorAuthenticationChallengeErrors[401] => fakeAuthenticationProblemDetails(options);
 
-export const fakePostAuthSetupSmsMfaRequest = (options?: Options): Omit<PostAuthSetupSmsMfaData, 'url'> => ({
+export const fakeSetupSmsMfaRequest = (options?: Options): Omit<SetupSmsMfaData, 'url'> => ({
     body: fakeSetupSmsMfaCommand(options)
 });
 
-export const fakePostAuthSetupSmsMfaResponse200 = (options?: Options): PostAuthSetupSmsMfaResponses[200] => fakeSmsMultiFactorAuthenticationSetupDto(options);
+export const fakeSetupSmsMfaResponse200 = (options?: Options): SetupSmsMfaResponses[200] => fakeSmsMultiFactorAuthenticationSetupDto(options);
 
-export const fakePostAuthSetupSmsMfaResponse400 = (options?: Options): PostAuthSetupSmsMfaErrors[400] => fakeProblemDetails(options);
+export const fakeSetupSmsMfaResponse400 = (options?: Options): SetupSmsMfaErrors[400] => fakeProblemDetails(options);
 
-export const fakePostAuthSetupSmsMfaResponse401 = (options?: Options): PostAuthSetupSmsMfaErrors[401] => fakeProblemDetails(options);
+export const fakeSetupSmsMfaResponse401 = (options?: Options): SetupSmsMfaErrors[401] => fakeProblemDetails(options);
 
-export const fakePostAuthSetupSmsMfaResponse404 = (options?: Options): PostAuthSetupSmsMfaErrors[404] => fakeProblemDetails(options);
+export const fakeSetupSmsMfaResponse404 = (options?: Options): SetupSmsMfaErrors[404] => fakeProblemDetails(options);
 
-export const fakePostAuthSetupSmsMfaResponse410 = (options?: Options): PostAuthSetupSmsMfaErrors[410] => fakeProblemDetails(options);
+export const fakeSetupSmsMfaResponse410 = (options?: Options): SetupSmsMfaErrors[410] => fakeProblemDetails(options);
 
-export const fakePostAuthVerifySmsMfaRequest = (options?: Options): Omit<PostAuthVerifySmsMfaData, 'url'> => ({
+export const fakeVerifySmsMultiFactorAuthenticationRequest = (options?: Options): Omit<VerifySmsMultiFactorAuthenticationData, 'url'> => ({
     body: fakeVerifySmsMultiFactorAuthenticationCommand(options)
 });
 
-export const fakePostAuthVerifySmsMfaResponse200 = (): PostAuthVerifySmsMfaResponses[200] => undefined;
+export const fakeVerifySmsMultiFactorAuthenticationResponse200 = (): VerifySmsMultiFactorAuthenticationResponses[200] => undefined;
 
-export const fakePostAuthVerifySmsMfaResponse400 = (options?: Options): PostAuthVerifySmsMfaErrors[400] => fakeProblemDetails(options);
+export const fakeVerifySmsMultiFactorAuthenticationResponse400 = (options?: Options): VerifySmsMultiFactorAuthenticationErrors[400] => fakeProblemDetails(options);
 
-export const fakePostAuthVerifySmsMfaResponse404 = (options?: Options): PostAuthVerifySmsMfaErrors[404] => fakeProblemDetails(options);
+export const fakeVerifySmsMultiFactorAuthenticationResponse404 = (options?: Options): VerifySmsMultiFactorAuthenticationErrors[404] => fakeProblemDetails(options);
 
-export const fakeGetAuthValidateSetupTokenRequest = (options?: Options): Omit<GetAuthValidateSetupTokenData, 'url'> => {
+export const fakeValidateSetupTokenRequest = (options?: Options): Omit<ValidateSetupTokenData, 'url'> => {
     const f = options?.faker ?? faker;
     return {
         query: {
@@ -1028,55 +1045,55 @@ export const fakeGetAuthValidateSetupTokenRequest = (options?: Options): Omit<Ge
     };
 };
 
-export const fakeGetAuthValidateSetupTokenResponse200 = (): GetAuthValidateSetupTokenResponses[200] => undefined;
+export const fakeValidateSetupTokenResponse200 = (): ValidateSetupTokenResponses[200] => undefined;
 
-export const fakeGetAuthValidateSetupTokenResponse400 = (options?: Options): GetAuthValidateSetupTokenErrors[400] => fakeProblemDetails(options);
+export const fakeValidateSetupTokenResponse400 = (options?: Options): ValidateSetupTokenErrors[400] => fakeProblemDetails(options);
 
-export const fakeGetAuthValidateSetupTokenResponse404 = (options?: Options): GetAuthValidateSetupTokenErrors[404] => fakeProblemDetails(options);
+export const fakeValidateSetupTokenResponse404 = (options?: Options): ValidateSetupTokenErrors[404] => fakeProblemDetails(options);
 
-export const fakeGetAuthValidateSetupTokenResponse409 = (options?: Options): GetAuthValidateSetupTokenErrors[409] => fakeProblemDetails(options);
+export const fakeValidateSetupTokenResponse409 = (options?: Options): ValidateSetupTokenErrors[409] => fakeProblemDetails(options);
 
-export const fakeGetAuthValidateSetupTokenResponse410 = (options?: Options): GetAuthValidateSetupTokenErrors[410] => fakeProblemDetails(options);
+export const fakeValidateSetupTokenResponse410 = (options?: Options): ValidateSetupTokenErrors[410] => fakeProblemDetails(options);
 
-export const fakePostAuthResendSetupTokenRequest = (options?: Options): Omit<PostAuthResendSetupTokenData, 'url'> => ({
+export const fakeResendSetupTokenRequest = (options?: Options): Omit<ResendSetupTokenData, 'url'> => ({
     body: fakeResendSetupTokenCommand(options)
 });
 
-export const fakePostAuthResendSetupTokenResponse200 = (options?: Options): PostAuthResendSetupTokenResponses[200] => fakeResendSetupTokenResponse(options);
+export const fakeResendSetupTokenResponse200 = (options?: Options): ResendSetupTokenResponses[200] => fakeResendSetupTokenResponse(options);
 
-export const fakePostAuthResendSetupTokenResponse400 = (options?: Options): PostAuthResendSetupTokenErrors[400] => fakeProblemDetails(options);
+export const fakeResendSetupTokenResponse400 = (options?: Options): ResendSetupTokenErrors[400] => fakeProblemDetails(options);
 
-export const fakePostAuthResendSetupTokenResponse403 = (options?: Options): PostAuthResendSetupTokenErrors[403] => fakeProblemDetails(options);
+export const fakeResendSetupTokenResponse403 = (options?: Options): ResendSetupTokenErrors[403] => fakeProblemDetails(options);
 
-export const fakePostAuthResendSetupTokenResponse404 = (options?: Options): PostAuthResendSetupTokenErrors[404] => fakeProblemDetails(options);
+export const fakeResendSetupTokenResponse404 = (options?: Options): ResendSetupTokenErrors[404] => fakeProblemDetails(options);
 
-export const fakePostAuthResendSetupTokenResponse409 = (options?: Options): PostAuthResendSetupTokenErrors[409] => fakeProblemDetails(options);
+export const fakeResendSetupTokenResponse409 = (options?: Options): ResendSetupTokenErrors[409] => fakeProblemDetails(options);
 
-export const fakePostAuthSetupUserRequest = (options?: Options): Omit<PostAuthSetupUserData, 'url'> => ({
+export const fakeSetupUserRequest = (options?: Options): Omit<SetupUserData, 'url'> => ({
     body: fakeSetupUserCommand(options)
 });
 
-export const fakePostAuthSetupUserResponse200 = (options?: Options): PostAuthSetupUserResponses[200] => fakeMultiFactorAuthenticationSetupDto(options);
+export const fakeSetupUserResponse200 = (options?: Options): SetupUserResponses[200] => fakeMultiFactorAuthenticationSetupDto(options);
 
-export const fakePostAuthSetupUserResponse400 = (options?: Options): PostAuthSetupUserErrors[400] => fakeProblemDetails(options);
+export const fakeSetupUserResponse400 = (options?: Options): SetupUserErrors[400] => fakeProblemDetails(options);
 
-export const fakePostAuthSetupUserResponse401 = (options?: Options): PostAuthSetupUserErrors[401] => fakeProblemDetails(options);
+export const fakeSetupUserResponse401 = (options?: Options): SetupUserErrors[401] => fakeProblemDetails(options);
 
-export const fakePostAuthSetupUserResponse404 = (options?: Options): PostAuthSetupUserErrors[404] => fakeProblemDetails(options);
+export const fakeSetupUserResponse404 = (options?: Options): SetupUserErrors[404] => fakeProblemDetails(options);
 
-export const fakePostAuthSetupUserResponse409 = (options?: Options): PostAuthSetupUserErrors[409] => fakeProblemDetails(options);
+export const fakeSetupUserResponse409 = (options?: Options): SetupUserErrors[409] => fakeProblemDetails(options);
 
-export const fakePostAuthSetupUserResponse410 = (options?: Options): PostAuthSetupUserErrors[410] => fakeProblemDetails(options);
+export const fakeSetupUserResponse410 = (options?: Options): SetupUserErrors[410] => fakeProblemDetails(options);
 
-export const fakePostAuthVerifyMfaRequest = (options?: Options): Omit<PostAuthVerifyMfaData, 'url'> => ({
+export const fakeVerifyMultiFactorAuthenticationRequest = (options?: Options): Omit<VerifyMultiFactorAuthenticationData, 'url'> => ({
     body: fakeVerifyMultiFactorAuthenticationCommand(options)
 });
 
-export const fakePostAuthVerifyMfaResponse200 = (): PostAuthVerifyMfaResponses[200] => undefined;
+export const fakeVerifyMultiFactorAuthenticationResponse200 = (): VerifyMultiFactorAuthenticationResponses[200] => undefined;
 
-export const fakePostAuthVerifyMfaResponse400 = (options?: Options): PostAuthVerifyMfaErrors[400] => fakeProblemDetails(options);
+export const fakeVerifyMultiFactorAuthenticationResponse400 = (options?: Options): VerifyMultiFactorAuthenticationErrors[400] => fakeProblemDetails(options);
 
-export const fakePostAuthVerifyMfaResponse404 = (options?: Options): PostAuthVerifyMfaErrors[404] => fakeProblemDetails(options);
+export const fakeVerifyMultiFactorAuthenticationResponse404 = (options?: Options): VerifyMultiFactorAuthenticationErrors[404] => fakeProblemDetails(options);
 
 export const fakeInitiateForgottenPasswordProcedureRequest = (options?: Options): Omit<InitiateForgottenPasswordProcedureData, 'url'> => ({
     body: fakeInitiateForgottenPasswordProcedureCommand(options)
@@ -1538,7 +1555,7 @@ export const fakeGetRecordTaskListResponse404 = (options?: Options): GetRecordTa
 
 export const fakeGetRecordTaskListResponse409 = (options?: Options): GetRecordTaskListErrors[409] => fakeAuthenticationProblemDetails(options);
 
-export const fakeGetUsersMeResponse200 = (options?: Options): GetUsersMeResponses[200] => fakeUserInformationDto(options);
+export const fakeGetUsersMeResponse200 = (options?: Options): GetUsersMeResponses[200] => fakeCurrentUserInformationDto(options);
 
 export const fakeGetUsersMeResponse401 = (options?: Options): GetUsersMeErrors[401] => fakeAuthenticationProblemDetails(options);
 

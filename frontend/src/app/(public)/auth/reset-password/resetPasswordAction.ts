@@ -12,7 +12,11 @@ import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 import { createResetPasswordCodeHref } from './confirm/navigation'
 import { resetEmailCookieName, serverValidate } from './resetPasswordShared'
 
-export const resetPasswordAction = async (prev: unknown, formData: FormData) => {
+export const resetPasswordAction = async (
+  redirectOnSuccess: boolean,
+  _prev: unknown,
+  formData: FormData,
+) => {
   try {
     const values = await serverValidate(formData)
     const { error, response } = await initiateForgottenPasswordProcedure({
@@ -56,5 +60,8 @@ export const resetPasswordAction = async (prev: unknown, formData: FormData) => 
     throw e
   }
 
-  redirect(createResetPasswordCodeHref())
+  if (redirectOnSuccess) {
+    redirect(createResetPasswordCodeHref())
+  }
+  return { success: true, ...initialFormState }
 }

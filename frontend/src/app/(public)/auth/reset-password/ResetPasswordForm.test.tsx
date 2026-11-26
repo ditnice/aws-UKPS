@@ -19,20 +19,29 @@ vi.mock('@/lib/form/FormLevelErrors', () => ({
 const mockAction = vi.mocked(resetPasswordAction)
 
 type FormState = typeof initialFormState
+type ResetPasswordFormProps = Parameters<typeof ResetPasswordForm>[0]
+type ActionArgs = [redirectOnSuccess: boolean, prev: unknown, formData: FormData]
 
 /** Builds the state the server action would return, merged over the initial state. */
 const serverState = (overrides: Partial<FormState> = {}): FormState =>
   ({ ...initialFormState, ...overrides }) as FormState
 
+/** The state the server action returns when the link was sent without redirecting. */
+const successState = () => ({ success: true, ...initialFormState }) as FormState
+
+const actionCall = (index: number) => mockAction.mock.calls[index] as unknown as ActionArgs
+
 /** Renders the form and returns the elements/helpers every test needs. */
-const setup = (actionResult: FormState = serverState()) => {
-  mockAction.mockResolvedValue(actionResult as never)
+const setup = (actionResult: FormState = serverState(), props: ResetPasswordFormProps = {}) => {
+  // Return a fresh object per call, as the real server action does.
+  mockAction.mockImplementation(async () => ({ ...actionResult }) as never)
 
   const user = userEvent.setup()
-  render(<ResetPasswordForm />)
+  render(<ResetPasswordForm {...props} />)
 
   const emailInput = () => screen.getByLabelText('Email address')
-  const submitButton = () => screen.getByRole('button', { name: 'Send link' })
+  const submitButton = () =>
+    screen.getByRole('button', { name: props.buttonContentOverride ?? 'Send link' })
 
   const submitWithEmail = async (email: string) => {
     await user.type(emailInput(), email)
@@ -69,6 +78,38 @@ describe('ResetPasswordForm', () => {
 
       expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     })
+
+    it('renders the button content override when provided', () => {
+      setup(serverState(), { buttonContentOverride: 'Resend link' })
+
+      expect(screen.getByRole('button', { name: 'Resend link' })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Send link' })).not.toBeInTheDocument()
+    })
+  })
+
+  describe('with a pre-filled email', () => {
+    const email = 'prefilled@example.com'
+
+    it('renders the email as a hidden input instead of a visible field', () => {
+      const { container } = render(<ResetPasswordForm email={email} />)
+
+      expect(screen.queryByLabelText('Email address')).not.toBeInTheDocument()
+
+      const hiddenInput = container.querySelector('input[type="hidden"][name="email"]')
+      expect(hiddenInput).toHaveValue(email)
+    })
+
+    it('submits the pre-filled email without redirecting on success', async () => {
+      const { user } = setup(successState(), { email, buttonContentOverride: 'Resend link' })
+
+      await user.click(screen.getByRole('button', { name: 'Resend link' }))
+
+      await waitFor(() => expect(mockAction).toHaveBeenCalledTimes(1))
+
+      const [redirectOnSuccess, , formData] = actionCall(0)
+      expect(redirectOnSuccess).toBe(false)
+      expect(formData.get('email')).toBe(email)
+    })
   })
 
   describe('user input', () => {
@@ -82,15 +123,74 @@ describe('ResetPasswordForm', () => {
   })
 
   describe('submission', () => {
-    it('calls the server action with the entered email', async () => {
+    it('calls the server action once with the entered email', async () => {
       const { submitWithEmail } = setup()
 
       await submitWithEmail('test@example.com')
 
       await waitFor(() => expect(mockAction).toHaveBeenCalledTimes(1))
 
-      const [, formData] = mockAction.mock.calls[0] as unknown as [unknown, FormData]
+      const [redirectOnSuccess, , formData] = actionCall(0)
+      expect(redirectOnSuccess).toBe(true)
       expect(formData.get('email')).toBe('test@example.com')
+    })
+
+    it('does not call the server action when the email is invalid', async () => {
+      const { submitWithEmail } = setup()
+
+      await submitWithEmail('not-an-email')
+
+      await waitFor(() => expect(screen.getByLabelText('Email address')).toBeInvalid())
+      expect(mockAction).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('onSuccess', () => {
+    it('is called exactly once after a successful submission', async () => {
+      const onSuccess = vi.fn()
+      const { submitWithEmail } = setup(successState(), { onSuccess })
+
+      await submitWithEmail('test@example.com')
+
+      await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1))
+      expect(mockAction).toHaveBeenCalledTimes(1)
+    })
+
+    it('is called again for each subsequent successful submission', async () => {
+      const onSuccess = vi.fn()
+      const { user, submitWithEmail, submitButton } = setup(successState(), { onSuccess })
+
+      await submitWithEmail('test@example.com')
+      await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1))
+
+      await user.click(submitButton())
+      await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(2))
+      expect(mockAction).toHaveBeenCalledTimes(2)
+    })
+
+    it('is not called when the server action returns errors', async () => {
+      const onSuccess = vi.fn()
+      const { submitWithEmail } = setup(serverState({ errors: ['Nope'] } as never), {
+        onSuccess,
+      })
+
+      await submitWithEmail('test@example.com')
+
+      await waitFor(() => expect(mockAction).toHaveBeenCalledTimes(1))
+      await waitFor(() =>
+        expect(FormLevelErrors).toHaveBeenLastCalledWith(
+          expect.objectContaining({ errors: ['Nope'] }),
+          undefined,
+        ),
+      )
+      expect(onSuccess).not.toHaveBeenCalled()
+    })
+
+    it('is not called on initial render', () => {
+      const onSuccess = vi.fn()
+      setup(successState(), { onSuccess })
+
+      expect(onSuccess).not.toHaveBeenCalled()
     })
   })
 
@@ -110,7 +210,7 @@ describe('ResetPasswordForm', () => {
       await waitFor(() =>
         expect(FormLevelErrors).toHaveBeenLastCalledWith(
           expect.objectContaining({ errors }),
-          undefined, // drop this arg if you're on React 19
+          undefined,
         ),
       )
     })

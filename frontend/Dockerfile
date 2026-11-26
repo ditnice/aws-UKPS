@@ -46,7 +46,7 @@ RUN pnpm build
 # Distroless Node.js 24 on Debian 13. Distroless publishes no version tags, so it's pinned by
 # digest; keep its Node version in step with the base stage above.
 # checkov:skip=CKV_DOCKER_2: Distroless base image has no shell or HTTP client, so a container-level HEALTHCHECK isn't feasible; the ALB target group already health-checks the service over HTTP.
-FROM --platform=${ECS_PLATFORM} gcr.io/distroless/nodejs24-debian13:nonroot@sha256:39b0407357c9fadf1a9708d22088f02de21f0e1e8a688474eea2d8701e7d5693 AS runtime
+FROM --platform=${ECS_PLATFORM} gcr.io/distroless/nodejs24-debian13:nonroot@sha256:675c532423b908f9e56f9d60a4e62309b63cd2a3175acb90a46b96f7ee68e121 AS runtime
 
 WORKDIR /app
 
