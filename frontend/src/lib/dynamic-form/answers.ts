@@ -317,8 +317,11 @@ const groupError = (
     : undefined
 }
 
-/** The errors of a multi-value hierarchical select: each blank entry, once there is more than one. */
-const hierarchicalError = (value: FormValue | undefined) => {
+/**
+ * The errors of a multi-value hierarchical select: each blank entry once there is more than one,
+ * and the question's own errors (a repeated area, too many areas), which ignore blank entries.
+ */
+const hierarchicalError = (question: Question, value: FormValue | undefined) => {
   // Not filtered, so positions keep lining up with the entries shown; a malformed one is blank.
   const entries: unknown[] = Array.isArray(value) ? value : []
   const items: Record<string, string> = {}
@@ -329,7 +332,10 @@ const hierarchicalError = (value: FormValue | undefined) => {
       }
     })
   }
-  return items
+  const answer = normaliseAnswer(toAnswer(question, value)) as string[]
+  const message =
+    new Set(answer).size !== answer.length ? duplicateMessage : firstFailure(question.rules, answer)
+  return { message, items }
 }
 
 /** Validates one question's form value; returns the error to show, or undefined. */
@@ -345,10 +351,8 @@ export const questionError = (
     return message || Object.keys(items).length > 0 ? { message: message ?? '', items } : undefined
   }
   if (isHierarchical(question) && question.multiple) {
-    const items = hierarchicalError(value)
-    if (Object.keys(items).length > 0) {
-      return { message: '', items }
-    }
+    const { message, items } = hierarchicalError(question, value)
+    return message || Object.keys(items).length > 0 ? { message: message ?? '', items } : undefined
   }
   if (
     question.type === 'PrecisionDate' &&

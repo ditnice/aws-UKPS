@@ -149,6 +149,27 @@ describe('validateQuestion', () => {
     ).toEqual({ message: '', items: { '0': emptyEntryMessage } })
   })
 
+  it('reports a repeated area and a blank entry together', () => {
+    expect(
+      questionError(areas, [
+        { parent: '2', child: '' },
+        { parent: '2', child: '' },
+        { parent: '', child: '' },
+      ]),
+    ).toEqual({ message: duplicateMessage, items: { '2': emptyEntryMessage } })
+  })
+
+  it('reports too many areas and a blank entry together', () => {
+    expect(
+      questionError(areas, [
+        { parent: '2', child: '' },
+        { parent: '1', child: '' },
+        { parent: '1', child: '11' },
+        { parent: '', child: '' },
+      ]),
+    ).toEqual({ message: 'Select up to 2', items: { '3': emptyEntryMessage } })
+  })
+
   it('rejects unknown rule kinds', () => {
     expect(() =>
       isSatisfied({ kind: 'Unknown' as never, value: null, message: '' }, null),
