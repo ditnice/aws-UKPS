@@ -1,0 +1,119 @@
+import { expect, test } from '../fixtures/test'
+import { forRoles } from '../helpers/roles'
+import { mutatesDataTag } from '../helpers/test-environment'
+
+import type { Page } from '@playwright/test'
+
+/** Creates a draft record through the create form and returns its ID, from the task list URL. */
+async function createDraftRecord(page: Page, recordsPath: string): Promise<string> {
+  await page.goto(`${recordsPath}/create`)
+  // The company code is an autocomplete, so its hidden suggestions list also matches the label.
+  await page.getByRole('combobox', { name: 'Company code' }).fill('E2E-BANNER')
+  await page.getByLabel('Generic name').fill('e2e-banner-substance')
+  await page.getByLabel('Record title').fill(`E2E banner test ${Date.now()}`)
+  await page.getByRole('button', { name: 'Save and continue' }).click()
+
+  await expect(page).toHaveURL(/\/portal\/records\/\d+\/task-list/)
+  const recordId = /\/portal\/records\/(\d+)\/task-list/.exec(new URL(page.url()).pathname)?.[1]
+  if (!recordId) {
+    throw new Error(`Could not read the new record's ID from ${page.url()}`)
+  }
+  return recordId
+}
+
+// Super users cannot create records, so this runs as the roles that can.
+test.describe(
+  'Success banners after discarding a record',
+  { tag: forRoles(['Standard', 'Champion'], mutatesDataTag) },
+  () => {
+    test('are not shown again after opening a record and going Back, or after a reload', async ({
+      page,
+      organisationId,
+    }) => {
+      const recordsPath = `/portal/organisations/${organisationId}/records`
+      const discardedBanner = page.getByRole('heading', { name: 'Record successfully discarded' })
+      const recordsTable = page.getByRole('table', { name: 'Organisation Records' })
+
+      // Two drafts, so the test needs no seeded data: one to open later, one to discard.
+      const recordToOpenId = await createDraftRecord(page, recordsPath)
+      const recordToDiscardId = await createDraftRecord(page, recordsPath)
+      await expect(page.getByRole('heading', { name: 'Draft record saved' })).toBeVisible()
+      await expect(page).not.toHaveURL(/action=/)
+
+      // Discard one: the records list shows the banner once, and the parameter leaves the URL.
+      // Through the record page, as a user would: the discard page needs the record type, which
+      // the links carry.
+      await page.goto(recordsPath)
+      await recordsTable
+        .getByRole('link', { name: new RegExp(`^View record ${recordToDiscardId}$`) })
+        .click()
+      await page.getByRole('link', { name: 'Discard record' }).click()
+      await page.getByRole('button', { name: 'Confirm' }).click()
+
+      await expect(page).toHaveURL(new RegExp(`${recordsPath}(\\?|$)`))
+      await expect(discardedBanner).toBeVisible()
+      await expect(page).not.toHaveURL(/action=/)
+
+      // Open the other record, then go Back: the page is restored without the banner.
+      await recordsTable
+        .getByRole('link', { name: new RegExp(`^View record ${recordToOpenId}$`) })
+        .click()
+      await expect(page).toHaveURL(new RegExp(`${recordsPath}/${recordToOpenId}`))
+
+      await page.goBack()
+
+      await expect(page).toHaveURL(new RegExp(`${recordsPath}(\\?|$)`))
+      await expect(recordsTable).toBeVisible()
+      await expect(discardedBanner).toBeHidden()
+
+      // A reload does not bring it back either.
+      await page.reload()
+
+      await expect(recordsTable).toBeVisible()
+      await expect(discardedBanner).toBeHidden()
+    })
+  },
+)
+
+test.describe(
+  'Discarding a record without saving',
+  { tag: forRoles(['Standard', 'Champion']) },
+  () => {
+    test.use({ readOnly: true })
+
+    test('opens discard and cancels', async ({ page, organisationId }) => {
+      await page.goto(`/portal/organisations/${organisationId}/records`)
+      const viewLinks = page
+        .getByRole('table', { name: 'Organisation Records' })
+        .getByRole('link', { name: /^View/ })
+      const recordPaths = await viewLinks.evaluateAll((links) =>
+        links.map((link) => link.getAttribute('href') ?? ''),
+      )
+
+      // Not every record can be discarded, so open them until one offers it.
+      const discardLink = page.getByRole('link', { name: 'Discard record' })
+      let recordPath: string | undefined
+      for (const path of recordPaths) {
+        await page.goto(path)
+        if (await discardLink.isVisible()) {
+          recordPath = path
+          break
+        }
+      }
+      if (!recordPath) {
+        test.skip(true, `Organisation ${organisationId} has no record that can be discarded`)
+        return
+      }
+
+      await discardLink.click()
+
+      const heading = page.getByRole('heading', { name: 'Confirm decision to discard record' })
+      await expect(heading).toBeVisible()
+      await page.getByRole('button', { name: 'Cancel' }).click()
+
+      await expect(heading).toBeHidden()
+      await expect(page).toHaveURL(new RegExp(`${recordPath.split('?')[0]}`))
+      await expect(discardLink).toBeVisible()
+    })
+  },
+)
