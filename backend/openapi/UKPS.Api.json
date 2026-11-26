@@ -6325,6 +6325,7 @@
             "minItems": 1,
             "type": "array",
             "items": {
+              "maxLength": 2000,
               "type": "string"
             },
             "description": "Gets the generic names associated with the record."
@@ -6332,6 +6333,7 @@
           "otherIdentifiers": {
             "type": "array",
             "items": {
+              "maxLength": 2000,
               "type": "string"
             },
             "description": "Gets the other names, codes, or synonyms associated with the record."

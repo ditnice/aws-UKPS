@@ -70,7 +70,7 @@ internal static class FormModelBuilder
             _ => [],
         };
 
-    private static List<FormRule> Rules(QuestionDeclaration question)
+    private static List<FormRule> BuildRules(QuestionDeclaration question)
     {
         List<FormRule> rules = [];
         if (question.Required is { } required)
@@ -140,7 +140,7 @@ internal static class FormModelBuilder
             PrefixDigits = question.Prefixes is { Digits: > 0 } prefixes ? prefixes.Digits : null,
             NumberName = question.Prefixes?.Name,
             DateName = question.DateEvent?.Name,
-            Rules = [.. Rules(question).OrderBy(static r => r.Kind)],
+            Rules = [.. BuildRules(question).OrderBy(static r => r.Kind)],
             ShowWhen = question.ShowWhen is { } showWhen
                 ? Condition(showWhen.QuestionId, showWhen.Values)
                 : null,

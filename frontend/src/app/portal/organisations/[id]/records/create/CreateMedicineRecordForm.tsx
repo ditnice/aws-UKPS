@@ -13,7 +13,7 @@ import { Input } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { Textarea } from '@/components/Textarea/Textarea'
 import { getCompanyCodeSuggestions } from '@/lib/form/companyCodeSuggestions'
-import { errorMessages } from '@/lib/form/errorMessages'
+import { errorMessages, maxRecordTextLength } from '@/lib/form/errorMessages'
 import { updateFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
@@ -25,24 +25,21 @@ const inputWidth = 'two-thirds'
 const isDistinctIgnoringCase = (values: string[]) =>
   new Set(values.map((value) => value.toLowerCase())).size === values.length
 
-// The default limit of a single-line record form answer; mirrors ControlRules.DefaultMaxLength.
-const maxTextLength = 2000
-
 export const createRecordCommandSchema = z.object({
   organisationId: z.number(),
   companyCode: z
     .string()
     .trim()
     .min(1, errorMessages.companyCodeRequired)
-    .max(maxTextLength, errorMessages.companyCodeTooLong),
+    .max(maxRecordTextLength, errorMessages.companyCodeTooLong),
   // Other identifiers are optional, so blank entries are dropped rather than rejected.
   otherIdentifiers: z
-    .array(z.string().trim().max(maxTextLength, errorMessages.otherIdentifierTooLong))
+    .array(z.string().trim().max(maxRecordTextLength, errorMessages.otherIdentifierTooLong))
     .transform((values) => values.filter(Boolean)),
   brandedName: z
     .string()
     .trim()
-    .max(maxTextLength, errorMessages.brandedNameTooLong)
+    .max(maxRecordTextLength, errorMessages.brandedNameTooLong)
     .nullish()
     .transform((value) => value || null),
   genericNames: z
@@ -51,7 +48,7 @@ export const createRecordCommandSchema = z.object({
         .string()
         .trim()
         .min(1, errorMessages.genericNameRequired)
-        .max(maxTextLength, errorMessages.genericNameTooLong),
+        .max(maxRecordTextLength, errorMessages.genericNameTooLong),
     )
     .min(1, errorMessages.genericNameRequired)
     .refine(isDistinctIgnoringCase, errorMessages.genericNamesDistinct),
