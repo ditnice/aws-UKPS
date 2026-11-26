@@ -19,9 +19,9 @@ export type AlertProps = Omit<ComponentPropsWithoutRef<'div'>, 'children'> & {
   dismissText?: string
   nonIntrusive?: boolean
   type?: AlertType
-  // For banners driven by a search parameter in `bannerSearchParams`: show the alert only on
-  // arrival, so Back, Forward and reload do not repeat it
-  showOnce?: boolean
+  // For banners driven by search parameters: name the parameter(s) that trigger the alert and it
+  // is shown only on arrival, so Back, Forward and reload do not repeat it
+  showOnce?: string | readonly string[]
 }
 
 // nonIntrusive means the screen reader doesn't interrupt itself to read out the alert
@@ -56,5 +56,6 @@ export function Alert({
     </div>
   )
 
-  return showOnce ? <ShowOnce>{alert}</ShowOnce> : alert
+  const params = typeof showOnce === 'string' ? [showOnce] : showOnce
+  return params ? <ShowOnce params={params}>{alert}</ShowOnce> : alert
 }

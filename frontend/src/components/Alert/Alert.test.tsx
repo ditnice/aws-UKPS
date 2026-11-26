@@ -64,7 +64,7 @@ describe('Alert showOnce', () => {
     navigationState.searchParams = new URLSearchParams({ action: 'submitted' })
 
     render(
-      <Alert type="success" showOnce>
+      <Alert type="success" showOnce="action">
         Record submitted
       </Alert>,
     )
@@ -72,9 +72,23 @@ describe('Alert showOnce', () => {
     expect(screen.getByText('Record submitted')).toBeInTheDocument()
   })
 
-  it('renders nothing when no banner parameter is in the URL', () => {
+  it('accepts several parameters', () => {
+    navigationState.searchParams = new URLSearchParams({ userId: '4' })
+
     render(
-      <Alert type="success" showOnce>
+      <Alert type="success" showOnce={['action', 'userId']}>
+        Invitation sent
+      </Alert>,
+    )
+
+    expect(screen.getByText('Invitation sent')).toBeInTheDocument()
+  })
+
+  it('renders nothing when none of its parameters are in the URL', () => {
+    navigationState.searchParams = new URLSearchParams({ userId: '4' })
+
+    render(
+      <Alert type="success" showOnce="action">
         Record submitted
       </Alert>,
     )

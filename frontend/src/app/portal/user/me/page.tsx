@@ -29,13 +29,13 @@ export default async function Me({ searchParams }: { searchParams: Promise<Searc
   return (
     <>
       {updated && (
-        <Alert type="success" showOnce>
+        <Alert type="success" showOnce="updated">
           <h3>Details changed successfully</h3>
           <p>You can update your details at any time from manage my details.</p>
         </Alert>
       )}
       {requestedNewEmail && (
-        <Alert type="success" showOnce>
+        <Alert type="success" showOnce="requestedNewEmail">
           <h3>Email update requested</h3>
           <p>
             We&rsquo;ve sent a verification email to your new address. Check your inbox and use the
@@ -45,7 +45,7 @@ export default async function Me({ searchParams }: { searchParams: Promise<Searc
         </Alert>
       )}
       {mfaUpdated && (
-        <Alert type="success" showOnce>
+        <Alert type="success" showOnce="mfaUpdated">
           <h3>Two-step verification updated</h3>
           <p>{mfaUpdatedMessages[mfaUpdated]}</p>
           <p>You can change your security settings at any time from manage my details.</p>

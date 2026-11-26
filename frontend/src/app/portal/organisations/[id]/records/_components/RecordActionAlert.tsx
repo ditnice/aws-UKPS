@@ -10,7 +10,7 @@ export const RecordActionAlert = ({ action }: RecordActionAlertProps) => {
   switch (action) {
     case 'discarded':
       return (
-        <Alert type="success" showOnce>
+        <Alert type="success" showOnce="action">
           <h3>Record successfully discarded</h3>
           <p>
             You have discarded the record. This record will no longer be viewable under my records.
@@ -19,7 +19,7 @@ export const RecordActionAlert = ({ action }: RecordActionAlertProps) => {
       )
     case 'submitted':
       return (
-        <Alert type="success" showOnce>
+        <Alert type="success" showOnce="action">
           <h3>Record submitted for QA review</h3>
           <p>
             You have submitted the record for review by the QA team. You cannot make any edits to
@@ -29,7 +29,7 @@ export const RecordActionAlert = ({ action }: RecordActionAlertProps) => {
       )
     case 'draft-saved':
       return (
-        <Alert type="success" showOnce>
+        <Alert type="success" showOnce="action">
           <h3>Draft record saved</h3>
           <p>
             This record has been saved in my records. This record has not been published and is not
