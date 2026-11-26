@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+import { navigationState } from '@/test-utils/nextNavigation'
 
 import { Alert } from './Alert'
+
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 describe('Alert', () => {
   it('renders an info alert by default', () => {
@@ -52,6 +56,36 @@ describe('Alert', () => {
     )
 
     expect(screen.getByTestId('deadline-alert').className).toMatch(/\balert--caution\b/)
+  })
+})
+
+describe('Alert showOnce', () => {
+  it('shows the alert when a banner parameter is in the URL', () => {
+    navigationState.searchParams = new URLSearchParams({ action: 'submitted' })
+
+    render(
+      <Alert type="success" showOnce>
+        Record submitted
+      </Alert>,
+    )
+
+    expect(screen.getByText('Record submitted')).toBeInTheDocument()
+  })
+
+  it('renders nothing when no banner parameter is in the URL', () => {
+    render(
+      <Alert type="success" showOnce>
+        Record submitted
+      </Alert>,
+    )
+
+    expect(screen.queryByText('Record submitted')).not.toBeInTheDocument()
+  })
+
+  it('always shows the alert without showOnce', () => {
+    render(<Alert type="success">Password changed</Alert>)
+
+    expect(screen.getByText('Password changed')).toBeInTheDocument()
   })
 })
 

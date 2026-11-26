@@ -32,7 +32,7 @@ export type RecordViewAlertProps = {
 export const RecordViewAlert = ({ action }: RecordViewAlertProps) => {
   const { heading, body } = alertContent[action]
   return (
-    <Alert type="success">
+    <Alert type="success" showOnce>
       <h2>{heading}</h2>
       <p>{body}</p>
     </Alert>

@@ -6,7 +6,7 @@ import { Alert as NdsAlert } from '@nice-digital/nds-alert'
 import { Button } from '@/components/Button/Button'
 
 import styles from './Alert.module.scss'
-import { ClearBannerParams } from './ClearBannerParams'
+import { ShowOnce } from './ShowOnce'
 
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 
@@ -19,6 +19,9 @@ export type AlertProps = Omit<ComponentPropsWithoutRef<'div'>, 'children'> & {
   dismissText?: string
   nonIntrusive?: boolean
   type?: AlertType
+  // For banners driven by a search parameter in `bannerSearchParams`: show the alert only on
+  // arrival, so Back, Forward and reload do not repeat it
+  showOnce?: boolean
 }
 
 // nonIntrusive means the screen reader doesn't interrupt itself to read out the alert
@@ -37,9 +40,10 @@ export function Alert({
   dismissText = 'Dismiss',
   nonIntrusive,
   type = 'info',
+  showOnce,
   ...rest
 }: AlertProps) {
-  return (
+  const alert = (
     <div className={clsx(styles.wrapper, className)}>
       <NdsAlert nonIntrusive={nonIntrusive ?? nonIntrusiveByType[type]} type={type} {...rest}>
         {children}
@@ -49,7 +53,8 @@ export function Alert({
           </Button>
         )}
       </NdsAlert>
-      {type === 'success' && <ClearBannerParams />}
     </div>
   )
+
+  return showOnce ? <ShowOnce>{alert}</ShowOnce> : alert
 }

@@ -9,11 +9,13 @@ import {
 } from '@/client/generated/sdk.gen'
 import type { RegisterUserDetailsDto, UserInformationDto } from '@/client/generated/types.gen'
 import { createServerApiClient } from '@/client/server-api'
+import { navigationState } from '@/test-utils/nextNavigation'
 
 import { UserActionAlert } from './UserActionAlert'
 
 import type { UserActionResult } from '../_lib/userActionAlert'
 
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 vi.mock('@/client/generated/sdk.gen', () => ({
   getUserDetailsWithinOrganisation: vi.fn(),
   getUserRegistrationById: vi.fn(),
@@ -51,6 +53,8 @@ async function renderAlert(userAction: UserActionResult) {
 }
 
 beforeEach(() => {
+  // The alert is shown once, only when the URL carries a banner parameter
+  navigationState.searchParams = new URLSearchParams({ action: 'invited' })
   vi.mocked(createServerApiClient).mockResolvedValue(apiClient)
   vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({ data: user, error: undefined })
   vi.mocked(getUserRegistrationById).mockResolvedValue({ data: registration, error: undefined })

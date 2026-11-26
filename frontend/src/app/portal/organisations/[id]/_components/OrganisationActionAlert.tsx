@@ -8,7 +8,7 @@ export type OrganisationActionAlertProps = {
 export const OrganisationActionAlert = async (props: OrganisationActionAlertProps) => {
   if (props.organisationAction === 'updated-details')
     return (
-      <Alert type="success">
+      <Alert type="success" showOnce>
         <h3>Organisation Details Updated</h3>
         <p>The details for the organisations have been successfully updated.</p>
       </Alert>
