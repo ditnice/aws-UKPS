@@ -2,7 +2,6 @@
 
 import { revalidateLogic, useForm } from '@tanstack/react-form'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
@@ -11,10 +10,13 @@ import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
+import { navigateOnSuccessfulAuth } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { submitForm } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
+import { useMfaSetupStore } from '../../../_lib/mfaSetupStorage'
+import { useSmsMfaSetupStore } from '../../../_lib/mfaSmsSetupStorage'
 import { useSignUpPassword } from '../../../_lib/SignUpPasswordContext'
 
 const codeSchema = z.object({
@@ -35,25 +37,17 @@ function normaliseSecurityCode(value: string) {
 }
 
 export default function CheckYourPhone() {
-  const router = useRouter()
   const { clearPassword } = useSignUpPassword()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  let authenticationSession = ''
-  let setupToken = ''
-  let hasSetup = false
-  try {
-    const stored = sessionStorage.getItem('signUpSmsSetup')
-    if (stored) {
-      const parsed = JSON.parse(stored)
-      authenticationSession = parsed.authenticationSession ?? ''
-      setupToken = parsed.setupToken ?? ''
-      hasSetup = Boolean(authenticationSession && setupToken)
-    }
-  } catch {
-    hasSetup = false
-  }
+  const mfaSetup = useMfaSetupStore()
+  const smsMfaSetup = useSmsMfaSetupStore()
+
+  const setupToken = mfaSetup.status === 'ready' ? (mfaSetup.data.setupToken ?? '') : ''
+  const authenticationSession =
+    smsMfaSetup.status === 'ready' ? (smsMfaSetup.data.authenticationSession ?? '') : ''
+  const hasSetup = Boolean(authenticationSession && setupToken)
 
   const form = useForm({
     defaultValues: { securityCode: '' } satisfies FormValues,
@@ -75,12 +69,11 @@ export default function CheckYourPhone() {
 
         if (!result.error) {
           setSuccess(true)
-          try {
-            sessionStorage.removeItem('signUpSmsSetup')
-          } catch {}
+          smsMfaSetup.clear()
+          mfaSetup.clear()
 
           clearPassword()
-          router.push('/portal')
+          navigateOnSuccessfulAuth()
           return
         }
 
@@ -104,7 +97,13 @@ export default function CheckYourPhone() {
     },
   })
 
-  if (!success && !hasSetup) {
+  // Once verified the setup stores are cleared and a full page load is in progress, so render
+  // nothing rather than a form that could be resubmitted with empty setup details.
+  if (success || mfaSetup.status === 'loading' || smsMfaSetup.status === 'loading') {
+    return null
+  }
+
+  if (!hasSetup) {
     return (
       <>
         <PageHeader heading="There is a problem setting up two-factor authentication" />

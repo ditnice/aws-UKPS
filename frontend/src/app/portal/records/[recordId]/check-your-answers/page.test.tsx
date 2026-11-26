@@ -509,6 +509,11 @@ describe('CheckAnswersPage', () => {
 
     await renderPage()
 
+    expect(
+      screen.getByText(
+        'Change the information before you submit the record for Quality Assurance (QA) review:',
+      ),
+    ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Enter a generic name' })).toHaveAttribute(
       'href',
       '/portal/records/42/names?returnTo=check-your-answers#generic-name',

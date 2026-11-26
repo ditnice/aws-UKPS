@@ -1,4 +1,3 @@
-import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 
 import { UserOrganisationContext } from '@/components/Layout/Header/Header'
@@ -17,13 +16,6 @@ const buildContext = (
   ...overrides,
 })
 
-// Labels contain <br /> elements and trailing whitespace; flatten them for comparison.
-const labelText = (label: React.ReactNode) =>
-  renderToStaticMarkup(<>{label}</>)
-    .replace(/<br\s*\/?>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-
 describe('createLinks', () => {
   it('returns no links when there is no user context', () => {
     expect(createLinks(undefined)).toEqual([])
@@ -37,7 +29,7 @@ describe('createLinks', () => {
       `/portal/organisations/${defaultOrganisationId}`,
       '/portal/user/me',
     ])
-    expect(links.map((l) => labelText(l.label))).toEqual([
+    expect(links.map((l) => l.label)).toEqual([
       'View and manage records',
       'Manage my organisation',
       'Manage my details',
@@ -51,7 +43,7 @@ describe('createLinks', () => {
       `/portal/organisations/${defaultOrganisationId}/records`,
       '/portal/user/me',
     ])
-    expect(links.map((l) => labelText(l.label))).not.toContain('Manage my organisation')
+    expect(links.map((l) => l.label)).not.toContain('Manage my organisation')
   })
 
   it('builds hrefs from the organisation id', () => {

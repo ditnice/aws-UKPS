@@ -18,7 +18,12 @@ import { buildPayload, fieldName, toFormValues } from '@/lib/dynamic-form/answer
 import { applyServerErrors } from '@/lib/dynamic-form/applyServerErrors'
 import { buildZodSchema } from '@/lib/dynamic-form/buildZodSchema'
 import { pageLayout, shownQuestionIds } from '@/lib/dynamic-form/conditions'
-import { pageHref, taskListHref, checkAnswersHref } from '@/lib/dynamic-form/links'
+import {
+  checkAnswersHref,
+  checkAnswersPageHref,
+  pageHref,
+  taskListHref,
+} from '@/lib/dynamic-form/links'
 import type { FormValue } from '@/lib/dynamic-form/types'
 import { submitForm } from '@/lib/form/formErrorHandling'
 import {
@@ -73,6 +78,10 @@ export function FormPage({
     ? checkAnswersHref(page.recordId)
     : taskListHref(page.recordId)
   const exitLabel = returnToCheckAnswers ? 'check your answers' : 'task list'
+  // This page's own URL, so a reload keeps the user on their way back to check your answers.
+  const reloadHref = returnToCheckAnswers
+    ? checkAnswersPageHref(page.recordId, page.page.id, { addGroupItem })
+    : pageHref(page, page.page.id)
   const hasNextPage = !returnToCheckAnswers && Boolean(page.nextPageId)
 
   const form = useForm({
@@ -157,7 +166,7 @@ export function FormPage({
         <Alert type="caution">
           <p>{saveState.detail}</p>
           <p>
-            <a href={pageHref(page, page.page.id)}>Reload this page</a> to see the latest answers.
+            <a href={reloadHref}>Reload this page</a> to see the latest answers.
           </p>
         </Alert>
       )}

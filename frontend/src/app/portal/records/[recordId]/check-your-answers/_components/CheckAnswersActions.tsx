@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -104,7 +105,11 @@ export function CheckAnswersActions({
             Submit record for review
           </Button>
         )}
-        <Button to={`/portal/organisations/${organisationId}/records`} variant="secondary">
+        <Button
+          elementType={Link}
+          href={`/portal/organisations/${organisationId}/records`}
+          variant="secondary"
+        >
           Return to my records
         </Button>
       </ButtonGroup>

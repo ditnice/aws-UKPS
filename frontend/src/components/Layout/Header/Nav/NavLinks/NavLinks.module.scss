@@ -8,6 +8,11 @@
   @extend %menu-list;
 }
 
+// Wraps the label with CSS only: a line break in the content makes NVDA read it as separate lines.
+.label {
+  max-inline-size: 13ch;
+}
+
 a.link {
   @extend %link-styling;
   column-gap: utils.rem(spacing.$small);
