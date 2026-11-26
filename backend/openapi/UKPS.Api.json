@@ -4848,6 +4848,119 @@
         }
       }
     },
+    "/users/{userId}/organisations/{organisationId}/admin-view": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Retrieves the administrator's view of a user's details, including their MFA settings,\nalong with their role within the specified organisation. Only super users may use this.",
+        "operationId": "GetUserDetailsWithinOrganisationAdminView",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "The unique identifier of the user to retrieve.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "organisationId",
+            "in": "path",
+            "description": "The unique identifier of the organisation to read the user's membership from. A user may\nbelong to several organisations, so their role is resolved against this organisation.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the administrator's view of the user's details.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInformationAdminViewDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInformationAdminViewDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInformationAdminViewDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The user does not exist in this organisation or is not accessible to the caller (ADR-004).",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/{userId}": {
       "patch": {
         "tags": [
@@ -8463,6 +8576,93 @@
           }
         },
         "description": "Represents the details of a user."
+      },
+      "UserInformationAdminViewDto": {
+        "required": [
+          "mfaMethod",
+          "mfaPhoneNumber",
+          "userId",
+          "fullName",
+          "workTelephone",
+          "workEmail",
+          "organisationMembershipId",
+          "organisationId",
+          "organisationName",
+          "userRole",
+          "status",
+          "allowedPharmaceuticalEntity",
+          "hasMultipleOrganisations"
+        ],
+        "type": "object",
+        "properties": {
+          "mfaMethod": {
+            "type": "string",
+            "description": "Gets the MFA method in use for the current user."
+          },
+          "mfaPhoneNumber": {
+            "type": "string",
+            "description": "Gets the obfuscated phone number used for SMS MFA, if applicable."
+          },
+          "hasMultipleOrganisations": {
+            "type": "boolean",
+            "description": "Gets whether the user can select more than one organisation."
+          },
+          "userId": {
+            "type": "integer",
+            "description": "Gets the unique identifier of the user.",
+            "format": "int32"
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Gets the full name of the user."
+          },
+          "workTelephone": {
+            "type": "string",
+            "description": "Gets the user's work telephone number."
+          },
+          "workEmail": {
+            "type": "string",
+            "description": "Gets the user's email address."
+          },
+          "organisationMembershipId": {
+            "type": "integer",
+            "description": "Gets the unique identifier of the user's organisation membership.",
+            "format": "int32"
+          },
+          "organisationId": {
+            "type": "integer",
+            "description": "Gets the unique identifier of the user's organisation.",
+            "format": "int32"
+          },
+          "organisationName": {
+            "type": "string",
+            "description": "Gets the name of the user's organisation."
+          },
+          "userRole": {
+            "description": "Gets the role assigned to the user within the organisation.",
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "status": {
+            "description": "Gets the user's membership status within the organisation.",
+            "$ref": "#/components/schemas/UserOrgStatus"
+          },
+          "allowedPharmaceuticalEntity": {
+            "description": "Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.",
+            "$ref": "#/components/schemas/PharmaceuticalEntity"
+          },
+          "pendingWorkEmail": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Gets the details of a requested change to the user's work email address that has not yet been\ncompleted, or `null` if there is no pending change.",
+                "$ref": "#/components/schemas/PendingWorkEmailChangeDto"
+              }
+            ]
+          }
+        },
+        "description": "Represents the information about a user within an organisation as viewed by a super user,\nincluding their multi-factor authentication (MFA) settings."
       },
       "UserInformationDto": {
         "required": [

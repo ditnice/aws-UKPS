@@ -1,5 +1,3 @@
-import { getUserDetailsWithinOrganisation } from '@/client/generated'
-import { createServerApiClient } from '@/client/server-api'
 import { Alert } from '@/components/Alert/Alert'
 import { BackLinkBrowser } from '@/components/BackLinkBrowser/BackLinkBrowser'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
@@ -7,6 +5,7 @@ import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { UserAuthenticationDetails } from '@/lib/users/UserAuthenticationDetails'
 import { UserDetails } from '@/lib/users/UserDetails'
 
+import { getUser } from './dataRetrieval'
 import {
   buildViewUserDetailsHref,
   PageParams,
@@ -18,11 +17,7 @@ import {
 const Page = async (params: PageParams) => {
   const { userId, organisationId, updated, requestedNewEmail } = await parseTypedParams(params)
   const unchangingParams = { userId, organisationId }
-  const apiClient = await createServerApiClient()
-  const { data: user, error } = await getUserDetailsWithinOrganisation({
-    client: apiClient,
-    path: { userId, organisationId },
-  })
+  const { user, error } = await getUser(organisationId, userId)
 
   return (
     <>

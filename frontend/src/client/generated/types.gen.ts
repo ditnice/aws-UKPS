@@ -1714,6 +1714,66 @@ export type UserDetailsDto = {
 };
 
 /**
+ * Represents the information about a user within an organisation as viewed by a super user,
+ * including their multi-factor authentication (MFA) settings.
+ */
+export type UserInformationAdminViewDto = {
+    /**
+     * Gets the MFA method in use for the current user.
+     */
+    mfaMethod: string;
+    /**
+     * Gets the obfuscated phone number used for SMS MFA, if applicable.
+     */
+    mfaPhoneNumber: string;
+    /**
+     * Gets whether the user can select more than one organisation.
+     */
+    hasMultipleOrganisations: boolean;
+    /**
+     * Gets the unique identifier of the user.
+     */
+    userId: number;
+    /**
+     * Gets the full name of the user.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work telephone number.
+     */
+    workTelephone: string;
+    /**
+     * Gets the user's email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the unique identifier of the user's organisation membership.
+     */
+    organisationMembershipId: number;
+    /**
+     * Gets the unique identifier of the user's organisation.
+     */
+    organisationId: number;
+    /**
+     * Gets the name of the user's organisation.
+     */
+    organisationName: string;
+    /**
+     * Gets the role assigned to the user within the organisation.
+     */
+    userRole: UserRole;
+    /**
+     * Gets the user's membership status within the organisation.
+     */
+    status: UserOrgStatus;
+    /**
+     * Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.
+     */
+    allowedPharmaceuticalEntity: PharmaceuticalEntity;
+    pendingWorkEmail?: null | PendingWorkEmailChangeDto;
+};
+
+/**
  * Represents information about a user and their membership within an organisation.
  */
 export type UserInformationDto = {
@@ -3641,6 +3701,49 @@ export type GetUserDetailsWithinOrganisationResponses = {
 };
 
 export type GetUserDetailsWithinOrganisationResponse = GetUserDetailsWithinOrganisationResponses[keyof GetUserDetailsWithinOrganisationResponses];
+
+export type GetUserDetailsWithinOrganisationAdminViewData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the user to retrieve.
+         */
+        userId: number;
+        /**
+         * The unique identifier of the organisation to read the user's membership from. A user may
+         * belong to several organisations, so their role is resolved against this organisation.
+         */
+        organisationId: number;
+    };
+    query?: never;
+    url: '/users/{userId}/organisations/{organisationId}/admin-view';
+};
+
+export type GetUserDetailsWithinOrganisationAdminViewErrors = {
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * The user does not exist in this organisation or is not accessible to the caller (ADR-004).
+     */
+    404: ProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type GetUserDetailsWithinOrganisationAdminViewError = GetUserDetailsWithinOrganisationAdminViewErrors[keyof GetUserDetailsWithinOrganisationAdminViewErrors];
+
+export type GetUserDetailsWithinOrganisationAdminViewResponses = {
+    /**
+     * Returns the administrator's view of the user's details.
+     */
+    200: UserInformationAdminViewDto;
+};
+
+export type GetUserDetailsWithinOrganisationAdminViewResponse = GetUserDetailsWithinOrganisationAdminViewResponses[keyof GetUserDetailsWithinOrganisationAdminViewResponses];
 
 export type RemoveUserData = {
     body?: never;

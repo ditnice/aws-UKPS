@@ -1,12 +1,12 @@
 import { notFound } from 'next/navigation'
 import { ReactNode } from 'react'
 
-import { getUserDetailsWithinOrganisation, getUsersMe } from '@/client/generated'
-import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { errorMessages } from '@/lib/form/errorMessages'
+
+import { getUser } from '../../dataRetrieval'
 
 import EditUserDetailForm from './editUserDetailValue/EditUserDetailForm'
 import EditUserEmailForm from './editUserEmail/EditUserEmailForm'
@@ -38,24 +38,6 @@ const userDetailLabels: Record<UserDetail, string> = {
   fullName: 'Full name',
   contactNumber: 'Contact number',
   email: 'Work email address',
-}
-
-const getUser = async (organisationId: number, userId: number) => {
-  const client = await createServerApiClient()
-  const { data: me, error: getMeError } = await getUsersMe({ client })
-  if (getMeError || !me) {
-    return { user: me, error: getMeError }
-  }
-  if (me && me.organisationId == organisationId && me.userId == userId) {
-    return { user: me }
-  }
-
-  const { data: user, error } = await getUserDetailsWithinOrganisation({
-    path: { userId, organisationId },
-    client,
-  })
-
-  return { user, error }
 }
 
 const Page = async (props: PageProps) => {
