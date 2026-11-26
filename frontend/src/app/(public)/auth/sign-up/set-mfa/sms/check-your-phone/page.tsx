@@ -12,6 +12,7 @@ import { Input } from '@/components/Input/Input'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { navigateOnSuccessfulAuth } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { submitForm } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import { useMfaSetupStore } from '../../../_lib/mfaSetupStorage'
@@ -50,7 +51,7 @@ export default function CheckYourPhone() {
 
   const form = useForm({
     defaultValues: { securityCode: '' } satisfies FormValues,
-    validationLogic: revalidateLogic({ mode: 'submit', modeAfterSubmission: 'blur' }),
+    validationLogic: revalidateLogic({ mode: 'submit', modeAfterSubmission: 'submit' }),
     validators: { onDynamic: codeSchema },
     onSubmit: async ({ value, formApi }) => {
       const { securityCode } = codeSchema.parse(value)
@@ -127,7 +128,7 @@ export default function CheckYourPhone() {
         onSubmit={(event) => {
           event.preventDefault()
           event.stopPropagation()
-          void form.handleSubmit()
+          void submitForm(form)
         }}
       >
         <form.Field name="securityCode">

@@ -13,6 +13,7 @@ import { Input } from '@/components/Input/Input'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { submitForm } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import { useMfaSetupStore } from '../../../_lib/mfaSetupStorage'
@@ -41,7 +42,7 @@ export default function EnterPhoneNumber() {
 
   const form = useForm({
     defaultValues: { phoneNumber: '', password: password ?? '' } satisfies FormValues,
-    validationLogic: revalidateLogic({ mode: 'submit', modeAfterSubmission: 'blur' }),
+    validationLogic: revalidateLogic({ mode: 'submit', modeAfterSubmission: 'submit' }),
     validators: { onDynamic: phoneSchema },
     onSubmit: async ({ value, formApi }) => {
       if (!setupToken) return
@@ -140,7 +141,7 @@ export default function EnterPhoneNumber() {
         onSubmit={(event) => {
           event.preventDefault()
           event.stopPropagation()
-          void form.handleSubmit()
+          void submitForm(form)
         }}
       >
         <form.Field name="phoneNumber">

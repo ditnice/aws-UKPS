@@ -25,6 +25,7 @@ import {
   taskListHref,
 } from '@/lib/dynamic-form/links'
 import type { FormValue } from '@/lib/dynamic-form/types'
+import { submitForm } from '@/lib/form/formErrorHandling'
 import {
   getFieldErrorItems,
   getFieldErrorMessage,
@@ -123,9 +124,13 @@ export function FormPage({
 
       setSaveState({ kind: 'failed' })
     },
-    validationLogic: revalidateLogic({ mode: 'submit', modeAfterSubmission: 'blur' }),
+    validationLogic: revalidateLogic({ mode: 'submit', modeAfterSubmission: 'submit' }),
     validators: { onDynamic: schema },
   })
+
+  const submit = (returnToTaskList = false) => {
+    void submitForm(form, { returnToTaskList })
+  }
 
   const heading = singleQuestion ? questions[layout.topLevel[0]].label : page.page.title
   const preheading = page.page.commercialInConfidence ? (
@@ -178,7 +183,7 @@ export function FormPage({
         onSubmit={(event) => {
           event.preventDefault()
           event.stopPropagation()
-          void form.handleSubmit()
+          submit()
         }}
       >
         {/* Re-render only when which questions are shown changes, not on every keystroke. */}
@@ -262,7 +267,7 @@ export function FormPage({
                   <Button
                     disabled={isSubmitting}
                     buttonType="button"
-                    onClick={() => void form.handleSubmit({ returnToTaskList: true })}
+                    onClick={() => submit(true)}
                     variant="primary"
                   >
                     Save and return to task list

@@ -11,6 +11,7 @@ import { postUsersOnboard } from '@/client/generated/sdk.gen'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { submitForm } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import { buildUserActionHref } from '../../_lib/userActionAlert'
@@ -60,7 +61,7 @@ export function OrganisationOnboardUserForm({ organisationId }: OrganisationOnbo
     } satisfies OnboardUserFormValues,
     validationLogic: revalidateLogic({
       mode: 'submit',
-      modeAfterSubmission: 'blur',
+      modeAfterSubmission: 'submit',
     }),
     validators: {
       onDynamic: onboardUserSchema,
@@ -115,7 +116,7 @@ export function OrganisationOnboardUserForm({ organisationId }: OrganisationOnbo
       onSubmit={(event) => {
         event.preventDefault()
         event.stopPropagation()
-        void form.handleSubmit()
+        void submitForm(form)
       }}
     >
       <p>

@@ -6,6 +6,7 @@ import { ChangeEvent, startTransition, useActionState } from 'react'
 import { EditableUserDetail } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
+import { submitForm } from '@/lib/form/formErrorHandling'
 import FormLevelErrors from '@/lib/form/FormLevelErrors'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
@@ -54,7 +55,7 @@ const EditUserDetailForm = ({ initialValue, userId, property, label }: EditUserD
       action={action as never}
       onSubmit={(e) => {
         e.preventDefault()
-        void form.handleSubmit({ formData: new FormData(e.currentTarget) })
+        void submitForm(form, { formData: new FormData(e.currentTarget) })
       }}
     >
       <FormLevelErrors errors={state?.errors ?? []} />

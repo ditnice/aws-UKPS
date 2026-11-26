@@ -144,7 +144,7 @@ describe('SignInMfaForm', () => {
     })
   })
 
-  it('revalidates fields on blur after a failed submit', async () => {
+  it('keeps the validation error until the next submit, which then submits the fixed code', async () => {
     renderValidForm()
 
     await submitForm()
@@ -154,9 +154,13 @@ describe('SignInMfaForm', () => {
     await updateForm({ ...validFormValues, securityCode: '123 456' })
     await user.tab()
 
+    expect(screen.getByText('Enter your security code')).toBeInTheDocument()
+    expect(respondToMultiFactorAuthenticationChallenge).not.toHaveBeenCalled()
+
+    await submitForm()
+
     await waitFor(() => {
-      expect(screen.queryByText('Enter your security code')).toBeNull()
-      expect(screen.queryByText('Enter a 6-digit security code')).toBeNull()
+      expect(respondToMultiFactorAuthenticationChallenge).toHaveBeenCalledOnce()
     })
   })
 

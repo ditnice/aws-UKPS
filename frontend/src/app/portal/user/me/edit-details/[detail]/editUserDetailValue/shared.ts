@@ -34,7 +34,7 @@ export const updateUserDetailOptions = formOptions({
   defaultValues: defaultValues,
   validationLogic: revalidateLogic({
     mode: 'submit',
-    modeAfterSubmission: 'blur',
+    modeAfterSubmission: 'submit',
   }),
   validators: {
     onDynamic: formSchema,

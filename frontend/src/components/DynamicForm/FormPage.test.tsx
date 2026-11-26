@@ -560,6 +560,28 @@ describe('FormPage', () => {
       expect(mocks.push).not.toHaveBeenCalled()
     })
 
+    it('saves a corrected answer after the server rejected the earlier one', async () => {
+      mocks.saveRecordFormPage.mockResolvedValueOnce({
+        error: { errors: { 'medicines_indication_detail.indication': ['Server says no'] } },
+        response: { ok: false, status: 400 },
+      })
+      render(
+        <FormPage page={page({ answers: { 'medicines_indication_detail.indication': 'x' } })} />,
+      )
+
+      save()
+
+      expect(await screen.findByText('Server says no')).toBeInTheDocument()
+
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Hepatitis C' } })
+      save()
+
+      await waitFor(() => {
+        expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/bnf-chapter')
+      })
+      expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(2)
+    })
+
     it('offers a reload when the page has changed since it was loaded', async () => {
       mocks.saveRecordFormPage.mockResolvedValue({
         error: {
@@ -691,7 +713,7 @@ describe('FormPage', () => {
   })
 
   describe('controls', () => {
-    it('associates radio hints and errors and revalidates on selection', async () => {
+    it('associates radio hints and errors, and keeps the error until the next save', async () => {
       const user = userEvent.setup()
       render(
         <FormPage
@@ -727,9 +749,13 @@ describe('FormPage', () => {
       }
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
       await user.click(yes)
-      await waitFor(() => expect(screen.queryByText('Choose yes or no')).not.toBeInTheDocument())
       expect(yes).toHaveFocus()
       expect(yes).toBeChecked()
+      // The error stays until the next save.
+      expect(screen.getByText('Choose yes or no')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Save and continue' }))
+      await waitFor(() => expect(screen.queryByText('Choose yes or no')).not.toBeInTheDocument())
+      expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1)
       expect(yes).not.toHaveAttribute('aria-invalid')
       expect(screen.getByRole('group', { name: 'Choose an answer' })).not.toHaveAttribute(
         'aria-invalid',
@@ -803,7 +829,7 @@ describe('FormPage', () => {
       ).not.toHaveAccessibleDescription()
     })
 
-    it('associates checkbox hints and errors and revalidates on selection', async () => {
+    it('associates checkbox hints and errors, and keeps the error until the next save', async () => {
       const user = userEvent.setup()
       render(
         <FormPage
@@ -839,10 +865,14 @@ describe('FormPage', () => {
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
       expect(document.querySelectorAll('.checkbox--error')).toHaveLength(1)
       await user.click(first)
+      expect(first).toHaveFocus()
+      // The error stays until the next save.
+      expect(screen.getByText('Choose at least one method')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Save and continue' }))
       await waitFor(() =>
         expect(screen.queryByText('Choose at least one method')).not.toBeInTheDocument(),
       )
-      expect(first).toHaveFocus()
+      expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1)
       expect(first).not.toHaveAttribute('aria-invalid')
       expect(screen.getByRole('group', { name: 'Choose contact methods' })).not.toHaveAttribute(
         'aria-invalid',
@@ -1373,7 +1403,8 @@ describe('FormPage', () => {
       await user.type(screen.getByRole('textbox', { name: 'Year' }), '2027')
       save()
 
-      expect(await screen.findByText('Select a quarter')).toBeInTheDocument()
+      // The quarter select's placeholder option has the same text, so match the message only.
+      expect(await screen.findByText('Select a quarter', { selector: 'p' })).toBeInTheDocument()
       expect(invalidParts()).toEqual(['Quarter'])
     })
 
@@ -1480,7 +1511,7 @@ describe('FormPage', () => {
       }
     })
 
-    it('clears the error when another precision is chosen until focus leaves the question', async () => {
+    it('clears the error when another precision is chosen, and asks again on the next save', async () => {
       const user = userEvent.setup()
       render(<FormPage page={datePage()} />)
 
@@ -1495,15 +1526,16 @@ describe('FormPage', () => {
         screen.queryByText('Actual date of submission must be a real date'),
       ).not.toBeInTheDocument()
 
-      // Moving into and between the parts does not revalidate.
+      // Moving into, between and out of the parts does not revalidate.
       await user.click(screen.getByRole('textbox', { name: 'Month' }))
       await user.keyboard('7')
+      await user.tab()
       await user.tab()
       expect(screen.queryByText('Enter the estimated submission date')).not.toBeInTheDocument()
       expect(invalidParts()).toEqual([])
 
-      // Leaving the question does, marking only the blank year.
-      await user.tab()
+      // The next save does, marking only the blank year.
+      save()
       expect(await screen.findByText('Enter the estimated submission date')).toBeInTheDocument()
       expect(invalidParts()).toEqual(['Year'])
     })

@@ -86,7 +86,7 @@ Monorepo: `backend/` (.NET 10, EF Core, Postgres), `frontend/` (Next.js 16, Payl
 - OpenAPI spec is checked in at `backend/openapi/UKPS.Api.json`; regenerate it when endpoints change.
 
 ### Frontend conventions to follow
-- Example hand-built form to mirror: `frontend/src/app/portal/user/me/edit-details/_components/EditDetailsForm.tsx` (TanStack `useForm` + `revalidateLogic({ mode: 'submit', modeAfterSubmission: 'blur' })` + Zod + `getFieldErrorMessage` + `updateFormApiErrors`).
+- Example hand-built form to mirror: `frontend/src/app/portal/user/me/edit-details/_components/EditDetailsForm.tsx` (TanStack `useForm` + `revalidateLogic({ mode: 'submit', modeAfterSubmission: 'submit' })` + Zod + `getFieldErrorMessage` + `updateFormApiErrors`).
 - Components: `frontend/src/components/` (`Input`, `Textarea`, `Select`, `Button`, `PageHeader`, `Placeholder/ErrorState`); NDS radio/checkbox via `@nice-digital/nds-radio` / `nds-checkbox` (see `app/portal/components/(examples)/`).
 - API client is generated: `pnpm generate:api` → `src/client/generated/`. Server-side calls via `src/client/server-api.ts`.
 - Error helpers: `src/lib/form/` (`errorMessages.ts`, `formErrorHandling.ts`, `getFieldErrorMessage.ts`), `src/lib/responses/typeGuards.ts`.
@@ -310,7 +310,7 @@ One DB transaction. Returns `Result<SavePageDto, SavePageError>`.
 - Each question renders in `form.Field name={question.id}`; group children use TanStack array fields (0-based) so names match server error keys. Nested groups render an `AddAnotherGroup` inside an item (one level only).
 - `showWhen` evaluated against form values + `context`; hidden questions unmounted and submitted as `null`.
 - `buildZodSchema(questions, context)`: rule → Zod (`required` → non-empty, `maxLength` → `.max()`, `maxItems` → array `.max()`, …) using server message text; conditional + cross-field as one page-level `superRefine` with `path: [questionId]`.
-- Validation timing: `revalidateLogic({ mode: 'submit', modeAfterSubmission: 'blur' })`.
+- Validation timing: `revalidateLogic({ mode: 'submit', modeAfterSubmission: 'submit' })`: validate on submit only, as the GOV.UK validation pattern says. Errors stay until the next submit, so fixing a field and clicking Submit submits first time.
 - On 400: generalise `updateFormApiErrors` to loop over every key in `errors` and `setFieldMeta`.
 - Payload: every page question ID present; empty text → `null`; empty checkbox → `[]`; echo `formVersion` and `revisionVersion`.
 - On 409 `revision_changed` / `form_version_changed`: show a "this page has changed, reload" message; do not retry automatically.

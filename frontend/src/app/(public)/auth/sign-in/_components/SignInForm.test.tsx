@@ -86,7 +86,7 @@ describe('SignInForm', () => {
     })
   })
 
-  it('revalidates fields on blur after a failed submit', async () => {
+  it('keeps validation errors until the next submit, which then submits the fixed values', async () => {
     render(<SignInForm />)
 
     await user.click(screen.getByRole('button', { name: 'Continue' }))
@@ -100,9 +100,14 @@ describe('SignInForm', () => {
     await fillInput(user, screen.getByLabelText('Password'), 'secure-password')
     await user.tab()
 
+    expect(screen.getByText('Enter your email address')).toBeInTheDocument()
+    expect(screen.getByText('Enter your password')).toBeInTheDocument()
+    expect(login).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
     await waitFor(() => {
-      expect(screen.queryByText('Enter your email address')).toBeNull()
-      expect(screen.queryByText('Enter your password')).toBeNull()
+      expect(login).toHaveBeenCalledOnce()
     })
   })
 
@@ -291,5 +296,27 @@ describe('SignInForm', () => {
     expect(await screen.findByTestId('email-verification-required-alert')).toBeInTheDocument()
     expect(router.push).not.toHaveBeenCalled()
     expect(replace).not.toHaveBeenCalled()
+  })
+
+  it('submits again after the email verification required alert was shown', async () => {
+    vi.mocked(login).mockResolvedValueOnce({
+      error: { code: 'PendingEmailRequiredVerification' },
+      data: undefined,
+    })
+
+    render(<SignInForm />)
+
+    await fillInput(user, screen.getByLabelText('Email address'), 'name@example.com')
+    await fillInput(user, screen.getByLabelText('Password'), 'secure-password')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect(await screen.findByTestId('email-verification-required-alert')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    await waitFor(() => {
+      expect(login).toHaveBeenCalledTimes(2)
+    })
+    expect(screen.queryByTestId('email-verification-required-alert')).toBeNull()
   })
 })

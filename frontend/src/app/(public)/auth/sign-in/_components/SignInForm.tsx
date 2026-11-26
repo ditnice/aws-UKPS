@@ -14,6 +14,7 @@ import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { navigateOnSuccessfulAuth } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { submitForm } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage, getFormErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import EmailVerificationRequiredAlert from '../../EmailVerificationRequiredAlert'
@@ -42,7 +43,7 @@ export function SignInForm({ returnTo }: SignInFormProps) {
     } satisfies SignInFormValues,
     validationLogic: revalidateLogic({
       mode: 'submit',
-      modeAfterSubmission: 'blur',
+      modeAfterSubmission: 'submit',
     }),
     validators: {
       onDynamic: signInSchema,
@@ -121,7 +122,7 @@ export function SignInForm({ returnTo }: SignInFormProps) {
           form.setFieldValue('email', String(formData.get('email') ?? ''))
           form.setFieldValue('password', String(formData.get('password') ?? ''))
 
-          form.handleSubmit()
+          void submitForm(form)
         }}
       >
         <form.Subscribe selector={(state) => getFormErrorMessage(state.errorMap.onSubmit)}>

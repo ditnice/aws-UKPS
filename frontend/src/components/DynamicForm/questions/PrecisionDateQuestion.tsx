@@ -96,8 +96,9 @@ export function PrecisionDateQuestion({
     )
   }
   return (
-    // Revalidate only when focus leaves the question, so moving from a newly chosen precision
-    // into its parts, or between the parts, does not flag them before they are filled in.
+    // Mark the question as blurred only when focus leaves it, so moving from a newly chosen
+    // precision into its parts, or between the parts, does not count. Forms validate on submit
+    // only, so this does not re-check the date.
     <div
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) {

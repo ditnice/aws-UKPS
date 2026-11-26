@@ -22,7 +22,8 @@ export function CheckboxQuestion({
       legendSize={labelSizeFor(labelStyle)}
       name={name}
       value={value}
-      // Revalidate on every tick, not only on blur, so an error clears as soon as one is ticked.
+      // Mark the field as blurred on every tick. Forms validate on submit only, so this does not
+      // re-check the answer.
       onChange={(next) => {
         onChange(next)
         onBlur()
