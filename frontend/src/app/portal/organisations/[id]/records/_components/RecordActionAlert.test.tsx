@@ -51,4 +51,13 @@ describe('RecordActionAlert', () => {
       ),
     ).toBeTruthy()
   })
+
+  it('confirms that two-factor authentication was set up', () => {
+    render(<RecordActionAlert action="mfa-setup-complete" />)
+
+    expect(
+      screen.getByRole('heading', { level: 3, name: 'Two-factor authentication setup complete' }),
+    ).toBeTruthy()
+    expect(screen.getByText('You can now access the UK PharmaScan system.')).toBeTruthy()
+  })
 })

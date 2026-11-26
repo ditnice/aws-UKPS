@@ -37,5 +37,12 @@ export const RecordActionAlert = ({ action }: RecordActionAlertProps) => {
           </p>
         </Alert>
       )
+    case 'mfa-setup-complete':
+      return (
+        <Alert type="success" showOnce="action">
+          <h3>Two-factor authentication setup complete</h3>
+          <p>You can now access the UK PharmaScan system.</p>
+        </Alert>
+      )
   }
 }

@@ -1,4 +1,4 @@
-import { createSessionStorageStore } from '@/lib/sessionStorageStore'
+import { createSessionStorageStore } from './sessionStorageStore'
 
 type SmsMfaSetupData = {
   phoneNumber: string

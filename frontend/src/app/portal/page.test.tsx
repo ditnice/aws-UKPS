@@ -36,7 +36,8 @@ describe('PortalDashboard', () => {
     mockCreateServerApiClient.mockResolvedValue(fakeClient)
   })
 
-  const render = async () => renderToStaticMarkup(await PortalDashboard())
+  const render = async (searchParams: { action?: string } = {}) =>
+    renderToStaticMarkup(await PortalDashboard({ searchParams: Promise.resolve(searchParams) }))
 
   it('is rendered dynamically on every request', () => {
     expect(dynamic).toBe('force-dynamic')
@@ -49,6 +50,24 @@ describe('PortalDashboard', () => {
       await render()
 
       expect(mockRedirect).toHaveBeenCalledTimes(1)
+      expect(mockRedirect).toHaveBeenCalledWith('/portal/organisations/123/records')
+    })
+
+    it('keeps a records banner action', async () => {
+      mockGetUsersMe.mockResolvedValue({ data: { organisationId: 123 }, error: undefined })
+
+      await render({ action: 'mfa-setup-complete' })
+
+      expect(mockRedirect).toHaveBeenCalledWith(
+        '/portal/organisations/123/records?action=mfa-setup-complete',
+      )
+    })
+
+    it('drops an unknown action', async () => {
+      mockGetUsersMe.mockResolvedValue({ data: { organisationId: 123 }, error: undefined })
+
+      await render({ action: 'unknown' })
+
       expect(mockRedirect).toHaveBeenCalledWith('/portal/organisations/123/records')
     })
   })

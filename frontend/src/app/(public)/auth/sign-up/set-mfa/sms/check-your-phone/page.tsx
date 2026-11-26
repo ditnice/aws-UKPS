@@ -5,12 +5,12 @@ import Link from 'next/link'
 import { useState, type ChangeEvent } from 'react'
 import { z } from 'zod'
 
+import { buildPortalRecordActionHref } from '@/app/portal/organisations/[id]/records/_lib/recordActionAlert'
 import { verifySmsMultiFactorAuthentication } from '@/client/generated/sdk.gen'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
-import { markMfaSetupComplete } from '@/lib/auth/mfa/mfaSetupCompleteFlag'
 import { navigateOnSuccessfulAuth } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
@@ -73,8 +73,8 @@ export default function CheckYourPhone() {
           mfaSetup.clear()
 
           clearPassword()
-          markMfaSetupComplete()
-          navigateOnSuccessfulAuth()
+          // Through the portal root, which knows the organisation, to show the success banner
+          navigateOnSuccessfulAuth(buildPortalRecordActionHref('mfa-setup-complete'))
           return
         }
 

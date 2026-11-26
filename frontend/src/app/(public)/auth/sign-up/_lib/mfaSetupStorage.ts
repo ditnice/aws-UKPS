@@ -1,5 +1,6 @@
 import { type SignUpMfaSetup, signUpMfaSetupSchema } from '@/lib/auth/mfa/SetupMfaForm'
-import { createSessionStorageStore } from '@/lib/sessionStorageStore'
+
+import { createSessionStorageStore } from './sessionStorageStore'
 
 export const signUpMfaSetupStorageKey = 'signUpMfaSetup:v1'
 

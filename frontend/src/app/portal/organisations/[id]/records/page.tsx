@@ -6,7 +6,6 @@ import { PageHeader } from '@/components/PageHeader/PageHeader'
 import OrganisationPageWrapper from '../_components/OrganisationPageWrapper'
 
 import { CreateRecordActionBanner } from './_components/CreateRecordActionBanner'
-import { MfaSetupCompleteAlert } from './_components/MfaSetupCompleteAlert'
 import { RecordActionAlert } from './_components/RecordActionAlert'
 import { parseRecordAction, type RecordActionSearchParams } from './_lib/recordActionAlert'
 import { RecordsFetch } from './RecordsFetch'
@@ -42,7 +41,6 @@ const OrganisationRecordsPage = async ({ params, searchParams }: OrganisationRec
     <OrganisationPageWrapper organisationId={organisationId}>
       {(organisation) => (
         <>
-          <MfaSetupCompleteAlert />
           {recordAction && <RecordActionAlert action={recordAction} />}
           <PageHeader heading={`${organisation.organisationName}`} />
           {isStandardUser && championEmails.length > 0 && (
