@@ -6396,6 +6396,10 @@
             "type": "string",
             "description": "Gets the obfuscated phone number used for SMS MFA, if applicable."
           },
+          "hasMultipleOrganisations": {
+            "type": "boolean",
+            "description": "Gets whether the user can select more than one organisation."
+          },
           "userId": {
             "type": "integer",
             "description": "Gets the unique identifier of the user.",
@@ -6434,10 +6438,6 @@
           "status": {
             "description": "Gets the user's membership status within the organisation.",
             "$ref": "#/components/schemas/UserOrgStatus"
-          },
-          "hasMultipleOrganisations": {
-            "type": "boolean",
-            "description": "Gets whether the user can select more than one organisation. Only set for the current user."
           },
           "allowedPharmaceuticalEntity": {
             "description": "Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.",
@@ -8475,8 +8475,7 @@
           "organisationName",
           "userRole",
           "status",
-          "allowedPharmaceuticalEntity",
-          "hasMultipleOrganisations"
+          "allowedPharmaceuticalEntity"
         ],
         "type": "object",
         "properties": {
@@ -8518,10 +8517,6 @@
           "status": {
             "description": "Gets the user's membership status within the organisation.",
             "$ref": "#/components/schemas/UserOrgStatus"
-          },
-          "hasMultipleOrganisations": {
-            "type": "boolean",
-            "description": "Gets whether the user can select more than one organisation. Only set for the current user."
           },
           "allowedPharmaceuticalEntity": {
             "description": "Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.",

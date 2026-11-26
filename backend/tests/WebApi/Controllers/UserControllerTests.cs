@@ -1224,13 +1224,16 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
         {
             ArgumentNullException.ThrowIfNull(userInformationDtoFaker);
 
-            // Copy the base user information through the copy constructor; MFA
-            // members are placeholders here and are set by the rules below.
+            // Copy the base user information through the copy constructor; the
+            // current-user-only members are placeholders here and are set by the rules below.
             CustomInstantiator(_ => new CurrentUserInformationDto(
                 mfaMethod: string.Empty,
                 mfaPhoneNumber: string.Empty,
+                hasMultipleOrganisations: false,
                 userInformationDto: userInformationDtoFaker.Generate()
             ));
+
+            RuleFor(x => x.HasMultipleOrganisations, f => f.Random.Bool());
 
             RuleFor(x => x.MfaMethod, f => f.PickRandom(_mfaMethods));
 
@@ -1258,7 +1261,6 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
             RuleFor(x => x.OrganisationId, f => f.Random.Int(1, 1000));
             RuleFor(x => x.OrganisationName, f => f.Company.CompanyName());
             RuleFor(x => x.UserRole, f => f.PickRandom<UserRole>());
-            RuleFor(x => x.HasMultipleOrganisations, f => f.Random.Bool());
             RuleFor(x => x.AllowedPharmaceuticalEntity, f => f.PickRandom<PharmaceuticalEntity>());
             RuleFor(
                 x => x.Status,

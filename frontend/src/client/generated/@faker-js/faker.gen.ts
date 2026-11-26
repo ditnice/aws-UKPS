@@ -778,6 +778,7 @@ export const fakeCurrentUserInformationDto = (options?: Options): CurrentUserInf
     return {
         mfaMethod: f.string.sample(),
         mfaPhoneNumber: f.string.sample(),
+        hasMultipleOrganisations: f.datatype.boolean(),
         userId: f.number.int(),
         fullName: f.person.fullName(),
         workTelephone: f.string.sample(),
@@ -787,7 +788,6 @@ export const fakeCurrentUserInformationDto = (options?: Options): CurrentUserInf
         organisationName: f.string.sample(),
         userRole: fakeUserRole(options),
         status: fakeUserOrgStatus(options),
-        hasMultipleOrganisations: f.datatype.boolean(),
         allowedPharmaceuticalEntity: fakePharmaceuticalEntity(options),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { pendingWorkEmail: f.datatype.boolean() ? fakePendingWorkEmailChangeDto(options) : null }
     };
@@ -822,7 +822,6 @@ export const fakeUserInformationDto = (options?: Options): UserInformationDto =>
         organisationName: f.string.sample(),
         userRole: fakeUserRole(options),
         status: fakeUserOrgStatus(options),
-        hasMultipleOrganisations: f.datatype.boolean(),
         allowedPharmaceuticalEntity: fakePharmaceuticalEntity(options),
         ...!resolveCondition(options?.includeOptional ?? true, f) ? {} : { pendingWorkEmail: f.datatype.boolean() ? fakePendingWorkEmailChangeDto(options) : null }
     };

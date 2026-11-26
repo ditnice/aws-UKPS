@@ -205,7 +205,7 @@ public class UserServiceTests : DatabaseTestBase
             }
         );
 
-        UserInformationDto result = await Service.GetCurrentUser(
+        CurrentUserInformationDto result = await Service.GetCurrentUser(
             TestContext.Current.CancellationToken
         );
 
@@ -234,7 +234,7 @@ public class UserServiceTests : DatabaseTestBase
             }
         );
 
-        UserInformationDto result = await Service.GetCurrentUser(
+        CurrentUserInformationDto result = await Service.GetCurrentUser(
             TestContext.Current.CancellationToken
         );
 

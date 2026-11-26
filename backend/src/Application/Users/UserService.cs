@@ -80,6 +80,7 @@ internal partial class UserService(
         return new CurrentUserInformationDto(
             mfaInformation.MfaMethod,
             mfaInformation.MfaPhoneNumber,
+            user.HasMultipleSelectableOrganisations(),
             userInformationDto
         );
     }
@@ -333,7 +334,6 @@ internal partial class UserService(
             OrganisationName = membership.Organisation.OrganisationName,
             UserRole = membership.UserRole,
             Status = membership.Status.ConvertToUserOrgStatus(),
-            HasMultipleOrganisations = user.HasMultipleSelectableOrganisations(),
             AllowedPharmaceuticalEntity = membership.AllowedPharmaceuticalEntity,
             PendingWorkEmail = user.PendingEmail.TryGetData().TryGetSuccessValue(out var data)
                 ? new() { Value = data.WorkEmail, VerifiedByEmail = data.Verified }

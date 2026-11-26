@@ -19,6 +19,11 @@ public sealed record CurrentUserInformationDto : UserInformationDto
     public required string MfaPhoneNumber { get; init; }
 
     /// <summary>
+    /// Gets whether the user can select more than one organisation.
+    /// </summary>
+    public bool HasMultipleOrganisations { get; init; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="CurrentUserInformationDto"/> record.
     /// </summary>
     /// <remarks>
@@ -30,11 +35,14 @@ public sealed record CurrentUserInformationDto : UserInformationDto
     /// <summary>
     /// Initializes a new instance of the <see cref="CurrentUserInformationDto"/> record
     /// by copying an existing <see cref="UserInformationDto"/> and adding the
-    /// current user's MFA details.
+    /// current user's MFA details and organisation selection information.
     /// </summary>
     /// <param name="mfaMethod">The MFA method in use for the current user.</param>
     /// <param name="mfaPhoneNumber">
     /// The obfuscated phone number used for SMS MFA, if applicable.
+    /// </param>
+    /// <param name="hasMultipleOrganisations">
+    /// Whether the current user can select more than one organisation.
     /// </param>
     /// <param name="userInformationDto">
     /// The base user information to copy into this instance.
@@ -43,11 +51,13 @@ public sealed record CurrentUserInformationDto : UserInformationDto
     public CurrentUserInformationDto(
         string mfaMethod,
         string mfaPhoneNumber,
+        bool hasMultipleOrganisations,
         UserInformationDto userInformationDto
     )
         : base(userInformationDto)
     {
         MfaMethod = mfaMethod;
         MfaPhoneNumber = mfaPhoneNumber;
+        HasMultipleOrganisations = hasMultipleOrganisations;
     }
 }

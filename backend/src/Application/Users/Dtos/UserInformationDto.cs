@@ -54,11 +54,6 @@ public record UserInformationDto
     public required UserOrgStatus Status { get; init; }
 
     /// <summary>
-    /// Gets whether the user can select more than one organisation. Only set for the current user.
-    /// </summary>
-    public bool HasMultipleOrganisations { get; init; }
-
-    /// <summary>
     /// Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.
     /// </summary>
     public required PharmaceuticalEntity AllowedPharmaceuticalEntity { get; init; }
@@ -96,7 +91,6 @@ public record UserInformationDto
         OrganisationName = userInformation.OrganisationName;
         UserRole = userInformation.UserRole;
         Status = userInformation.Status;
-        HasMultipleOrganisations = userInformation.HasMultipleOrganisations;
         AllowedPharmaceuticalEntity = userInformation.AllowedPharmaceuticalEntity;
         PendingWorkEmail = userInformation.PendingWorkEmail;
     }

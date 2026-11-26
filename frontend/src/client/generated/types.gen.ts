@@ -179,6 +179,10 @@ export type CurrentUserInformationDto = {
      */
     mfaPhoneNumber: string;
     /**
+     * Gets whether the user can select more than one organisation.
+     */
+    hasMultipleOrganisations: boolean;
+    /**
      * Gets the unique identifier of the user.
      */
     userId: number;
@@ -214,10 +218,6 @@ export type CurrentUserInformationDto = {
      * Gets the user's membership status within the organisation.
      */
     status: UserOrgStatus;
-    /**
-     * Gets whether the user can select more than one organisation. Only set for the current user.
-     */
-    hasMultipleOrganisations: boolean;
     /**
      * Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.
      */
@@ -1753,10 +1753,6 @@ export type UserInformationDto = {
      * Gets the user's membership status within the organisation.
      */
     status: UserOrgStatus;
-    /**
-     * Gets whether the user can select more than one organisation. Only set for the current user.
-     */
-    hasMultipleOrganisations: boolean;
     /**
      * Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.
      */
