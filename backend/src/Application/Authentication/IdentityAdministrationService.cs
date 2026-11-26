@@ -341,6 +341,28 @@ internal partial class IdentityAdministrationService : IIdentityAdministrationSe
         };
     }
 
+    public async Task InitiateUpdateSmsMultiFactorAuthentication(
+        string accessToken,
+        string phoneNumber,
+        CancellationToken cancellationToken
+    )
+    {
+        await _identityService.UpdateUserPhoneNumberWithAccessToken(
+            accessToken,
+            phoneNumber,
+            cancellationToken
+        );
+    }
+
+    public async Task VerifyUpdateSmsMultiFactorAuthentication(
+        string accessToken,
+        string code,
+        CancellationToken cancellationToken
+    )
+    {
+        await _identityService.VerifyUserPhoneNumber(accessToken, code, cancellationToken);
+    }
+
     private async Task<UserOnboardingRecord> ReplaceOnboardingRecord(
         UserOnboardingRecord existingRecord,
         CancellationToken cancellationToken

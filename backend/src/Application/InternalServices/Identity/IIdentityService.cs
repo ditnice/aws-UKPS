@@ -106,4 +106,16 @@ internal interface IIdentityService
         CancellationToken cancellationToken,
         bool softwareTokenEnabled = true
     );
+
+    Task UpdateUserPhoneNumberWithAccessToken(
+        string accessToken,
+        string phoneNumber,
+        CancellationToken cancellationToken
+    );
+
+    Task VerifyUserPhoneNumber(
+        string accessToken,
+        string code,
+        CancellationToken cancellationToken
+    );
 }
