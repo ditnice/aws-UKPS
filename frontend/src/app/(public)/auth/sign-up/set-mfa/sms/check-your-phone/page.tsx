@@ -10,6 +10,7 @@ import { BackLink } from '@/components/BackLink/BackLink'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
+import { markMfaSetupComplete } from '@/lib/auth/mfa/mfaSetupCompleteFlag'
 import { navigateOnSuccessfulAuth } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
@@ -72,6 +73,7 @@ export default function CheckYourPhone() {
           mfaSetup.clear()
 
           clearPassword()
+          markMfaSetupComplete()
           navigateOnSuccessfulAuth()
           return
         }

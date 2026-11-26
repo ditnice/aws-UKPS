@@ -3,6 +3,7 @@
 import { useState } from 'react'
 
 import { PageHeader } from '@/components/PageHeader/PageHeader'
+import { markMfaSetupComplete } from '@/lib/auth/mfa/mfaSetupCompleteFlag'
 import SetupMfaForm from '@/lib/auth/mfa/SetupMfaForm'
 import { navigateOnSuccessfulAuth } from '@/lib/auth/routing'
 
@@ -45,6 +46,7 @@ export default function SignUpSetMfa() {
           setSuccess(true)
           clearSetup()
           clearPassword()
+          markMfaSetupComplete()
           navigateOnSuccessfulAuth()
         }}
       />

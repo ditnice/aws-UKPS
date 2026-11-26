@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { verifyMultiFactorAuthentication } from '@/client/generated/sdk.gen'
+import { mfaSetupCompleteStorageKey } from '@/lib/auth/mfa/mfaSetupCompleteFlag'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { fillInput } from '@/test-utils/userInteractions'
 
@@ -207,6 +208,17 @@ describe('SignUpSetMfa', () => {
     })
   })
 
+  it('flags MFA setup as complete for the records page after successful verification', async () => {
+    renderPage()
+
+    await enterSecurityCode('123456')
+    await submitForm()
+
+    await waitFor(() => {
+      expect(sessionStorage.getItem(mfaSetupCompleteStorageKey)).toBe('true')
+    })
+  })
+
   it('shows an invalid code error for a 400 response', async () => {
     vi.mocked(verifyMultiFactorAuthentication).mockResolvedValue({
       data: undefined,
@@ -220,6 +232,7 @@ describe('SignUpSetMfa', () => {
 
     expect(await screen.findByText(errorMessages.incorrectMfaCode)).toBeInTheDocument()
     expect(replace).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem(mfaSetupCompleteStorageKey)).toBeNull()
   })
 
   it('shows the backend detail for a 500 response without clearing setup details', async () => {
