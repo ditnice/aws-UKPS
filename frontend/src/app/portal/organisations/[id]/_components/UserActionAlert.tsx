@@ -94,7 +94,7 @@ const renderUserRequestAction = async ({ organisationId, userAction }: UserReque
     case 'approved-request':
       return (
         <Alert type="success">
-          <h3>Approval Email Sent</h3>
+          <h3>Approval email sent</h3>
           <p>
             We&rsquo;ve sent an email to {request?.workEmail ?? 'the new user'} notifying them that
             their request has been approved and instructions to set up an account.
