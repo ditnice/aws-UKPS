@@ -391,18 +391,6 @@ export const fakeRecordTaskListSectionDto = (options?: Options): RecordTaskListS
     };
 };
 
-export const fakeRecordTaskListDto = (options?: Options): RecordTaskListDto => {
-    const f = options?.faker ?? faker;
-    return {
-        recordId: f.number.int(),
-        organisationId: f.number.int(),
-        displayStatus: fakeRecordDisplayStatus(options),
-        companyCode: f.datatype.boolean() ? f.string.sample() : null,
-        recordTitle: f.datatype.boolean() ? f.string.sample() : null,
-        sections: f.helpers.multiple(() => fakeRecordTaskListSectionDto(options))
-    };
-};
-
 export const fakeRecordType = (options?: Options): RecordType => {
     const f = options?.faker ?? faker;
     return f.helpers.arrayElement(['Medicine', 'Vaccine']);
@@ -446,6 +434,20 @@ export const fakeRecordOverviewDto = (options?: Options): RecordOverviewDto => {
         nextUpdateDue: f.datatype.boolean() ? f.date.recent().toISOString() : null,
         companyCode: f.datatype.boolean() ? f.string.sample() : null,
         recordTitle: f.datatype.boolean() ? f.string.sample() : null
+    };
+};
+
+export const fakeRecordTaskListDto = (options?: Options): RecordTaskListDto => {
+    const f = options?.faker ?? faker;
+    return {
+        recordId: f.number.int(),
+        organisationId: f.number.int(),
+        displayStatus: fakeRecordDisplayStatus(options),
+        companyCode: f.datatype.boolean() ? f.string.sample() : null,
+        recordTitle: f.datatype.boolean() ? f.string.sample() : null,
+        recordType: fakeRecordType(options),
+        canDiscard: f.datatype.boolean(),
+        sections: f.helpers.multiple(() => fakeRecordTaskListSectionDto(options))
     };
 };
 

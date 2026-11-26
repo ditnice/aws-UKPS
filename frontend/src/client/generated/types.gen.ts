@@ -1226,6 +1226,15 @@ export type RecordTaskListDto = {
      */
     recordTitle: null | string;
     /**
+     * The record's type; needed to link to the record's discard page.
+     */
+    recordType: RecordType;
+    /**
+     * Whether the caller may discard the record: it has never been submitted and their role
+     * allows it.
+     */
+    canDiscard: boolean;
+    /**
      * Sections and their ordered tasks.
      */
     sections: Array<RecordTaskListSectionDto>;

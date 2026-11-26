@@ -10,6 +10,7 @@ using UKPS.Api.Application.RecordForms;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
 using UKPS.Api.Application.Records.Dtos;
+using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.WebApi.InternalServices.Authentication;
 using GetRecordTaskListResult = UKPS.Api.Application.Common.Result<
@@ -110,6 +111,8 @@ public class RecordTaskListControllerTests : IClassFixture<WebApplicationFactory
             DisplayStatus = RecordDisplayStatus.Draft,
             CompanyCode = "GC123",
             RecordTitle = "COVID-19, adults 18+",
+            RecordType = RecordType.Medicine,
+            CanDiscard = true,
             Sections =
             [
                 new RecordTaskListSectionDto

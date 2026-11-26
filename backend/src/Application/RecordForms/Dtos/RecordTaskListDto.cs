@@ -1,4 +1,5 @@
 using UKPS.Api.Application.Records.Dtos;
+using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Application.RecordForms.Dtos;
 
@@ -19,6 +20,15 @@ public sealed record RecordTaskListDto
 
     /// <summary>The latest revision's record title; null when it has no product details.</summary>
     public required string? RecordTitle { get; init; }
+
+    /// <summary>The record's type; needed to link to the record's discard page.</summary>
+    public required RecordType RecordType { get; init; }
+
+    /// <summary>
+    /// Whether the caller may discard the record: it has never been submitted and their role
+    /// allows it.
+    /// </summary>
+    public required bool CanDiscard { get; init; }
 
     /// <summary>Sections and their ordered tasks.</summary>
     public required IReadOnlyList<RecordTaskListSectionDto> Sections { get; init; }

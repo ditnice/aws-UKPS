@@ -7814,6 +7814,8 @@
           "displayStatus",
           "companyCode",
           "recordTitle",
+          "recordType",
+          "canDiscard",
           "sections"
         ],
         "type": "object",
@@ -7845,6 +7847,14 @@
               "string"
             ],
             "description": "The latest revision's record title; null when it has no product details."
+          },
+          "recordType": {
+            "description": "The record's type; needed to link to the record's discard page.",
+            "$ref": "#/components/schemas/RecordType"
+          },
+          "canDiscard": {
+            "type": "boolean",
+            "description": "Whether the caller may discard the record: it has never been submitted and their role\nallows it."
           },
           "sections": {
             "type": "array",

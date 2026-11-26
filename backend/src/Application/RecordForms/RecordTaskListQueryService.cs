@@ -8,12 +8,14 @@ using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Persistence;
+using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Application.RecordForms;
 
 internal sealed class RecordTaskListQueryService(
     AppDbContext dbContext,
-    RecordFormPageLoader loader
+    RecordFormPageLoader loader,
+    IRecordViewService recordViewService
 ) : IRecordTaskListQueryService
 {
     private static readonly MethodInfo _readAnsweredMethod =
@@ -37,17 +39,20 @@ internal sealed class RecordTaskListQueryService(
             );
         }
 
-        RecordDisplayStatus displayStatus = await dbContext
-            .Records.AsNoTracking()
-            .Where(r => r.Id == form.Record.Id)
-            .SelectLatestRevision()
-            .Select(static x => x.DisplayStatus)
-            .SingleAsync(cancellationToken);
-        var productDetail = await dbContext
-            .RecordProductDetails.AsNoTracking()
-            .Where(x => x.RevisionId == form.Revision.Id)
-            .Select(static x => new { x.CompanyCode, x.RecordTitle })
-            .SingleOrDefaultAsync(cancellationToken);
+        if (
+            !(
+                await recordViewService.GetRecordOverview(
+                    form.Record.Id,
+                    form.Record.RecordType,
+                    form.Record.OrganisationId,
+                    cancellationToken
+                )
+            ).TryGetSuccessValue(out RecordOverviewDto? overview)
+        )
+        {
+            return GetRecordTaskListResult.Err(new GetRecordTaskListError.NotFound());
+        }
+
         HashSet<string> answered = await ReadAnsweredQuestionIdsAsync(
             form.Model,
             form.Revision.Id,
@@ -63,9 +68,11 @@ internal sealed class RecordTaskListQueryService(
             {
                 RecordId = form.Record.Id,
                 OrganisationId = form.Record.OrganisationId,
-                DisplayStatus = displayStatus,
-                CompanyCode = productDetail?.CompanyCode,
-                RecordTitle = productDetail?.RecordTitle,
+                DisplayStatus = overview.DisplayStatus,
+                CompanyCode = overview.CompanyCode,
+                RecordTitle = overview.RecordTitle,
+                RecordType = overview.RecordType,
+                CanDiscard = overview.Actions.Contains(RecordAction.Discard),
                 Sections = form
                     .Model.Sections.Select(section => ToDto(section, answered, applicability))
                     .ToArray(),
