@@ -209,7 +209,8 @@ internal class LoginService : ILoginService
         {
             // Handles edge cases where there is a pending email that only changes in case.
             bool hasPendingEmailThatMatchesCase =
-                user.IsPendingEmailVerified()
+                user.PendingEmail.TryGetData().TryGetSuccessValue(out var data)
+                && data.Verified
                 && string.Equals(
                     user.NormalisedPendingWorkEmail,
                     user.NormalisedWorkEmail,

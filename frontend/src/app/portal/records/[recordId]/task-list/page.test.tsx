@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getRecordTaskList } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
+import { navigationState } from '@/test-utils/nextNavigation'
 
 import RecordTaskListPage from './page'
 
@@ -20,7 +21,8 @@ vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(),
 }))
 
-vi.mock('next/navigation', () => ({
+vi.mock('next/navigation', async () => ({
+  ...(await import('@/test-utils/nextNavigation')),
   notFound: mocks.notFound,
 }))
 
@@ -89,6 +91,8 @@ const mandatoryTasksCompleteTaskList = {
 } satisfies GetRecordTaskListResult
 
 const renderPage = async (recordId = '42', action?: string) => {
+  // The alert is shown once, only when the URL carries the banner parameter
+  navigationState.searchParams = new URLSearchParams(action ? { action } : {})
   const page = await RecordTaskListPage({
     params: Promise.resolve({ recordId }),
     searchParams: Promise.resolve({ action }),

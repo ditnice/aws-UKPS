@@ -166,6 +166,66 @@ export type CreateRecordDto = {
 };
 
 /**
+ * Represents the information for the currently authenticated user, including
+ * their multi-factor authentication (MFA) settings.
+ */
+export type CurrentUserInformationDto = {
+    /**
+     * Gets the MFA method in use for the current user.
+     */
+    mfaMethod: string;
+    /**
+     * Gets the obfuscated phone number used for SMS MFA, if applicable.
+     */
+    mfaPhoneNumber: string;
+    /**
+     * Gets whether the user can select more than one organisation.
+     */
+    hasMultipleOrganisations: boolean;
+    /**
+     * Gets the unique identifier of the user.
+     */
+    userId: number;
+    /**
+     * Gets the full name of the user.
+     */
+    fullName: string;
+    /**
+     * Gets the user's work telephone number.
+     */
+    workTelephone: string;
+    /**
+     * Gets the user's email address.
+     */
+    workEmail: string;
+    /**
+     * Gets the unique identifier of the user's organisation membership.
+     */
+    organisationMembershipId: number;
+    /**
+     * Gets the unique identifier of the user's organisation.
+     */
+    organisationId: number;
+    /**
+     * Gets the name of the user's organisation.
+     */
+    organisationName: string;
+    /**
+     * Gets the role assigned to the user within the organisation.
+     */
+    userRole: UserRole;
+    /**
+     * Gets the user's membership status within the organisation.
+     */
+    status: UserOrgStatus;
+    /**
+     * Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.
+     */
+    allowedPharmaceuticalEntity: PharmaceuticalEntity;
+    pendingWorkEmail?: null | PendingWorkEmailChangeDto;
+};
+
+/**
  * Specifies the user details that can be edited.
  */
 export const EditableUserDetail = { FULL_NAME: 'FullName', WORK_PHONE: 'WorkPhone' } as const;
@@ -1704,22 +1764,10 @@ export type UserInformationDto = {
      */
     status: UserOrgStatus;
     /**
-     * Gets whether the user can select more than one organisation. Only set for the current user.
-     */
-    hasMultipleOrganisations: boolean;
-    /**
      * Gets the permissions of the user. Whether they can interact with medicines, vaccines or both.
      */
     allowedPharmaceuticalEntity: PharmaceuticalEntity;
     pendingWorkEmail?: null | PendingWorkEmailChangeDto;
-    /**
-     * Gets the MFA method in use for the current user.
-     */
-    mfaMethod: string;
-    /**
-     * Gets the obfuscated phone number used for SMS MFA, if applicable.
-     */
-    mfaPhoneNumber: string;
 };
 
 /**
@@ -3544,7 +3592,7 @@ export type GetUsersMeResponses = {
     /**
      * Returns the information for the currently authenticated user.
      */
-    200: UserInformationDto;
+    200: CurrentUserInformationDto;
 };
 
 export type GetUsersMeResponse = GetUsersMeResponses[keyof GetUsersMeResponses];

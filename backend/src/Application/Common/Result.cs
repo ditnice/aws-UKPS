@@ -198,4 +198,20 @@ public readonly record struct Result<TValue, TError> : IResult<TError>
             "Result was created with 'default' and holds neither a value nor an error."
         );
     }
+
+    /// <summary>
+    /// Attempts to get the success value.
+    /// </summary>
+    /// <param name="output">The success value when the result is successful; otherwise <c>default</c>.</param>
+    /// <returns><c>true</c> if the result is successful; otherwise <c>false</c>.</returns>
+    public bool TryGetSuccessValue([MaybeNullWhen(false)] out TValue output)
+    {
+        output = default;
+        if (IsOk)
+        {
+            output = Value;
+            return true;
+        }
+        return false;
+    }
 }
