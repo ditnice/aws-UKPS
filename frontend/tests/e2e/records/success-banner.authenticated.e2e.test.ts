@@ -41,7 +41,13 @@ test.describe(
       await expect(page).not.toHaveURL(/action=/)
 
       // Discard one: the records list shows the banner once, and the parameter leaves the URL.
-      await page.goto(`${recordsPath}/${recordToDiscardId}/discard`)
+      // Through the record page, as a user would: the discard page needs the record type, which
+      // the links carry.
+      await page.goto(recordsPath)
+      await recordsTable
+        .getByRole('link', { name: new RegExp(`^View record ${recordToDiscardId}$`) })
+        .click()
+      await page.getByRole('link', { name: 'Discard record' }).click()
       await page.getByRole('button', { name: 'Confirm' }).click()
 
       await expect(page).toHaveURL(new RegExp(`${recordsPath}(\\?|$)`))
