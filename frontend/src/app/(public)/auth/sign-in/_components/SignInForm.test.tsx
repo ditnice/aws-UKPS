@@ -240,6 +240,29 @@ describe('SignInForm', () => {
     })
   })
 
+  it('redirects to the check your phone page if there is an SMS MFA challenge', async () => {
+    vi.mocked(login).mockResolvedValue({
+      error: {
+        challengeType: 'SmsMultiFactorAuthenticationRequired',
+        authenticationSession: 'test-authentication-session',
+      },
+      data: undefined,
+    })
+
+    render(<SignInForm />)
+
+    await fillInput(user, screen.getByLabelText('Email address'), 'name@example.com')
+    await fillInput(user, screen.getByLabelText('Password'), 'secure-password')
+
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    await waitFor(() => {
+      expect(router.push).toHaveBeenCalledWith(
+        '/auth/sign-in/mfa/sms?username=name%40example.com&session=test-authentication-session',
+      )
+    })
+  })
+
   it('passes returnTo to the MFA page if there is an MFA challenge', async () => {
     vi.mocked(login).mockResolvedValue({
       error: {

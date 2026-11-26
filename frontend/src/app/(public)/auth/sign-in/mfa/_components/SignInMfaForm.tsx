@@ -40,8 +40,14 @@ type SignInFormProps = {
   returnTo?: string
   username: string
   session: string
+  method?: 'authenticator' | 'sms'
 }
-export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) {
+export function SignInMfaForm({
+  username,
+  returnTo,
+  session,
+  method = 'authenticator',
+}: SignInFormProps) {
   // The authentication session is single-use, so once it has been accepted the form stays disabled
   // while the full page load to the portal is in progress.
   const [succeeded, setSucceeded] = useState(false)
@@ -142,9 +148,12 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
         Continue
       </Button>
 
-      {/* TODO 620 - link this up when the page is created */}
       <p className={styles.helpLink}>
-        <Link href="/">I do not have access to my authenticator</Link>
+        <Link href="/auth/account-recovery">
+          {method === 'sms'
+            ? 'I do not have access to my phone'
+            : 'I do not have access to my authenticator'}
+        </Link>
       </p>
     </form>
   )
