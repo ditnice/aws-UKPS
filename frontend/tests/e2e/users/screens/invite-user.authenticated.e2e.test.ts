@@ -1,4 +1,3 @@
-import { buildUserActionHref } from '../../../../src/app/portal/organisations/[id]/_lib/userActionAlert'
 import { expect, test } from '../../fixtures/test'
 import { forRoles } from '../../helpers/roles'
 
@@ -19,9 +18,8 @@ test(
     await page.getByLabel('Contact number').fill('020 7946 0000')
     await page.getByRole('button', { name: 'Send invite' }).click()
 
-    await expect(page).toHaveURL(
-      buildUserActionHref(Number(organisationId), { action: 'invited', userId }),
-    )
+    // The banner parameters are removed from the address bar once the alert has been shown.
+    await expect(page).toHaveURL(`/portal/organisations/${organisationId}`)
     await expect(page.getByRole('heading', { name: 'Invitation sent' })).toBeVisible()
   },
 )

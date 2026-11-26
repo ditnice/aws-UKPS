@@ -7,6 +7,7 @@ import { getUsersMe } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { UserAuthenticationDetails } from '@/lib/users/UserAuthenticationDetails'
+import { navigationState } from '@/test-utils/nextNavigation'
 
 import { SearchParams } from './navigation'
 import Me from './page'
@@ -46,6 +47,12 @@ beforeEach(() => {
 const exampleUser = fakeCurrentUserInformationDto()
 
 const renderPage = async (searchParams: SearchParams = {}) => {
+  // The success alerts are shown once, only when the URL carries the banner parameter
+  navigationState.searchParams = new URLSearchParams(
+    Object.entries(searchParams).flatMap(([name, value]) =>
+      typeof value === 'string' ? [[name, value]] : [],
+    ),
+  )
   render(await Me({ searchParams: Promise.resolve(searchParams) }))
 }
 

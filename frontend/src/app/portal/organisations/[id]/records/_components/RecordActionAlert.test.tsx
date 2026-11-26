@@ -1,7 +1,16 @@
 import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { navigationState } from '@/test-utils/nextNavigation'
 
 import { RecordActionAlert } from './RecordActionAlert'
+
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
+
+beforeEach(() => {
+  // The alert is shown once, only when the URL carries a banner parameter
+  navigationState.searchParams = new URLSearchParams({ action: 'discarded' })
+})
 
 afterEach(cleanup)
 

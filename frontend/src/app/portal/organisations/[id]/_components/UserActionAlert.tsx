@@ -27,7 +27,7 @@ const renderRegisteredUserAction = async ({
   switch (userAction.action) {
     case 'invited':
       return (
-        <Alert type="success">
+        <Alert type="success" showOnce={['action', 'userId']}>
           <h3>Invitation sent</h3>
           <p>
             We&rsquo;ve sent an email to {user?.workEmail ?? 'the new user'} with instructions to
@@ -37,21 +37,21 @@ const renderRegisteredUserAction = async ({
       )
     case 'deactivated':
       return (
-        <Alert type="success">
+        <Alert type="success" showOnce={['action', 'userId']}>
           <h3>{user?.workEmail ?? 'The user'}&apos;s account has been deactivated</h3>
           <p>We&#39;ve sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
         </Alert>
       )
     case 'reactivated':
       return (
-        <Alert type="success">
+        <Alert type="success" showOnce={['action', 'userId']}>
           <h3>{user?.workEmail ?? 'The user'}&apos;s account has been reactivated</h3>
           <p>We&rsquo;ve sent an email to {user?.workEmail ?? 'the user'} notifying them.</p>
         </Alert>
       )
     case 'permissions-updated':
       return (
-        <Alert type="success">
+        <Alert type="success" showOnce={['action', 'userId']}>
           <h3>Permissions changed</h3>
           <p>
             {user?.workEmail ?? "The user's"}{' '}
@@ -68,7 +68,7 @@ const renderRegisteredUserAction = async ({
         return null
       }
       return (
-        <Alert type="success" dismissHref={dismissHref}>
+        <Alert type="success" dismissHref={dismissHref} showOnce={['action', 'userId']}>
           <h3>User removed from UK PharmaScan</h3>
           <p>
             This user&apos;s personal information is no longer available. In a record&apos;s
@@ -93,7 +93,7 @@ const renderUserRequestAction = async ({ organisationId, userAction }: UserReque
   switch (userAction.action) {
     case 'approved-request':
       return (
-        <Alert type="success">
+        <Alert type="success" showOnce={['action', 'userRequestId']}>
           <h3>Approval Email Sent</h3>
           <p>
             We&rsquo;ve sent an email to {request?.workEmail ?? 'the new user'} notifying them that
@@ -103,7 +103,7 @@ const renderUserRequestAction = async ({ organisationId, userAction }: UserReque
       )
     case 'rejected-request':
       return (
-        <Alert type="success">
+        <Alert type="success" showOnce={['action', 'userRequestId']}>
           <h3>Rejection Email Sent</h3>
           <p>
             We&rsquo;ve sent an email to {request?.workEmail ?? 'the user'} notifying them that
