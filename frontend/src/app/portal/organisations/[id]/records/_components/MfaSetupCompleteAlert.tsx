@@ -1,33 +1,23 @@
 'use client'
 
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useState } from 'react'
 
 import { Alert } from '@/components/Alert/Alert'
-import { clearMfaSetupComplete, isMfaSetupComplete } from '@/lib/auth/mfa/mfaSetupCompleteFlag'
+import { useMfaSetupCompleteStore } from '@/lib/auth/mfa/mfaSetupCompleteFlag'
 
-const subscribe = () => () => undefined
-
-// Session storage is only readable in the browser, so nothing renders on the server.
+// Clears the flag once read, so the alert shows on arrival but not after a refresh or a later
+// visit. `shown` keeps the alert up after clearing flips the store back to empty.
 export const MfaSetupCompleteAlert = () => {
-  const isClient = useSyncExternalStore(
-    subscribe,
-    () => true,
-    () => false,
-  )
+  const { status, clear } = useMfaSetupCompleteStore()
+  const [shown, setShown] = useState(false)
 
-  return isClient ? <MfaSetupCompleteAlertOnce /> : null
-}
-
-// Reads the flag once on mount and clears it, so the alert shows on arrival but not after a
-// refresh or a later visit.
-const MfaSetupCompleteAlertOnce = () => {
-  const [show] = useState(isMfaSetupComplete)
+  if (status === 'ready' && !shown) setShown(true)
 
   useEffect(() => {
-    clearMfaSetupComplete()
-  }, [])
+    if (status === 'ready') clear()
+  }, [status, clear])
 
-  if (!show) return null
+  if (!shown) return null
 
   return (
     <Alert type="success">
