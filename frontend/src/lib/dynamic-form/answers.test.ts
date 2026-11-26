@@ -3,9 +3,11 @@ import { describe, expect, it } from 'vitest'
 import {
   buildPayload,
   duplicateMessage,
+  emptyEntryMessage,
   fieldName,
   findEntry,
   isSatisfied,
+  questionError,
   toAnswer,
   toFormValue,
   toFormValues,
@@ -126,6 +128,46 @@ describe('validateQuestion', () => {
         { parent: '1', child: '11' },
       ]),
     ).toBe('Select up to 2')
+  })
+
+  it('accepts a single blank entry of an optional multi-value hierarchical select', () => {
+    expect(questionError(areas, [{ parent: '', child: '' }])).toBeUndefined()
+  })
+
+  it('reports each blank entry of a multi-value hierarchical select once there are several', () => {
+    expect(
+      questionError(areas, [
+        { parent: '2', child: '' },
+        { parent: '', child: '' },
+      ]),
+    ).toEqual({ message: '', items: { '1': emptyEntryMessage } })
+    expect(
+      questionError(areas, [
+        { parent: '', child: '' },
+        { parent: '2', child: '' },
+      ]),
+    ).toEqual({ message: '', items: { '0': emptyEntryMessage } })
+  })
+
+  it('reports a repeated area and a blank entry together', () => {
+    expect(
+      questionError(areas, [
+        { parent: '2', child: '' },
+        { parent: '2', child: '' },
+        { parent: '', child: '' },
+      ]),
+    ).toEqual({ message: duplicateMessage, items: { '2': emptyEntryMessage } })
+  })
+
+  it('reports too many areas and a blank entry together', () => {
+    expect(
+      questionError(areas, [
+        { parent: '2', child: '' },
+        { parent: '1', child: '' },
+        { parent: '1', child: '11' },
+        { parent: '', child: '' },
+      ]),
+    ).toEqual({ message: 'Select up to 2', items: { '3': emptyEntryMessage } })
   })
 
   it('rejects unknown rule kinds', () => {
