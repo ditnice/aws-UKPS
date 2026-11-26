@@ -3,9 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { verifyMultiFactorAuthentication } from '@/client/generated/sdk.gen'
-import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
-import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
 
 import { signUpMfaSetupStorageKey } from '../_lib/mfaSetupStorage'
@@ -13,7 +11,7 @@ import { SignUpPasswordProvider } from '../_lib/SignUpPasswordContext'
 
 import SignUpSetMfa from './page'
 
-const { push: mockPush } = router
+const replace = vi.fn()
 
 const setup = {
   authenticationSession: 'test-authentication-session',
@@ -29,6 +27,7 @@ vi.mock('@/client/generated/sdk.gen', () => ({
 }))
 
 beforeEach(() => {
+  vi.stubGlobal('location', { ...globalThis.location, replace })
   sessionStorage.setItem(signUpMfaSetupStorageKey, JSON.stringify(setup))
   vi.mocked(verifyMultiFactorAuthentication).mockResolvedValue({
     data: undefined,
@@ -196,7 +195,7 @@ describe('SignUpSetMfa', () => {
     })
   })
 
-  it('clears setup details and redirects to the portal after successful verification', async () => {
+  it('clears setup details and redirects to organisation selection after successful verification', async () => {
     renderPage()
 
     await enterSecurityCode('123456')
@@ -204,7 +203,7 @@ describe('SignUpSetMfa', () => {
 
     await waitFor(() => {
       expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
-      expect(mockPush).toHaveBeenCalledWith(routeOnSuccessfulAuth)
+      expect(replace).toHaveBeenCalledWith('/portal/organisations/select')
     })
   })
 
@@ -220,7 +219,7 @@ describe('SignUpSetMfa', () => {
     await submitForm()
 
     expect(await screen.findByText(errorMessages.incorrectMfaCode)).toBeInTheDocument()
-    expect(mockPush).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
   })
 
   it('shows the backend detail for a 500 response without clearing setup details', async () => {
@@ -234,7 +233,7 @@ describe('SignUpSetMfa', () => {
     await submitForm()
 
     expect(await screen.findByText('The service is temporarily unavailable.')).toBeInTheDocument()
-    expect(mockPush).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBe(JSON.stringify(setup))
   })
 
@@ -251,7 +250,7 @@ describe('SignUpSetMfa', () => {
     expect(
       await screen.findByText('We could not verify your authentication code. Try again later.'),
     ).toBeInTheDocument()
-    expect(mockPush).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBe(JSON.stringify(setup))
   })
 
@@ -267,7 +266,7 @@ describe('SignUpSetMfa', () => {
     expect(
       await screen.findByText('We could not verify your authentication code. Try again later.'),
     ).toBeInTheDocument()
-    expect(mockPush).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBe(JSON.stringify(setup))
   })
 
@@ -281,6 +280,6 @@ describe('SignUpSetMfa', () => {
     expect(
       await screen.findByText('We could not verify your authentication code. Try again later.'),
     ).toBeInTheDocument()
-    expect(mockPush).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
   })
 })

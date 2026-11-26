@@ -35,6 +35,8 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasFilter("normalised_pending_work_email IS NOT NULL")
             .HasDatabaseName("ix_app_user_normalised_pending_work_email");
 
+        User.ConfigurePendingEmail(builder);
+
         builder.Property(x => x.UserType);
         builder.Property(x => x.FullName).IsRequired();
         builder.Property(x => x.CreatedAt).HasColumnType("timestamptz");

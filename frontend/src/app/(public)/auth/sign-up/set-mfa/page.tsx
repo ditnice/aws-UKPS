@@ -1,17 +1,15 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import SetupMfaForm from '@/lib/auth/mfa/SetupMfaForm'
-import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
+import { navigateOnSuccessfulAuth } from '@/lib/auth/routing'
 
 import { useMfaSetupStore } from '../_lib/mfaSetupStorage'
 import { useSignUpPassword } from '../_lib/SignUpPasswordContext'
 
 export default function SignUpSetMfa() {
-  const router = useRouter()
   const { clearPassword } = useSignUpPassword()
   const setupState = useMfaSetupStore()
 
@@ -47,7 +45,7 @@ export default function SignUpSetMfa() {
           setSuccess(true)
           clearSetup()
           clearPassword()
-          router.push(routeOnSuccessfulAuth)
+          navigateOnSuccessfulAuth()
         }}
       />
     </>

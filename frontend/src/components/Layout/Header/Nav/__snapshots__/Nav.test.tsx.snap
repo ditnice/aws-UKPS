@@ -22,7 +22,11 @@ exports[`Nav > renders collapsed 1`] = `
               class="_link_12dd76"
               href="/test1"
             >
-              Test link 1
+              <span
+                class="_label_12dd76"
+              >
+                Test link 1
+              </span>
             </a>
           </li>
           <li>
@@ -30,7 +34,11 @@ exports[`Nav > renders collapsed 1`] = `
               class="_link_12dd76"
               href="/test2"
             >
-              Test link 2
+              <span
+                class="_label_12dd76"
+              >
+                Test link 2
+              </span>
             </a>
           </li>
         </ul>
@@ -62,7 +70,11 @@ exports[`Nav > renders expanded 1`] = `
               class="_link_12dd76"
               href="/test1"
             >
-              Test link 1
+              <span
+                class="_label_12dd76"
+              >
+                Test link 1
+              </span>
             </a>
           </li>
           <li>
@@ -70,7 +82,11 @@ exports[`Nav > renders expanded 1`] = `
               class="_link_12dd76"
               href="/test2"
             >
-              Test link 2
+              <span
+                class="_label_12dd76"
+              >
+                Test link 2
+              </span>
             </a>
           </li>
         </ul>
