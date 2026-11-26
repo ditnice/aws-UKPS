@@ -42,7 +42,6 @@ const user: UserInformationDto = {
   organisationName: 'Example Pharma',
   userRole: 'Standard',
   status: 'Active',
-  hasMultipleOrganisations: false,
   allowedPharmaceuticalEntity: PharmaceuticalEntity.BOTH,
 }
 
@@ -50,6 +49,7 @@ const currentUser: CurrentUserInformationDto = {
   ...user,
   mfaMethod: 'Unknown',
   mfaPhoneNumber: '',
+  hasMultipleOrganisations: false,
 }
 
 function mockResponse() {
