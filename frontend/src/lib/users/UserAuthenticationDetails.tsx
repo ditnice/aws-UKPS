@@ -1,4 +1,4 @@
-import { UserInformationDto } from '@/client/generated'
+import { CurrentUserInformationDto } from '@/client/generated'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import {
   SummaryList,
@@ -8,7 +8,7 @@ import {
 import { errorMessages } from '@/lib/form/errorMessages'
 
 type UserAuthenticationDetailsProps = {
-  currentUser: UserInformationDto | undefined
+  currentUser: CurrentUserInformationDto | undefined
   actions?: {
     changePassword?: string
     sendRecoveryLink?: {

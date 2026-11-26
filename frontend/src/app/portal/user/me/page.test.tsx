@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { UserInformationDto } from '@/client/generated'
-import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
+import { CurrentUserInformationDto } from '@/client/generated'
+import { fakeCurrentUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
 import { getUsersMe } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { errorMessages } from '@/lib/form/errorMessages'
@@ -23,13 +23,15 @@ vi.mock('@/client/server-api', () => ({
 }))
 
 vi.mock('@/lib/users/UserAuthenticationDetails', () => ({
-  UserAuthenticationDetails: vi.fn(({ currentUser }: { currentUser: UserInformationDto }) => (
-    <div data-testid="user-authentication-details">{currentUser.userId}</div>
-  )),
+  UserAuthenticationDetails: vi.fn(
+    ({ currentUser }: { currentUser: CurrentUserInformationDto }) => (
+      <div data-testid="user-authentication-details">{currentUser.userId}</div>
+    ),
+  ),
 }))
 
 vi.mock('@/lib/users/UserDetails', () => ({
-  UserDetails: ({ currentUser }: { currentUser: UserInformationDto }) => (
+  UserDetails: ({ currentUser }: { currentUser: CurrentUserInformationDto }) => (
     <div data-testid="user-details">{currentUser.userId}</div>
   ),
 }))
@@ -41,7 +43,7 @@ beforeEach(() => {
   vi.mocked(createServerApiClient).mockResolvedValue(apiClient)
 })
 
-const exampleUser = fakeUserInformationDto()
+const exampleUser = fakeCurrentUserInformationDto()
 
 const renderPage = async (searchParams: SearchParams = {}) => {
   render(await Me({ searchParams: Promise.resolve(searchParams) }))

@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
+import { fakeCurrentUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
 
 import { UserAuthenticationDetails } from './UserAuthenticationDetails'
 
-const user = fakeUserInformationDto()
+const user = fakeCurrentUserInformationDto()
 
 const actions = {
   changePassword: '/change-password',

@@ -23,7 +23,7 @@ public interface IUserService
     /// A task that represents the asynchronous operation. The task result contains
     /// the current user's details, including their organisation membership and role.
     /// </returns>
-    Task<UserInformationDto> GetCurrentUser(CancellationToken cancellationToken);
+    Task<CurrentUserInformationDto> GetCurrentUser(CancellationToken cancellationToken);
 
     /// <summary>
     /// Retrieves a paginated list of users based on the specified criteria.
@@ -151,6 +151,30 @@ public interface IUserService
     /// details and their role within the organisation, or the reason the request failed.
     /// </returns>
     Task<Result<UserInformationDto, GetUsersError>> GetUserDetailsWithinOrganisation(
+        int userId,
+        int organisationId,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
+    /// Retrieves the administrator's view of a user's details, along with their membership of the
+    /// specified organisation.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user to retrieve.</param>
+    /// <param name="organisationId">
+    /// The unique identifier of the organisation the user's membership should be read from. A user
+    /// may belong to several organisations, so their role is resolved against this organisation.
+    /// </param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a
+    /// <see cref="Result{TSuccess, TError}"/> with the user's details as seen by an administrator
+    /// (see <see cref="UserInformationAdminViewDto"/>) and their role within the organisation, or
+    /// an error of type <see cref="GetUsersError"/> if the request failed.
+    /// </returns>
+    Task<
+        Result<UserInformationAdminViewDto, GetUsersError>
+    > GetUserDetailsWithinOrganisationAdminView(
         int userId,
         int organisationId,
         CancellationToken cancellationToken
