@@ -298,7 +298,7 @@ describe('SignInForm', () => {
   })
 
   it('shows the pending email expired alert if the pending email has expired', async () => {
-    vi.mocked(postAuthLogin).mockResolvedValue({
+    vi.mocked(login).mockResolvedValue({
       error: {
         code: 'PendingEmailExpired',
       },

@@ -204,7 +204,7 @@ describe('SignInMfaForm', () => {
     expect(screen.queryByTestId('email-verification-required-alert')).toBeNull()
     expect(screen.queryByText('PendingEmailExpired')).toBeNull()
     expect(screen.queryByText(errorMessages.incorrectMfaCode)).toBeNull()
-    expect(mockPush).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
   })
 
   it('does not show the email verification alert on a successful authentication', async () => {
