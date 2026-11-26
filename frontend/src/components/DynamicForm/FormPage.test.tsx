@@ -713,7 +713,7 @@ describe('FormPage', () => {
   })
 
   describe('controls', () => {
-    it('associates radio hints and errors and revalidates on selection', async () => {
+    it('associates radio hints and errors, and keeps the error until the next save', async () => {
       const user = userEvent.setup()
       render(
         <FormPage
@@ -749,9 +749,13 @@ describe('FormPage', () => {
       }
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
       await user.click(yes)
-      await waitFor(() => expect(screen.queryByText('Choose yes or no')).not.toBeInTheDocument())
       expect(yes).toHaveFocus()
       expect(yes).toBeChecked()
+      // The error stays until the next save.
+      expect(screen.getByText('Choose yes or no')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Save and continue' }))
+      await waitFor(() => expect(screen.queryByText('Choose yes or no')).not.toBeInTheDocument())
+      expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1)
       expect(yes).not.toHaveAttribute('aria-invalid')
       expect(screen.getByRole('group', { name: 'Choose an answer' })).not.toHaveAttribute(
         'aria-invalid',
@@ -825,7 +829,7 @@ describe('FormPage', () => {
       ).not.toHaveAccessibleDescription()
     })
 
-    it('associates checkbox hints and errors and revalidates on selection', async () => {
+    it('associates checkbox hints and errors, and keeps the error until the next save', async () => {
       const user = userEvent.setup()
       render(
         <FormPage
@@ -861,10 +865,14 @@ describe('FormPage', () => {
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
       expect(document.querySelectorAll('.checkbox--error')).toHaveLength(1)
       await user.click(first)
+      expect(first).toHaveFocus()
+      // The error stays until the next save.
+      expect(screen.getByText('Choose at least one method')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Save and continue' }))
       await waitFor(() =>
         expect(screen.queryByText('Choose at least one method')).not.toBeInTheDocument(),
       )
-      expect(first).toHaveFocus()
+      expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1)
       expect(first).not.toHaveAttribute('aria-invalid')
       expect(screen.getByRole('group', { name: 'Choose contact methods' })).not.toHaveAttribute(
         'aria-invalid',
@@ -1395,7 +1403,8 @@ describe('FormPage', () => {
       await user.type(screen.getByRole('textbox', { name: 'Year' }), '2027')
       save()
 
-      expect(await screen.findByText('Select a quarter')).toBeInTheDocument()
+      // The quarter select's placeholder option has the same text, so match the message only.
+      expect(await screen.findByText('Select a quarter', { selector: 'p' })).toBeInTheDocument()
       expect(invalidParts()).toEqual(['Quarter'])
     })
 

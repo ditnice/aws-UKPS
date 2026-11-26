@@ -28,7 +28,8 @@ export function RadioQuestion({
       legendSize={labelSizeFor(labelStyle)}
       name={name}
       onBlur={onBlur}
-      // A choice is a whole answer, so revalidate straight away rather than waiting for blur.
+      // A choice is a whole answer, so mark the field as blurred straight away. Forms validate on
+      // submit only, so this does not re-check the answer.
       onChange={(next) => {
         onChange(next)
         onBlur()

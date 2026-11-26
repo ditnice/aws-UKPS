@@ -20,6 +20,7 @@ type EntryProps = {
   entry: HierarchicalEntry
   onChange: (entry: HierarchicalEntry) => void
   onBlur: () => void
+  clearError: () => void
   error?: string
   /** The ID of the question's hint, which every select is described by. */
   hintId?: string
@@ -36,6 +37,7 @@ function HierarchicalEntrySelects({
   entry,
   onChange,
   onBlur,
+  clearError,
   error,
   hintId,
   entryLabel,
@@ -71,9 +73,9 @@ function HierarchicalEntrySelects({
         onBlur={onBlur}
         onChange={(event) => {
           onChange({ parent: event.target.value, child: '' })
-          // Revalidate straight away, so an error the new parent fixes clears before the child
-          // select appears, rather than the child showing as invalid until the next blur.
-          onBlur()
+          // Forms only validate on submit, so clear the error now: otherwise the child select would
+          // appear showing as invalid. The next save checks the new choice.
+          clearError()
         }}
         value={entry.parent}
         width="one-third"
@@ -140,6 +142,7 @@ export function HierarchicalSelectQuestion({
   const entryLabel = (index: number) => `${question.itemLabel ?? 'Item'} ${index + 1}`
   const renderEntry = (index: number, hintId?: string) => (
     <HierarchicalEntrySelects
+      clearError={clearError}
       entry={entries[index]}
       entryLabel={question.multiple ? entryLabel(index) : undefined}
       error={error}

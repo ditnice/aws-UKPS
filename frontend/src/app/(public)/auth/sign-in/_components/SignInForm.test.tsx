@@ -297,4 +297,26 @@ describe('SignInForm', () => {
     expect(router.push).not.toHaveBeenCalled()
     expect(replace).not.toHaveBeenCalled()
   })
+
+  it('submits again after the email verification required alert was shown', async () => {
+    vi.mocked(login).mockResolvedValueOnce({
+      error: { code: 'PendingEmailRequiredVerification' },
+      data: undefined,
+    })
+
+    render(<SignInForm />)
+
+    await fillInput(user, screen.getByLabelText('Email address'), 'name@example.com')
+    await fillInput(user, screen.getByLabelText('Password'), 'secure-password')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect(await screen.findByTestId('email-verification-required-alert')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    await waitFor(() => {
+      expect(login).toHaveBeenCalledTimes(2)
+    })
+    expect(screen.queryByTestId('email-verification-required-alert')).toBeNull()
+  })
 })

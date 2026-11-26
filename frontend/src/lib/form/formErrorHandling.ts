@@ -46,7 +46,7 @@ export const clearFormApiErrors = (): Updater<AnyFieldLikeMetaBase> => {
  * Clears the errors the server set on any field, before the form is submitted again. Only a change
  * to the field removes them otherwise, so resubmitting an unchanged field would be blocked.
  */
-export const clearAllFormApiErrors = (form: AnyFormApi) => {
+const clearAllFormApiErrors = (form: AnyFormApi) => {
   for (const name of Object.keys(form.state.fieldMeta)) {
     form.setFieldMeta(name, clearFormApiErrors())
   }
@@ -55,11 +55,13 @@ export const clearAllFormApiErrors = (form: AnyFormApi) => {
 /**
  * Submits a form that validates on submit only. Before submitting, the form checks each field for
  * errors, but only re-runs its own validation afterwards, so errors left by the previous attempt
- * would stop a corrected form from submitting. This clears the server's errors and re-runs the
- * form's validation first.
+ * would stop a corrected form from submitting. This clears the server's errors, on the fields and
+ * on the form, and re-runs the form's validation first.
  */
 export const submitForm = async (form: AnyFormApi, meta?: unknown) => {
   clearAllFormApiErrors(form)
+  // An error set on the whole form, such as the email verification one, counts against its validity.
+  form.setErrorMap({ onSubmit: undefined })
   await form.validate('submit')
   await form.handleSubmit(meta)
 }
