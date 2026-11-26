@@ -60,7 +60,7 @@ function HierarchicalEntrySelects({
   const labelClass = labelStyle === 'lead' ? styles.leadLabel : styles.childLabel
   // The entry's own error is shown above its parent select, which describes itself by it. The
   // question's error is shown by the group, so every select is described by that instead.
-  const invalid = Boolean(error) || Boolean(groupError)
+  const invalid = Boolean(error || groupError)
   const entryErrorId = error ? `${parentId}-error` : undefined
   const groupErrorId = groupError ? `${name}-error` : undefined
 

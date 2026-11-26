@@ -1154,7 +1154,8 @@ describe('FormPage', () => {
       const message = await screen.findByText(emptyEntryMessage)
       const blank = screen.getByRole('combobox', { name: 'Therapeutic area 2' })
       expect(blank).toBeInvalid()
-      expect(blank).toHaveAttribute('aria-describedby', message.id)
+      expect(blank).toHaveAccessibleDescription(expect.stringContaining(emptyEntryMessage))
+      expect(blank.getAttribute('aria-describedby')?.split(' ')).toContain(message.id)
       expect(screen.getByRole('combobox', { name: 'Therapeutic area 1' })).toBeValid()
       expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
 

@@ -47,6 +47,9 @@ export const isTextList = (question: Question) => question.type === FormControl.
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
+const isHierarchicalEntry = (value: unknown): value is HierarchicalEntry =>
+  isRecord(value) && typeof value.parent === 'string'
+
 /** A group's items, from its form value. */
 export const groupItems = (value: FormValue | undefined): GroupItemValue[] =>
   (Array.isArray(value) ? (value as unknown[]) : []).filter(isRecord) as GroupItemValue[]
@@ -316,11 +319,12 @@ const groupError = (
 
 /** The errors of a multi-value hierarchical select: each blank entry, once there is more than one. */
 const hierarchicalError = (value: FormValue | undefined) => {
-  const entries = Array.isArray(value) ? (value as HierarchicalEntry[]) : []
+  // Not filtered, so positions keep lining up with the entries shown; a malformed one is blank.
+  const entries: unknown[] = Array.isArray(value) ? value : []
   const items: Record<string, string> = {}
   if (entries.length > 1) {
     entries.forEach((entry, index) => {
-      if (!entry.parent) {
+      if (!isHierarchicalEntry(entry) || !entry.parent) {
         items[String(index)] = emptyEntryMessage
       }
     })
