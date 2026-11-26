@@ -589,11 +589,7 @@ internal partial class UserService(
                 return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.UserDoesNotExist());
             }
 
-            bool isTheCurrentUserModifyingTheirOwnDetails = currentUserInfoService.IsCurrentUser(
-                user
-            );
-
-            if (!isTheCurrentUserModifyingTheirOwnDetails)
+            if (!IsCurrentUserPermittedToModifyDetailsOf(user))
             {
                 return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.Unauthorised());
             }
@@ -1021,6 +1017,16 @@ internal partial class UserService(
         return null;
     }
 
+    /// <summary>
+    /// Users may always modify their own details; super users may also modify the details of
+    /// any other user.
+    /// </summary>
+    private bool IsCurrentUserPermittedToModifyDetailsOf(User user)
+    {
+        return currentUserInfoService.IsCurrentUser(user)
+            || currentUserInfoService.GetCurrentUserInfo().UserRole == UserRole.Super;
+    }
+
     private async Task<UpdateUserEmailError?> ValidateEmailUpdatePermitted(
         User? user,
         UpdateUserEmailCommand command,
@@ -1032,9 +1038,7 @@ internal partial class UserService(
             return new UpdateUserEmailError.UserDoesNotExist();
         }
 
-        bool isTheCurrentUserModifyingTheirOwnDetails = currentUserInfoService.IsCurrentUser(user);
-
-        if (!isTheCurrentUserModifyingTheirOwnDetails)
+        if (!IsCurrentUserPermittedToModifyDetailsOf(user))
         {
             return new UpdateUserEmailError.Unauthorised();
         }

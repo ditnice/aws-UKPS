@@ -1,4 +1,5 @@
 using System.Data.Common;
+using System.Diagnostics;
 using Amazon.CognitoIdentityProvider.Model;
 using Bogus;
 using Microsoft.EntityFrameworkCore;
@@ -1671,20 +1672,172 @@ public class UserServiceTests : DatabaseTestBase
         result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.UserDoesNotExist>();
     }
 
-    [Fact]
-    public async Task UpdateUserDetails_WhenUserIsNotTheTargetUser_ShouldReturnUserIsNoPermittedToUserDetailsError()
+    [Theory]
+    [InlineData(UserRole.Standard, EditableUserDetail.FullName)]
+    [InlineData(UserRole.Standard, EditableUserDetail.WorkPhone)]
+    [InlineData(UserRole.Champion, EditableUserDetail.FullName)]
+    [InlineData(UserRole.Champion, EditableUserDetail.WorkPhone)]
+    [InlineData(UserRole.Super, EditableUserDetail.FullName)]
+    [InlineData(UserRole.Super, EditableUserDetail.WorkPhone)]
+    public async Task UpdateUserDetails_WhenUserIsUpdatingTheirOwnDetails_ShouldSucceedRegardlessOfRole(
+        UserRole currentUserRole,
+        EditableUserDetail property
+    )
     {
-        var currentUser = await CreateExistingCurrentUser();
-        var otherUserTestHarness = new ServiceTestHarness<IUserService>(_harness).UpdateCurrentUser(
-            x => x with { Email = "otheruser@email.com" }
-        );
-        var command = _updateUserDetailsCommandFaker.Generate();
-        var result = await otherUserTestHarness.Service.UpdateUserDetails(
+        User currentUser = await CreateExistingCurrentUser();
+        _harness.UpdateCurrentUser(x => x with { UserRole = currentUserRole });
+        UpdateUserDetailsCommand command = GenerateUpdateUserDetailsCommand(property);
+
+        Result<UserDetailsDto, UpdateUserDetailsError> result = await Service.UpdateUserDetails(
             currentUser.Id,
             command,
-            TestContext.Current.CancellationToken
+            Ct
         );
-        result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.Unauthorised>();
+
+        result.ShouldBeSuccess();
+        UserInformationDto updatedUser = await Service.GetCurrentUser(Ct);
+        GetEditableUserDetail(updatedUser, property).ShouldBe(command.Value);
+    }
+
+    [Theory]
+    [InlineData(UserRole.Super, EditableUserDetail.FullName, true)]
+    [InlineData(UserRole.Super, EditableUserDetail.WorkPhone, true)]
+    [InlineData(UserRole.Champion, EditableUserDetail.FullName, false)]
+    [InlineData(UserRole.Champion, EditableUserDetail.WorkPhone, false)]
+    [InlineData(UserRole.Standard, EditableUserDetail.FullName, false)]
+    [InlineData(UserRole.Standard, EditableUserDetail.WorkPhone, false)]
+    public async Task UpdateUserDetails_WhenUpdatingAnotherUsersDetails_OnlySuperUsersAreAllowed(
+        UserRole currentUserRole,
+        EditableUserDetail property,
+        bool isAllowed
+    )
+    {
+        User targetUser = await CreateExistingCurrentUser();
+        // The main harness acts as the target user, so it can read back their details.
+        string originalValue = GetEditableUserDetail(await Service.GetCurrentUser(Ct), property);
+        UpdateUserDetailsCommand command = GenerateUpdateUserDetailsCommand(property);
+
+        Result<UserDetailsDto, UpdateUserDetailsError> result = await ServiceAsAnotherUser(
+                currentUserRole
+            )
+            .UpdateUserDetails(targetUser.Id, command, Ct);
+
+        UserInformationDto updatedUser = await Service.GetCurrentUser(Ct);
+        if (isAllowed)
+        {
+            result.ShouldBeSuccess();
+            GetEditableUserDetail(updatedUser, property).ShouldBe(command.Value);
+        }
+        else
+        {
+            result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.Unauthorised>();
+            GetEditableUserDetail(updatedUser, property).ShouldBe(originalValue);
+        }
+    }
+
+    [Theory]
+    [InlineData(UserRole.Standard)]
+    [InlineData(UserRole.Champion)]
+    [InlineData(UserRole.Super)]
+    public async Task UpdateUserEmail_WhenUserIsUpdatingTheirOwnEmail_ShouldSucceedRegardlessOfRole(
+        UserRole currentUserRole
+    )
+    {
+        const string newEmail = "my-new-email@email.com";
+        User currentUser = await CreateExistingCurrentUser();
+        _harness.UpdateCurrentUser(x => x with { UserRole = currentUserRole });
+
+        Result<UpdateUserEmailError> result = await Service.UpdateUserEmail(
+            currentUser.Id,
+            new UpdateUserEmailCommand() { Value = newEmail },
+            Ct
+        );
+
+        result.ShouldBeSuccess();
+        UserInformationDto updatedUser = await Service.GetCurrentUser(Ct);
+        updatedUser.PendingWorkEmail.ShouldNotBeNull().Value.ShouldBe(newEmail);
+    }
+
+    [Theory]
+    [InlineData(UserRole.Super, true)]
+    [InlineData(UserRole.Champion, false)]
+    [InlineData(UserRole.Standard, false)]
+    public async Task UpdateUserEmail_WhenUpdatingAnotherUsersEmail_OnlySuperUsersAreAllowed(
+        UserRole currentUserRole,
+        bool isAllowed
+    )
+    {
+        const string newEmail = "my-new-email@email.com";
+        _mockEmailVerificationLinkCreator
+            .GetVerificationLink(Arg.Any<string>())
+            .Returns(callInfo => new Uri($"http://{callInfo.Arg<string>()}"));
+        User targetUser = await CreateExistingCurrentUser();
+
+        Result<UpdateUserEmailError> result = await ServiceAsAnotherUser(currentUserRole)
+            .UpdateUserEmail(targetUser.Id, new UpdateUserEmailCommand() { Value = newEmail }, Ct);
+
+        // The main harness acts as the target user, so it can read back their details.
+        UserInformationDto updatedUser = await Service.GetCurrentUser(Ct);
+        if (isAllowed)
+        {
+            result.ShouldBeSuccess();
+            updatedUser.PendingWorkEmail.ShouldNotBeNull().Value.ShouldBe(newEmail);
+            _harness
+                .Emails.Sent.OfType<EmailChangeVerificationRequestEmail>()
+                .ShouldHaveSingleItem();
+        }
+        else
+        {
+            result.ShouldBeError().ShouldBeOfType<UpdateUserEmailError.Unauthorised>();
+            updatedUser.PendingWorkEmail.ShouldBeNull();
+            _harness.Emails.Sent.OfType<EmailChangeVerificationRequestEmail>().ShouldBeEmpty();
+        }
+    }
+
+    /// <summary>
+    /// Creates a service acting as a different user (not any existing user) with the given role.
+    /// </summary>
+    private IUserService ServiceAsAnotherUser(UserRole role)
+    {
+        return new ServiceTestHarness<IUserService>(_harness)
+            .UpdateCurrentTime(_currentDateTime)
+            .ConfigureServices(services => services.AddSingleton(_mockEmailVerificationLinkCreator))
+            .UpdateCurrentUser(x =>
+                x with
+                {
+                    CognitoUsername = CognitoUsername.GenerateNew(),
+                    Email = "otheruser@email.com",
+                    UserRole = role,
+                }
+            )
+            .Service;
+    }
+
+    private UpdateUserDetailsCommand GenerateUpdateUserDetailsCommand(EditableUserDetail property)
+    {
+        return _updateUserDetailsCommandFaker.Generate() with
+        {
+            Property = property,
+            Value = property switch
+            {
+                EditableUserDetail.FullName => _faker.Name.FullName(),
+                EditableUserDetail.WorkPhone => new TelephoneNumberFaker().Generate(),
+                _ => throw new UnreachableException(),
+            },
+        };
+    }
+
+    private static string GetEditableUserDetail(
+        UserInformationDto user,
+        EditableUserDetail property
+    )
+    {
+        return property switch
+        {
+            EditableUserDetail.FullName => user.FullName,
+            EditableUserDetail.WorkPhone => user.WorkTelephone,
+            _ => throw new UnreachableException(),
+        };
     }
 
     private IEnumerable<int> GetOrganisationIdsFromUserEmails(string emailAddress)
