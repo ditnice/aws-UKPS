@@ -376,7 +376,6 @@ namespace UKPS.Api.Persistence.Migrations
                         .HasName("pk_app_user");
 
                     b.HasIndex("NormalisedPendingWorkEmail")
-                        .IsUnique()
                         .HasDatabaseName("ix_app_user_normalised_pending_work_email")
                         .HasFilter("normalised_pending_work_email IS NOT NULL");
 

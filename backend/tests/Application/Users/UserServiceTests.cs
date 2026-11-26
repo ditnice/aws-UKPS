@@ -1284,6 +1284,30 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task UpdateUserEmail_WhenThereIsAnotherExpiredPendingEmailWithTheSameValue_ShouldSucceed()
+    {
+        var newEmail = "my-new-email@email.com";
+
+        User userA = await CreateExistingCurrentUser();
+        Result<UpdateUserEmailError> resultA = await Service.UpdateUserEmail(
+            userA.Id,
+            new UpdateUserEmailCommand() { Value = newEmail },
+            TestContext.Current.CancellationToken
+        );
+        resultA.ShouldBeSuccess();
+
+        AdvanceTimeToPendingEmailTimeout();
+
+        User userB = await CreateExistingCurrentUser();
+        Result<UpdateUserEmailError> resultB = await Service.UpdateUserEmail(
+            userB.Id,
+            new UpdateUserEmailCommand() { Value = newEmail },
+            TestContext.Current.CancellationToken
+        );
+        resultB.ShouldBeSuccess();
+    }
+
+    [Fact]
     public async Task UpdateUserEmail_WhenEmailConflictsWithExistingUser_ShouldReturnAnError()
     {
         var existingOtherUser = await AddEntity(

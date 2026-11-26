@@ -4,11 +4,6 @@ namespace UKPS.Api.Persistence.Entities.Identity;
 
 internal sealed record PendingEmailChangeHandler : PendingEmailChange
 {
-    private string? _workEmail;
-    private string? _verificationToken;
-    private DateTime? _verifiedAt;
-    private DateTime? _requestedAt;
-
     public PendingEmailChangeHandler(
         string workEmail,
         string verificationToken,
@@ -147,7 +142,7 @@ internal sealed record PendingEmailChangeHandler : PendingEmailChange
     }
 
     private bool HasTimedOut(DateTime currentTime, TimeSpan timeout) =>
-        _requestedAt is not { } requestedAt || currentTime - requestedAt >= timeout;
+        _requestedAt is not { } requestedAt || requestedAt <= currentTime - timeout;
 
     private void Clear()
     {

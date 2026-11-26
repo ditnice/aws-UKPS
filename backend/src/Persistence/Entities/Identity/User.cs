@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Linq.Expressions;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Persistence.Enums;
 
@@ -7,6 +8,14 @@ namespace UKPS.Api.Persistence.Entities.Identity;
 internal sealed partial class User
 {
     private const string RemovedPersonalValue = "REMOVED";
+
+    /// <summary>
+    /// Lets <see cref="PendingEmailChange.HasActivePendingEmail"/> reach the mapped complex
+    /// property in query expressions without exposing the handler itself.
+    /// </summary>
+    internal static readonly Expression<
+        Func<User, PendingEmailChangeHandler>
+    > _pendingEmailHandlerAccessor = user => user.PendingEmailHandler;
 
     public IReadOnlyCollection<IUserDomainEvent> Events => _events;
     public int Id { get; set; }

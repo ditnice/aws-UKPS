@@ -1,10 +1,45 @@
 using System.Diagnostics;
+using System.Linq.Expressions;
 using UKPS.Api.Application.Common;
 
 namespace UKPS.Api.Persistence.Entities.Identity;
 
 internal abstract record PendingEmailChange
 {
+    private protected string? _workEmail;
+    private protected string? _verificationToken;
+    private protected DateTime? _verifiedAt;
+    private protected DateTime? _requestedAt;
+
+    /// <summary>
+    /// EF Core translatable filter for users whose pending email change is still active
+    /// (requested and not timed out). Use with <c>Where</c> on an <see cref="IQueryable{User}"/>.
+    /// The cutoff is computed client-side so the database only does a plain comparison.
+    /// </summary>
+    internal static Expression<Func<User, bool>> HasActivePendingEmail(
+        DateTime currentTime,
+        TimeSpan timeout
+    )
+    {
+        DateTime cutoff = currentTime - timeout;
+        Expression<Func<PendingEmailChange, bool>> isActive = pendingEmail =>
+            pendingEmail._workEmail != null && pendingEmail._requestedAt > cutoff;
+
+        Expression<Func<User, PendingEmailChangeHandler>> accessor =
+            User._pendingEmailHandlerAccessor;
+        Expression body = new ReplaceParameterVisitor(isActive.Parameters[0], accessor.Body).Visit(
+            isActive.Body
+        );
+        return Expression.Lambda<Func<User, bool>>(body, accessor.Parameters);
+    }
+
+    private sealed class ReplaceParameterVisitor(ParameterExpression from, Expression to)
+        : ExpressionVisitor
+    {
+        protected override Expression VisitParameter(ParameterExpression node) =>
+            node == from ? to : base.VisitParameter(node);
+    }
+
     internal abstract Result<Data, PendingEmailError> TryGetData(
         DateTime currentTime,
         TimeSpan timeout

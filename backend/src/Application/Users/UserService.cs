@@ -705,14 +705,6 @@ internal partial class UserService(
                     new UpdateUserEmailError.ConcurrentChangeDetected()
                 );
             }
-            catch (DbUpdateException updateException)
-                when (ConstraintExceptions.IsUniquePendingEmailException(updateException))
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                return Result<UpdateUserEmailError>.Err(
-                    new UpdateUserEmailError.ConflictingEmail()
-                );
-            }
             catch (Exception ex)
             {
                 LogUpdatingUserDetailsFailed(ex);
@@ -1096,12 +1088,22 @@ internal partial class UserService(
         }
 
         IQueryable<User> otherUsers = dbContext.Users.Where(x => x.Id != user.Id);
-        bool emailAlreadyExistInTheDatabase = await otherUsers.AnyAsync(
-            x =>
-                x.NormalisedPendingWorkEmail == EmailDbFunctions.Normalise(command.Value)
-                || x.NormalisedWorkEmail == EmailDbFunctions.Normalise(command.Value),
-            cancellationToken
-        );
+        bool emailAlreadyExistInTheDatabase =
+            await otherUsers.AnyAsync(
+                x => x.NormalisedWorkEmail == EmailDbFunctions.Normalise(command.Value),
+                cancellationToken
+            )
+            || await otherUsers
+                .Where(
+                    PendingEmailChange.HasActivePendingEmail(
+                        timeProvider.GetUtcNow(),
+                        PendingEmailChangeTimeout
+                    )
+                )
+                .AnyAsync(
+                    x => x.NormalisedPendingWorkEmail == EmailDbFunctions.Normalise(command.Value),
+                    cancellationToken
+                );
 
         if (emailAlreadyExistInTheDatabase)
         {

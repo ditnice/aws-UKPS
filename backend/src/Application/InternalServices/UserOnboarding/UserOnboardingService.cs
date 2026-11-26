@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Options;
 using Npgsql;
+using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
@@ -20,13 +22,15 @@ internal sealed partial class UserOnboardingService
     private readonly CurrentDbUserEntityService _currentDbUserEntityService;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly ILogger<UserOnboardingService> _logger;
+    private readonly AccountRecoveryOptions _accountRecoveryOptions;
 
     public UserOnboardingService(
         AppDbContext dbContext,
         IIdentityService administerIdentityService,
         CurrentDbUserEntityService currentDbUserEntityService,
         IDateTimeProvider dateTimeProvider,
-        ILogger<UserOnboardingService> logger
+        ILogger<UserOnboardingService> logger,
+        IOptions<AccountRecoveryOptions> accountRecoveryOptions
     )
     {
         _dbContext = dbContext;
@@ -34,6 +38,7 @@ internal sealed partial class UserOnboardingService
         _currentDbUserEntityService = currentDbUserEntityService;
         _dateTimeProvider = dateTimeProvider;
         _logger = logger;
+        _accountRecoveryOptions = accountRecoveryOptions.Value;
     }
 
     public async Task<Result<UserOnboardingOutcome, OnboardUserError>> OnboardUserToOrganisation(
@@ -87,12 +92,24 @@ internal sealed partial class UserOnboardingService
             cancellationToken
         );
 
-        bool emailInUse = await _dbContext.Users.AnyAsync(
-            x =>
-                x.NormalisedWorkEmail == EmailDbFunctions.Normalise(command.NewUserEmail)
-                || x.NormalisedPendingWorkEmail == EmailDbFunctions.Normalise(command.NewUserEmail),
-            cancellationToken
-        );
+        bool emailInUse =
+            await _dbContext.Users.AnyAsync(
+                x => x.NormalisedWorkEmail == EmailDbFunctions.Normalise(command.NewUserEmail),
+                cancellationToken
+            )
+            || await _dbContext
+                .Users.Where(
+                    PendingEmailChange.HasActivePendingEmail(
+                        _dateTimeProvider.GetUtcNow(),
+                        _accountRecoveryOptions.PendingEmailChangeTimeout
+                    )
+                )
+                .AnyAsync(
+                    x =>
+                        x.NormalisedPendingWorkEmail
+                        == EmailDbFunctions.Normalise(command.NewUserEmail),
+                    cancellationToken
+                );
         if (emailInUse)
         {
             return Result<UserOnboardingOutcome, OnboardUserError>.Err(
