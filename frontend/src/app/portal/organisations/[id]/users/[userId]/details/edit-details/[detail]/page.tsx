@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { ReactNode } from 'react'
 
-import { getUserDetailsWithinOrganisation } from '@/client/generated'
+import { getUserDetailsWithinOrganisation, getUsersMe } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
@@ -40,6 +40,24 @@ const userDetailLabels: Record<UserDetail, string> = {
   email: 'Work email address',
 }
 
+const getUser = async (organisationId: number, userId: number) => {
+  const client = await createServerApiClient()
+  const { data: me, error: getMeError } = await getUsersMe({ client })
+  if (getMeError || !me) {
+    return { user: me, error: getMeError }
+  }
+  if (me && me.organisationId == organisationId && me.userId == userId) {
+    return { user: me }
+  }
+
+  const { data: user, error } = await getUserDetailsWithinOrganisation({
+    path: { userId, organisationId },
+    client,
+  })
+
+  return { user, error }
+}
+
 const Page = async (props: PageProps) => {
   const params = await findTypedPageProps(props)
   const { detail, userId, organisationId } = params
@@ -49,12 +67,8 @@ const Page = async (props: PageProps) => {
   }
 
   const onSuccessRedirect = setUrlFlag(params.returnLink, params.onSuccessFlag)
-  const client = await createServerApiClient()
-  // const { data: me, error } = await getUsersMe({ client })
-  const { data: user, error } = await getUserDetailsWithinOrganisation({
-    path: { userId, organisationId },
-    client,
-  })
+
+  const { user, error } = await getUser(organisationId, userId)
   const label = userDetailLabels[detail]
 
   if (!user || error) {

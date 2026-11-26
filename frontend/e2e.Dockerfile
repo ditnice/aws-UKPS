@@ -33,6 +33,8 @@ COPY tests/e2e ./tests/e2e
 COPY src/app/portal/organisations/[[]id]/_lib/userActionAlert.ts ./src/app/portal/organisations/[id]/_lib/userActionAlert.ts
 # search-and-filter-users.authenticated.e2e.test.ts imports the last-active filter presets.
 COPY src/app/portal/organisations/[[]id]/_lib/userLabels.ts ./src/app/portal/organisations/[id]/_lib/userLabels.ts
+# The me page object builds its URL with the app's own href helper.
+COPY src/app/portal/user/me/navigation.ts ./src/app/portal/user/me/navigation.ts
 
 RUN mkdir -p e2e-results && chmod a+rwx e2e-results
 
