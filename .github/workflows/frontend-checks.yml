@@ -1,0 +1,86 @@
+name: Frontend checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend-checks:
+    name: Frontend checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+        working-directory: frontend
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          # Keep in step with frontend/Dockerfile and backend-checks.yml.
+          version: 12.13.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        id: install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend
+        run: pnpm build
+
+      # Report independent failures together without masking any failed check.
+      - name: Check ESLint
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm lint
+
+      - name: Check Stylelint
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm lint:style
+
+      - name: Check Prettier formatting
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm format:check
+
+      - name: Run unit and component tests with coverage
+        id: tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm test:coverage
+
+      - name: Verify coverage was produced
+        if: ${{ !cancelled() && steps.tests.outcome == 'success' }}
+        run: |
+          if [[ ! -s coverage/index.html || ! -s coverage/lcov.info ]]; then
+            echo "::error::Tests passed but the HTML or LCOV coverage report is missing or empty."
+            exit 1
+          fi
+
+      - name: Upload coverage reports
+        if: ${{ !cancelled() && hashFiles('frontend/coverage/index.html', 'frontend/coverage/lcov.info') != '' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
+          if-no-files-found: error
+          retention-days: 14
