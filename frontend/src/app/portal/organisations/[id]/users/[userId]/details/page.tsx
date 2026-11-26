@@ -44,7 +44,8 @@ const Page = async (params: PageParams) => {
         <>
           <UserAuthenticationDetails currentUser={user} />
           <UserDetails
-            currentUser={user}
+            owner="not-me"
+            user={user}
             navigation={{
               returnLink: buildViewUserDetailsHref({ ...unchangingParams }),
               onSuccessFlag: {

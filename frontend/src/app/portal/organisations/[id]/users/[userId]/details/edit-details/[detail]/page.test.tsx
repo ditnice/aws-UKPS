@@ -1,13 +1,13 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getUsersMe } from '@/client/generated'
 import {
   fakePendingWorkEmailChangeDto,
   fakeUserInformationDto,
 } from '@/client/generated/@faker-js/faker.gen'
-import { createServerApiClient } from '@/client/server-api'
 import { errorMessages } from '@/lib/form/errorMessages'
+
+import { getUser } from '../../dataRetrieval'
 
 import { findTypedPageProps } from './navigation'
 import Page from './page'
@@ -22,12 +22,8 @@ vi.mock('next/navigation', () => ({
   }),
 }))
 
-vi.mock('@/client/generated', () => ({
-  getUsersMe: vi.fn(),
-}))
-
-vi.mock('@/client/server-api', () => ({
-  createServerApiClient: vi.fn(),
+vi.mock('../../dataRetrieval', () => ({
+  getUser: vi.fn(),
 }))
 
 vi.mock('./navigation', () => ({
@@ -81,8 +77,6 @@ const PendingEmailUpdateAlertMock = vi.mocked(PendingEmailUpdateAlert)
 
 // ---- Helpers ---------------------------------------------------------------
 
-const mockClient = { id: 'mock-client' }
-
 const mockUser = {
   userId: 'user-123',
   fullName: 'Jane Doe',
@@ -101,11 +95,12 @@ const setDetail = (detail: string | undefined) => {
     detail,
     returnLink,
     onSuccessFlag,
+    owner: 'not-me',
   } as unknown as Awaited<ReturnType<typeof findTypedPageProps>>)
 }
 
-const mockGetUsersMe = (result: { data?: unknown; error?: unknown }) => {
-  vi.mocked(getUsersMe).mockResolvedValue(result as Awaited<ReturnType<typeof getUsersMe>>)
+const mockGetUser = (result: { user?: unknown; error?: unknown }) => {
+  vi.mocked(getUser).mockResolvedValue(result as Awaited<ReturnType<typeof getUser>>)
 }
 
 /**
@@ -127,38 +122,34 @@ const getFormProps = (testId: string) => JSON.parse(screen.getByTestId(testId).t
 describe('Edit user detail page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(createServerApiClient).mockResolvedValue(
-      mockClient as unknown as Awaited<ReturnType<typeof createServerApiClient>>,
-    )
     setDetail('fullName')
-    mockGetUsersMe({ data: mockUser })
+    mockGetUser({ user: mockUser })
   })
 
   describe('when no detail param is provided', () => {
-    it('calls notFound and does not fetch the current user', async () => {
+    it('calls notFound and does not fetch the user', async () => {
       const { notFound } = await import('next/navigation')
       setDetail(undefined)
 
       await expect(renderPage()).rejects.toThrow('NEXT_NOT_FOUND')
 
       expect(notFound).toHaveBeenCalledTimes(1)
-      expect(createServerApiClient).not.toHaveBeenCalled()
-      expect(getUsersMe).not.toHaveBeenCalled()
+      expect(getUser).not.toHaveBeenCalled()
     })
   })
 
   describe('data fetching', () => {
-    it('creates a server api client and passes it to getUsersMe', async () => {
+    it('fetches the user for the organisation and user id', async () => {
       await renderPage()
 
-      expect(createServerApiClient).toHaveBeenCalledTimes(1)
-      expect(getUsersMe).toHaveBeenCalledWith({ client: mockClient })
+      expect(getUser).toHaveBeenCalledTimes(1)
+      expect(getUser).toHaveBeenCalledWith(7, 42)
     })
   })
 
   describe('error handling', () => {
     it('renders the error state when the request returns an error', async () => {
-      mockGetUsersMe({ data: mockUser, error: { message: 'boom' } })
+      mockGetUser({ user: mockUser, error: { message: 'boom' } })
 
       await renderPage()
 
@@ -170,7 +161,7 @@ describe('Edit user detail page', () => {
     })
 
     it('renders the error state when no user data is returned', async () => {
-      mockGetUsersMe({ data: undefined })
+      mockGetUser({ user: undefined })
 
       await renderPage()
 
@@ -181,7 +172,7 @@ describe('Edit user detail page', () => {
 
     it('still renders the page header with the correct label on error', async () => {
       setDetail('email')
-      mockGetUsersMe({ data: undefined, error: { message: 'boom' } })
+      mockGetUser({ user: undefined, error: { message: 'boom' } })
 
       await renderPage()
 
@@ -263,8 +254,8 @@ describe('Edit user detail page', () => {
       setDetail('email')
 
       const pendingWorkEmail = { ...fakePendingWorkEmailChangeDto(), verifiedByEmail: false }
-      mockGetUsersMe({
-        data: { ...fakeUserInformationDto(), pendingWorkEmail, userId: 123 },
+      mockGetUser({
+        user: { ...fakeUserInformationDto(), pendingWorkEmail, userId: 123 },
       })
 
       await renderPage()
@@ -277,6 +268,7 @@ describe('Edit user detail page', () => {
         detail: 'email',
         returnLink,
         onSuccessFlag,
+        owner: 'not-me',
       })
     })
   })

@@ -77,7 +77,8 @@ export default async function Me({ searchParams }: { searchParams: Promise<Searc
         <>
           <UserAuthenticationDetails currentUser={me} actions={authenticationActions} />
           <UserDetails
-            currentUser={me}
+            owner="me"
+            user={me}
             navigation={{
               returnLink: buildMyDetailsHref(),
               onSuccessFlag: {

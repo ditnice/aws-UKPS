@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest'
 
 import {
   buildUpdateUserDetailsHref,
+  Owner,
+  TypedPageProps,
   UserDetail,
 } from '@/app/portal/organisations/[id]/users/[userId]/details/edit-details/[detail]/navigation'
 import { UserInformationDto } from '@/client/generated'
@@ -14,6 +16,8 @@ import {
 import { UserDetails } from './UserDetails'
 
 const user: UserInformationDto = { ...fakeUserInformationDto(), pendingWorkEmail: undefined }
+
+const owner: Owner = 'me'
 
 const expectedDetails: UserDetail[] = ['fullName', 'email', 'contactNumber']
 
@@ -33,7 +37,8 @@ const buildExpectedHref = (detail: UserDetail) =>
     detail,
     returnLink: navigation.returnLink,
     onSuccessFlag: navigation.onSuccessFlag[detail],
-  })
+    owner,
+  } as TypedPageProps)
 
 const expectDefinitionValue = (labelText: string, expectedValue: string) => {
   const label = screen.getByText(labelText)
@@ -42,26 +47,20 @@ const expectDefinitionValue = (labelText: string, expectedValue: string) => {
 }
 
 describe('UserDetails', () => {
-  it('renders an error when the current user cannot be retrieved', () => {
-    render(<UserDetails currentUser={undefined} navigation={navigation} />)
-    expect(screen.getByTestId('failed-user-retrieval')).toBeInTheDocument()
-  })
-
   it("renders the current user's details", () => {
-    const currentUser = { ...user }
+    render(<UserDetails owner={owner} user={user} navigation={navigation} />)
 
-    render(<UserDetails currentUser={currentUser} navigation={navigation} />)
-
-    expectDefinitionValue('Organisation', currentUser.organisationName)
-    expectDefinitionValue('Full name', currentUser.fullName)
-    expectDefinitionValue('Email address', currentUser.workEmail)
-    expectDefinitionValue('Contact Number', currentUser.workTelephone)
+    expectDefinitionValue('Organisation', user.organisationName)
+    expectDefinitionValue('Full name', user.fullName)
+    expectDefinitionValue('Email address', user.workEmail)
+    expectDefinitionValue('Contact Number', user.workTelephone)
   })
 
   it('renders update pending if there is an email update pending', () => {
     render(
       <UserDetails
-        currentUser={{ ...user, pendingWorkEmail: fakePendingWorkEmailChangeDto() }}
+        owner={owner}
+        user={{ ...user, pendingWorkEmail: fakePendingWorkEmailChangeDto() }}
         navigation={navigation}
       />,
     )
@@ -69,7 +68,7 @@ describe('UserDetails', () => {
   })
 
   it('renders a change link for each editable detail', () => {
-    render(<UserDetails currentUser={{ ...user }} navigation={navigation} />)
+    render(<UserDetails owner={owner} user={user} navigation={navigation} />)
 
     const changeLinks = screen.getAllByRole('link', { name: /change/i })
 
@@ -77,7 +76,7 @@ describe('UserDetails', () => {
   })
 
   it.each(expectedDetails)('links to the correct edit page for "%s"', (detail) => {
-    render(<UserDetails currentUser={{ ...user }} navigation={navigation} />)
+    render(<UserDetails owner={owner} user={user} navigation={navigation} />)
 
     const expectedHref = buildExpectedHref(detail)
     const links = screen.getAllByRole('link', { name: /change/i })
@@ -86,7 +85,7 @@ describe('UserDetails', () => {
   })
 
   it('does not render a change link for organisation', () => {
-    render(<UserDetails currentUser={{ ...user }} navigation={navigation} />)
+    render(<UserDetails owner={owner} user={user} navigation={navigation} />)
 
     const links = screen.getAllByRole('link', { name: /change/i })
     const hrefs = links.map((link) => link.getAttribute('href'))
@@ -95,10 +94,14 @@ describe('UserDetails', () => {
     expect(hrefs.sort()).toEqual(expectedDetails.map(buildExpectedHref).sort())
   })
 
-  it('renders no change links when the user could not be retrieved', () => {
-    render(<UserDetails currentUser={undefined} navigation={navigation} />)
+  it('passes the owner through to the change links', () => {
+    render(<UserDetails owner="not-me" user={user} navigation={navigation} />)
 
-    expect(screen.getByTestId('failed-user-retrieval')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /change/i })).not.toBeInTheDocument()
+    const links = screen.getAllByRole('link', { name: /change/i })
+
+    for (const link of links) {
+      const query = new URLSearchParams(link.getAttribute('href')?.split('?')[1])
+      expect(query.get('owner')).toBe('not-me')
+    }
   })
 })

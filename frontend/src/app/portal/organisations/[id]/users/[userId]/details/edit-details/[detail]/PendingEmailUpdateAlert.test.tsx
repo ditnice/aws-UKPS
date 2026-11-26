@@ -34,6 +34,7 @@ async function renderAlert(props: Partial<Props>) {
     organisationId: 7,
     returnLink: '/portal/organisations/7/users/123/details',
     onSuccessFlag: 'updated',
+    owner: 'me',
     verificationLinkResent: undefined,
     error: undefined,
   }
@@ -100,6 +101,55 @@ describe('PendingEmailUpdateAlert', () => {
 
       expect(screen.getByText(/this address has been verified/i)).toBeInTheDocument()
       expect(screen.queryByText(/sent a verification email to/i)).not.toBeInTheDocument()
+    })
+  })
+
+  describe('messages', () => {
+    it('renders the resent status when verificationLinkResent is true', async () => {
+      await renderAlert({ verificationLinkResent: true })
+
+      expect(screen.getByRole('status')).toHaveTextContent(`Verification email resent to ${email}.`)
+    })
+
+    it('renders an error when error is true', async () => {
+      await renderAlert({ error: true })
+
+      expect(screen.getByText('An unexpected error occurred.')).toBeInTheDocument()
+    })
+
+    it('renders no messages by default', async () => {
+      await renderAlert({})
+
+      expect(screen.queryByRole('status')).not.toBeInTheDocument()
+      expect(screen.queryByText('An unexpected error occurred.')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('when viewing another user (owner is "not-me")', () => {
+    it("refers to the user's email address rather than your own", async () => {
+      await renderAlert({ owner: 'not-me', verifiedByEmail: false })
+
+      expect(screen.getByText(/change this user.s work email address to/i)).toBeInTheDocument()
+      expect(screen.queryByText(/change your work email address/i)).not.toBeInTheDocument()
+      expect(screen.getByText(/a verification email has been sent to/i)).toBeInTheDocument()
+      expect(screen.getByTestId('target-email-not-verified')).toHaveTextContent(email)
+    })
+
+    it('explains the user needs to log in when the address is verified', async () => {
+      await renderAlert({ owner: 'not-me', verifiedByEmail: true })
+
+      expect(
+        screen.getByText(/the change will be completed the next time the user logs in/i),
+      ).toBeInTheDocument()
+      expect(screen.queryByTestId('resend-verification-email-button')).not.toBeInTheDocument()
+      expect(screen.getByTestId('cancel-verification-email-button')).toBeInTheDocument()
+    })
+
+    it('renders both buttons when the address is not verified', async () => {
+      await renderAlert({ owner: 'not-me', verifiedByEmail: false })
+
+      expect(screen.getByTestId('resend-verification-email-button')).toBeInTheDocument()
+      expect(screen.getByTestId('cancel-verification-email-button')).toBeInTheDocument()
     })
   })
 })

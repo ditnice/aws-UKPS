@@ -24,7 +24,7 @@ export class EditUserEmailPage {
     this.cancelEmailChange = page.getByRole('button', { name: 'Cancel email change', exact: true })
     this.verificationEmailSent = page
       .getByRole('status')
-      .filter({ hasText: 'Verification email sent' })
+      .filter({ hasText: 'Verification email resent to' })
   }
 
   async expectLoaded() {

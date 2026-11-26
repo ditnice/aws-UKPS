@@ -62,7 +62,7 @@ const Page = async (props: PageProps) => {
   }
 
   const getHeader = () => {
-    if (detail === 'email' && user.pendingWorkEmail) {
+    if (params.detail === 'email' && user.pendingWorkEmail) {
       return (
         <>
           <PendingEmailUpdateAlert {...params} {...user.pendingWorkEmail} />

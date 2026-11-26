@@ -31,8 +31,8 @@ vi.mock('@/lib/users/UserAuthenticationDetails', () => ({
 }))
 
 vi.mock('@/lib/users/UserDetails', () => ({
-  UserDetails: ({ currentUser }: { currentUser: CurrentUserInformationDto }) => (
-    <div data-testid="user-details">{currentUser.userId}</div>
+  UserDetails: ({ user }: { user: CurrentUserInformationDto }) => (
+    <div data-testid="user-details">{user.userId}</div>
   ),
 }))
 
