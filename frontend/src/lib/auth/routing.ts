@@ -3,7 +3,14 @@ import { AuthenticationFailCode } from '@/client/generated/types.gen'
 export const signInPath = '/auth/sign-in'
 export const selectOrganisationPath = '/portal/organisations/select'
 export const switchOrganisationPath = '/portal/organisations/switch'
-export const routeOnSuccessfulAuth = '/portal'
+
+// A full page load rather than router.push, so the portal is rendered from scratch with the new
+// session cookies and nothing cached while signed out (such as the layout or header) is reused.
+// replace rather than assign so Back does not return to the sign-in or MFA forms, whose
+// authentication session has already been used.
+export function navigateOnSuccessfulAuth(returnTo?: string): void {
+  globalThis.location.replace(buildSelectOrganisationHref(returnTo))
+}
 
 export type SignInOptions = {
   emailVerified?: true

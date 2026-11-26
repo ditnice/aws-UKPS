@@ -27,7 +27,7 @@ const PlaceOnHoldConfirmPage = async (props: StatusChangeRouteProps) => {
           )}
           banner={
             <Alert type="caution">
-              <h2>If you continue, this record will be placed on hold</h2>
+              <h3>If you continue, this record will be placed on hold</h3>
               <p>
                 The record status will change as development has paused and may restart in the
                 future. Update requests for this record will be reduced to every 6 months. You can

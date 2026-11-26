@@ -21,7 +21,10 @@ vi.mock('../../EmailVerificationRequiredAlert', () => ({
 
 let user: ReturnType<typeof userEvent.setup>
 
+const replace = vi.fn()
+
 beforeEach(() => {
+  vi.stubGlobal('location', { ...globalThis.location, replace })
   vi.mocked(login).mockResolvedValue({ error: undefined, data: undefined })
   user = userEvent.setup()
 })
@@ -125,7 +128,7 @@ describe('SignInForm', () => {
         credentials: 'include',
       })
 
-      expect(router.push).toHaveBeenCalledWith('/portal/organisations/select')
+      expect(replace).toHaveBeenCalledWith('/portal/organisations/select')
     })
   })
 
@@ -138,7 +141,7 @@ describe('SignInForm', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => {
-      expect(router.push).toHaveBeenCalledWith(
+      expect(replace).toHaveBeenCalledWith(
         '/portal/organisations/select?returnTo=%2Fportal%2Forganisations%2F1%3Ftab%3Dusers',
       )
     })
@@ -208,6 +211,7 @@ describe('SignInForm', () => {
     })
 
     expect(router.push).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
   })
 
   it('redirects to the MFA page if there is an MFA challenge', async () => {
@@ -291,5 +295,6 @@ describe('SignInForm', () => {
 
     expect(await screen.findByTestId('email-verification-required-alert')).toBeInTheDocument()
     expect(router.push).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
   })
 })

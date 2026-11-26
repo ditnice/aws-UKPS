@@ -2,13 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import React from 'react'
 
 import styles from './NavLinks.module.scss'
 
 export type NavLinkItem = {
   href: string
-  label: string | React.ReactElement
+  label: string
 }
 
 export type NavLinksProps = {
@@ -42,7 +41,7 @@ export function NavLinks({ links }: NavLinksProps) {
             className={styles.link}
             aria-current={href === activeHref ? 'page' : undefined}
           >
-            {label}
+            <span className={styles.label}>{label}</span>
           </Link>
         </li>
       ))}

@@ -14,7 +14,7 @@ vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 type StringLabelledNavLinkItem = NavLinkItem & { stringLabel: string }
 
 const links: StringLabelledNavLinkItem[] = [
-  { href: '/', label: <>Home</>, stringLabel: 'Home' },
+  { href: '/', label: 'Home', stringLabel: 'Home' },
   { href: '/about-us', label: 'About', stringLabel: 'About' },
   { href: '/portal', label: 'Dashboard', stringLabel: 'Dashboard' },
   { href: '/portal/components', label: 'Components', stringLabel: 'Components' },
