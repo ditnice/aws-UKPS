@@ -36,6 +36,7 @@ vi.mock('./shared', () => ({
 }))
 
 describe('updateUserDetailsAction', () => {
+  const onSuccessRedirect = '/portal/organisations/7/users/42/details?updated=true'
   const userId = 42
   const formData = new FormData()
   const values = { firstName: 'Jane', lastName: 'Doe' }
@@ -60,9 +61,9 @@ describe('updateUserDetailsAction', () => {
         response: { ok: true },
       } as never)
 
-      await expect(updateUserDetailsAction(userId, undefined, formData)).rejects.toThrow(
-        'NEXT_REDIRECT',
-      )
+      await expect(
+        updateUserDetailsAction(onSuccessRedirect, userId, undefined, formData),
+      ).rejects.toThrow('NEXT_REDIRECT')
 
       expect(serverValidate).toHaveBeenCalledWith(formData)
     })
@@ -71,7 +72,7 @@ describe('updateUserDetailsAction', () => {
       const formState = { ...initialFormState, errors: ['Invalid'] }
       vi.mocked(serverValidate).mockRejectedValue(new ServerValidateError({ formState } as never))
 
-      const result = await updateUserDetailsAction(userId, undefined, formData)
+      const result = await updateUserDetailsAction(onSuccessRedirect, userId, undefined, formData)
 
       expect(result).toBe(formState)
       expect(updateUserDetails).not.toHaveBeenCalled()
@@ -82,7 +83,9 @@ describe('updateUserDetailsAction', () => {
       const error = new Error('boom')
       vi.mocked(serverValidate).mockRejectedValue(error)
 
-      await expect(updateUserDetailsAction(userId, undefined, formData)).rejects.toBe(error)
+      await expect(
+        updateUserDetailsAction(onSuccessRedirect, userId, undefined, formData),
+      ).rejects.toBe(error)
 
       expect(updateUserDetails).not.toHaveBeenCalled()
     })
@@ -95,9 +98,9 @@ describe('updateUserDetailsAction', () => {
         response: { ok: true },
       } as never)
 
-      await expect(updateUserDetailsAction(userId, undefined, formData)).rejects.toThrow(
-        'NEXT_REDIRECT',
-      )
+      await expect(
+        updateUserDetailsAction(onSuccessRedirect, userId, undefined, formData),
+      ).rejects.toThrow('NEXT_REDIRECT')
 
       expect(createServerApiClient).toHaveBeenCalledTimes(1)
       expect(updateUserDetails).toHaveBeenCalledWith({
@@ -109,17 +112,17 @@ describe('updateUserDetailsAction', () => {
   })
 
   describe('success', () => {
-    it('redirects to the user profile page with updated=true', async () => {
+    it('redirects to the provided success redirect', async () => {
       vi.mocked(updateUserDetails).mockResolvedValue({
         error: undefined,
         response: { ok: true },
       } as never)
 
-      await expect(updateUserDetailsAction(userId, undefined, formData)).rejects.toThrow(
-        'NEXT_REDIRECT',
-      )
+      await expect(
+        updateUserDetailsAction(onSuccessRedirect, userId, undefined, formData),
+      ).rejects.toThrow('NEXT_REDIRECT')
 
-      expect(redirect).toHaveBeenCalledWith('/portal/user/me?updated=true')
+      expect(redirect).toHaveBeenCalledWith(onSuccessRedirect)
     })
 
     it('does not treat a redirect as an error response', async () => {
@@ -128,9 +131,9 @@ describe('updateUserDetailsAction', () => {
         response: { ok: true },
       } as never)
 
-      await expect(updateUserDetailsAction(userId, undefined, formData)).rejects.toThrow(
-        'NEXT_REDIRECT',
-      )
+      await expect(
+        updateUserDetailsAction(onSuccessRedirect, userId, undefined, formData),
+      ).rejects.toThrow('NEXT_REDIRECT')
 
       expect(isValidationProblemDetails).not.toHaveBeenCalled()
     })
@@ -151,7 +154,7 @@ describe('updateUserDetailsAction', () => {
       vi.mocked(isValidationProblemDetails).mockReturnValue(true)
       vi.mocked(getFormStateServerErrors).mockReturnValue(mappedErrors as never)
 
-      const result = await updateUserDetailsAction(userId, undefined, formData)
+      const result = await updateUserDetailsAction(onSuccessRedirect, userId, undefined, formData)
 
       expect(getFormStateServerErrors).toHaveBeenCalledWith(apiErrors)
       expect(result).toEqual({ ...initialFormState, values, ...mappedErrors })
@@ -166,7 +169,7 @@ describe('updateUserDetailsAction', () => {
         response: { ok: false },
       } as never)
 
-      const result = await updateUserDetailsAction(userId, undefined, formData)
+      const result = await updateUserDetailsAction(onSuccessRedirect, userId, undefined, formData)
 
       expect(result).toEqual({
         ...initialFormState,
@@ -183,7 +186,7 @@ describe('updateUserDetailsAction', () => {
         response: { ok: false },
       } as never)
 
-      const result = await updateUserDetailsAction(userId, undefined, formData)
+      const result = await updateUserDetailsAction(onSuccessRedirect, userId, undefined, formData)
 
       expect(result).toEqual({
         ...initialFormState,
@@ -198,7 +201,7 @@ describe('updateUserDetailsAction', () => {
         response: undefined,
       } as never)
 
-      const result = await updateUserDetailsAction(userId, undefined, formData)
+      const result = await updateUserDetailsAction(onSuccessRedirect, userId, undefined, formData)
 
       expect(result).toEqual({
         ...initialFormState,
@@ -211,14 +214,18 @@ describe('updateUserDetailsAction', () => {
       const error = new Error('network down')
       vi.mocked(updateUserDetails).mockRejectedValue(error)
 
-      await expect(updateUserDetailsAction(userId, undefined, formData)).rejects.toBe(error)
+      await expect(
+        updateUserDetailsAction(onSuccessRedirect, userId, undefined, formData),
+      ).rejects.toBe(error)
     })
 
     it('rethrows when creating the API client fails', async () => {
       const error = new Error('no session')
       vi.mocked(createServerApiClient).mockRejectedValue(error)
 
-      await expect(updateUserDetailsAction(userId, undefined, formData)).rejects.toBe(error)
+      await expect(
+        updateUserDetailsAction(onSuccessRedirect, userId, undefined, formData),
+      ).rejects.toBe(error)
       expect(updateUserDetails).not.toHaveBeenCalled()
     })
   })

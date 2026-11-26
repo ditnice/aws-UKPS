@@ -86,6 +86,7 @@ vi.mock('@/components/Button/Button', () => ({
 const USER_ID = 42
 const PROPERTY = 'first_name' as unknown as EditableUserDetail
 const LABEL = 'First name'
+const ON_SUCCESS_REDIRECT = '/portal/organisations/7/users/42/details?updated=true'
 
 const mockedUseActionState = vi.mocked(useActionState)
 const mockedServerAction = vi.mocked(updateUserDetailsAction)
@@ -97,6 +98,7 @@ const renderForm = (overrides: Partial<React.ComponentProps<typeof EditUserDetai
       initialValue="Alice"
       property={PROPERTY}
       label={LABEL}
+      onSuccessRedirect={ON_SUCCESS_REDIRECT}
       {...overrides}
     />,
   )
@@ -157,14 +159,19 @@ describe('EditUserDetailForm', () => {
       expect(mockedUseActionState).toHaveBeenCalledWith(expect.any(Function), initialFormState)
     })
 
-    it('binds the userId as the first argument of the server action', async () => {
+    it('binds the success redirect and userId as the leading arguments of the server action', async () => {
       renderForm()
 
       const boundAction = mockedUseActionState.mock.calls[0][0] as (...args: unknown[]) => unknown
       const formData = new FormData()
       await boundAction(initialFormState, formData)
 
-      expect(mockedServerAction).toHaveBeenCalledWith(USER_ID, initialFormState, formData)
+      expect(mockedServerAction).toHaveBeenCalledWith(
+        ON_SUCCESS_REDIRECT,
+        USER_ID,
+        initialFormState,
+        formData,
+      )
     })
   })
 

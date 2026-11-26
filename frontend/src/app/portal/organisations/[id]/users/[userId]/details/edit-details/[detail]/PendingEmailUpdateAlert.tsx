@@ -5,22 +5,20 @@ import { Alert } from '@/components/Alert/Alert'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 
 import CancelPendingEmailChange from './editUserEmail/CancelPendingEmailChange'
+import { buildUpdateUserDetailsHref, getStaticProps, TypedPageProps } from './navigation'
 import styles from './PendingEmailUpdateAlert.module.scss'
 import ResendVerificationEmailButton from './ResendVerificationEmail/ResendVerificationEmailButton'
 
-export type PendingEmailUpdateAlertProps = PendingWorkEmailChangeDto & {
-  verificationEmailResent: true | undefined
-  error: true | undefined
-  userId: number
-}
+export type PendingEmailUpdateAlertProps = PendingWorkEmailChangeDto &
+  TypedPageProps & { userId: number }
 
 const PendingEmailUpdateAlert = async ({
   value,
   verifiedByEmail,
-  userId,
-  verificationEmailResent,
-  error,
+  ...props
 }: PendingEmailUpdateAlertProps) => {
+  const { userId } = props
+  if (props.detail !== 'email') throw new Error('')
   return (
     <Alert type="caution" title="Email update pending">
       <h3>Email update pending</h3>
@@ -35,7 +33,7 @@ const PendingEmailUpdateAlert = async ({
             address.
           </p>
           <div className={styles.buttons}>
-            <CancelPendingEmailChange userId={userId} />
+            <CancelPendingEmailChange userId={userId} onSuccessRedirect={props.returnLink} />
           </div>
         </>
       ) : (
@@ -47,13 +45,22 @@ const PendingEmailUpdateAlert = async ({
             it to complete the change.
           </p>
           <div className={styles.buttons}>
-            <ResendVerificationEmailButton userId={userId} />
-            <CancelPendingEmailChange userId={userId} />
+            <ResendVerificationEmailButton
+              userId={userId}
+              navigation={{
+                onSuccess: buildUpdateUserDetailsHref({
+                  ...getStaticProps(props),
+                  verificationLinkResent: true,
+                }),
+                onError: buildUpdateUserDetailsHref({ ...getStaticProps(props), error: true }),
+              }}
+            />
+            <CancelPendingEmailChange userId={userId} onSuccessRedirect={props.returnLink} />
           </div>
-          {verificationEmailResent ? (
+          {props.verificationLinkResent ? (
             <p role="status">Verification email sent. Check your inbox.</p>
           ) : undefined}
-          {error ? <ErrorState>An unexpected error occurred.</ErrorState> : undefined}
+          {props.error ? <ErrorState>An unexpected error occurred.</ErrorState> : undefined}
         </>
       )}
     </Alert>

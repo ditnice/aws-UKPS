@@ -9,12 +9,15 @@ import { cancelPendingEmailChangeAction } from './serverActions'
 
 type Props = {
   userId: number
+  onSuccessRedirect: string
 }
 
 type State = { errors: string[] } | undefined
 
-const CancelPendingEmailChange = ({ userId }: Props) => {
-  const boundAction = cancelPendingEmailChangeAction.bind(null, userId)
+const CancelPendingEmailChange = ({ userId, onSuccessRedirect: redirectOnSuccess }: Props) => {
+  const boundAction = cancelPendingEmailChangeAction
+    .bind(null, redirectOnSuccess)
+    .bind(null, userId)
   const [state, action, isPending] = useActionState<State, FormData>(
     async () => boundAction(),
     undefined,

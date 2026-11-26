@@ -25,11 +25,9 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/client/generated', () => ({ resendVerificationEmail: vi.fn() }))
 vi.mock('@/client/server-api', () => ({ createServerApiClient: vi.fn() }))
-vi.mock('../navigation', () => ({
-  buildUpdateUserDetailsHref: vi.fn((params) => `/update?${new URLSearchParams(params)}`),
-}))
+const navigation = { onSuccess: '/resend-success', onError: '/resend-error' }
 
-const run = () => resendWorkEmailVerification(42, undefined, new FormData())
+const run = () => resendWorkEmailVerification(navigation, 42, undefined, new FormData())
 
 describe('resendWorkEmailVerification', () => {
   const client = { name: 'api-client' }
@@ -47,27 +45,25 @@ describe('resendWorkEmailVerification', () => {
     expect(resendVerificationEmail).toHaveBeenCalledWith({ path: { userId: 42 }, client })
   })
 
-  it('redirects with emailLinkResent when the request succeeds', async () => {
+  it('redirects to the success navigation when the request succeeds', async () => {
     vi.mocked(resendVerificationEmail).mockResolvedValue({ response: { ok: true } } as never)
 
-    await expect(run()).rejects.toMatchObject({
-      url: '/update?detail=email&emailLinkResent=true',
-    })
+    await expect(run()).rejects.toMatchObject({ url: navigation.onSuccess })
   })
 
-  it('redirects with error when the response is not ok', async () => {
+  it('redirects to the error navigation when the response is not ok', async () => {
     vi.mocked(resendVerificationEmail).mockResolvedValue({
       response: { ok: false },
       error: { message: 'nope' },
     } as never)
 
-    await expect(run()).rejects.toMatchObject({ url: '/update?detail=email&error=true' })
+    await expect(run()).rejects.toMatchObject({ url: navigation.onError })
   })
 
-  it('redirects with error when the API call throws', async () => {
+  it('redirects to the error navigation when the API call throws', async () => {
     vi.mocked(resendVerificationEmail).mockRejectedValue(new Error('network down'))
 
-    await expect(run()).rejects.toMatchObject({ url: '/update?detail=email&error=true' })
+    await expect(run()).rejects.toMatchObject({ url: navigation.onError })
   })
 
   it('rethrows framework errors instead of redirecting to the error page', async () => {

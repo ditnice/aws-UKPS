@@ -3,38 +3,51 @@
 import { initialFormState, mergeForm, useForm, useTransform } from '@tanstack/react-form-nextjs'
 import { ChangeEvent, startTransition, useActionState } from 'react'
 
+import { EditableUserDetail } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
 import FormLevelErrors from '@/lib/form/FormLevelErrors'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
-import { updateUserEmailAction } from './serverActions'
-import { updateUserEmailOptions } from './shared'
+import { updateUserDetailsAction } from './serverActions'
+import { updateUserDetailOptions } from './shared'
 
 type EditUserDetailFormProps = {
   userId: number
   initialValue: string
+  property: EditableUserDetail
+  label: string
+  onSuccessRedirect: string
 }
-const EditUserEmailForm = ({ initialValue, userId }: EditUserDetailFormProps) => {
-  const boundAction = updateUserEmailAction.bind(null, userId)
-  const [state, action] = useActionState(boundAction, initialFormState)
+const EditUserDetailForm = ({
+  initialValue,
+  userId,
+  property,
+  label,
+  onSuccessRedirect,
+}: EditUserDetailFormProps) => {
+  const boundAction = updateUserDetailsAction.bind(null, onSuccessRedirect).bind(null, userId)
+  const [state, action, isPending] = useActionState(boundAction, initialFormState)
   const defaultValues = {
-    ...updateUserEmailOptions.defaultValues,
+    ...updateUserDetailOptions.defaultValues,
     value: initialValue,
+    property,
   }
   const form = useForm({
-    ...updateUserEmailOptions,
+    ...updateUserDetailOptions,
     defaultValues,
     transform: useTransform(
-      (baseForm) =>
-        mergeForm(baseForm, {
+      (baseForm) => {
+        return mergeForm(baseForm, {
           ...state!,
           values: {
             ...defaultValues,
             ...state?.values,
+            property,
           },
-        }),
-      [state, initialValue],
+        })
+      },
+      [state, initialValue, property],
     ),
     onSubmitMeta: {} as { formData: FormData },
     onSubmit: ({ meta }) => {
@@ -52,15 +65,17 @@ const EditUserEmailForm = ({ initialValue, userId }: EditUserDetailFormProps) =>
       }}
     >
       <FormLevelErrors errors={state?.errors ?? []} />
+      <form.Field name="property">
+        {(field) => <input type="hidden" name={field.name} value={field.state.value} />}
+      </form.Field>
       <form.Field name="value">
         {(field) => {
           const errorMessage = getFieldErrorMessage(field.state.meta.errors)
           return (
             <Input
-              autoComplete="email"
               error={Boolean(errorMessage)}
               errorMessage={errorMessage}
-              label={'Work email address'}
+              label={label}
               name={field.name}
               onBlur={field.handleBlur}
               onChange={(event: ChangeEvent<HTMLInputElement>) =>
@@ -73,11 +88,11 @@ const EditUserEmailForm = ({ initialValue, userId }: EditUserDetailFormProps) =>
           )
         }}
       </form.Field>
-      <Button type="submit" variant="cta" disabled={form.state.isSubmitting}>
-        Submit
+      <Button type="submit" variant="cta" disabled={isPending}>
+        Save
       </Button>
     </form>
   )
 }
 
-export default EditUserEmailForm
+export default EditUserDetailForm

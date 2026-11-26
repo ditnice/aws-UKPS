@@ -9,11 +9,10 @@ import { errorMessages } from '@/lib/form/errorMessages'
 import { getFormStateServerErrors } from '@/lib/form/formErrorHandling'
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 
-import { buildMyDetailsHref } from '../../../navigation'
-
 import { serverValidate } from './shared'
 
 export const updateUserDetailsAction = async (
+  onSuccessRedirect: string,
   userId: number,
   prev: unknown,
   formData: FormData,
@@ -27,7 +26,7 @@ export const updateUserDetailsAction = async (
     })
 
     if (response?.ok) {
-      redirect(buildMyDetailsHref({ updated: true }))
+      redirect(onSuccessRedirect)
     }
 
     if (isValidationProblemDetails(error)) {

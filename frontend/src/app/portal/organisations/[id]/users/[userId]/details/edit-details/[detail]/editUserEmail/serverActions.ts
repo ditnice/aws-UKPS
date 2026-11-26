@@ -3,17 +3,21 @@
 import { initialFormState, ServerValidateError } from '@tanstack/react-form-nextjs'
 import { redirect } from 'next/navigation'
 
+import { buildMyDetailsHref } from '@/app/portal/user/me/navigation'
 import { cancelPendingEmailChange, updateUserEmail } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFormStateServerErrors } from '@/lib/form/formErrorHandling'
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
 
-import { buildMyDetailsHref } from '../../../navigation'
-
 import { serverValidate } from './shared'
 
-export const updateUserEmailAction = async (userId: number, prev: unknown, formData: FormData) => {
+export const updateUserEmailAction = async (
+  onSuccessRedirect: string,
+  userId: number,
+  prev: unknown,
+  formData: FormData,
+) => {
   try {
     const values = await serverValidate(formData)
     const { error, response } = await updateUserEmail({
@@ -23,7 +27,7 @@ export const updateUserEmailAction = async (userId: number, prev: unknown, formD
     })
 
     if (response?.ok) {
-      redirect(buildMyDetailsHref({ requestedNewEmail: true }))
+      redirect(onSuccessRedirect)
     }
 
     if (response?.status == 409) {
@@ -57,7 +61,7 @@ export const updateUserEmailAction = async (userId: number, prev: unknown, formD
   }
 }
 
-export const cancelPendingEmailChangeAction = async (userId: number) => {
+export const cancelPendingEmailChangeAction = async (onCancel: string, userId: number) => {
   const { error, response } = await cancelPendingEmailChange({
     client: await createServerApiClient(),
     path: { userId },

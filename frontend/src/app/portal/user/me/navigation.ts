@@ -5,6 +5,11 @@ export type TypedParams = {
   mfaUpdated?: 'primary' | 'secondary'
 }
 
+export const updatedFlag = Object.keys({ updated: 'true' } satisfies SearchParams)[0]
+export const requestedNewEmailFlag = Object.keys({
+  requestedNewEmail: 'true',
+} satisfies SearchParams)[0]
+
 const mfaUpdateValues = ['primary', 'secondary'] as const
 const myDetailsPath = '/portal/user/me'
 

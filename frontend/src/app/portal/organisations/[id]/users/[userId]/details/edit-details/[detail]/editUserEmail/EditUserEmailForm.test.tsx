@@ -17,9 +17,17 @@ const mockedAction = vi.mocked(updateUserEmailAction)
 
 const USER_ID = 42
 const INITIAL_EMAIL = 'jane@example.com'
+const ON_SUCCESS_REDIRECT = '/portal/organisations/7/users/42/details?requestedNewEmail=true'
 
 const renderForm = (props: Partial<{ userId: number; initialValue: string }> = {}) =>
-  render(<EditUserEmailForm userId={USER_ID} initialValue={INITIAL_EMAIL} {...props} />)
+  render(
+    <EditUserEmailForm
+      userId={USER_ID}
+      initialValue={INITIAL_EMAIL}
+      onSuccessRedirect={ON_SUCCESS_REDIRECT}
+      {...props}
+    />,
+  )
 
 const getEmailInput = () => screen.getByRole('textbox', { name: /email address/i })
 
@@ -71,12 +79,14 @@ describe('EditUserDetailForm', () => {
 
     await waitFor(() => expect(mockedAction).toHaveBeenCalledTimes(1))
 
-    // bound args: (userId, previousState, formData)
-    const [userId, , formData] = mockedAction.mock.calls[0] as unknown as [
+    // bound args: (onSuccessRedirect, userId, previousState, formData)
+    const [onSuccessRedirect, userId, , formData] = mockedAction.mock.calls[0] as unknown as [
+      string,
       number,
       unknown,
       FormData,
     ]
+    expect(onSuccessRedirect).toBe(ON_SUCCESS_REDIRECT)
     expect(userId).toBe(USER_ID)
     expect(formData.get('value')).toBe('new@example.com')
   })
@@ -89,7 +99,7 @@ describe('EditUserDetailForm', () => {
 
     await waitFor(() => expect(mockedAction).toHaveBeenCalledTimes(1))
 
-    const formData = mockedAction.mock.calls[0][2] as unknown as FormData
+    const formData = mockedAction.mock.calls[0][3] as unknown as FormData
     expect(formData.get('value')).toBe(INITIAL_EMAIL)
   })
 

@@ -5,12 +5,16 @@ import { redirect, unstable_rethrow } from 'next/navigation'
 import { resendVerificationEmail } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 
-import { buildUpdateUserDetailsHref } from '../navigation'
+export type Navigations = {
+  onSuccess: string
+  onError: string
+}
 
 export type ResendVerificationState =
   { status: 'idle' } | { status: 'success' } | { status: 'error'; message: string }
 
 export const resendWorkEmailVerification = async (
+  navigation: Navigations,
   userId: number,
   _prevState: unknown,
   _formData: FormData,
@@ -22,12 +26,12 @@ export const resendWorkEmailVerification = async (
     })
 
     if (response?.ok) {
-      redirect(buildUpdateUserDetailsHref({ detail: 'email', emailLinkResent: true }))
+      redirect(navigation.onSuccess)
     }
 
-    redirect(buildUpdateUserDetailsHref({ detail: 'email', error: true }))
+    redirect(navigation.onError)
   } catch (error) {
     unstable_rethrow(error)
-    redirect(buildUpdateUserDetailsHref({ detail: 'email', error: true }))
+    redirect(navigation.onError)
   }
 }

@@ -3,8 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { errorMessages } from '@/lib/form/errorMessages'
 
-import { buildMyDetailsHref } from '../../../navigation'
-
 import { updateUserEmailAction } from './serverActions'
 
 // ---- Mocks -----------------------------------------------------------------
@@ -52,6 +50,7 @@ vi.mock('./shared', () => ({
 // ---- Tests -----------------------------------------------------------------
 
 describe('updateUserEmailAction', () => {
+  const onSuccessRedirect = '/portal/organisations/7/users/123/details?requestedNewEmail=true'
   const userId = 123
 
   const values = {
@@ -74,7 +73,7 @@ describe('updateUserEmailAction', () => {
   })
 
   it('updates the email and redirects on success', async () => {
-    await updateUserEmailAction(userId, undefined, formData)
+    await updateUserEmailAction(onSuccessRedirect, userId, undefined, formData)
 
     expect(serverValidateMock).toHaveBeenCalledWith(formData)
 
@@ -86,7 +85,7 @@ describe('updateUserEmailAction', () => {
       body: values,
     })
 
-    expect(redirectMock).toHaveBeenCalledWith(buildMyDetailsHref({ requestedNewEmail: true }))
+    expect(redirectMock).toHaveBeenCalledWith(onSuccessRedirect)
   })
 
   it('returns an email conflict error when the API responds with 409', async () => {
@@ -97,7 +96,7 @@ describe('updateUserEmailAction', () => {
       },
     })
 
-    const result = await updateUserEmailAction(userId, undefined, formData)
+    const result = await updateUserEmailAction(onSuccessRedirect, userId, undefined, formData)
 
     expect(result).toEqual({
       ...initialFormState,
@@ -142,7 +141,7 @@ describe('updateUserEmailAction', () => {
     isValidationProblemDetailsMock.mockReturnValue(true)
     getFormStateServerErrorsMock.mockReturnValue(formErrors)
 
-    const result = await updateUserEmailAction(userId, undefined, formData)
+    const result = await updateUserEmailAction(onSuccessRedirect, userId, undefined, formData)
 
     expect(isValidationProblemDetailsMock).toHaveBeenCalledWith(error)
 
@@ -168,7 +167,7 @@ describe('updateUserEmailAction', () => {
       },
     })
 
-    const result = await updateUserEmailAction(userId, undefined, formData)
+    const result = await updateUserEmailAction(onSuccessRedirect, userId, undefined, formData)
 
     expect(result).toEqual({
       ...initialFormState,
@@ -187,7 +186,7 @@ describe('updateUserEmailAction', () => {
       },
     })
 
-    const result = await updateUserEmailAction(userId, undefined, formData)
+    const result = await updateUserEmailAction(onSuccessRedirect, userId, undefined, formData)
 
     expect(result).toEqual({
       ...initialFormState,
@@ -204,7 +203,7 @@ describe('updateUserEmailAction', () => {
 
     serverValidateMock.mockRejectedValue(new ServerValidateError({ formState } as never))
 
-    const result = await updateUserEmailAction(userId, undefined, formData)
+    const result = await updateUserEmailAction(onSuccessRedirect, userId, undefined, formData)
 
     expect(result).toEqual(formState)
 
@@ -217,7 +216,9 @@ describe('updateUserEmailAction', () => {
 
     serverValidateMock.mockRejectedValue(error)
 
-    await expect(updateUserEmailAction(userId, undefined, formData)).rejects.toThrow(error)
+    await expect(
+      updateUserEmailAction(onSuccessRedirect, userId, undefined, formData),
+    ).rejects.toThrow(error)
 
     expect(createServerApiClientMock).not.toHaveBeenCalled()
     expect(updateUserEmailMock).not.toHaveBeenCalled()

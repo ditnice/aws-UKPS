@@ -1,31 +1,37 @@
 import { notFound } from 'next/navigation'
 import { ReactNode } from 'react'
 
-import { getUsersMe } from '@/client/generated'
+import { getUserDetailsWithinOrganisation } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { errorMessages } from '@/lib/form/errorMessages'
 
-import { buildMyDetailsHref } from '../../navigation'
-
 import EditUserDetailForm from './editUserDetailValue/EditUserDetailForm'
 import EditUserEmailForm from './editUserEmail/EditUserEmailForm'
 import { findTypedPageProps, PageProps, UserDetail } from './navigation'
 import PendingEmailUpdateAlert from './PendingEmailUpdateAlert'
 
-const PageWrapper = (props: React.PropsWithChildren & { label: string; header?: ReactNode }) => {
+const PageWrapper = (
+  props: React.PropsWithChildren & { label: string; returnLink: string; header?: ReactNode },
+) => {
   return (
     <>
       {props.header}
       <PageHeader
-        backLink={<BackLink href={buildMyDetailsHref()} />}
+        backLink={<BackLink href={props.returnLink} />}
         heading={`Edit ${props.label.toLocaleLowerCase()}`}
       />
       {props.children}
     </>
   )
+}
+
+const setUrlFlag = (relativeLink: string, flag: string): string => {
+  const url = new URL(relativeLink, 'http://placeholder.local')
+  url.searchParams.set(flag, 'true')
+  return url.pathname + url.search + url.hash
 }
 
 const userDetailLabels: Record<UserDetail, string> = {
@@ -35,35 +41,35 @@ const userDetailLabels: Record<UserDetail, string> = {
 }
 
 const Page = async (props: PageProps) => {
-  const { params, searchParams } = await findTypedPageProps(props)
-  const { detail } = params
+  const params = await findTypedPageProps(props)
+  const { detail, userId, organisationId } = params
 
   if (!detail) {
     notFound()
   }
 
+  const onSuccessRedirect = setUrlFlag(params.returnLink, params.onSuccessFlag)
   const client = await createServerApiClient()
-  const { data: me, error } = await getUsersMe({ client })
+  // const { data: me, error } = await getUsersMe({ client })
+  const { data: user, error } = await getUserDetailsWithinOrganisation({
+    path: { userId, organisationId },
+    client,
+  })
   const label = userDetailLabels[detail]
 
-  if (!me || error) {
+  if (!user || error) {
     return (
-      <PageWrapper label={label}>
+      <PageWrapper label={label} returnLink={params.returnLink}>
         <ErrorState>{errorMessages.failedToRetrieveCurrentUser}</ErrorState>
       </PageWrapper>
     )
   }
 
   const getHeader = () => {
-    if (detail === 'email' && me.pendingWorkEmail) {
+    if (detail === 'email' && user.pendingWorkEmail) {
       return (
         <>
-          <PendingEmailUpdateAlert
-            userId={me.userId}
-            verificationEmailResent={searchParams?.verificationLinkResent}
-            error={searchParams?.error}
-            {...me.pendingWorkEmail}
-          />
+          <PendingEmailUpdateAlert {...params} {...user.pendingWorkEmail} />
         </>
       )
     }
@@ -76,20 +82,28 @@ const Page = async (props: PageProps) => {
         return (
           <EditUserDetailForm
             label={label}
-            userId={me.userId}
+            userId={user.userId}
             property="FullName"
-            initialValue={me.fullName}
+            initialValue={user.fullName}
+            onSuccessRedirect={onSuccessRedirect}
           />
         )
       case 'email':
-        return <EditUserEmailForm userId={me.userId} initialValue={me.workEmail} />
+        return (
+          <EditUserEmailForm
+            userId={user.userId}
+            initialValue={user.workEmail}
+            onSuccessRedirect={onSuccessRedirect}
+          />
+        )
       case 'contactNumber':
         return (
           <EditUserDetailForm
             label={label}
-            userId={me.userId}
+            userId={user.userId}
             property="WorkPhone"
-            initialValue={me.workTelephone}
+            initialValue={user.workTelephone}
+            onSuccessRedirect={onSuccessRedirect}
           />
         )
     }
@@ -97,7 +111,7 @@ const Page = async (props: PageProps) => {
 
   return (
     <>
-      <PageWrapper label={label} header={getHeader()}>
+      <PageWrapper label={label} header={getHeader()} returnLink={params.returnLink}>
         {getForm()}
       </PageWrapper>
     </>

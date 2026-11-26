@@ -30,10 +30,14 @@ async function renderAlert(props: Partial<Props>) {
     value: email,
     userId,
     verifiedByEmail: false,
-    verificationEmailResent: undefined,
+    detail: 'email',
+    organisationId: 7,
+    returnLink: '/portal/organisations/7/users/123/details',
+    onSuccessFlag: 'updated',
+    verificationLinkResent: undefined,
     error: undefined,
   }
-  const ui = await PendingEmailUpdateAlert({ ...defaultProps, ...props })
+  const ui = await PendingEmailUpdateAlert({ ...defaultProps, ...props } as Props)
   return render(ui)
 }
 

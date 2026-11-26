@@ -90,10 +90,18 @@ const mockUser = {
   workTelephone: '07123 456789',
 }
 
+const returnLink = '/portal/organisations/7/users/42/details'
+const onSuccessFlag = 'updated'
+const onSuccessRedirect = `${returnLink}?${onSuccessFlag}=true`
+
 const setDetail = (detail: string | undefined) => {
   vi.mocked(findTypedPageProps).mockResolvedValue({
-    params: { detail },
-  } as Awaited<ReturnType<typeof findTypedPageProps>>)
+    organisationId: 7,
+    userId: 42,
+    detail,
+    returnLink,
+    onSuccessFlag,
+  } as unknown as Awaited<ReturnType<typeof findTypedPageProps>>)
 }
 
 const mockGetUsersMe = (result: { data?: unknown; error?: unknown }) => {
@@ -106,7 +114,7 @@ const mockGetUsersMe = (result: { data?: unknown; error?: unknown }) => {
  */
 const renderPage = async () => {
   const ui = await Page({
-    params: Promise.resolve({ detail: 'email' }),
+    params: Promise.resolve({ id: '7', userId: '42', detail: 'email' }),
     searchParams: Promise.resolve({}),
   })
   return render(ui)
@@ -178,7 +186,7 @@ describe('Edit user detail page', () => {
       await renderPage()
 
       expect(screen.getByRole('heading', { name: 'Edit work email address' })).toBeInTheDocument()
-      expect(screen.getByTestId('back-link')).toHaveAttribute('href', '/portal/user/me')
+      expect(screen.getByTestId('back-link')).toHaveAttribute('href', returnLink)
     })
   })
 
@@ -195,10 +203,10 @@ describe('Edit user detail page', () => {
       expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument()
     })
 
-    it('renders a back link to the user profile page', async () => {
+    it('renders a back link to the return link', async () => {
       await renderPage()
 
-      expect(screen.getByTestId('back-link')).toHaveAttribute('href', '/portal/user/me')
+      expect(screen.getByTestId('back-link')).toHaveAttribute('href', returnLink)
     })
   })
 
@@ -213,6 +221,7 @@ describe('Edit user detail page', () => {
         userId: mockUser.userId,
         property: 'FullName',
         initialValue: mockUser.fullName,
+        onSuccessRedirect,
       })
       expect(screen.queryByTestId('edit-user-email-form')).not.toBeInTheDocument()
       expect(screen.queryByTestId('error-state')).not.toBeInTheDocument()
@@ -228,6 +237,7 @@ describe('Edit user detail page', () => {
         userId: mockUser.userId,
         property: 'WorkPhone',
         initialValue: mockUser.workTelephone,
+        onSuccessRedirect,
       })
       expect(screen.queryByTestId('edit-user-email-form')).not.toBeInTheDocument()
       expect(screen.queryByTestId('error-state')).not.toBeInTheDocument()
@@ -241,6 +251,7 @@ describe('Edit user detail page', () => {
       expect(getFormProps('edit-user-email-form')).toEqual({
         userId: mockUser.userId,
         initialValue: mockUser.workEmail,
+        onSuccessRedirect,
       })
       expect(screen.queryByTestId('edit-user-detail-form')).not.toBeInTheDocument()
       expect(screen.queryByTestId('error-state')).not.toBeInTheDocument()
@@ -261,7 +272,11 @@ describe('Edit user detail page', () => {
       expect(PendingEmailUpdateAlertMock).toHaveBeenCalledTimes(1)
       expect(PendingEmailUpdateAlertMock.mock.calls[0][0]).toEqual({
         ...pendingWorkEmail,
-        userId: 123,
+        organisationId: 7,
+        userId: 42,
+        detail: 'email',
+        returnLink,
+        onSuccessFlag,
       })
     })
   })

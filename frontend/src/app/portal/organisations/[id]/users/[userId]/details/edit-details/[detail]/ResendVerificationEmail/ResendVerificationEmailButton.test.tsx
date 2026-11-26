@@ -13,6 +13,8 @@ vi.mock('./actions', () => ({
 
 const mockAction = vi.mocked(resendWorkEmailVerification)
 
+const navigation = { onSuccess: '/success', onError: '/error' }
+
 const getButton = () => screen.getByRole('button', { name: /resend email/i })
 
 describe('ResendVerificationEmailButton', () => {
@@ -22,7 +24,7 @@ describe('ResendVerificationEmailButton', () => {
   })
 
   it('renders an enabled submit button and no feedback initially', () => {
-    render(<ResendVerificationEmailButton userId={1} />)
+    render(<ResendVerificationEmailButton userId={1} navigation={navigation} />)
 
     const button = getButton()
     expect(button).toBeInTheDocument()
@@ -33,29 +35,46 @@ describe('ResendVerificationEmailButton', () => {
     expect(screen.queryByText(/verification email sent/i)).not.toBeInTheDocument()
   })
 
-  it('calls the action with the bound userId, the initial state and form data', async () => {
+  it('calls the action with the bound navigation and userId, the initial state and form data', async () => {
     const user = userEvent.setup()
-    render(<ResendVerificationEmailButton userId={42} />)
+    render(<ResendVerificationEmailButton userId={42} navigation={navigation} />)
 
     await user.click(getButton())
 
     await waitFor(() => expect(mockAction).toHaveBeenCalledTimes(1))
-    expect(mockAction).toHaveBeenCalledWith(42, { status: 'idle' }, expect.any(FormData))
+    expect(mockAction).toHaveBeenCalledWith(
+      navigation,
+      42,
+      { status: 'idle' },
+      expect.any(FormData),
+    )
   })
 
   it('uses the userId passed in props', async () => {
     const user = userEvent.setup()
-    const { rerender } = render(<ResendVerificationEmailButton userId={1} />)
-
-    await user.click(getButton())
-    await waitFor(() =>
-      expect(mockAction).toHaveBeenLastCalledWith(1, expect.anything(), expect.anything()),
+    const { rerender } = render(
+      <ResendVerificationEmailButton userId={1} navigation={navigation} />,
     )
 
-    rerender(<ResendVerificationEmailButton userId={2} />)
     await user.click(getButton())
     await waitFor(() =>
-      expect(mockAction).toHaveBeenLastCalledWith(2, expect.anything(), expect.anything()),
+      expect(mockAction).toHaveBeenLastCalledWith(
+        navigation,
+        1,
+        expect.anything(),
+        expect.anything(),
+      ),
+    )
+
+    rerender(<ResendVerificationEmailButton userId={2} navigation={navigation} />)
+    await user.click(getButton())
+    await waitFor(() =>
+      expect(mockAction).toHaveBeenLastCalledWith(
+        navigation,
+        2,
+        expect.anything(),
+        expect.anything(),
+      ),
     )
   })
 })

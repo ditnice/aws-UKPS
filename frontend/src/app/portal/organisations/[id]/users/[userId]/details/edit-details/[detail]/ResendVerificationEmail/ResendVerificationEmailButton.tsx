@@ -5,13 +5,17 @@ import { useActionState } from 'react'
 import { Button } from '@/components/Button/Button'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 
-import { resendWorkEmailVerification } from './actions'
+import { Navigations, resendWorkEmailVerification } from './actions'
 
 type ResendVerificationEmailButtonProps = {
   userId: number
+  navigation: Navigations
 }
-const ResendVerificationEmailButton = ({ userId }: ResendVerificationEmailButtonProps) => {
-  const boundAction = resendWorkEmailVerification.bind(null, userId)
+const ResendVerificationEmailButton = ({
+  userId,
+  navigation,
+}: ResendVerificationEmailButtonProps) => {
+  const boundAction = resendWorkEmailVerification.bind(null, navigation).bind(null, userId)
   const [state, formAction, isPending] = useActionState(boundAction, { status: 'idle' })
   return (
     <form action={formAction}>

@@ -7,8 +7,9 @@ import type { UserMembershipAction, UserOrgStatus, UserRole } from '@/client/gen
 import { Button } from '@/components/Button/Button'
 import { Radio, Radios } from '@/components/Radios/Radios'
 
-import type { SubmitEvent } from 'react'
 import { buildViewUserDetailsHref } from '../../../users/[userId]/details/navigation'
+
+import type { SubmitEvent } from 'react'
 
 interface Props {
   organisationId: number

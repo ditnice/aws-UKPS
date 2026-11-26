@@ -6,9 +6,11 @@ import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
 import { getUsersMe } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { UserAuthenticationDetails } from '@/lib/users/UserAuthenticationDetails'
 
 import { SearchParams } from './navigation'
 import Me from './page'
+import { buildUpdateUserMfaLink } from './update-mfa/navigate'
 
 vi.mock('@/client/generated/sdk.gen', () => ({
   getUsersMe: vi.fn(),
@@ -20,13 +22,13 @@ vi.mock('@/client/server-api', () => ({
   createServerApiClient: vi.fn(),
 }))
 
-vi.mock('./_components/UserAuthenticationDetails', () => ({
-  UserAuthenticationDetails: ({ currentUser }: { currentUser: UserInformationDto }) => (
+vi.mock('@/lib/users/UserAuthenticationDetails', () => ({
+  UserAuthenticationDetails: vi.fn(({ currentUser }: { currentUser: UserInformationDto }) => (
     <div data-testid="user-authentication-details">{currentUser.userId}</div>
-  ),
+  )),
 }))
 
-vi.mock('./_components/UserDetails', () => ({
+vi.mock('@/lib/users/UserDetails', () => ({
   UserDetails: ({ currentUser }: { currentUser: UserInformationDto }) => (
     <div data-testid="user-details">{currentUser.userId}</div>
   ),
@@ -69,6 +71,32 @@ describe('Me (direct invocation)', () => {
       exampleUser.userId.toString(),
     )
     expect(screen.getByTestId('user-details')).toHaveTextContent(exampleUser.userId.toString())
+  })
+
+  it('passes the sign in method actions to UserAuthenticationDetails', async () => {
+    mockedGetUsersMe.mockResolvedValue({
+      data: exampleUser,
+    } as Awaited<ReturnType<typeof getUsersMe>>)
+
+    await renderPage()
+
+    expect(vi.mocked(UserAuthenticationDetails)).toHaveBeenCalledWith(
+      {
+        currentUser: exampleUser,
+        actions: {
+          changePassword: '#change-password',
+          sendRecoveryLink: {
+            primary: '#send-recovery-link',
+            secondary: '#send-backup-method-recovery-link',
+          },
+          changeMfa: {
+            primary: buildUpdateUserMfaLink(),
+            secondary: '#update-backup-authentication-method',
+          },
+        },
+      },
+      undefined,
+    )
   })
 
   it('renders an error when the current user cannot be retrieved', async () => {
