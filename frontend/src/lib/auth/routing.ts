@@ -84,14 +84,38 @@ export function getOrganisationLandingHref(
   return safeReturnTo
 }
 
+// A fixed base, so the check behaves the same in the browser and on the server.
+const returnToBase = 'http://return-to.invalid'
+
+// Browsers treat a backslash as a slash and strip tabs and newlines inside URLs, so a prefix check
+// alone would let "/\evil.com" or "/<tab>/evil.com" through as "//evil.com". Parse the value the way
+// a browser would, then check both the origin and the normalised path, since dot segments can also
+// produce a leading "//" (for example "/.//evil.com").
 export function getSafeReturnTo(returnTo: string | undefined): string | undefined {
   const trimmedReturnTo = returnTo?.trim()
 
-  if (!trimmedReturnTo || !trimmedReturnTo.startsWith('/') || trimmedReturnTo.startsWith('//')) {
+  if (!trimmedReturnTo || !trimmedReturnTo.startsWith('/')) {
     return undefined
   }
 
-  return trimmedReturnTo
+  let url: URL
+  try {
+    url = new URL(trimmedReturnTo, returnToBase)
+  } catch {
+    return undefined
+  }
+
+  const safeReturnTo = `${url.pathname}${url.search}${url.hash}`
+  if (
+    url.origin !== returnToBase ||
+    !safeReturnTo.startsWith('/') ||
+    safeReturnTo.startsWith('//') ||
+    safeReturnTo.startsWith('/\\')
+  ) {
+    return undefined
+  }
+
+  return safeReturnTo
 }
 
 function buildHref(path: string, params: Record<string, string | undefined>): string {
