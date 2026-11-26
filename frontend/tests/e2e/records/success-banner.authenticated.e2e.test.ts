@@ -2,6 +2,25 @@ import { expect, test } from '../fixtures/test'
 import { forRoles } from '../helpers/roles'
 import { mutatesDataTag } from '../helpers/test-environment'
 
+import type { Page } from '@playwright/test'
+
+/** Creates a draft record through the create form and returns its ID, from the task list URL. */
+async function createDraftRecord(page: Page, recordsPath: string): Promise<string> {
+  await page.goto(`${recordsPath}/create`)
+  // The company code is an autocomplete, so its hidden suggestions list also matches the label.
+  await page.getByRole('combobox', { name: 'Company code' }).fill('E2E-BANNER')
+  await page.getByLabel('Generic name').fill('e2e-banner-substance')
+  await page.getByLabel('Record title').fill(`E2E banner test ${Date.now()}`)
+  await page.getByRole('button', { name: 'Save and continue' }).click()
+
+  await expect(page).toHaveURL(/\/portal\/records\/\d+\/task-list/)
+  const recordId = /\/portal\/records\/(\d+)\/task-list/.exec(new URL(page.url()).pathname)?.[1]
+  if (!recordId) {
+    throw new Error(`Could not read the new record's ID from ${page.url()}`)
+  }
+  return recordId
+}
+
 // Super users cannot create records, so this runs as the roles that can.
 test.describe(
   'Success banners after discarding a record',
@@ -15,37 +34,25 @@ test.describe(
       const discardedBanner = page.getByRole('heading', { name: 'Record successfully discarded' })
       const recordsTable = page.getByRole('table', { name: 'Organisation Records' })
 
-      // Create a draft, so there is a record this test can discard without touching existing data.
-      await page.goto(`${recordsPath}/create`)
-      await page.getByLabel('Company code').fill('E2E-BANNER')
-      await page.getByLabel('Generic name').fill('e2e-banner-substance')
-      await page.getByLabel('Record title').fill(`E2E banner test ${Date.now()}`)
-      await page.getByRole('button', { name: 'Save and continue' }).click()
-
-      await expect(page).toHaveURL(/\/portal\/records\/\d+\/task-list/)
+      // Two drafts, so the test needs no seeded data: one to open later, one to discard.
+      const recordToOpenId = await createDraftRecord(page, recordsPath)
+      const recordToDiscardId = await createDraftRecord(page, recordsPath)
       await expect(page.getByRole('heading', { name: 'Draft record saved' })).toBeVisible()
       await expect(page).not.toHaveURL(/action=/)
-      const recordId = /\/portal\/records\/(\d+)\/task-list/.exec(new URL(page.url()).pathname)?.[1]
-      if (!recordId) {
-        throw new Error(`Could not read the new record's ID from ${page.url()}`)
-      }
 
-      // Discard it: the records list shows the banner once, and the parameter leaves the URL.
-      await page.goto(`${recordsPath}/${recordId}/discard`)
+      // Discard one: the records list shows the banner once, and the parameter leaves the URL.
+      await page.goto(`${recordsPath}/${recordToDiscardId}/discard`)
       await page.getByRole('button', { name: 'Confirm' }).click()
 
       await expect(page).toHaveURL(new RegExp(`${recordsPath}(\\?|$)`))
       await expect(discardedBanner).toBeVisible()
       await expect(page).not.toHaveURL(/action=/)
 
-      // Open a record, then go Back: the page is restored without the banner.
-      const viewLinks = recordsTable.getByRole('link', { name: /^View/ })
-      if ((await viewLinks.count()) === 0) {
-        test.skip(true, `Organisation ${organisationId} has no other record to open`)
-        return
-      }
-      await viewLinks.first().click()
-      await expect(page).toHaveURL(new RegExp(`${recordsPath}/\\d+`))
+      // Open the other record, then go Back: the page is restored without the banner.
+      await recordsTable
+        .getByRole('link', { name: new RegExp(`^View record ${recordToOpenId}$`) })
+        .click()
+      await expect(page).toHaveURL(new RegExp(`${recordsPath}/${recordToOpenId}`))
 
       await page.goBack()
 
