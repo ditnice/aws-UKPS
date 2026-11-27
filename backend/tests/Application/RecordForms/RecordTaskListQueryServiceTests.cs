@@ -336,14 +336,11 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task GetTaskList_SuperUser_CannotDiscard()
+    public async Task GetTaskList_SuperUser_CannotEdit()
     {
-        RecordTaskListDto taskList = (
-            await CreateHarness(_organisation.Id, UserRole.Super)
-                .Service.GetTaskList(_record.Id, Ct)
-        ).ShouldBeSuccess();
-
-        taskList.CanDiscard.ShouldBeFalse();
+        (await CreateHarness(_organisation.Id, UserRole.Super).Service.GetTaskList(_record.Id, Ct))
+            .ShouldBeError()
+            .ShouldBeOfType<GetRecordTaskListError.CannotEdit>();
     }
 
     [Fact]

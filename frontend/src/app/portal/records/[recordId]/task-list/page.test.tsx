@@ -309,6 +309,23 @@ describe('RecordTaskListPage', () => {
     await expect(renderPage()).rejects.toThrow('NEXT_NOT_FOUND')
   })
 
+  it('says the record cannot be edited, without the task list, when the API returns 403', async () => {
+    vi.mocked(getRecordTaskList).mockResolvedValue({
+      data: undefined,
+      error: { detail: 'You are not authorised to edit this record.' },
+      response: { status: 403 },
+    } as never)
+
+    await renderPage()
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: "You can't edit this record" }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('You are not authorised to edit this record.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute('href', '/portal')
+    expect(screen.queryByRole('link', { name: 'Return to my records' })).not.toBeInTheDocument()
+  })
+
   it('shows an error when the task list cannot be loaded', async () => {
     vi.mocked(getRecordTaskList).mockResolvedValue({
       data: undefined,

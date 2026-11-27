@@ -52,6 +52,10 @@ internal sealed class RecordTaskListQueryService(
         {
             return GetRecordTaskListResult.Err(new GetRecordTaskListError.NotFound());
         }
+        if (!overview.CanEditContent)
+        {
+            return GetRecordTaskListResult.Err(new GetRecordTaskListError.CannotEdit());
+        }
 
         HashSet<string> answered = await ReadAnsweredQuestionIdsAsync(
             form.Model,

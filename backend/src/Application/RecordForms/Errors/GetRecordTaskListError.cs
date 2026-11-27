@@ -8,4 +8,7 @@ public abstract record GetRecordTaskListError
 
     /// <summary>The caller cannot read the record's organisation.</summary>
     public sealed record NotAllowed : GetRecordTaskListError;
+
+    /// <summary>The caller can read the record but not edit it.</summary>
+    public sealed record CannotEdit : GetRecordTaskListError;
 }

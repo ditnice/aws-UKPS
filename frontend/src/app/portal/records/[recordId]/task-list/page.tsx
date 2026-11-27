@@ -11,7 +11,7 @@ import {
   recordStatusLabels,
   recordStatusTagColours,
 } from '@/app/portal/organisations/[id]/records/labels'
-import { getRecordTaskList, type RecordTaskStatus } from '@/client/generated'
+import { getRecordTaskList, ProblemDetails, type RecordTaskStatus } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { Button, ButtonGroup } from '@/components/Button/Button'
@@ -63,6 +63,19 @@ const RecordTaskListPage = async ({ params, searchParams }: RecordTaskListPagePr
 
   if (response?.status === 404) {
     notFound()
+  }
+
+  if (response?.status === 403) {
+    const { detail } = (error ?? {}) as ProblemDetails
+    return (
+      <section>
+        <PageHeader
+          backLink={<BackLink href="/portal">Back</BackLink>}
+          heading="You can't edit this record"
+        />
+        <ErrorState>{detail ?? 'You do not have permission to edit this record.'}</ErrorState>
+      </section>
+    )
   }
 
   if (!taskList || error) {

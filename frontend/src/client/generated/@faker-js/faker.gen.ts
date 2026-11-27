@@ -1553,6 +1553,8 @@ export const fakeGetRecordTaskListResponse200 = (options?: Options): GetRecordTa
 
 export const fakeGetRecordTaskListResponse401 = (options?: Options): GetRecordTaskListErrors[401] => fakeAuthenticationProblemDetails(options);
 
+export const fakeGetRecordTaskListResponse403 = (options?: Options): GetRecordTaskListErrors[403] => fakeProblemDetails(options);
+
 export const fakeGetRecordTaskListResponse404 = (options?: Options): GetRecordTaskListErrors[404] => fakeProblemDetails(options);
 
 export const fakeGetRecordTaskListResponse409 = (options?: Options): GetRecordTaskListErrors[409] => fakeAuthenticationProblemDetails(options);

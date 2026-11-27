@@ -75,6 +75,20 @@ public class RecordTaskListControllerTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
+    public async Task GetRecordTaskList_CannotEdit_ReturnsForbidden()
+    {
+        _mockQueryService
+            .GetTaskList(5, Arg.Any<CancellationToken>())
+            .Returns(GetRecordTaskListResult.Err(new GetRecordTaskListError.CannotEdit()));
+
+        HttpResponseMessage response = await _client.GetAsync(Url(TaskListUrl), Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        JsonObject body = (await response.Content.ReadFromJsonAsync<JsonObject>(Ct))!;
+        body["detail"]!.GetValue<string>().ShouldBe("You are not authorised to edit this record.");
+    }
+
+    [Fact]
     public async Task GetRecordTaskList_InaccessibleAndMissingRecords_ReturnIdenticalResponses()
     {
         _mockQueryService

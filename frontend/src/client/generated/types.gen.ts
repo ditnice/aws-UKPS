@@ -3475,6 +3475,10 @@ export type GetRecordTaskListErrors = {
      */
     401: AuthenticationProblemDetails;
     /**
+     * The caller can read the record but not edit it.
+     */
+    403: ProblemDetails;
+    /**
      * The record is not found or is not accessible to the caller.
      */
     404: ProblemDetails;
