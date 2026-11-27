@@ -16,14 +16,14 @@ const cases: { subject: ChampionSubject; actions: Record<'Super' | 'Champion', s
     subject: 'readonly',
     actions: {
       Super: [changePermissions, deactivate, remove, manageDetails],
-      Champion: [changePermissions, deactivate, manageDetails],
+      Champion: [changePermissions, deactivate],
     },
   },
   {
     subject: 'champion',
     actions: {
       Super: [changePermissions, deactivate, remove, manageDetails],
-      Champion: [changePermissions, deactivate, manageDetails],
+      Champion: [changePermissions, deactivate],
     },
   },
   {

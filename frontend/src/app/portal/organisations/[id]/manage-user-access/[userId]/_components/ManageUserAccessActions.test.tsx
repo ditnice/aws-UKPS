@@ -135,10 +135,7 @@ describe('ManageUserAccessActions', () => {
     ['Deactivate user', '/portal/organisations/2/users/4/deactivate'],
     ['Remove user', '/portal/organisations/2/manage-user-access/4/remove'],
     ['Reactivate user', '/portal/organisations/2/users/4/reactivate'],
-    [
-      'Manage user details and sign in method',
-      '/portal/organisations/2/manage-user-access/4/manage-details',
-    ],
+    ['Manage user details and sign in method', '/portal/organisations/2/users/4/details'],
   ])('requests navigation to the selected %s action', async (action, href) => {
     renderActions(action === 'Reactivate user' ? 'Deactivated' : 'Active')
 

@@ -299,6 +299,78 @@ internal partial class UserService(
         CancellationToken cancellationToken
     )
     {
+        var membershipResult = await GetMembershipWithinOrganisation(
+            userId,
+            organisationId,
+            cancellationToken
+        );
+
+        return membershipResult.Match(
+            membership =>
+                GetUserInformationResult.Ok(
+                    MapUserToUserInformationDto(
+                        membership,
+                        timeProvider.GetUtcNow(),
+                        PendingEmailChangeTimeout
+                    )
+                ),
+            error => GetUserInformationResult.Err(error)
+        );
+    }
+
+    public async Task<
+        Result<UserInformationAdminViewDto, GetUsersError>
+    > GetUserDetailsWithinOrganisationAdminView(
+        int userId,
+        int organisationId,
+        CancellationToken cancellationToken
+    )
+    {
+        if (currentUserInfoService.GetCurrentUserInfo().UserRole != UserRole.Super)
+        {
+            return Result<UserInformationAdminViewDto, GetUsersError>.Err(
+                new GetUsersError.UserNotFound(userId, organisationId)
+            );
+        }
+
+        var membershipResult = await GetMembershipWithinOrganisation(
+            userId,
+            organisationId,
+            cancellationToken
+        );
+
+        return await membershipResult.Match(
+            async membership =>
+            {
+                User user = membership.User!;
+                var mfaInformation = await GetUserMfaInformation(
+                    user.CognitoUsername,
+                    cancellationToken
+                );
+
+                return Result<UserInformationAdminViewDto, GetUsersError>.Ok(
+                    new UserInformationAdminViewDto(
+                        mfaInformation.MfaMethod,
+                        mfaInformation.MfaPhoneNumber,
+                        user.HasMultipleSelectableOrganisations(),
+                        MapUserToUserInformationDto(
+                            membership,
+                            timeProvider.GetUtcNow(),
+                            PendingEmailChangeTimeout
+                        )
+                    )
+                );
+            },
+            error => Task.FromResult(Result<UserInformationAdminViewDto, GetUsersError>.Err(error))
+        );
+    }
+
+    private async Task<Result<UserOrgMembership, GetUsersError>> GetMembershipWithinOrganisation(
+        int userId,
+        int organisationId,
+        CancellationToken cancellationToken
+    )
+    {
         GetUsersError? organisationError = await ValidateOrganisationAsync(
             organisationId,
             Operation.ElevatedRead,
@@ -306,7 +378,7 @@ internal partial class UserService(
         );
         if (organisationError is not null)
         {
-            return GetUserInformationResult.Err(organisationError);
+            return Result<UserOrgMembership, GetUsersError>.Err(organisationError);
         }
 
         var membership = await dbContext
@@ -318,19 +390,11 @@ internal partial class UserService(
             .Where(m => m.UserId == userId && m.OrganisationId == organisationId)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (membership is null)
-        {
-            return GetUserInformationResult.Err(
+        return membership is null
+            ? Result<UserOrgMembership, GetUsersError>.Err(
                 new GetUsersError.UserNotFound(userId, organisationId)
-            );
-        }
-        var dto = MapUserToUserInformationDto(
-            membership,
-            timeProvider.GetUtcNow(),
-            PendingEmailChangeTimeout
-        );
-
-        return GetUserInformationResult.Ok(dto);
+            )
+            : Result<UserOrgMembership, GetUsersError>.Ok(membership);
     }
 
     private static UserInformationDto MapUserToUserInformationDto(
@@ -455,11 +519,17 @@ internal partial class UserService(
 
         if (m.MembershipStatus.HasValue)
         {
+            UserMembershipAction[] actionsOnlyPermittedToSuperUsers =
+            [
+                UserMembershipAction.RemoveUser,
+                UserMembershipAction.ManageUserDetails,
+            ];
+
             return UserOrgMembership
                 .GetPermittedActions(m.MembershipStatus.Value)
                 .Where(action =>
-                    action != UserMembershipAction.RemoveUser
-                    || currentUserInfo.UserRole == UserRole.Super
+                    currentUserInfo.UserRole == UserRole.Super
+                    || !actionsOnlyPermittedToSuperUsers.Contains(action)
                 )
                 .ToArray();
         }
@@ -618,11 +688,7 @@ internal partial class UserService(
                 return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.UserDoesNotExist());
             }
 
-            bool isTheCurrentUserModifyingTheirOwnDetails = currentUserInfoService.IsCurrentUser(
-                user
-            );
-
-            if (!isTheCurrentUserModifyingTheirOwnDetails)
+            if (!IsCurrentUserPermittedToModifyDetailsOf(user))
             {
                 return UpdateUserDetailsResult.Err(new UpdateUserDetailsError.Unauthorised());
             }
@@ -787,7 +853,7 @@ internal partial class UserService(
             return ResendVerificationEmailResult.Err(new ResendVerificationEmailError.NotFound());
         }
 
-        if (!currentUserInfoService.IsCurrentUser(user))
+        if (!IsCurrentUserPermittedToModifyDetailsOf(user))
         {
             return ResendVerificationEmailResult.Err(new ResendVerificationEmailError.Forbidden());
         }
@@ -915,7 +981,7 @@ internal partial class UserService(
                 );
             }
 
-            if (!currentUserInfoService.IsCurrentUser(user))
+            if (!IsCurrentUserPermittedToModifyDetailsOf(user))
             {
                 return Result<CancelPendingEmailChangeError>.Err(
                     new CancelPendingEmailChangeError.Unauthorised()
@@ -1063,6 +1129,16 @@ internal partial class UserService(
         return null;
     }
 
+    /// <summary>
+    /// Users may always modify their own details; super users may also modify the details of
+    /// any other user.
+    /// </summary>
+    private bool IsCurrentUserPermittedToModifyDetailsOf(User user)
+    {
+        return currentUserInfoService.IsCurrentUser(user)
+            || currentUserInfoService.GetCurrentUserInfo().UserRole == UserRole.Super;
+    }
+
     private async Task<UpdateUserEmailError?> ValidateEmailUpdatePermitted(
         User? user,
         UpdateUserEmailCommand command,
@@ -1074,9 +1150,7 @@ internal partial class UserService(
             return new UpdateUserEmailError.UserDoesNotExist();
         }
 
-        bool isTheCurrentUserModifyingTheirOwnDetails = currentUserInfoService.IsCurrentUser(user);
-
-        if (!isTheCurrentUserModifyingTheirOwnDetails)
+        if (!IsCurrentUserPermittedToModifyDetailsOf(user))
         {
             return new UpdateUserEmailError.Unauthorised();
         }

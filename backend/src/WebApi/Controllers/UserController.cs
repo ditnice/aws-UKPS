@@ -128,6 +128,56 @@ public class UserController(IUserService userService) : ControllerBase
     }
 
     /// <summary>
+    /// Retrieves the administrator's view of a user's details, including their MFA settings,
+    /// along with their role within the specified organisation. Only super users may use this.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user to retrieve.</param>
+    /// <param name="organisationId">
+    /// The unique identifier of the organisation to read the user's membership from. A user may
+    /// belong to several organisations, so their role is resolved against this organisation.
+    /// </param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A <see cref="UserInformationAdminViewDto"/> describing the user, their MFA settings and
+    /// their organisation membership if successful, or an appropriate error response if the
+    /// request fails.
+    /// </returns>
+    /// <response code="200">Returns the administrator's view of the user's details.</response>
+    /// <response code="404">The user does not exist in this organisation or is not accessible to the caller (ADR-004).</response>
+    [HttpGet(
+        "{userId:int}/organisations/{organisationId:int}/admin-view",
+        Name = nameof(GetUserDetailsWithinOrganisationAdminView)
+    )]
+    [ProducesResponseType<UserInformationAdminViewDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<
+        ActionResult<UserInformationAdminViewDto>
+    > GetUserDetailsWithinOrganisationAdminView(
+        int userId,
+        int organisationId,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await userService.GetUserDetailsWithinOrganisationAdminView(
+            userId,
+            organisationId,
+            cancellationToken
+        );
+
+        return result.Match<ActionResult<UserInformationAdminViewDto>>(
+            user => Ok(user),
+            error =>
+                error switch
+                {
+                    GetUsersError.OrganisationNotFound
+                    or GetUsersError.UserNotFound
+                    or GetUsersError.NotAllowed => NotFound(),
+                    _ => throw new UnreachableException("Unhandled GetUsersError variant."),
+                }
+        );
+    }
+
+    /// <summary>
     /// Updates the details of the specified user.
     /// </summary>
     /// <param name="userId">The unique identifier of the user whose details are being updated.</param>

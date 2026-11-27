@@ -5,10 +5,17 @@ import { BackLinkBrowser } from '@/components/BackLinkBrowser/BackLinkBrowser'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { UserAuthenticationDetails } from '@/lib/users/UserAuthenticationDetails'
+import { UserDetails } from '@/lib/users/UserDetails'
 
-import { UserAuthenticationDetails } from './_components/UserAuthenticationDetails'
-import { UserDetails } from './_components/UserDetails'
-import { parseTypedParamsFromSearchParams, SearchParams } from './navigation'
+import {
+  buildMyDetailsHref,
+  parseTypedParamsFromSearchParams,
+  requestedNewEmailFlag,
+  SearchParams,
+  updatedFlag,
+} from './navigation'
+import { buildUpdateUserMfaLink } from './update-mfa/navigate'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,6 +23,18 @@ const mfaUpdatedMessages = {
   primary: 'Your primary authentication method has been updated.',
   secondary: 'Your backup authentication method has been updated.',
 } as const
+
+const authenticationActions = {
+  changePassword: '#change-password',
+  sendRecoveryLink: {
+    primary: '#send-recovery-link',
+    secondary: '#send-backup-method-recovery-link',
+  },
+  changeMfa: {
+    primary: buildUpdateUserMfaLink(),
+    secondary: '#update-backup-authentication-method',
+  },
+}
 
 export default async function Me({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const { updated, requestedNewEmail, mfaUpdated } = parseTypedParamsFromSearchParams(
@@ -56,8 +75,18 @@ export default async function Me({ searchParams }: { searchParams: Promise<Searc
         <ErrorState>{errorMessages.failedToRetrieveCurrentUser}</ErrorState>
       ) : (
         <>
-          <UserAuthenticationDetails currentUser={me} />
-          <UserDetails currentUser={me} />
+          <UserAuthenticationDetails currentUser={me} actions={authenticationActions} />
+          <UserDetails
+            user={me}
+            navigation={{
+              returnLink: buildMyDetailsHref(),
+              onSuccessFlag: {
+                contactNumber: updatedFlag,
+                fullName: updatedFlag,
+                email: requestedNewEmailFlag,
+              },
+            }}
+          />
         </>
       )}
     </>

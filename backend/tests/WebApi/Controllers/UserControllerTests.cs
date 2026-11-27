@@ -397,6 +397,114 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async Task GetUserDetailsWithinOrganisationAdminView_ReturnsOk_WhenTheUserIsAMember()
+    {
+        UserInformationAdminViewDto expected = new UserInformationAdminViewDtoFaker().Generate();
+        _mockUserService
+            .GetUserDetailsWithinOrganisationAdminView(
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Result<UserInformationAdminViewDto, GetUsersError>.Ok(expected));
+
+        var response = await _client.GetAsync(
+            UserWithinOrganisationAdminViewUrl(expected.UserId, expected.OrganisationId),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<UserInformationAdminViewDto>(
+            TestJsonOptions.Default,
+            TestContext.Current.CancellationToken
+        );
+        content.ShouldBe(expected);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisationAdminView_PassesRouteValuesToService()
+    {
+        _ = await _client.GetAsync(
+            UserWithinOrganisationAdminViewUrl(userId: 7, organisationId: 12),
+            TestContext.Current.CancellationToken
+        );
+
+        await _mockUserService
+            .Received(1)
+            .GetUserDetailsWithinOrganisationAdminView(7, 12, Arg.Any<CancellationToken>());
+    }
+
+    public static TheoryData<GetUsersError> GetUserDetailsWithinOrganisationAdminViewErrors =>
+        [
+            new GetUsersError.OrganisationNotFound(1),
+            new GetUsersError.UserNotFound(2, 1),
+            new GetUsersError.NotAllowed(1),
+        ];
+
+    [Theory]
+    [MemberData(nameof(GetUserDetailsWithinOrganisationAdminViewErrors))]
+    public async Task GetUserDetailsWithinOrganisationAdminView_ReturnsNotFound_WhenTheServiceReturnsAnError(
+        GetUsersError error
+    )
+    {
+        _mockUserService
+            .GetUserDetailsWithinOrganisationAdminView(
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Result<UserInformationAdminViewDto, GetUsersError>.Err(error));
+
+        var response = await _client.GetAsync(
+            UserWithinOrganisationAdminViewUrl(userId: 2, organisationId: 1),
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task GetUserDetailsWithinOrganisationAdminView_ShouldConcealDeniedAndMissingResources(
+        bool missingOrganisation
+    )
+    {
+        GetUsersError missing = missingOrganisation
+            ? new GetUsersError.OrganisationNotFound(1)
+            : new GetUsersError.UserNotFound(2, 1);
+        _mockUserService
+            .GetUserDetailsWithinOrganisationAdminView(2, 1, Arg.Any<CancellationToken>())
+            .Returns(
+                Result<UserInformationAdminViewDto, GetUsersError>.Err(
+                    new GetUsersError.NotAllowed(1)
+                ),
+                Result<UserInformationAdminViewDto, GetUsersError>.Err(missing)
+            );
+
+        var denied = await _client.GetAsync(
+            UserWithinOrganisationAdminViewUrl(userId: 2, organisationId: 1),
+            TestContext.Current.CancellationToken
+        );
+        var absent = await _client.GetAsync(
+            UserWithinOrganisationAdminViewUrl(userId: 2, organisationId: 1),
+            TestContext.Current.CancellationToken
+        );
+
+        denied.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        absent.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        var deniedBody = JsonNode
+            .Parse(await denied.Content.ReadAsStringAsync(TestContext.Current.CancellationToken))!
+            .AsObject();
+        var absentBody = JsonNode
+            .Parse(await absent.Content.ReadAsStringAsync(TestContext.Current.CancellationToken))!
+            .AsObject();
+        deniedBody.Remove("traceId");
+        absentBody.Remove("traceId");
+        JsonNode.DeepEquals(deniedBody, absentBody).ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task UpdateUserDetails_WhenValidRequest_ShouldReturnOk()
     {
         var response = await SendUpdateUserDetailsRequest();
@@ -1039,6 +1147,9 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
     private static Uri UserWithinOrganisationUrl(int userId, int organisationId) =>
         new($"{UsersUrl}/{userId}/organisations/{organisationId}", UriKind.Relative);
 
+    private static Uri UserWithinOrganisationAdminViewUrl(int userId, int organisationId) =>
+        new($"{UsersUrl}/{userId}/organisations/{organisationId}/admin-view", UriKind.Relative);
+
     private static Uri AppendQueryParams(string url, GetUsersQueryDto query)
     {
         var queryParams = new List<string>();
@@ -1254,6 +1365,44 @@ public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
                 x => x.MfaPhoneNumber,
                 (f, x) =>
                     x.MfaMethod.Equals(SmsMfaMethod, StringComparison.Ordinal)
+                        ? $"*******{f.Random.ReplaceNumbers("####")}"
+                        : string.Empty
+            );
+        }
+    }
+
+    private sealed class UserInformationAdminViewDtoFaker : Faker<UserInformationAdminViewDto>
+    {
+        private static readonly string[] _mfaMethods =
+        [
+            CurrentUserInformationDtoFaker.SmsMfaMethod,
+            "Authenticator",
+            "Unknown",
+        ];
+
+        public UserInformationAdminViewDtoFaker()
+        {
+            // Copy the base user information through the copy constructor; the admin-view
+            // members are placeholders here and are set by the rules below.
+            CustomInstantiator(_ => new UserInformationAdminViewDto(
+                mfaMethod: string.Empty,
+                mfaPhoneNumber: string.Empty,
+                hasMultipleOrganisations: false,
+                userInformationDto: new UserInformationDtoFaker().Generate()
+            ));
+
+            RuleFor(x => x.HasMultipleOrganisations, f => f.Random.Bool());
+
+            RuleFor(x => x.MfaMethod, f => f.PickRandom(_mfaMethods));
+
+            // Rules run in order, so MfaMethod is already set here.
+            RuleFor(
+                x => x.MfaPhoneNumber,
+                (f, x) =>
+                    x.MfaMethod.Equals(
+                        CurrentUserInformationDtoFaker.SmsMfaMethod,
+                        StringComparison.Ordinal
+                    )
                         ? $"*******{f.Random.ReplaceNumbers("####")}"
                         : string.Empty
             );

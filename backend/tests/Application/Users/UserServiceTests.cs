@@ -1,4 +1,5 @@
 using System.Data.Common;
+using System.Diagnostics;
 using Amazon.CognitoIdentityProvider.Model;
 using Bogus;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,10 @@ using UKPS.Api.Tests.Utilities.AssertionHelpers;
 using UKPS.Api.Tests.Utilities.Data;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.Harnesses;
+using GetUserInformationAdminViewResult = UKPS.Api.Application.Common.Result<
+    UKPS.Api.Application.Users.Dtos.UserInformationAdminViewDto,
+    UKPS.Api.Application.Users.Errors.GetUsersError
+>;
 using GetUserInformationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Users.Dtos.UserInformationDto,
     UKPS.Api.Application.Users.Errors.GetUsersError
@@ -985,24 +990,39 @@ public class UserServiceTests : DatabaseTestBase
         result.ShouldBeError().ShouldBeOfType<GetUsersError.NotAllowed>();
     }
 
-    [Theory]
-    [InlineData(UserRole.Super)]
-    [InlineData(UserRole.Champion)]
-    public async Task GetUsers_WhenChampionOrSuperUser_ShouldReturnAllRolePermittedActions(
-        UserRole userRoles
-    )
+    [Fact]
+    public async Task GetUsers_WhenSuperUser_ShouldReturnAllRolePermittedActions()
     {
         var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
             x with
             {
-                UserRole = userRoles,
+                UserRole = UserRole.Super,
+                OrganisationId = 1,
+            }
+        );
+        var allActions = Enum.GetValues<UserMembershipAction>().ToArray();
+        var result = await harness.Service.GetUsers(
+            _getAllUserQuery,
+            TestContext.Current.CancellationToken
+        );
+        var users = result.ShouldBeSuccess().Items;
+        var actions = users.SelectMany(x => x.Actions).Distinct();
+        var intersection = allActions.Intersect(actions);
+        intersection.Count().ShouldBe(allActions.Length);
+    }
+
+    [Fact]
+    public async Task GetUsers_WhenChampionUser_ShouldReturnAllRolePermittedActionsExceptRemoveUserAndModifyDetails()
+    {
+        var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
+            x with
+            {
+                UserRole = UserRole.Champion,
                 OrganisationId = 1,
             }
         );
         var allActions = Enum.GetValues<UserMembershipAction>()
-            .Where(action =>
-                action != UserMembershipAction.RemoveUser || userRoles == UserRole.Super
-            )
+            .Except([UserMembershipAction.RemoveUser, UserMembershipAction.ManageUserDetails])
             .ToArray();
         var result = await harness.Service.GetUsers(
             _getAllUserQuery,
@@ -1012,10 +1032,35 @@ public class UserServiceTests : DatabaseTestBase
         var actions = users.SelectMany(x => x.Actions).Distinct();
         var intersection = allActions.Intersect(actions);
         intersection.Count().ShouldBe(allActions.Length);
-        if (userRoles != UserRole.Super)
-        {
-            actions.ShouldNotContain(UserMembershipAction.RemoveUser);
-        }
+    }
+
+    [Theory]
+    [InlineData(UserRole.Super, true)]
+    [InlineData(UserRole.Champion, false)]
+    public async Task GetUsers_OnlyAllowSuperUsersToManageDetails(
+        UserRole callerRole,
+        bool shouldOfferManageDetails
+    )
+    {
+        (User target, UserOrgMembership membership) = await AddUserWithMembership(
+            status: UserOrgMembershipStatus.Active
+        );
+        _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                UserRole = callerRole,
+                OrganisationId = membership.OrganisationId,
+            }
+        );
+
+        var result = await Service.GetUsers(
+            CreateGetUsersQuery(organisationId: membership.OrganisationId, email: target.WorkEmail),
+            TestContext.Current.CancellationToken
+        );
+
+        UserListItemDto user = result.ShouldBeSuccess().Items.Single();
+        user.Actions.Contains(UserMembershipAction.ManageUserDetails)
+            .ShouldBe(shouldOfferManageDetails);
     }
 
     [Theory]
@@ -1214,22 +1259,6 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task UpdateUserDetails_WhenUserIsNotTheTargetUser_ShouldReturnUserIsNoPermittedToUserDetailsError()
-    {
-        var currentUser = await CreateExistingCurrentUser();
-        var otherUserTestHarness = new ServiceTestHarness<IUserService>(_harness).UpdateCurrentUser(
-            x => x with { Email = "otheruser@email.com" }
-        );
-        var command = _updateUserDetailsCommandFaker.Generate();
-        var result = await otherUserTestHarness.Service.UpdateUserDetails(
-            currentUser.Id,
-            command,
-            TestContext.Current.CancellationToken
-        );
-        result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.Unauthorised>();
-    }
-
-    [Fact]
     public async Task UpdateUserEmail_ShouldUpdateUserDtoSoTheyAreMarkedAsHavingAPendingEmail()
     {
         var newEmail = "my-new-email@email.com";
@@ -1413,19 +1442,34 @@ public class UserServiceTests : DatabaseTestBase
         _harness.Emails.Sent.ShouldBeEmpty();
     }
 
-    [Fact]
-    public async Task ResendVerificationEmail_WhenCurrentUserIsNotTheSameAsTargetUser_ShouldResendVerificationEmailAndReturnAForbiddenError()
+    [Theory]
+    [InlineData(UserRole.Super, true)]
+    [InlineData(UserRole.Champion, false)]
+    [InlineData(UserRole.Standard, false)]
+    public async Task ResendVerificationEmail_WhenResendingForAnotherUser_OnlySuperUsersAreAllowed(
+        UserRole currentUserRole,
+        bool isAllowed
+    )
     {
-        User firstUser = await CreateExistingCurrentUser();
-        _ = await RequestEmailUpdate(firstUser);
-
-        _ = await CreateExistingCurrentUser(); // Sets a new current user.
+        User targetUser = await CreateExistingCurrentUser();
+        _ = await RequestEmailUpdate(targetUser);
         _harness.Emails.Clear();
 
-        var result = await Service.ResendVerificationEmail(firstUser.Id, Ct);
+        var result = await ServiceAsAnotherUser(currentUserRole)
+            .ResendVerificationEmail(targetUser.Id, Ct);
 
-        result.ShouldBeError().ShouldBeOfType<ResendVerificationEmailError.Forbidden>();
-        _harness.Emails.Sent.ShouldBeEmpty();
+        if (isAllowed)
+        {
+            result.ShouldBeSuccess();
+            _harness
+                .Emails.Sent.OfType<EmailChangeVerificationRequestEmail>()
+                .ShouldHaveSingleItem();
+        }
+        else
+        {
+            result.ShouldBeError().ShouldBeOfType<ResendVerificationEmailError.Forbidden>();
+            _harness.Emails.Sent.ShouldBeEmpty();
+        }
     }
 
     [Fact]
@@ -1691,19 +1735,33 @@ public class UserServiceTests : DatabaseTestBase
         result.ShouldBeError().ShouldBeOfType<CancelPendingEmailChangeError.UserDoesNotExist>();
     }
 
-    [Fact]
-    public async Task CancelPendingEmailChange_WhenNotCurrentUser_ShouldReturnUnauthorisedError()
+    [Theory]
+    [InlineData(UserRole.Super, true)]
+    [InlineData(UserRole.Champion, false)]
+    [InlineData(UserRole.Standard, false)]
+    public async Task CancelPendingEmailChange_WhenCancellingForAnotherUser_OnlySuperUsersAreAllowed(
+        UserRole currentUserRole,
+        bool isAllowed
+    )
     {
-        User firstUser = await CreateExistingCurrentUser();
-        _ = await RequestEmailUpdate(firstUser);
-        _ = await CreateExistingCurrentUser();
+        User targetUser = await CreateExistingCurrentUser();
+        _ = await RequestEmailUpdate(targetUser);
 
-        var result = await Service.CancelPendingEmailChange(
-            firstUser.Id,
-            TestContext.Current.CancellationToken
-        );
+        var result = await ServiceAsAnotherUser(currentUserRole)
+            .CancelPendingEmailChange(targetUser.Id, Ct);
 
-        result.ShouldBeError().ShouldBeOfType<CancelPendingEmailChangeError.Unauthorised>();
+        // The main harness acts as the target user, so it can read back their details.
+        UserInformationDto targetDetails = await Service.GetCurrentUser(Ct);
+        if (isAllowed)
+        {
+            result.ShouldBeSuccess();
+            targetDetails.PendingWorkEmail.ShouldBeNull();
+        }
+        else
+        {
+            result.ShouldBeError().ShouldBeOfType<CancelPendingEmailChangeError.Unauthorised>();
+            targetDetails.PendingWorkEmail.ShouldNotBeNull();
+        }
     }
 
     [Fact]
@@ -1891,6 +1949,174 @@ public class UserServiceTests : DatabaseTestBase
             .ShouldHaveSingleItem();
 
         return email.EmailVerificationLink.Host;
+    }
+
+    [Theory]
+    [InlineData(UserRole.Standard, EditableUserDetail.FullName)]
+    [InlineData(UserRole.Standard, EditableUserDetail.WorkPhone)]
+    [InlineData(UserRole.Champion, EditableUserDetail.FullName)]
+    [InlineData(UserRole.Champion, EditableUserDetail.WorkPhone)]
+    [InlineData(UserRole.Super, EditableUserDetail.FullName)]
+    [InlineData(UserRole.Super, EditableUserDetail.WorkPhone)]
+    public async Task UpdateUserDetails_WhenUserIsUpdatingTheirOwnDetails_ShouldSucceedRegardlessOfRole(
+        UserRole currentUserRole,
+        EditableUserDetail property
+    )
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        _harness.UpdateCurrentUser(x => x with { UserRole = currentUserRole });
+        UpdateUserDetailsCommand command = GenerateUpdateUserDetailsCommand(property);
+
+        Result<UserDetailsDto, UpdateUserDetailsError> result = await Service.UpdateUserDetails(
+            currentUser.Id,
+            command,
+            Ct
+        );
+
+        result.ShouldBeSuccess();
+        UserInformationDto updatedUser = await Service.GetCurrentUser(Ct);
+        GetEditableUserDetail(updatedUser, property).ShouldBe(command.Value);
+    }
+
+    [Theory]
+    [InlineData(UserRole.Super, EditableUserDetail.FullName, true)]
+    [InlineData(UserRole.Super, EditableUserDetail.WorkPhone, true)]
+    [InlineData(UserRole.Champion, EditableUserDetail.FullName, false)]
+    [InlineData(UserRole.Champion, EditableUserDetail.WorkPhone, false)]
+    [InlineData(UserRole.Standard, EditableUserDetail.FullName, false)]
+    [InlineData(UserRole.Standard, EditableUserDetail.WorkPhone, false)]
+    public async Task UpdateUserDetails_WhenUpdatingAnotherUsersDetails_OnlySuperUsersAreAllowed(
+        UserRole currentUserRole,
+        EditableUserDetail property,
+        bool isAllowed
+    )
+    {
+        User targetUser = await CreateExistingCurrentUser();
+        // The main harness acts as the target user, so it can read back their details.
+        string originalValue = GetEditableUserDetail(await Service.GetCurrentUser(Ct), property);
+        UpdateUserDetailsCommand command = GenerateUpdateUserDetailsCommand(property);
+
+        Result<UserDetailsDto, UpdateUserDetailsError> result = await ServiceAsAnotherUser(
+                currentUserRole
+            )
+            .UpdateUserDetails(targetUser.Id, command, Ct);
+
+        UserInformationDto updatedUser = await Service.GetCurrentUser(Ct);
+        if (isAllowed)
+        {
+            result.ShouldBeSuccess();
+            GetEditableUserDetail(updatedUser, property).ShouldBe(command.Value);
+        }
+        else
+        {
+            result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.Unauthorised>();
+            GetEditableUserDetail(updatedUser, property).ShouldBe(originalValue);
+        }
+    }
+
+    [Theory]
+    [InlineData(UserRole.Standard)]
+    [InlineData(UserRole.Champion)]
+    [InlineData(UserRole.Super)]
+    public async Task UpdateUserEmail_WhenUserIsUpdatingTheirOwnEmail_ShouldSucceedRegardlessOfRole(
+        UserRole currentUserRole
+    )
+    {
+        const string newEmail = "my-new-email@email.com";
+        User currentUser = await CreateExistingCurrentUser();
+        _harness.UpdateCurrentUser(x => x with { UserRole = currentUserRole });
+
+        Result<UpdateUserEmailError> result = await Service.UpdateUserEmail(
+            currentUser.Id,
+            new UpdateUserEmailCommand() { Value = newEmail },
+            Ct
+        );
+
+        result.ShouldBeSuccess();
+        UserInformationDto updatedUser = await Service.GetCurrentUser(Ct);
+        updatedUser.PendingWorkEmail.ShouldNotBeNull().Value.ShouldBe(newEmail);
+    }
+
+    [Theory]
+    [InlineData(UserRole.Super, true)]
+    [InlineData(UserRole.Champion, false)]
+    [InlineData(UserRole.Standard, false)]
+    public async Task UpdateUserEmail_WhenUpdatingAnotherUsersEmail_OnlySuperUsersAreAllowed(
+        UserRole currentUserRole,
+        bool isAllowed
+    )
+    {
+        const string newEmail = "my-new-email@email.com";
+        _mockEmailVerificationLinkCreator
+            .GetVerificationLink(Arg.Any<string>())
+            .Returns(callInfo => new Uri($"http://{callInfo.Arg<string>()}"));
+        User targetUser = await CreateExistingCurrentUser();
+
+        Result<UpdateUserEmailError> result = await ServiceAsAnotherUser(currentUserRole)
+            .UpdateUserEmail(targetUser.Id, new UpdateUserEmailCommand() { Value = newEmail }, Ct);
+
+        // The main harness acts as the target user, so it can read back their details.
+        UserInformationDto updatedUser = await Service.GetCurrentUser(Ct);
+        if (isAllowed)
+        {
+            result.ShouldBeSuccess();
+            updatedUser.PendingWorkEmail.ShouldNotBeNull().Value.ShouldBe(newEmail);
+            _harness
+                .Emails.Sent.OfType<EmailChangeVerificationRequestEmail>()
+                .ShouldHaveSingleItem();
+        }
+        else
+        {
+            result.ShouldBeError().ShouldBeOfType<UpdateUserEmailError.Unauthorised>();
+            updatedUser.PendingWorkEmail.ShouldBeNull();
+            _harness.Emails.Sent.OfType<EmailChangeVerificationRequestEmail>().ShouldBeEmpty();
+        }
+    }
+
+    /// <summary>
+    /// Creates a service acting as a different user (not any existing user) with the given role.
+    /// </summary>
+    private IUserService ServiceAsAnotherUser(UserRole role)
+    {
+        return new ServiceTestHarness<IUserService>(_harness)
+            .UpdateCurrentTime(_currentDateTime)
+            .ConfigureServices(services => services.AddSingleton(_mockEmailVerificationLinkCreator))
+            .UpdateCurrentUser(x =>
+                x with
+                {
+                    CognitoUsername = CognitoUsername.GenerateNew(),
+                    Email = "otheruser@email.com",
+                    UserRole = role,
+                }
+            )
+            .Service;
+    }
+
+    private UpdateUserDetailsCommand GenerateUpdateUserDetailsCommand(EditableUserDetail property)
+    {
+        return _updateUserDetailsCommandFaker.Generate() with
+        {
+            Property = property,
+            Value = property switch
+            {
+                EditableUserDetail.FullName => _faker.Name.FullName(),
+                EditableUserDetail.WorkPhone => new TelephoneNumberFaker().Generate(),
+                _ => throw new UnreachableException(),
+            },
+        };
+    }
+
+    private static string GetEditableUserDetail(
+        UserInformationDto user,
+        EditableUserDetail property
+    )
+    {
+        return property switch
+        {
+            EditableUserDetail.FullName => user.FullName,
+            EditableUserDetail.WorkPhone => user.WorkTelephone,
+            _ => throw new UnreachableException(),
+        };
     }
 
     private IEnumerable<int> GetOrganisationIdsFromUserEmails(string emailAddress)
@@ -2188,6 +2414,343 @@ public class UserServiceTests : DatabaseTestBase
         {
             result.ShouldBeError().ShouldBeOfType<GetUsersError.NotAllowed>();
         }
+    }
+
+    [Theory]
+    [InlineData((int)UserOrgMembershipStatus.AwaitingSetup)]
+    [InlineData((int)UserOrgMembershipStatus.Active)]
+    [InlineData((int)UserOrgMembershipStatus.Inactive)]
+    [InlineData((int)UserOrgMembershipStatus.Deactivated)]
+    [InlineData((int)UserOrgMembershipStatus.Removed)]
+    public async Task GetUserDetailsWithinOrganisationAdminView_MapsUserAndMembershipFields_WhenTheUserIsAMember(
+        int status
+    )
+    {
+        (User user, UserOrgMembership membership) = await AddUserWithMembership(
+            status: (UserOrgMembershipStatus)status
+        );
+
+        GetUserInformationAdminViewResult result =
+            await Service.GetUserDetailsWithinOrganisationAdminView(
+                user.Id,
+                membership.OrganisationId,
+                TestContext.Current.CancellationToken
+            );
+
+        UserInformationAdminViewDto dto = result.ShouldBeSuccess();
+        dto.ShouldBe(
+            new UserInformationAdminViewDto(
+                mfaMethod: "Unknown",
+                mfaPhoneNumber: string.Empty,
+                hasMultipleOrganisations: false,
+                new UserInformationDto()
+                {
+                    UserId = user.Id,
+                    FullName = user.FullName,
+                    WorkEmail = user.WorkEmail,
+                    WorkTelephone = user.WorkTelephone!,
+                    OrganisationMembershipId = membership.Id,
+                    OrganisationId = membership.OrganisationId,
+                    OrganisationName = membership.Organisation!.OrganisationName,
+                    UserRole = membership.UserRole,
+                    Status = (UserOrgStatus)membership.Status,
+                    AllowedPharmaceuticalEntity = membership.AllowedPharmaceuticalEntity,
+                }
+            )
+        );
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisationAdminView_ReturnsEmptyTelephone_WhenTheUserHasNone()
+    {
+        (User user, UserOrgMembership membership) = await AddUserWithMembership(configureUser: x =>
+            x.WorkTelephone = null
+        );
+
+        GetUserInformationAdminViewResult result =
+            await Service.GetUserDetailsWithinOrganisationAdminView(
+                user.Id,
+                membership.OrganisationId,
+                TestContext.Current.CancellationToken
+            );
+
+        result.ShouldBeSuccess().WorkTelephone.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisationAdminView_ReturnsUnknownMfa_WhenTheUserHasNotSetUpMfa()
+    {
+        (User user, UserOrgMembership membership) = await AddUserWithMembership();
+        AddCognitoAccount(user);
+
+        GetUserInformationAdminViewResult result =
+            await Service.GetUserDetailsWithinOrganisationAdminView(
+                user.Id,
+                membership.OrganisationId,
+                TestContext.Current.CancellationToken
+            );
+
+        UserInformationAdminViewDto dto = result.ShouldBeSuccess();
+        dto.MfaMethod.ShouldBe("Unknown");
+        dto.MfaPhoneNumber.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisationAdminView_ReturnsAuthenticatorAppMfa_WhenTheUserHasSetUpASoftwareToken()
+    {
+        (User user, UserOrgMembership membership) = await AddUserWithMembership();
+        _harness.Cognito.AddCurrentUser(
+            _mockUserFaker.Generate() with
+            {
+                Username = user.CognitoUsername.Value,
+                MfaSetup = true,
+            }
+        );
+
+        GetUserInformationAdminViewResult result =
+            await Service.GetUserDetailsWithinOrganisationAdminView(
+                user.Id,
+                membership.OrganisationId,
+                TestContext.Current.CancellationToken
+            );
+
+        UserInformationAdminViewDto dto = result.ShouldBeSuccess();
+        dto.MfaMethod.ShouldBe("AuthenticatorApp");
+        dto.MfaPhoneNumber.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisationAdminView_ReturnsSmsMfaWithAnObfuscatedPhoneNumber_WhenTheUserHasSetUpSms()
+    {
+        (User user, UserOrgMembership membership) = await AddUserWithMembership();
+        AddCognitoAccount(user);
+        await _harness.Cognito.Mock.AdminUpdateUserAttributesAsync(
+            new AdminUpdateUserAttributesRequest
+            {
+                Username = user.CognitoUsername.Value,
+                UserAttributes = [new() { Name = "phone_number", Value = "+447700900123" }],
+            },
+            TestContext.Current.CancellationToken
+        );
+
+        GetUserInformationAdminViewResult result =
+            await Service.GetUserDetailsWithinOrganisationAdminView(
+                user.Id,
+                membership.OrganisationId,
+                TestContext.Current.CancellationToken
+            );
+
+        UserInformationAdminViewDto dto = result.ShouldBeSuccess();
+        dto.MfaMethod.ShouldBe("Sms");
+        dto.MfaPhoneNumber.ShouldBe("+4** ***23");
+    }
+
+    [Theory]
+    [InlineData(1, false)]
+    [InlineData(2, true)]
+    public async Task GetUserDetailsWithinOrganisationAdminView_ReturnsWhetherTheUserHasMultipleOrganisations(
+        int numberOfMemberships,
+        bool expected
+    )
+    {
+        (User user, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
+            numberOfMemberships,
+            organisationStatus: UserOrgStatus.Active
+        );
+
+        GetUserInformationAdminViewResult result =
+            await Service.GetUserDetailsWithinOrganisationAdminView(
+                user.Id,
+                memberships[0].OrganisationId,
+                TestContext.Current.CancellationToken
+            );
+
+        result.ShouldBeSuccess().HasMultipleOrganisations.ShouldBe(expected);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisationAdminView_DoesNotCountOrganisationsThatCannotBeSelected()
+    {
+        (User user, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
+            2,
+            organisationStatus: UserOrgStatus.Active
+        );
+        await Context
+            .Organisations.Where(x => x.Id == memberships[1].OrganisationId)
+            .ExecuteUpdateAsync(
+                x => x.SetProperty(o => o.Status, UserOrgStatus.Inactive),
+                TestContext.Current.CancellationToken
+            );
+
+        GetUserInformationAdminViewResult result =
+            await Service.GetUserDetailsWithinOrganisationAdminView(
+                user.Id,
+                memberships[0].OrganisationId,
+                TestContext.Current.CancellationToken
+            );
+
+        result.ShouldBeSuccess().HasMultipleOrganisations.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisationAdminView_ReturnsTheRoleForTheRequestedOrganisation_WhenTheUserBelongsToSeveral()
+    {
+        User user = _userFaker.Generate();
+        UserOrgMembership standardMembership = _userOrgMembershipFaker
+            .Generate()
+            .Update(x =>
+            {
+                x.User = user;
+                x.Organisation = _organisationFaker.Generate();
+                x.UserRole = UserRole.Standard;
+            });
+        UserOrgMembership championMembership = _userOrgMembershipFaker
+            .Generate()
+            .Update(x =>
+            {
+                x.User = user;
+                x.Organisation = _organisationFaker.Generate();
+                x.UserRole = UserRole.Champion;
+            });
+        await AddEntities(
+            new[] { standardMembership, championMembership },
+            TestContext.Current.CancellationToken
+        );
+
+        GetUserInformationAdminViewResult standardResult =
+            await Service.GetUserDetailsWithinOrganisationAdminView(
+                user.Id,
+                standardMembership.OrganisationId,
+                TestContext.Current.CancellationToken
+            );
+        GetUserInformationAdminViewResult championResult =
+            await Service.GetUserDetailsWithinOrganisationAdminView(
+                user.Id,
+                championMembership.OrganisationId,
+                TestContext.Current.CancellationToken
+            );
+
+        standardResult.ShouldBeSuccess().UserRole.ShouldBe(UserRole.Standard);
+        championResult.ShouldBeSuccess().UserRole.ShouldBe(UserRole.Champion);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisationAdminView_ReturnsOrganisationNotFoundError_WhenOrganisationDoesNotExist()
+    {
+        GetUserInformationAdminViewResult result =
+            await Service.GetUserDetailsWithinOrganisationAdminView(
+                userId: 1,
+                organisationId: 99,
+                TestContext.Current.CancellationToken
+            );
+
+        GetUsersError.OrganisationNotFound notFound = result
+            .ShouldBeError()
+            .ShouldBeOfType<GetUsersError.OrganisationNotFound>();
+        notFound.OrganisationId.ShouldBe(99);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisationAdminView_ReturnsUserNotFoundError_WhenTheUserIsNotAMemberOfTheOrganisation()
+    {
+        (User user, _) = await AddUserWithMembership();
+        Organisation otherOrganisation = await AddEntity(
+            _organisationFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+
+        GetUserInformationAdminViewResult result =
+            await Service.GetUserDetailsWithinOrganisationAdminView(
+                user.Id,
+                otherOrganisation.Id,
+                TestContext.Current.CancellationToken
+            );
+
+        GetUsersError.UserNotFound notFound = result
+            .ShouldBeError()
+            .ShouldBeOfType<GetUsersError.UserNotFound>();
+        notFound.UserId.ShouldBe(user.Id);
+        notFound.OrganisationId.ShouldBe(otherOrganisation.Id);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisationAdminView_ReturnsUserNotFoundError_WhenTheUserDoesNotExist()
+    {
+        (_, UserOrgMembership membership) = await AddUserWithMembership();
+
+        GetUserInformationAdminViewResult result =
+            await Service.GetUserDetailsWithinOrganisationAdminView(
+                userId: int.MaxValue,
+                membership.OrganisationId,
+                TestContext.Current.CancellationToken
+            );
+
+        GetUsersError.UserNotFound notFound = result
+            .ShouldBeError()
+            .ShouldBeOfType<GetUsersError.UserNotFound>();
+        notFound.UserId.ShouldBe(int.MaxValue);
+        notFound.OrganisationId.ShouldBe(membership.OrganisationId);
+    }
+
+    [Fact]
+    public async Task GetUserDetailsWithinOrganisationAdminView_AllowsSuperUsers_WhenTheOrganisationIsNotTheCallersOwn()
+    {
+        (User user, UserOrgMembership membership) = await AddUserWithMembership();
+        IUserService service = new ServiceTestHarness<IUserService>(Context)
+            .UpdateCurrentUser(x =>
+                x with
+                {
+                    UserRole = UserRole.Super,
+                    OrganisationId = membership.OrganisationId + 1,
+                }
+            )
+            .Service;
+
+        GetUserInformationAdminViewResult result =
+            await service.GetUserDetailsWithinOrganisationAdminView(
+                user.Id,
+                membership.OrganisationId,
+                TestContext.Current.CancellationToken
+            );
+
+        result.ShouldBeSuccess().UserId.ShouldBe(user.Id);
+    }
+
+    [Theory]
+    [InlineData(UserRole.Champion, true)]
+    [InlineData(UserRole.Champion, false)]
+    [InlineData(UserRole.Standard, true)]
+    [InlineData(UserRole.Standard, false)]
+    public async Task GetUserDetailsWithinOrganisationAdminView_ReturnsUserNotFoundError_WhenTheCallerIsNotASuperUser(
+        UserRole callerRole,
+        bool isCallersOwnOrganisation
+    )
+    {
+        (User user, UserOrgMembership membership) = await AddUserWithMembership();
+        IUserService service = new ServiceTestHarness<IUserService>(Context)
+            .UpdateCurrentUser(x =>
+                x with
+                {
+                    UserRole = callerRole,
+                    OrganisationId = isCallersOwnOrganisation
+                        ? membership.OrganisationId
+                        : membership.OrganisationId + 1,
+                }
+            )
+            .Service;
+
+        GetUserInformationAdminViewResult result =
+            await service.GetUserDetailsWithinOrganisationAdminView(
+                user.Id,
+                membership.OrganisationId,
+                TestContext.Current.CancellationToken
+            );
+
+        GetUsersError.UserNotFound notFound = result
+            .ShouldBeError()
+            .ShouldBeOfType<GetUsersError.UserNotFound>();
+        notFound.UserId.ShouldBe(user.Id);
+        notFound.OrganisationId.ShouldBe(membership.OrganisationId);
     }
 
     [Fact]
