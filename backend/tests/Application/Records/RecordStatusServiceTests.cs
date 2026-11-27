@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Records.Dtos;
@@ -205,6 +206,118 @@ public class RecordStatusServiceTests : DatabaseTestBase
         (await LoadRecord(record.Id, cancellationToken))
             .StatusHistory.ShouldHaveSingleItem()
             .Note.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task ChangeStatus_WhenArchived_SendsTheArchivedEmailToTheCurrentUser()
+    {
+        Record record = await AddRecord(RecordStatus.Published, [WorkflowStatus.Published]);
+
+        Result<ChangeRecordStatusError> result = await Archive(record.Id);
+
+        result.IsOk.ShouldBeTrue();
+        SendEmailCommand command = _harness.Emails.SentCommands.ShouldHaveSingleItem();
+        command.RecipientAddress.ShouldBe(_user.WorkEmail);
+        command
+            .Email.ShouldBeOfType<RecordArchivedNotificationEmail>()
+            .RecordId.ShouldBe(record.Id);
+    }
+
+    [Fact]
+    public async Task ChangeStatus_WhenArchived_SendsTheArchivedEmailToEachEnabledChampion()
+    {
+        User firstChampion = await AddChampion(_organisation.Id);
+        User secondChampion = await AddChampion(_organisation.Id);
+        Record record = await AddRecord(RecordStatus.Published, [WorkflowStatus.Published]);
+
+        Result<ChangeRecordStatusError> result = await Archive(record.Id);
+
+        result.IsOk.ShouldBeTrue();
+        _harness
+            .Emails.SentCommands.Select(c => c.RecipientAddress)
+            .ShouldBe(
+                [_user.WorkEmail, firstChampion.WorkEmail, secondChampion.WorkEmail],
+                ignoreOrder: true
+            );
+    }
+
+    [Fact]
+    public async Task ChangeStatus_WhenArchivedByAChampion_SendsThemOnlyOneEmail()
+    {
+        await AddEntity(
+            new UserOrgMembershipFaker()
+                .RuleFor(x => x.Status, _ => UserOrgMembershipStatus.Active)
+                .RuleFor(x => x.UserRole, _ => UserRole.Champion)
+                .RuleFor(x => x.UserId, _ => _user.Id)
+                .RuleFor(x => x.OrganisationId, _ => _organisation.Id)
+                .Generate(),
+            TestContext.Current.CancellationToken
+        );
+        _harness.UpdateCurrentUser(x => x with { UserRole = UserRole.Champion });
+        Record record = await AddRecord(RecordStatus.Published, [WorkflowStatus.Published]);
+
+        Result<ChangeRecordStatusError> result = await Archive(record.Id);
+
+        result.IsOk.ShouldBeTrue();
+        _harness
+            .Emails.SentCommands.ShouldHaveSingleItem()
+            .RecipientAddress.ShouldBe(_user.WorkEmail);
+    }
+
+    [Fact]
+    public async Task ChangeStatus_WhenArchived_DoesNotEmailADeactivatedChampion()
+    {
+        await AddChampion(_organisation.Id, UserOrgMembershipStatus.Deactivated);
+        Record record = await AddRecord(RecordStatus.Published, [WorkflowStatus.Published]);
+
+        Result<ChangeRecordStatusError> result = await Archive(record.Id);
+
+        result.IsOk.ShouldBeTrue();
+        _harness
+            .Emails.SentCommands.ShouldHaveSingleItem()
+            .RecipientAddress.ShouldBe(_user.WorkEmail);
+    }
+
+    [Fact]
+    public async Task ChangeStatus_WhenArchived_DoesNotEmailAChampionInAnotherOrganisation()
+    {
+        Organisation otherOrganisation = await AddEntity(
+            new OrganisationFaker().Generate(),
+            TestContext.Current.CancellationToken
+        );
+        await AddChampion(otherOrganisation.Id);
+        Record record = await AddRecord(RecordStatus.Published, [WorkflowStatus.Published]);
+
+        Result<ChangeRecordStatusError> result = await Archive(record.Id);
+
+        result.IsOk.ShouldBeTrue();
+        _harness
+            .Emails.SentCommands.ShouldHaveSingleItem()
+            .RecipientAddress.ShouldBe(_user.WorkEmail);
+    }
+
+    [Fact]
+    public async Task ChangeStatus_WhenPutOnHold_SendsNoEmail()
+    {
+        await AddChampion(_organisation.Id);
+        Record record = await AddRecord(RecordStatus.Published, [WorkflowStatus.Published]);
+
+        Result<ChangeRecordStatusError> result = await PutOnHold(record.Id);
+
+        result.IsOk.ShouldBeTrue();
+        _harness.Emails.Sent.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task ChangeStatus_WhenArchiveIsNotPermitted_SendsNoEmail()
+    {
+        await AddChampion(_organisation.Id);
+        Record record = await AddRecord(RecordStatus.Archived, [WorkflowStatus.Published]);
+
+        Result<ChangeRecordStatusError> result = await Archive(record.Id);
+
+        result.ShouldBeError().ShouldBeOfType<ChangeRecordStatusError.TransitionNotPermitted>();
+        _harness.Emails.Sent.ShouldBeEmpty();
     }
 
     [Fact]
@@ -712,6 +825,36 @@ public class RecordStatusServiceTests : DatabaseTestBase
         updated.RecordStatus.ShouldBe(RecordStatus.Archived);
         updated.StatusHistory.ShouldHaveSingleItem().ToStatus.ShouldBe(RecordStatus.Archived);
         updated.Events.ShouldHaveSingleItem();
+    }
+
+    private Task<Result<ChangeRecordStatusError>> Archive(int recordId) =>
+        Service.ChangeStatus(
+            recordId,
+            _organisation.Id,
+            RecordStatusChangeAction.Archive,
+            new ChangeRecordStatusCommand
+            {
+                Reason = RecordStatusChangeReason.DevelopmentDiscontinued,
+            },
+            TestContext.Current.CancellationToken
+        );
+
+    private async Task<User> AddChampion(
+        int organisationId,
+        UserOrgMembershipStatus status = UserOrgMembershipStatus.Active
+    )
+    {
+        UserOrgMembership membership = await AddEntity(
+            new UserOrgMembershipFaker()
+                .RuleFor(x => x.Status, _ => status)
+                .RuleFor(x => x.UserRole, _ => UserRole.Champion)
+                .RuleFor(x => x.OrganisationId, _ => organisationId)
+                .RuleFor(x => x.User, _ => new UserFaker().Generate())
+                .Generate(),
+            TestContext.Current.CancellationToken
+        );
+        Context.ChangeTracker.Clear();
+        return membership.User!;
     }
 
     private Task<Result<ChangeRecordStatusError>> PutOnHold(

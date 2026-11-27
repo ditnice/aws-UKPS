@@ -20,6 +20,16 @@ public class MockEmailService
                 _sent.Add(command);
                 return Task.CompletedTask;
             });
+
+        Mock.SendEmails(
+                Arg.Any<IReadOnlyCollection<SendEmailCommand>>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(callInfo =>
+            {
+                _sent.AddRange(callInfo.Arg<IReadOnlyCollection<SendEmailCommand>>());
+                return Task.CompletedTask;
+            });
     }
 
     internal void Clear()

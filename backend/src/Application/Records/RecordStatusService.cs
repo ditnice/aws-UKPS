@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
+using UKPS.Api.Application.InternalServices.Communication;
 using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Application.Records.Dtos;
@@ -19,6 +20,7 @@ internal sealed class RecordStatusService(
     IDateTimeProvider timeProvider,
     IOrganisationAuthoriser organisationAuthoriser,
     ICurrentUserInfoService currentUserInfoService,
+    IEmailService emailService,
     CurrentDbUserEntityService currentDbUserEntityService
 ) : IRecordStatusService
 {
@@ -100,7 +102,38 @@ internal sealed class RecordStatusService(
             );
         }
 
-        return await Save(latestRevision, cancellationToken);
+        ChangeRecordStatusResult saved = await Save(latestRevision, cancellationToken);
+        if (saved.IsOk && change == RecordStatusChangeAction.Archive)
+        {
+            await SendArchivedNotifications(record, currentUser, cancellationToken);
+        }
+
+        return saved;
+    }
+
+    private async Task SendArchivedNotifications(
+        Record record,
+        User archiver,
+        CancellationToken cancellationToken
+    )
+    {
+        List<User> champions = await dbContext
+            .UserOrgMemberships.EnabledChampions(record.OrganisationId)
+            .Select(m => m.User!)
+            .ToListAsync(cancellationToken);
+
+        List<SendEmailCommand> commands = champions
+            .Append(archiver)
+            .DistinctBy(u => u.Id)
+            .Select(recipient => new SendEmailCommand()
+            {
+                PersonIdentifier = recipient.CognitoUsername,
+                RecipientAddress = recipient.WorkEmail,
+                Email = new RecordArchivedNotificationEmail() { RecordId = record.Id },
+            })
+            .ToList();
+
+        await emailService.SendEmails(commands, cancellationToken);
     }
 
     /// <summary>

@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using UKPS.Api.Application.Authentication.SecurityNotification;
 using UKPS.Api.Application.Organisations;
+using UKPS.Api.Application.Records;
 using UKPS.Api.Application.Users;
 
 namespace UKPS.Api.Application.InternalServices.Communication;
@@ -13,6 +14,7 @@ namespace UKPS.Api.Application.InternalServices.Communication;
 [JsonDerivedType(typeof(ReactivatedUserNotificationEmail), "ReactivatedUserNotification")]
 [JsonDerivedType(typeof(DeactivatedUserNotificationEmail), "DeactivatedUserNotification")]
 [JsonDerivedType(typeof(UserAddedToOrganisationEmail), "UserAddedToOrganisation")]
+[JsonDerivedType(typeof(RecordArchivedNotificationEmail), "RecordArchivedNotification")]
 [JsonDerivedType(
     typeof(UserMembershipRequestApprovedExistingUserEmail),
     "UserMembershipRequestApprovedExistingUser"
