@@ -44,7 +44,6 @@ internal sealed class RecordMhraProcedure
         Order = 20,
         Hint = "Enter additional information that may be relevant to horizon scanners."
     )]
-    [FormMaxLength(2000, "MHRA regulatory procedure details must be 2000 characters or fewer")]
     public string? ProcedureDetails { get; set; }
 
     // Navigation

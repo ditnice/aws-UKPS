@@ -186,12 +186,16 @@ export const normaliseAnswer = (answer: Answer): Answer => {
 
 const isEmpty = (answer: Answer) => (Array.isArray(answer) ? answer.length === 0 : answer === null)
 
+/** Whether a trimmed value, or one text list entry, is within a MaxLength rule. */
+const isShortEnough = (rule: Rule, value: string | null) =>
+  value === null || value.length <= (rule.value ?? Infinity)
+
 export const isSatisfied = (rule: Rule, answer: Answer): boolean => {
   switch (rule.kind) {
     case RuleKind.REQUIRED:
       return !isEmpty(answer)
     case RuleKind.MAX_LENGTH:
-      return typeof answer !== 'string' || answer.length <= (rule.value ?? Infinity)
+      return [answer].flat().every((value) => isShortEnough(rule, value))
     case RuleKind.MAX_ITEMS:
       return !Array.isArray(answer) || answer.length <= (rule.value ?? Infinity)
     case RuleKind.DISTINCT:
@@ -263,7 +267,17 @@ const textListError = (question: Question, value: FormValue | undefined) => {
       items[String(index)] = message
     }
   }
-  return { message: firstFailure(ownRules(question), normaliseAnswer(entries)), items }
+  // Reported in place of a repeat, as MaxLength comes before Distinct.
+  const maxLength = question.rules.find((rule) => rule.kind === RuleKind.MAX_LENGTH)
+  if (maxLength) {
+    entries.forEach((entry, index) => {
+      if (!isShortEnough(maxLength, entry.trim())) {
+        items[String(index)] = maxLength.message
+      }
+    })
+  }
+  const listRules = ownRules(question).filter((rule) => rule.kind !== RuleKind.MAX_LENGTH)
+  return { message: firstFailure(listRules, normaliseAnswer(entries)), items }
 }
 
 /** The value of a group child that must differ between items, as the server compares it. */

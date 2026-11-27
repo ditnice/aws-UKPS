@@ -10,6 +10,17 @@ internal static class ControllerProblemExtensions
     /// <summary>The problem details member that says which problem occurred.</summary>
     public const string CodeExtension = "code";
 
+    /// <summary>A 403 problem with the given detail.</summary>
+    /// <param name="controller">The controller handling the request.</param>
+    /// <param name="detail">What the caller may not do.</param>
+    /// <returns>The 403 result.</returns>
+    public static ObjectResult ForbiddenProblem(this ControllerBase controller, string detail) =>
+        controller.Problem(
+            statusCode: StatusCodes.Status403Forbidden,
+            title: "Forbidden",
+            detail: detail
+        );
+
     /// <summary>A 404 problem with the given detail.</summary>
     /// <param name="controller">The controller handling the request.</param>
     /// <param name="detail">What could not be found.</param>

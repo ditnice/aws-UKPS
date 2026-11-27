@@ -114,7 +114,18 @@ internal static class PageAnswerValidator
                     errors[$"{key}[{repeat}]"] = DistinctMessage(question)!;
                 }
 
-                return FirstFailure(question, answer);
+                // Reported in place of a repeat, as MaxLength comes before Distinct.
+                foreach (var (index, message) in TooLongEntries(question, answer.Values))
+                {
+                    errors[$"{key}[{index}]"] = message;
+                }
+
+                return RuleEvaluator.FirstFailure(
+                    question.Rules.Where(static r =>
+                        r.Kind is not (RuleKind.MaxLength or RuleKind.Distinct)
+                    ),
+                    answer
+                );
             case AnswerShape.Group:
                 CheckItems(question, key, answer, errors);
                 return FirstFailure(question, answer);
@@ -161,6 +172,16 @@ internal static class PageAnswerValidator
             question.Rules.Where(static r => r.Kind != RuleKind.Distinct),
             answer
         );
+
+    private static IEnumerable<(int Index, string Message)> TooLongEntries(
+        FormQuestion question,
+        IReadOnlyList<string> entries
+    ) =>
+        from rule in question.Rules
+        where rule.Kind == RuleKind.MaxLength
+        from entry in entries.Index()
+        where !RuleEvaluator.IsShortEnough(rule, entry.Item)
+        select (entry.Index, rule.Message);
 
     private static IEnumerable<int> RepeatIndexes(
         FormQuestion question,

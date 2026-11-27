@@ -19,6 +19,7 @@ using UKPS.Api.WebApi.InternalServices.Authentication;
 using UKPS.Api.WebApi.InternalServices.Hosting;
 using UKPS.Api.WebApi.InternalServices.Identity;
 using UKPS.Api.WebApi.OpenApi;
+using UKPS.Api.WebApi.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -112,6 +113,37 @@ builder.Services.AddOpenApi(options =>
                             property.Name
                         );
                     }
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+    );
+
+    // Describe [MaxItemLength] as the maximum length of each item of a string array.
+    options.AddSchemaTransformer(
+        (schema, context, cancellationToken) =>
+        {
+            if (schema.Properties is null)
+            {
+                return Task.CompletedTask;
+            }
+
+            foreach (var property in context.JsonTypeInfo.Properties)
+            {
+                if (
+                    property
+                        .AttributeProvider?.GetCustomAttributes(
+                            typeof(MaxItemLengthAttribute),
+                            inherit: true
+                        )
+                        .FirstOrDefault()
+                        is MaxItemLengthAttribute maxItemLength
+                    && schema.Properties.TryGetValue(property.Name, out var propertySchema)
+                    && propertySchema is OpenApiSchema { Items: OpenApiSchema items }
+                )
+                {
+                    items.MaxLength = maxItemLength.Length;
                 }
             }
 

@@ -320,6 +320,30 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task GetTaskList_DraftWithOneRevision_CanBeDiscarded()
+    {
+        RecordTaskListDto taskList = await GetTaskList();
+
+        (taskList.RecordType, taskList.CanDiscard).ShouldBe((RecordType.Medicine, true));
+    }
+
+    [Fact]
+    public async Task GetTaskList_RecordWithAnEarlierRevision_CannotBeDiscarded()
+    {
+        await AddRevision(WorkflowStatus.Published, _revision.CreatedAt.AddDays(-1));
+
+        (await GetTaskList()).CanDiscard.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task GetTaskList_SuperUser_CannotEdit()
+    {
+        (await CreateHarness(_organisation.Id, UserRole.Super).Service.GetTaskList(_record.Id, Ct))
+            .ShouldBeError()
+            .ShouldBeOfType<GetRecordTaskListError.CannotEdit>();
+    }
+
+    [Fact]
     public async Task GetTaskList_UnknownRecord_IsNotFound()
     {
         (await CreateHarness(_organisation.Id).Service.GetTaskList(_record.Id + 1, Ct))
@@ -589,7 +613,10 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             .Single(static t => string.Equals(t.Id, "indication-details", StringComparison.Ordinal))
             .Status;
 
-    private ServiceTestHarness<IRecordTaskListQueryService> CreateHarness(int organisationId)
+    private ServiceTestHarness<IRecordTaskListQueryService> CreateHarness(
+        int organisationId,
+        UserRole userRole = UserRole.Standard
+    )
     {
         ServiceTestHarness<IRecordTaskListQueryService> harness = new(Context);
         harness.UpdateCurrentUser(x =>
@@ -597,7 +624,7 @@ public class RecordTaskListQueryServiceTests : DatabaseTestBase
             {
                 CognitoUsername = _user.CognitoUsername,
                 OrganisationId = organisationId,
-                UserRole = UserRole.Standard,
+                UserRole = userRole,
             }
         );
         return harness;

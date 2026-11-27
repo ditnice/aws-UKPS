@@ -18,6 +18,7 @@ public record CreateRecordCommand
     /// Gets the company's internal code or working name for the product, e.g. ABC-123.
     /// </summary>
     [Required]
+    [MaxLength(2000)]
     public required string CompanyCode { get; init; }
 
     /// <summary>
@@ -27,6 +28,7 @@ public record CreateRecordCommand
     /// This field is optional, but when provided it cannot be empty or whitespace.
     /// </remarks>
     [NotEmptyOrWhitespace]
+    [MaxLength(2000)]
     public string? BrandedName { get; init; }
 
     /// <summary>
@@ -40,12 +42,14 @@ public record CreateRecordCommand
     [MinLength(1)]
     [DistinctStrings(StringComparison.OrdinalIgnoreCase)]
     [NoEmptyOrWhitespaceItems]
+    [MaxItemLength(2000)]
     public required IReadOnlyCollection<string> GenericNames { get; init; }
 
     /// <summary>
     /// Gets the other names, codes, or synonyms associated with the record.
     /// </summary>
     [NoEmptyOrWhitespaceItems]
+    [MaxItemLength(2000)]
     public IReadOnlyCollection<string> OtherIdentifiers { get; init; } = [];
 
     /// <summary>

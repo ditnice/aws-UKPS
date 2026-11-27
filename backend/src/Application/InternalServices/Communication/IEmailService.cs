@@ -18,4 +18,18 @@ public interface IEmailService
     /// A task representing the asynchronous send operation.
     /// </returns>
     Task SendEmail(SendEmailCommand command, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Sends several email messages, each to its own recipient. Throws if any message could not be
+    /// queued; messages in earlier batches may have already been queued.
+    /// </summary>
+    /// <param name="commands">The commands, each with a recipient address and email message.</param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>A task representing the asynchronous send operation.</returns>
+    Task SendEmails(
+        IReadOnlyCollection<SendEmailCommand> commands,
+        CancellationToken cancellationToken
+    );
 }

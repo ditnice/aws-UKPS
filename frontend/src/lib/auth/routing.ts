@@ -84,14 +84,42 @@ export function getOrganisationLandingHref(
   return safeReturnTo
 }
 
+// The base getSafeReturnTo parses against. It is only compared with the parsed origin and is never
+// navigated to or returned: the result is the path, query and fragment alone.
+// - Fixed rather than location.origin, so the check behaves the same on the server, where there is
+//   no location.
+// - The scheme must be http(s). Browsers only treat "\" as "/" and "//x" as a host for these
+//   "special" schemes, so with a base such as "x:/", "/\evil.com" would parse as a harmless path
+//   here but still reach the browser as "//evil.com".
+// - .invalid is reserved (RFC 6761) and never resolves, so the base cannot name a real site.
+const returnToBase = 'http://return-to.invalid'
+
+// Browsers treat a backslash as a slash and strip tabs and newlines inside URLs, so a prefix check
+// alone would let "/\evil.com" or "/<tab>/evil.com" through as "//evil.com". Parse the value the way
+// a browser would, then check both the origin and the normalised path, since dot segments can also
+// produce a leading "//" (for example "/.//evil.com").
 export function getSafeReturnTo(returnTo: string | undefined): string | undefined {
   const trimmedReturnTo = returnTo?.trim()
 
-  if (!trimmedReturnTo || !trimmedReturnTo.startsWith('/') || trimmedReturnTo.startsWith('//')) {
+  if (!trimmedReturnTo || !trimmedReturnTo.startsWith('/')) {
     return undefined
   }
 
-  return trimmedReturnTo
+  let url: URL
+  try {
+    url = new URL(trimmedReturnTo, returnToBase)
+  } catch {
+    return undefined
+  }
+
+  // With an http(s) base the pathname always starts with "/" and any "\" in it has already become
+  // "/", so a leading "//" is the only unsafe shape left to check for.
+  const safeReturnTo = `${url.pathname}${url.search}${url.hash}`
+  if (url.origin !== returnToBase || safeReturnTo.startsWith('//')) {
+    return undefined
+  }
+
+  return safeReturnTo
 }
 
 function buildHref(path: string, params: Record<string, string | undefined>): string {

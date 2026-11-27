@@ -10,6 +10,12 @@ internal sealed class MockAwsSimpleQueueServer
     public IEnumerable<Message> Messages => _sentMessages.Except(_deletedMessages);
     public IEnumerable<Message> DeletedMessages => _deletedMessages;
 
+    /// <summary>The number of SendMessageBatch calls received.</summary>
+    public int BatchRequestCount { get; private set; }
+
+    /// <summary>When true, SendMessageBatch queues nothing and reports every entry as failed.</summary>
+    public bool FailBatchEntries { get; set; }
+
     private readonly List<Message> _sentMessages = new List<Message>();
     private readonly List<Message> _deletedMessages = new List<Message>();
 
@@ -28,6 +34,50 @@ internal sealed class MockAwsSimpleQueueServer
                 );
                 return Task.FromResult(
                     new SendMessageResponse() { MessageId = Guid.NewGuid().ToString() }
+                );
+            });
+
+        Mock.SendMessageBatchAsync(Arg.Any<SendMessageBatchRequest>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var request = callInfo.Arg<SendMessageBatchRequest>();
+                BatchRequestCount++;
+
+                // SQS reports failed entries in the response and still returns success.
+                if (FailBatchEntries)
+                {
+                    return Task.FromResult(
+                        new SendMessageBatchResponse
+                        {
+                            Failed = request
+                                .Entries.Select(e => new BatchResultErrorEntry
+                                {
+                                    Id = e.Id,
+                                    Code = "InternalError",
+                                })
+                                .ToList(),
+                        }
+                    );
+                }
+
+                _sentMessages.AddRange(
+                    request.Entries.Select(e => new Message
+                    {
+                        Body = e.MessageBody,
+                        ReceiptHandle = Guid.NewGuid().ToString(),
+                    })
+                );
+                return Task.FromResult(
+                    new SendMessageBatchResponse
+                    {
+                        Successful = request
+                            .Entries.Select(e => new SendMessageBatchResultEntry
+                            {
+                                Id = e.Id,
+                                MessageId = Guid.NewGuid().ToString(),
+                            })
+                            .ToList(),
+                    }
                 );
             });
 

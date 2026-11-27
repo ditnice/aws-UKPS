@@ -6,6 +6,7 @@ import { Alert } from '@/components/Alert/Alert'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
+import { taskListHref, taskListReturnTo } from '@/lib/dynamic-form/links'
 import { parsePositiveInteger } from '@/lib/valueParsing'
 
 import OrganisationPageWrapper from '../../../_components/OrganisationPageWrapper'
@@ -15,12 +16,12 @@ import { DiscardRecordControls } from './_components/DiscardRecordControls'
 
 type DiscardRecordPageProps = {
   params: Promise<{ id: string; recordId: string }>
-  searchParams: Promise<{ recordType?: string | string[] }>
+  searchParams: Promise<{ recordType?: string | string[]; returnTo?: string | string[] }>
 }
 
 const DiscardRecordPage = async ({ params, searchParams }: DiscardRecordPageProps) => {
   const { id: organisationId, recordId: recordIdParam } = await params
-  const { recordType: recordTypeParam } = await searchParams
+  const { recordType: recordTypeParam, returnTo } = await searchParams
   const recordId = parsePositiveInteger(recordIdParam)
   const recordType = Object.values(RecordType).find((type) => type === recordTypeParam)
 
@@ -35,6 +36,7 @@ const DiscardRecordPage = async ({ params, searchParams }: DiscardRecordPageProp
           organisationId={organisation.id}
           recordId={recordId}
           recordType={recordType}
+          returnToTaskList={returnTo === taskListReturnTo}
         />
       )}
     </OrganisationPageWrapper>
@@ -45,9 +47,16 @@ type DiscardRecordProps = {
   organisationId: number
   recordId: number
   recordType: RecordType
+  /** The user came from the task list, so Back returns there rather than to the record. */
+  returnToTaskList: boolean
 }
 
-const DiscardRecord = async ({ organisationId, recordId, recordType }: DiscardRecordProps) => {
+const DiscardRecord = async ({
+  organisationId,
+  recordId,
+  recordType,
+  returnToTaskList,
+}: DiscardRecordProps) => {
   const {
     data: record,
     error,
@@ -66,7 +75,15 @@ const DiscardRecord = async ({ organisationId, recordId, recordType }: DiscardRe
   }
 
   const backLink = (
-    <BackLink href={buildRecordHref(organisationId, recordId, recordType)}>Back</BackLink>
+    <BackLink
+      href={
+        returnToTaskList
+          ? taskListHref(recordId)
+          : buildRecordHref(organisationId, recordId, recordType)
+      }
+    >
+      Back
+    </BackLink>
   )
 
   if (error || !record) {

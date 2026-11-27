@@ -587,7 +587,7 @@ public class RecordFormServiceTests : DatabaseTestBase
             { "12", RecordFormMessages.WrongShape },
             { "[\"a\"]", RecordFormMessages.WrongShape },
             { "\"   \"", "Enter the indication" },
-            { $"\"{new string('a', 2001)}\"", "Indication must be 2000 characters or fewer" },
+            { $"\"{new string('a', 20001)}\"", "Answer must be 20000 characters or fewer" },
         };
 
     [Fact]
