@@ -195,7 +195,7 @@ describe('SignUpSetMfa', () => {
     })
   })
 
-  it('clears setup details and redirects to organisation selection after successful verification', async () => {
+  it('clears setup details and redirects through organisation selection to the setup complete banner after successful verification', async () => {
     renderPage()
 
     await enterSecurityCode('123456')
@@ -203,7 +203,9 @@ describe('SignUpSetMfa', () => {
 
     await waitFor(() => {
       expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
-      expect(replace).toHaveBeenCalledWith('/portal/organisations/select')
+      expect(replace).toHaveBeenCalledWith(
+        `/portal/organisations/select?returnTo=${encodeURIComponent('/portal?action=mfa-setup-complete')}`,
+      )
     })
   })
 

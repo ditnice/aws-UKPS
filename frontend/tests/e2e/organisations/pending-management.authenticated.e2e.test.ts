@@ -41,7 +41,7 @@ test(
     await expect(page.getByText(`You are about to approve ${workEmail}'s request`)).toBeVisible()
     await page.getByRole('button', { name: 'Approve user' }).click()
 
-    await expect(page.getByRole('heading', { name: 'Approval Email Sent' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Approval email sent' })).toBeVisible()
     await expect(page.getByText(`We’ve sent an email to ${workEmail}`)).toBeVisible()
     // Approving invites the requester, so they become a pending user.
     await usersPage.expectUser(workEmail, 'Pending')

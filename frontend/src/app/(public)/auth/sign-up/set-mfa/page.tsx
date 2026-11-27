@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 
+import { buildPortalRecordActionHref } from '@/app/portal/organisations/[id]/records/_lib/recordActionAlert'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import SetupMfaForm from '@/lib/auth/mfa/SetupMfaForm'
 import { navigateOnSuccessfulAuth } from '@/lib/auth/routing'
@@ -45,7 +46,8 @@ export default function SignUpSetMfa() {
           setSuccess(true)
           clearSetup()
           clearPassword()
-          navigateOnSuccessfulAuth()
+          // Through the portal root, which knows the organisation, to show the success banner
+          navigateOnSuccessfulAuth(buildPortalRecordActionHref('mfa-setup-complete'))
         }}
       />
     </>

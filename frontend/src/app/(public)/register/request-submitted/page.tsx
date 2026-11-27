@@ -23,7 +23,7 @@ export default function RequestSubmitted() {
       <PageHeader heading="Account request submitted" />
       <p>
         Your request to access UK PharmaScan has been sent to your organisation&#39;s champion user
-        for review
+        for review.
       </p>
       {user && (
         <>

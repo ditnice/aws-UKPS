@@ -1,4 +1,4 @@
-const recordAlertActions = ['discarded', 'submitted', 'draft-saved'] as const
+const recordAlertActions = ['discarded', 'submitted', 'draft-saved', 'mfa-setup-complete'] as const
 export type RecordAlertAction = (typeof recordAlertActions)[number]
 
 export type RecordActionSearchParams = {
@@ -17,4 +17,10 @@ export function parseRecordAction({
 
 export function buildRecordActionHref(organisationId: number, action: RecordAlertAction): string {
   return `/portal/organisations/${organisationId}/records?action=${action}`
+}
+
+// For when the organisation is not known yet: the portal root redirects to the current
+// organisation's records, keeping the action.
+export function buildPortalRecordActionHref(action: RecordAlertAction): string {
+  return `/portal?action=${action}`
 }
