@@ -153,13 +153,14 @@ describe('confirmResetPasswordAction', () => {
       expect(mocked.redirect).not.toHaveBeenCalled()
     })
 
-    it('uses a rate-limit specific message for a 429, distinct from the generic one', async () => {
-      const rateLimited = await getErrorMessageFor(STATUS_TOO_MANY_REQUESTS)
-      const generic = await getErrorMessageFor(STATUS_SERVER_ERROR)
+    it('redirects to account recovery when Cognito rate limits the request (429)', async () => {
+      mocked.confirmNewPassword.mockResolvedValue(
+        apiResult({ error: { detail: 'x' }, status: STATUS_TOO_MANY_REQUESTS }),
+      )
 
-      expect(rateLimited).toBeTruthy()
-      expect(generic).toBeTruthy()
-      expect(rateLimited).not.toBe(generic)
+      await expect(run()).rejects.toThrow(RedirectSignal)
+
+      expect(mocked.redirect).toHaveBeenCalledExactlyOnceWith('/auth/account-recovery')
     })
 
     it('uses the same generic message regardless of status or missing response', async () => {

@@ -27,19 +27,18 @@ export const confirmResetPasswordAction = async (prev: unknown, formData: FormDa
       }
     }
 
-    if (error || !response?.ok) {
-      let message = undefined
-      switch (response?.status) {
-        case 429:
-          message = 'Number of requests exceeded limit. Try again later.'
-          break
-        default:
-          message =
-            'An unexpected error occurred while confirming your password reset. Please try again.'
-          break
-      }
+    // Cognito's rate limits: the user needs the support team to recover their account.
+    if (response?.status === 429) {
+      redirect('/auth/account-recovery')
+    }
 
-      return { ...initialFormState, errors: [message] }
+    if (error || !response?.ok) {
+      return {
+        ...initialFormState,
+        errors: [
+          'An unexpected error occurred while confirming your password reset. Please try again.',
+        ],
+      }
     }
   } catch (e) {
     if (e instanceof ServerValidateError) {
