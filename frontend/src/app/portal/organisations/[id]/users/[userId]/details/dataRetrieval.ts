@@ -7,7 +7,8 @@ export const getUser = async (organisationId: number, userId: number) => {
   if (getMeError || !me) {
     return { user: me, error: getMeError }
   }
-  if (me && me.organisationId == organisationId && me.userId == userId) {
+
+  if (me.userId == userId) {
     return { user: me }
   }
 

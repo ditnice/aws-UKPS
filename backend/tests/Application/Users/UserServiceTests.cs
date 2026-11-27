@@ -1345,19 +1345,34 @@ public class UserServiceTests : DatabaseTestBase
         _harness.Emails.Sent.ShouldBeEmpty();
     }
 
-    [Fact]
-    public async Task ResendVerificationEmail_WhenCurrentUserIsNotTheSameAsTargetUser_ShouldResendVerificationEmailAndReturnAForbiddenError()
+    [Theory]
+    [InlineData(UserRole.Super, true)]
+    [InlineData(UserRole.Champion, false)]
+    [InlineData(UserRole.Standard, false)]
+    public async Task ResendVerificationEmail_WhenResendingForAnotherUser_OnlySuperUsersAreAllowed(
+        UserRole currentUserRole,
+        bool isAllowed
+    )
     {
-        User firstUser = await CreateExistingCurrentUser();
-        _ = await RequestEmailUpdate(firstUser);
-
-        _ = await CreateExistingCurrentUser(); // Sets a new current user.
+        User targetUser = await CreateExistingCurrentUser();
+        _ = await RequestEmailUpdate(targetUser);
         _harness.Emails.Clear();
 
-        var result = await Service.ResendVerificationEmail(firstUser.Id, Ct);
+        var result = await ServiceAsAnotherUser(currentUserRole)
+            .ResendVerificationEmail(targetUser.Id, Ct);
 
-        result.ShouldBeError().ShouldBeOfType<ResendVerificationEmailError.Forbidden>();
-        _harness.Emails.Sent.ShouldBeEmpty();
+        if (isAllowed)
+        {
+            result.ShouldBeSuccess();
+            _harness
+                .Emails.Sent.OfType<EmailChangeVerificationRequestEmail>()
+                .ShouldHaveSingleItem();
+        }
+        else
+        {
+            result.ShouldBeError().ShouldBeOfType<ResendVerificationEmailError.Forbidden>();
+            _harness.Emails.Sent.ShouldBeEmpty();
+        }
     }
 
     [Fact]
@@ -1543,19 +1558,33 @@ public class UserServiceTests : DatabaseTestBase
         result.ShouldBeError().ShouldBeOfType<CancelPendingEmailChangeError.UserDoesNotExist>();
     }
 
-    [Fact]
-    public async Task CancelPendingEmailChange_WhenNotCurrentUser_ShouldReturnUnauthorisedError()
+    [Theory]
+    [InlineData(UserRole.Super, true)]
+    [InlineData(UserRole.Champion, false)]
+    [InlineData(UserRole.Standard, false)]
+    public async Task CancelPendingEmailChange_WhenCancellingForAnotherUser_OnlySuperUsersAreAllowed(
+        UserRole currentUserRole,
+        bool isAllowed
+    )
     {
-        User firstUser = await CreateExistingCurrentUser();
-        _ = await RequestEmailUpdate(firstUser);
-        _ = await CreateExistingCurrentUser();
+        User targetUser = await CreateExistingCurrentUser();
+        _ = await RequestEmailUpdate(targetUser);
 
-        var result = await Service.CancelPendingEmailChange(
-            firstUser.Id,
-            TestContext.Current.CancellationToken
-        );
+        var result = await ServiceAsAnotherUser(currentUserRole)
+            .CancelPendingEmailChange(targetUser.Id, Ct);
 
-        result.ShouldBeError().ShouldBeOfType<CancelPendingEmailChangeError.Unauthorised>();
+        // The main harness acts as the target user, so it can read back their details.
+        UserInformationDto targetDetails = await Service.GetCurrentUser(Ct);
+        if (isAllowed)
+        {
+            result.ShouldBeSuccess();
+            targetDetails.PendingWorkEmail.ShouldBeNull();
+        }
+        else
+        {
+            result.ShouldBeError().ShouldBeOfType<CancelPendingEmailChangeError.Unauthorised>();
+            targetDetails.PendingWorkEmail.ShouldNotBeNull();
+        }
     }
 
     [Fact]

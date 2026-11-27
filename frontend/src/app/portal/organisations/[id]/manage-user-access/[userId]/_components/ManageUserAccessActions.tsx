@@ -86,7 +86,7 @@ export default function ManageUserAccessActions({
           (isActive || status === 'AwaitingSetup' || status === 'Deactivated')
         )
       case 'ManageUserDetails':
-        return isActive
+        return currentUserRole === 'Super' && isActive
       default:
         return false
     }

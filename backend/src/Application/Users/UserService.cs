@@ -824,7 +824,7 @@ internal partial class UserService(
             return ResendVerificationEmailResult.Err(new ResendVerificationEmailError.NotFound());
         }
 
-        if (!currentUserInfoService.IsCurrentUser(user))
+        if (!IsCurrentUserPermittedToModifyDetailsOf(user))
         {
             return ResendVerificationEmailResult.Err(new ResendVerificationEmailError.Forbidden());
         }
@@ -944,7 +944,7 @@ internal partial class UserService(
                 );
             }
 
-            if (!currentUserInfoService.IsCurrentUser(user))
+            if (!IsCurrentUserPermittedToModifyDetailsOf(user))
             {
                 return Result<CancelPendingEmailChangeError>.Err(
                     new CancelPendingEmailChangeError.Unauthorised()

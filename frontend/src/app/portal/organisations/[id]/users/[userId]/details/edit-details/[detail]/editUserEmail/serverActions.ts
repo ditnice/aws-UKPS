@@ -3,7 +3,6 @@
 import { initialFormState, ServerValidateError } from '@tanstack/react-form-nextjs'
 import { redirect } from 'next/navigation'
 
-import { buildMyDetailsHref } from '@/app/portal/user/me/navigation'
 import { cancelPendingEmailChange, updateUserEmail } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { errorMessages } from '@/lib/form/errorMessages'
@@ -68,7 +67,7 @@ export const cancelPendingEmailChangeAction = async (onCancel: string, userId: n
   })
 
   if (response?.ok) {
-    redirect(buildMyDetailsHref())
+    redirect(onCancel)
   }
 
   if (error || !response?.ok) {
