@@ -435,6 +435,63 @@ public class LoginServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task InitiateForgottenPasswordFlow_WhenCognitoRejectsADisabledUser_ShouldReturnSuccess()
+    {
+        _harness
+            .Cognito.Mock.ForgotPasswordAsync(
+                Arg.Any<ForgotPasswordRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .ThrowsAsync(new NotAuthorizedException("User is disabled."));
+
+        Result<InitiateForgottenPasswordProcedureError> result =
+            await _harness.Service.InitiateForgottenPasswordProcedure(
+                new() { Email = _user.WorkEmail },
+                Ct
+            );
+
+        result.ShouldBeSuccess();
+    }
+
+    [Fact]
+    public async Task InitiateForgottenPasswordFlow_WhenCognitoHasNoVerifiedEmailForTheUser_ShouldReturnSuccess()
+    {
+        _harness
+            .Cognito.Mock.ForgotPasswordAsync(
+                Arg.Any<ForgotPasswordRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .ThrowsAsync(
+                new InvalidParameterException(
+                    "Cannot reset password for the user as there is no registered/verified email or phone_number"
+                )
+            );
+
+        Result<InitiateForgottenPasswordProcedureError> result =
+            await _harness.Service.InitiateForgottenPasswordProcedure(
+                new() { Email = _user.WorkEmail },
+                Ct
+            );
+
+        result.ShouldBeSuccess();
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenCognitoRejectsADisabledUser_ShouldReturnCodeMismatchError()
+    {
+        _harness
+            .Cognito.Mock.ConfirmForgotPasswordAsync(
+                Arg.Any<ConfirmForgotPasswordRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .ThrowsAsync(new NotAuthorizedException("User is disabled."));
+
+        Result<ConfirmNewPasswordError> result = await MakeValidConfirmPasswordRequest();
+
+        result.ShouldBeError().ShouldBeOfType<ConfirmNewPasswordError.CodeMismatch>();
+    }
+
+    [Fact]
     public async Task ConfirmNewPassword_WhenCognitoHasNoSuchUser_ShouldReturnCodeMismatchError()
     {
         _harness
