@@ -29,9 +29,11 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .Property(u => u.NormalisedPendingWorkEmail)
             .HasComputedColumnSql("ukps.normalise_email(pending_work_email)", stored: true);
 
+        // Not unique: a timed-out pending email no longer reserves its address, and an index
+        // predicate cannot depend on the current time. Uniqueness among active pending emails
+        // is enforced by the application (see PendingEmailChange.HasActivePendingEmail).
         builder
             .HasIndex(u => u.NormalisedPendingWorkEmail)
-            .IsUnique()
             .HasFilter("normalised_pending_work_email IS NOT NULL")
             .HasDatabaseName("ix_app_user_normalised_pending_work_email");
 

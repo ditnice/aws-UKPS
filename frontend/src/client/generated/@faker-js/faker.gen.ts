@@ -36,7 +36,8 @@ export const fakeAuthenticationFailCode = (options?: Options): AuthenticationFai
         'MembershipNotInValidState',
         'OrganisationNotActive',
         'SelectedOrganisationMismatch',
-        'PendingEmailRequiredVerification'
+        'PendingEmailRequiredVerification',
+        'PendingEmailExpired'
     ]);
 };
 
@@ -1744,6 +1745,8 @@ export const fakeVerifyPendingEmailAddressResponse403 = (options?: Options): Ver
 export const fakeVerifyPendingEmailAddressResponse404 = (options?: Options): VerifyPendingEmailAddressErrors[404] => fakeProblemDetails(options);
 
 export const fakeVerifyPendingEmailAddressResponse409 = (options?: Options): VerifyPendingEmailAddressErrors[409] => fakeAuthenticationProblemDetails(options);
+
+export const fakeVerifyPendingEmailAddressResponse410 = (options?: Options): VerifyPendingEmailAddressErrors[410] => fakeProblemDetails(options);
 
 export const fakeCancelPendingEmailChangeRequest = (options?: Options): Omit<CancelPendingEmailChangeData, 'url'> => {
     const f = options?.faker ?? faker;

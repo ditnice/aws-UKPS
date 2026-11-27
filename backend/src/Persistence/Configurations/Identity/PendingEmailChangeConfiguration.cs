@@ -23,6 +23,9 @@ internal partial class User
                 pendingEmail
                     .Property<DateTime?>("_verifiedAt")
                     .HasColumnName("pending_email_verified_at");
+                pendingEmail
+                    .Property<DateTime?>("_requestedAt")
+                    .HasColumnName("pending_email_requested_at");
             }
         );
     }

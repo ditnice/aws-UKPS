@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Bogus;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +18,7 @@ using UKPS.Api.Application.InternalServices.Identity;
 using UKPS.Api.Application.InternalServices.Temporal;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.Tests.Utilities.MockInternalServices;
+using UKPS.Api.WebApi;
 using UKPS.Api.WebApi.InternalServices.Authentication;
 using InitiatedAuthenticationResult = UKPS.Api.Application.Common.Result<
     UKPS.Api.Application.Authentication.Dtos.AuthenticationCredentialsDto,
@@ -173,6 +175,35 @@ public class AuthenticationControllerTests : IClassFixture<WebApplicationFactory
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        AssertCookiesDoNotExist(response.Headers);
+    }
+
+    [Fact]
+    public async Task Login_WhenPendingEmailHasExpired_ShouldReturnBadRequestWithPendingEmailExpiredCode()
+    {
+        _mockedLoginService
+            .Login(Arg.Any<LoginRequest>(), Arg.Any<CancellationToken>())
+            .Returns(
+                InitiatedAuthenticationResult.Err(
+                    new InitiateAuthenticationError.PendingEmailExpired()
+                )
+            );
+
+        var response = await _client.PostAsJsonAsync(
+            new Uri(LoginUrl, UriKind.Relative),
+            _defaultLoginRequest,
+            TestContext.Current.CancellationToken
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        using var body = await JsonDocument.ParseAsync(
+            await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken),
+            cancellationToken: TestContext.Current.CancellationToken
+        );
+        body.RootElement.GetProperty("code")
+            .GetString()
+            .ShouldBe(nameof(AuthenticationFailCode.PendingEmailExpired));
 
         AssertCookiesDoNotExist(response.Headers);
     }

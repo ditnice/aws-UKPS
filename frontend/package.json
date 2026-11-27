@@ -80,7 +80,7 @@
     "dotenv": "18.0.10",
     "graphql": "^16.15.0",
     "jose": "^6.2.18",
-    "libphonenumber-js": "1.13.16",
+    "libphonenumber-js": "1.13.17",
     "next": "16.4.6",
     "payload": "3.94.0",
     "qrcode.react": "^4.2.0",

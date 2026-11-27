@@ -13,7 +13,8 @@ export const AuthenticationFailCode = {
     MEMBERSHIP_NOT_IN_VALID_STATE: 'MembershipNotInValidState',
     ORGANISATION_NOT_ACTIVE: 'OrganisationNotActive',
     SELECTED_ORGANISATION_MISMATCH: 'SelectedOrganisationMismatch',
-    PENDING_EMAIL_REQUIRED_VERIFICATION: 'PendingEmailRequiredVerification'
+    PENDING_EMAIL_REQUIRED_VERIFICATION: 'PendingEmailRequiredVerification',
+    PENDING_EMAIL_EXPIRED: 'PendingEmailExpired'
 } as const;
 
 export type AuthenticationFailCode = typeof AuthenticationFailCode[keyof typeof AuthenticationFailCode];
@@ -3952,6 +3953,10 @@ export type VerifyPendingEmailAddressErrors = {
      * The user has no pending email address, or the pending email address has already been verified.
      */
     409: AuthenticationProblemDetails;
+    /**
+     * The pending email address has expired and can no longer be verified.
+     */
+    410: ProblemDetails;
 };
 
 export type VerifyPendingEmailAddressError = VerifyPendingEmailAddressErrors[keyof VerifyPendingEmailAddressErrors];

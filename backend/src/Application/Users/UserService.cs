@@ -3,6 +3,8 @@ using System.Linq.Expressions;
 using Amazon.Runtime;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Options;
+using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.SecurityNotification;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
@@ -50,9 +52,13 @@ internal partial class UserService(
     ICurrentUserInfoService currentUserInfoService,
     IEmailService emailService,
     IEmailVerificationLinkCreator emailVerificationLinkCreator,
+    IOptions<AccountRecoveryOptions> accountRecoveryOptions,
     ILogger<UserService> logger
 ) : IUserService
 {
+    private TimeSpan PendingEmailChangeTimeout =>
+        accountRecoveryOptions.Value.PendingEmailChangeTimeout;
+
     public async Task<CurrentUserInformationDto> GetCurrentUser(CancellationToken cancellationToken)
     {
         CurrentUser currentUser = currentUserInfoService.GetCurrentUserInfo();
@@ -72,7 +78,11 @@ internal partial class UserService(
 
         // The current user's email and role come from the session token claims,
         // as those are what the backend authorises against.
-        var userInformationDto = MapUserToUserInformationDto(membership) with
+        var userInformationDto = MapUserToUserInformationDto(
+            membership,
+            timeProvider.GetUtcNow(),
+            PendingEmailChangeTimeout
+        ) with
         {
             WorkEmail = currentUser.Email,
             UserRole = currentUser.UserRole,
@@ -296,7 +306,14 @@ internal partial class UserService(
         );
 
         return membershipResult.Match(
-            membership => GetUserInformationResult.Ok(MapUserToUserInformationDto(membership)),
+            membership =>
+                GetUserInformationResult.Ok(
+                    MapUserToUserInformationDto(
+                        membership,
+                        timeProvider.GetUtcNow(),
+                        PendingEmailChangeTimeout
+                    )
+                ),
             error => GetUserInformationResult.Err(error)
         );
     }
@@ -336,7 +353,11 @@ internal partial class UserService(
                         mfaInformation.MfaMethod,
                         mfaInformation.MfaPhoneNumber,
                         user.HasMultipleSelectableOrganisations(),
-                        MapUserToUserInformationDto(membership)
+                        MapUserToUserInformationDto(
+                            membership,
+                            timeProvider.GetUtcNow(),
+                            PendingEmailChangeTimeout
+                        )
                     )
                 );
             },
@@ -376,7 +397,11 @@ internal partial class UserService(
             : Result<UserOrgMembership, GetUsersError>.Ok(membership);
     }
 
-    private static UserInformationDto MapUserToUserInformationDto(UserOrgMembership membership)
+    private static UserInformationDto MapUserToUserInformationDto(
+        UserOrgMembership membership,
+        DateTime currentTime,
+        TimeSpan pendingEmailChangeTimeout
+    )
     {
         User user = membership.User!;
         return new UserInformationDto
@@ -391,7 +416,9 @@ internal partial class UserService(
             UserRole = membership.UserRole,
             Status = membership.Status.ConvertToUserOrgStatus(),
             AllowedPharmaceuticalEntity = membership.AllowedPharmaceuticalEntity,
-            PendingWorkEmail = user.PendingEmail.TryGetData().TryGetSuccessValue(out var data)
+            PendingWorkEmail = user
+                .PendingEmail.TryGetData(currentTime, pendingEmailChangeTimeout)
+                .TryGetSuccessValue(out var data)
                 ? new() { Value = data.WorkEmail, VerifiedByEmail = data.Verified }
                 : null,
         };
@@ -738,14 +765,6 @@ internal partial class UserService(
                     new UpdateUserEmailError.ConcurrentChangeDetected()
                 );
             }
-            catch (DbUpdateException updateException)
-                when (ConstraintExceptions.IsUniquePendingEmailException(updateException))
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                return Result<UpdateUserEmailError>.Err(
-                    new UpdateUserEmailError.ConflictingEmail()
-                );
-            }
             catch (Exception ex)
             {
                 LogUpdatingUserDetailsFailed(ex);
@@ -774,7 +793,10 @@ internal partial class UserService(
                 );
             }
 
-            var result = user.CompletePendingEmail(timeProvider.GetUtcNow());
+            var result = user.CompletePendingEmail(
+                timeProvider.GetUtcNow(),
+                PendingEmailChangeTimeout
+            );
 
             return await result.Match(
                 async _ =>
@@ -807,8 +829,9 @@ internal partial class UserService(
     )
     {
         return err.Match<UpdateEmailToCompletePendingEmailError>(
-            _ => new UpdateEmailToCompletePendingEmailError.NotFound(),
-            _ => new UpdateEmailToCompletePendingEmailError.NotVerified()
+            noPendingEmailToComplete: _ => new UpdateEmailToCompletePendingEmailError.NotFound(),
+            notVerified: _ => new UpdateEmailToCompletePendingEmailError.NotVerified(),
+            pendingEmailTimedOut: _ => new UpdateEmailToCompletePendingEmailError.PendingEmailExpired()
         );
     }
 
@@ -830,7 +853,11 @@ internal partial class UserService(
         }
 
         var token = VerificationTokenGenerator.Generate();
-        var result = user.TryRefreshVerificationToken(token, timeProvider.GetUtcNow());
+        var result = user.TryRefreshVerificationToken(
+            token,
+            timeProvider.GetUtcNow(),
+            PendingEmailChangeTimeout
+        );
 
         return await result.Match<Task<ResendVerificationEmailResult>>(
             async (pendingWorkEmail) =>
@@ -865,8 +892,10 @@ internal partial class UserService(
     )
     {
         return err.Match<ResendVerificationEmailError>(
-            _ => new ResendVerificationEmailError.NoPendingVerification(),
-            _ => new ResendVerificationEmailError.PendingEmailAlreadyVerified()
+            noPendingEmailToRefresh: _ => new ResendVerificationEmailError.NoPendingVerification(),
+            alreadyVerified: _ => new ResendVerificationEmailError.PendingEmailAlreadyVerified(),
+            // An expired change can no longer be verified, so there is nothing to resend.
+            pendingEmailTimedOut: _ => new ResendVerificationEmailError.NoPendingVerification()
         );
     }
 
@@ -888,7 +917,8 @@ internal partial class UserService(
 
             var result = user!.TryMarkPendingEmailAsVerified(
                 command.VerificationToken,
-                timeProvider.GetUtcNow()
+                timeProvider.GetUtcNow(),
+                PendingEmailChangeTimeout
             );
             return await result.Match<Task<VerifyPendingEmailAddressResult>>(
                 async () =>
@@ -924,7 +954,8 @@ internal partial class UserService(
         return error.Match<VerifyPendingEmailAddressError>(
             noPendingEmailToVerify: _ => new VerifyPendingEmailAddressError.NoPendingEmailToVerify(),
             invalidVerificationToken: _ => new VerifyPendingEmailAddressError.InvalidTokenProvided(),
-            alreadyVerified: _ => new VerifyPendingEmailAddressError.EmailAlreadyVerified()
+            alreadyVerified: _ => new VerifyPendingEmailAddressError.EmailAlreadyVerified(),
+            pendingEmailTimedOut: _ => new VerifyPendingEmailAddressError.PendingEmailExpired()
         );
     }
 
@@ -951,7 +982,10 @@ internal partial class UserService(
                 );
             }
 
-            var result = user.TryCancelPendingEmailChange(timeProvider.GetUtcNow());
+            var result = user.TryCancelPendingEmailChange(
+                timeProvider.GetUtcNow(),
+                PendingEmailChangeTimeout
+            );
             return await result.Match(
                 async () =>
                 {
@@ -960,9 +994,11 @@ internal partial class UserService(
                 },
                 async err =>
                 {
-                    return err.Match<Result<CancelPendingEmailChangeError>>(_ =>
-                        Result<CancelPendingEmailChangeError>.Err(
-                            new CancelPendingEmailChangeError.NoPendingEmailToCancel()
+                    // An expired change is no longer pending, so there is nothing to cancel.
+                    return Result<CancelPendingEmailChangeError>.Err(
+                        err.Match<CancelPendingEmailChangeError>(
+                            noPendingEmailToCancel: _ => new CancelPendingEmailChangeError.NoPendingEmailToCancel(),
+                            pendingEmailTimedOut: _ => new CancelPendingEmailChangeError.NoPendingEmailToCancel()
                         )
                     );
                 }
@@ -1120,12 +1156,22 @@ internal partial class UserService(
         }
 
         IQueryable<User> otherUsers = dbContext.Users.Where(x => x.Id != user.Id);
-        bool emailAlreadyExistInTheDatabase = await otherUsers.AnyAsync(
-            x =>
-                x.NormalisedPendingWorkEmail == EmailDbFunctions.Normalise(command.Value)
-                || x.NormalisedWorkEmail == EmailDbFunctions.Normalise(command.Value),
-            cancellationToken
-        );
+        bool emailAlreadyExistInTheDatabase =
+            await otherUsers.AnyAsync(
+                x => x.NormalisedWorkEmail == EmailDbFunctions.Normalise(command.Value),
+                cancellationToken
+            )
+            || await otherUsers
+                .Where(
+                    PendingEmailChange.HasActivePendingEmail(
+                        timeProvider.GetUtcNow(),
+                        PendingEmailChangeTimeout
+                    )
+                )
+                .AnyAsync(
+                    x => x.NormalisedPendingWorkEmail == EmailDbFunctions.Normalise(command.Value),
+                    cancellationToken
+                );
 
         if (emailAlreadyExistInTheDatabase)
         {
