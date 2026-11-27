@@ -58,7 +58,14 @@ describe('SignInMfaForm', () => {
     expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
     expect(
       screen.getByRole('link', { name: 'I do not have access to my authenticator' }),
-    ).toBeInTheDocument()
+    ).toHaveAttribute('href', '/auth/account-recovery')
+  })
+  it('refers to the phone in the help link for SMS', () => {
+    render(<SignInMfaForm username={exampleUserEmail} session={exampleSession} method="sms" />)
+    expect(screen.getByRole('link', { name: 'I do not have access to my phone' })).toHaveAttribute(
+      'href',
+      '/auth/account-recovery',
+    )
   })
   it('redirects on successful authentication', async () => {
     renderValidForm()

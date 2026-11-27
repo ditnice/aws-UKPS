@@ -73,7 +73,11 @@ export function SignInForm({ returnTo }: SignInFormProps) {
         return
       }
 
-      if (result.error.challengeType === 'MultiFactorAuthenticationRequired') {
+      const { challengeType } = result.error
+      if (
+        challengeType === 'MultiFactorAuthenticationRequired' ||
+        challengeType === 'SmsMultiFactorAuthenticationRequired'
+      ) {
         const { authenticationSession } = result.error
 
         if (!authenticationSession) {
@@ -86,7 +90,11 @@ export function SignInForm({ returnTo }: SignInFormProps) {
         })
         if (returnTo) params.set('returnTo', returnTo)
 
-        router.push(`/auth/sign-in/mfa?${params.toString()}`)
+        const mfaPath =
+          challengeType === 'SmsMultiFactorAuthenticationRequired'
+            ? '/auth/sign-in/mfa/sms'
+            : '/auth/sign-in/mfa'
+        router.push(`${mfaPath}?${params.toString()}`)
         return
       }
 

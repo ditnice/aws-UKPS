@@ -700,7 +700,7 @@ internal sealed partial class CognitoIdentityService : IIdentityService
                 session
             ),
             [ChallengeNameType.SMS_MFA] = new InitiateAuthenticationError.Challenge(
-                UkpsChallengeType.MultiFactorAuthenticationRequired,
+                UkpsChallengeType.SmsMultiFactorAuthenticationRequired,
                 session
             ),
         };

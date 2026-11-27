@@ -571,7 +571,7 @@ internal partial class IdentityAdministrationService : IIdentityAdministrationSe
                         ),
                     challenge: challenge =>
                         challenge.ChallengeType
-                        == UkpsChallengeType.MultiFactorAuthenticationRequired
+                        == UkpsChallengeType.SmsMultiFactorAuthenticationRequired
                             ? SetupSmsMfaResult.Ok(
                                 new SmsMultiFactorAuthenticationSetupDto
                                 {

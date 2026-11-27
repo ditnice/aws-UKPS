@@ -99,6 +99,27 @@ public class LoginServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task Login_WhenUserUsesSms_ShouldRespondWithAnSmsMfaChallenge()
+    {
+        await _harness.Cognito.Mock.AdminUpdateUserAttributesAsync(
+            new AdminUpdateUserAttributesRequest
+            {
+                UserPoolId = "eu-west-2_test123",
+                Username = _harness.Cognito.TestUser.Username,
+                UserAttributes =
+                [
+                    new AttributeType { Name = "phone_number", Value = "+447700900123" },
+                ],
+            },
+            TestContext.Current.CancellationToken
+        );
+
+        InitiateAuthenticationError.Challenge challenge = await AttemptLoginAndGetChallenge();
+
+        challenge.ChallengeType.ShouldBe(UkpsChallengeType.SmsMultiFactorAuthenticationRequired);
+    }
+
+    [Fact]
     public async Task RespondToMultiFactorAuthenticationChallenge_WhenCodeAndSessionAreCorrect_ShouldReturnSuccessfulLogin()
     {
         InitiateAuthenticationError.Challenge challenge = await AttemptLoginAndGetChallenge();
