@@ -141,7 +141,16 @@ describe('ResetPasswordForm', () => {
       await submitWithEmail('not-an-email')
 
       await waitFor(() => expect(screen.getByLabelText('Email address')).toBeInvalid())
+      expect(screen.getByText('Enter a valid email address')).toBeInTheDocument()
       expect(mockAction).not.toHaveBeenCalled()
+    })
+
+    it("turns off the browser's own validation so the field shows its error instead", () => {
+      setup()
+
+      expect(screen.getByRole('button', { name: 'Send link' }).closest('form')).toHaveAttribute(
+        'novalidate',
+      )
     })
   })
 
@@ -156,11 +165,14 @@ describe('ResetPasswordForm', () => {
       expect(mockAction).toHaveBeenCalledTimes(1)
     })
 
-    it('is called again for each subsequent successful submission', async () => {
+    it('is called again for each subsequent successful submission (resending)', async () => {
       const onSuccess = vi.fn()
-      const { user, submitWithEmail, submitButton } = setup(successState(), { onSuccess })
+      const { user, submitButton } = setup(successState(), {
+        email: 'test@example.com',
+        onSuccess,
+      })
 
-      await submitWithEmail('test@example.com')
+      await user.click(submitButton())
       await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1))
 
       await user.click(submitButton())
