@@ -20,9 +20,11 @@ public sealed class RecordTaskListController(IRecordTaskListQueryService querySe
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>The task list.</returns>
     /// <response code="200">Returns the task list.</response>
+    /// <response code="403">The caller can read the record but not edit it.</response>
     /// <response code="404">The record is not found or is not accessible to the caller.</response>
     [HttpGet(Name = nameof(GetRecordTaskList))]
     [ProducesResponseType<RecordTaskListDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RecordTaskListDto>> GetRecordTaskList(
         int recordId,
@@ -42,6 +44,7 @@ public sealed class RecordTaskListController(IRecordTaskListQueryService querySe
                     // ADR-004: not found and not allowed are indistinguishable.
                     GetRecordTaskListError.NotFound or GetRecordTaskListError.NotAllowed =>
                         TaskListNotFound(),
+                    GetRecordTaskListError.CannotEdit => CannotEdit(),
                     _ => throw new UnreachableException(
                         "Unhandled GetRecordTaskListError variant."
                     ),
@@ -51,4 +54,7 @@ public sealed class RecordTaskListController(IRecordTaskListQueryService querySe
 
     private ObjectResult TaskListNotFound() =>
         this.NotFoundProblem("The specified task list could not be found.");
+
+    private ObjectResult CannotEdit() =>
+        this.ForbiddenProblem("You are not authorised to edit this record.");
 }

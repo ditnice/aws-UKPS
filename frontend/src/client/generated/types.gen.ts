@@ -1227,6 +1227,15 @@ export type RecordTaskListDto = {
      */
     recordTitle: null | string;
     /**
+     * The record's type; needed to link to the record's discard page.
+     */
+    recordType: RecordType;
+    /**
+     * Whether the caller may discard the record: it has never been submitted and their role
+     * allows it.
+     */
+    canDiscard: boolean;
+    /**
      * Sections and their ordered tasks.
      */
     sections: Array<RecordTaskListSectionDto>;
@@ -3466,6 +3475,10 @@ export type GetRecordTaskListErrors = {
      * Unauthorized
      */
     401: AuthenticationProblemDetails;
+    /**
+     * The caller can read the record but not edit it.
+     */
+    403: ProblemDetails;
     /**
      * The record is not found or is not accessible to the caller.
      */

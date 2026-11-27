@@ -392,18 +392,6 @@ export const fakeRecordTaskListSectionDto = (options?: Options): RecordTaskListS
     };
 };
 
-export const fakeRecordTaskListDto = (options?: Options): RecordTaskListDto => {
-    const f = options?.faker ?? faker;
-    return {
-        recordId: f.number.int(),
-        organisationId: f.number.int(),
-        displayStatus: fakeRecordDisplayStatus(options),
-        companyCode: f.datatype.boolean() ? f.string.sample() : null,
-        recordTitle: f.datatype.boolean() ? f.string.sample() : null,
-        sections: f.helpers.multiple(() => fakeRecordTaskListSectionDto(options))
-    };
-};
-
 export const fakeRecordType = (options?: Options): RecordType => {
     const f = options?.faker ?? faker;
     return f.helpers.arrayElement(['Medicine', 'Vaccine']);
@@ -447,6 +435,20 @@ export const fakeRecordOverviewDto = (options?: Options): RecordOverviewDto => {
         nextUpdateDue: f.datatype.boolean() ? f.date.recent().toISOString() : null,
         companyCode: f.datatype.boolean() ? f.string.sample() : null,
         recordTitle: f.datatype.boolean() ? f.string.sample() : null
+    };
+};
+
+export const fakeRecordTaskListDto = (options?: Options): RecordTaskListDto => {
+    const f = options?.faker ?? faker;
+    return {
+        recordId: f.number.int(),
+        organisationId: f.number.int(),
+        displayStatus: fakeRecordDisplayStatus(options),
+        companyCode: f.datatype.boolean() ? f.string.sample() : null,
+        recordTitle: f.datatype.boolean() ? f.string.sample() : null,
+        recordType: fakeRecordType(options),
+        canDiscard: f.datatype.boolean(),
+        sections: f.helpers.multiple(() => fakeRecordTaskListSectionDto(options))
     };
 };
 
@@ -1551,6 +1553,8 @@ export const fakeGetRecordTaskListRequest = (options?: Options): Omit<GetRecordT
 export const fakeGetRecordTaskListResponse200 = (options?: Options): GetRecordTaskListResponses[200] => fakeRecordTaskListDto(options);
 
 export const fakeGetRecordTaskListResponse401 = (options?: Options): GetRecordTaskListErrors[401] => fakeAuthenticationProblemDetails(options);
+
+export const fakeGetRecordTaskListResponse403 = (options?: Options): GetRecordTaskListErrors[403] => fakeProblemDetails(options);
 
 export const fakeGetRecordTaskListResponse404 = (options?: Options): GetRecordTaskListErrors[404] => fakeProblemDetails(options);
 

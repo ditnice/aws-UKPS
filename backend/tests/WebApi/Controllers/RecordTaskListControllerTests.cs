@@ -10,6 +10,7 @@ using UKPS.Api.Application.RecordForms;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
 using UKPS.Api.Application.Records.Dtos;
+using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Tests.Utilities.Fixtures;
 using UKPS.Api.WebApi.InternalServices.Authentication;
 using GetRecordTaskListResult = UKPS.Api.Application.Common.Result<
@@ -74,6 +75,20 @@ public class RecordTaskListControllerTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
+    public async Task GetRecordTaskList_CannotEdit_ReturnsForbidden()
+    {
+        _mockQueryService
+            .GetTaskList(5, Arg.Any<CancellationToken>())
+            .Returns(GetRecordTaskListResult.Err(new GetRecordTaskListError.CannotEdit()));
+
+        HttpResponseMessage response = await _client.GetAsync(Url(TaskListUrl), Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        JsonObject body = (await response.Content.ReadFromJsonAsync<JsonObject>(Ct))!;
+        body["detail"]!.GetValue<string>().ShouldBe("You are not authorised to edit this record.");
+    }
+
+    [Fact]
     public async Task GetRecordTaskList_InaccessibleAndMissingRecords_ReturnIdenticalResponses()
     {
         _mockQueryService
@@ -110,6 +125,8 @@ public class RecordTaskListControllerTests : IClassFixture<WebApplicationFactory
             DisplayStatus = RecordDisplayStatus.Draft,
             CompanyCode = "GC123",
             RecordTitle = "COVID-19, adults 18+",
+            RecordType = RecordType.Medicine,
+            CanDiscard = true,
             Sections =
             [
                 new RecordTaskListSectionDto

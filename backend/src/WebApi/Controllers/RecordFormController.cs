@@ -107,12 +107,7 @@ public class RecordFormController(
         return error.Match(
             notFound: _ => PageNotFound(),
             notAllowed: _ => PageNotFound(),
-            cannotEdit: _ =>
-                Problem(
-                    statusCode: StatusCodes.Status403Forbidden,
-                    title: "Forbidden",
-                    detail: "You are not authorised to edit this record."
-                ),
+            cannotEdit: _ => this.ForbiddenProblem("You are not authorised to edit this record."),
             notEditable: _ =>
                 this.ConflictProblem(
                     "record_not_editable",

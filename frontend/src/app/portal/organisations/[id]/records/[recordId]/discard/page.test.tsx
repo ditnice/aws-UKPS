@@ -87,10 +87,10 @@ const recordId = String(medicineRecord.recordId)
 const mockRecord = (result: Partial<GetRecordResult>) =>
   vi.mocked(getRecordOverview).mockResolvedValue(result as GetRecordResult)
 
-const renderPage = async () => {
+const renderPage = async (returnTo?: string) => {
   const page = await DiscardRecordPage({
     params: Promise.resolve({ id: organisationId, recordId }),
-    searchParams: Promise.resolve({ recordType: medicineRecord.recordType }),
+    searchParams: Promise.resolve({ recordType: medicineRecord.recordType, returnTo }),
   })
   // The organisation wrapper mock renders the async discard view directly, so resolve it here.
   const view = page.props.children({ id: medicineRecord.organisationId }) as ReactElement<unknown>
@@ -141,6 +141,26 @@ describe('DiscardRecordPage', () => {
     mockRecord({ data: medicineRecord, error: undefined, response: new Response() })
 
     await renderPage()
+
+    expect(screen.getByRole('link', { name: 'Back' }).getAttribute('href')).toBe(
+      `/portal/organisations/${organisationId}/records/${recordId}?recordType=${medicineRecord.recordType}`,
+    )
+  })
+
+  it('links back to the task list when the user came from it', async () => {
+    mockRecord({ data: medicineRecord, error: undefined, response: new Response() })
+
+    await renderPage('task-list')
+
+    expect(screen.getByRole('link', { name: 'Back' }).getAttribute('href')).toBe(
+      `/portal/records/${recordId}/task-list`,
+    )
+  })
+
+  it('links back to the record when returnTo is not recognised', async () => {
+    mockRecord({ data: medicineRecord, error: undefined, response: new Response() })
+
+    await renderPage('https://example.com')
 
     expect(screen.getByRole('link', { name: 'Back' }).getAttribute('href')).toBe(
       `/portal/organisations/${organisationId}/records/${recordId}?recordType=${medicineRecord.recordType}`,

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { buildRecordHref } from '@/app/portal/organisations/[id]/records/[recordId]/_lib/recordLinks'
 import { RecordActionAlert } from '@/app/portal/organisations/[id]/records/_components/RecordActionAlert'
 import {
   parseRecordAction,
@@ -10,7 +11,7 @@ import {
   recordStatusLabels,
   recordStatusTagColours,
 } from '@/app/portal/organisations/[id]/records/labels'
-import { getRecordTaskList, type RecordTaskStatus } from '@/client/generated'
+import { getRecordTaskList, ProblemDetails, type RecordTaskStatus } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { BackLink } from '@/components/BackLink/BackLink'
 import { Button, ButtonGroup } from '@/components/Button/Button'
@@ -24,7 +25,7 @@ import {
   TaskListTask,
   type TaskStatus,
 } from '@/components/TaskList/TaskList'
-import { checkAnswersHref, pageHref } from '@/lib/dynamic-form/links'
+import { checkAnswersHref, pageHref, taskListReturnTo } from '@/lib/dynamic-form/links'
 import { parsePositiveInteger } from '@/lib/valueParsing'
 
 const taskStatuses: Record<RecordTaskStatus, TaskStatus> = {
@@ -62,6 +63,20 @@ const RecordTaskListPage = async ({ params, searchParams }: RecordTaskListPagePr
 
   if (response?.status === 404) {
     notFound()
+  }
+
+  if (response?.status === 403) {
+    // The organisation is unknown here, so go via /portal, which redirects to the user's records list.
+    const { detail } = (error ?? {}) as ProblemDetails
+    return (
+      <section>
+        <PageHeader
+          backLink={<BackLink href="/portal">Back</BackLink>}
+          heading="You can't edit this record"
+        />
+        <ErrorState>{detail ?? 'You do not have permission to edit this record.'}</ErrorState>
+      </section>
+    )
   }
 
   if (!taskList || error) {
@@ -142,6 +157,21 @@ const RecordTaskListPage = async ({ params, searchParams }: RecordTaskListPagePr
         >
           Return to my records
         </Button>
+
+        {taskList.canDiscard && (
+          <Button
+            elementType={Link}
+            href={`${buildRecordHref(
+              taskList.organisationId,
+              recordId,
+              taskList.recordType,
+              'discard',
+            )}&returnTo=${taskListReturnTo}`}
+            variant="secondary"
+          >
+            Discard record
+          </Button>
+        )}
       </ButtonGroup>
     </>
   )
