@@ -66,6 +66,7 @@ const RecordTaskListPage = async ({ params, searchParams }: RecordTaskListPagePr
   }
 
   if (response?.status === 403) {
+    // The organisation is unknown here, so go via /portal, which redirects to the user's records list.
     const { detail } = (error ?? {}) as ProblemDetails
     return (
       <section>
