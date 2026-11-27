@@ -469,6 +469,11 @@ internal sealed partial class CognitoIdentityService : IIdentityService
                 cancellationToken
             );
         }
+        catch (UserNotFoundException)
+        {
+            // No such user: carry on as if a code was sent, so the response does not reveal who
+            // has an account, whether or not the app client prevents user existence errors.
+        }
         catch (LimitExceededException)
         {
             return false;
@@ -507,6 +512,12 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         }
         catch (CodeMismatchException)
         {
+            return ConfirmNewPasswordResult.Err(new ConfirmNewPasswordError.CodeMismatch());
+        }
+        catch (UserNotFoundException)
+        {
+            // No such user: answer as for a wrong code, so the response does not reveal who has
+            // an account (as Cognito does when the app client prevents user existence errors).
             return ConfirmNewPasswordResult.Err(new ConfirmNewPasswordError.CodeMismatch());
         }
         catch (InvalidPasswordException)

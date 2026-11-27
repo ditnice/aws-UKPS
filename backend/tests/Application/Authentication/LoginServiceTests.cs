@@ -416,6 +416,45 @@ public class LoginServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task InitiateForgottenPasswordFlow_WhenCognitoHasNoSuchUser_ShouldReturnSuccess()
+    {
+        _harness
+            .Cognito.Mock.ForgotPasswordAsync(
+                Arg.Any<ForgotPasswordRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .ThrowsAsync<UserNotFoundException>();
+
+        Result<InitiateForgottenPasswordProcedureError> result =
+            await _harness.Service.InitiateForgottenPasswordProcedure(
+                new() { Email = "notreal@email.com" },
+                Ct
+            );
+
+        result.ShouldBeSuccess();
+    }
+
+    [Fact]
+    public async Task ConfirmNewPassword_WhenCognitoHasNoSuchUser_ShouldReturnCodeMismatchError()
+    {
+        _harness
+            .Cognito.Mock.ConfirmForgotPasswordAsync(
+                Arg.Any<ConfirmForgotPasswordRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .ThrowsAsync<UserNotFoundException>();
+
+        Result<ConfirmNewPasswordError> result = await MakeValidConfirmPasswordRequest(x =>
+            x with
+            {
+                Email = "notreal@email.com",
+            }
+        );
+
+        result.ShouldBeError().ShouldBeOfType<ConfirmNewPasswordError.CodeMismatch>();
+    }
+
+    [Fact]
     public async Task ConfirmNewPassword_WhenAResetRequestHasBeenInitiated_ShouldReturnSuccess()
     {
         Result<InitiateForgottenPasswordProcedureError> initiateResult =
