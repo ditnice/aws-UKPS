@@ -15,9 +15,6 @@ internal sealed record UserOnboardingOptions : IAppOptions
     public int SetupTokenExpiryTimeSeconds { get; set; } = 30 * 60;
 
     [RequiredConfiguration]
-    public required Uri SetupLink { get; init; }
-
-    [RequiredConfiguration]
     [Range(1, int.MaxValue)]
     public int MaxSmsSetupAttempts { get; set; } = 5;
 
