@@ -990,24 +990,39 @@ public class UserServiceTests : DatabaseTestBase
         result.ShouldBeError().ShouldBeOfType<GetUsersError.NotAllowed>();
     }
 
-    [Theory]
-    [InlineData(UserRole.Super)]
-    [InlineData(UserRole.Champion)]
-    public async Task GetUsers_WhenChampionOrSuperUser_ShouldReturnAllRolePermittedActions(
-        UserRole userRoles
-    )
+    [Fact]
+    public async Task GetUsers_WhenSuperUser_ShouldReturnAllRolePermittedActions()
     {
         var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
             x with
             {
-                UserRole = userRoles,
+                UserRole = UserRole.Super,
+                OrganisationId = 1,
+            }
+        );
+        var allActions = Enum.GetValues<UserMembershipAction>().ToArray();
+        var result = await harness.Service.GetUsers(
+            _getAllUserQuery,
+            TestContext.Current.CancellationToken
+        );
+        var users = result.ShouldBeSuccess().Items;
+        var actions = users.SelectMany(x => x.Actions).Distinct();
+        var intersection = allActions.Intersect(actions);
+        intersection.Count().ShouldBe(allActions.Length);
+    }
+
+    [Fact]
+    public async Task GetUsers_WhenChampionUser_ShouldReturnAllRolePermittedActionsExceptRemoveUserAndModifyDetails()
+    {
+        var harness = new ServiceTestHarness<IUserService>(Context).UpdateCurrentUser(x =>
+            x with
+            {
+                UserRole = UserRole.Champion,
                 OrganisationId = 1,
             }
         );
         var allActions = Enum.GetValues<UserMembershipAction>()
-            .Where(action =>
-                action != UserMembershipAction.RemoveUser || userRoles == UserRole.Super
-            )
+            .Except([UserMembershipAction.RemoveUser, UserMembershipAction.ManageUserDetails])
             .ToArray();
         var result = await harness.Service.GetUsers(
             _getAllUserQuery,
@@ -1017,10 +1032,35 @@ public class UserServiceTests : DatabaseTestBase
         var actions = users.SelectMany(x => x.Actions).Distinct();
         var intersection = allActions.Intersect(actions);
         intersection.Count().ShouldBe(allActions.Length);
-        if (userRoles != UserRole.Super)
-        {
-            actions.ShouldNotContain(UserMembershipAction.RemoveUser);
-        }
+    }
+
+    [Theory]
+    [InlineData(UserRole.Super, true)]
+    [InlineData(UserRole.Champion, false)]
+    public async Task GetUsers_OnlyAllowSuperUsersToManageDetails(
+        UserRole callerRole,
+        bool shouldOfferManageDetails
+    )
+    {
+        (User target, UserOrgMembership membership) = await AddUserWithMembership(
+            status: UserOrgMembershipStatus.Active
+        );
+        _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                UserRole = callerRole,
+                OrganisationId = membership.OrganisationId,
+            }
+        );
+
+        var result = await Service.GetUsers(
+            CreateGetUsersQuery(organisationId: membership.OrganisationId, email: target.WorkEmail),
+            TestContext.Current.CancellationToken
+        );
+
+        UserListItemDto user = result.ShouldBeSuccess().Items.Single();
+        user.Actions.Contains(UserMembershipAction.ManageUserDetails)
+            .ShouldBe(shouldOfferManageDetails);
     }
 
     [Theory]

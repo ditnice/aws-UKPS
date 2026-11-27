@@ -519,11 +519,17 @@ internal partial class UserService(
 
         if (m.MembershipStatus.HasValue)
         {
+            UserMembershipAction[] actionsOnlyPermittedToSuperUsers =
+            [
+                UserMembershipAction.RemoveUser,
+                UserMembershipAction.ManageUserDetails,
+            ];
+
             return UserOrgMembership
                 .GetPermittedActions(m.MembershipStatus.Value)
                 .Where(action =>
-                    action != UserMembershipAction.RemoveUser
-                    || currentUserInfo.UserRole == UserRole.Super
+                    currentUserInfo.UserRole == UserRole.Super
+                    || !actionsOnlyPermittedToSuperUsers.Contains(action)
                 )
                 .ToArray();
         }
