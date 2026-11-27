@@ -1,13 +1,14 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using UKPS.Api.Application.InternalServices.Authorisation;
 using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Dtos;
 using UKPS.Api.Application.RecordForms.Errors;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.Records;
-using UKPS.Api.Application.Records.Dtos;
 using UKPS.Api.Persistence;
+using UKPS.Api.Persistence.Entities.RecordWorkflow;
 using UKPS.Api.Persistence.Enums;
 
 namespace UKPS.Api.Application.RecordForms;
@@ -15,7 +16,7 @@ namespace UKPS.Api.Application.RecordForms;
 internal sealed class RecordTaskListQueryService(
     AppDbContext dbContext,
     RecordFormPageLoader loader,
-    IRecordViewService recordViewService
+    IOrganisationAuthoriser organisationAuthoriser
 ) : IRecordTaskListQueryService
 {
     private static readonly MethodInfo _readAnsweredMethod =
@@ -39,23 +40,28 @@ internal sealed class RecordTaskListQueryService(
             );
         }
 
+        // The task list is only for editing, so it is refused as a save would be.
         if (
-            !(
-                await recordViewService.GetRecordOverview(
-                    form.Record.Id,
-                    form.Record.RecordType,
-                    form.Record.OrganisationId,
-                    cancellationToken
-                )
-            ).TryGetSuccessValue(out RecordOverviewDto? overview)
+            !organisationAuthoriser.CanPerformOperationOnOrganisation(
+                Operation.EditRecordContent,
+                form.Record.OrganisationId
+            )
         )
-        {
-            return GetRecordTaskListResult.Err(new GetRecordTaskListError.NotFound());
-        }
-        if (!overview.CanEditContent)
         {
             return GetRecordTaskListResult.Err(new GetRecordTaskListError.CannotEdit());
         }
+
+        var latest = await dbContext
+            .Records.AsNoTracking()
+            .Where(r => r.Id == form.Record.Id)
+            .SelectLatestRevision()
+            .Select(static x => new { x.DisplayStatus, x.HasSingleRevision })
+            .SingleAsync(cancellationToken);
+        var productDetail = await dbContext
+            .RecordProductDetails.AsNoTracking()
+            .Where(x => x.RevisionId == form.Revision.Id)
+            .Select(static x => new { x.CompanyCode, x.RecordTitle })
+            .SingleOrDefaultAsync(cancellationToken);
 
         HashSet<string> answered = await ReadAnsweredQuestionIdsAsync(
             form.Model,
@@ -72,17 +78,37 @@ internal sealed class RecordTaskListQueryService(
             {
                 RecordId = form.Record.Id,
                 OrganisationId = form.Record.OrganisationId,
-                DisplayStatus = overview.DisplayStatus,
-                CompanyCode = overview.CompanyCode,
-                RecordTitle = overview.RecordTitle,
-                RecordType = overview.RecordType,
-                CanDiscard = overview.Actions.Contains(RecordAction.Discard),
+                DisplayStatus = latest.DisplayStatus,
+                CompanyCode = productDetail?.CompanyCode,
+                RecordTitle = productDetail?.RecordTitle,
+                RecordType = form.Record.RecordType,
+                CanDiscard = CanDiscard(form, latest.HasSingleRevision),
                 Sections = form
                     .Model.Sections.Select(section => ToDto(section, answered, applicability))
                     .ToArray(),
             }
         );
     }
+
+    /// <summary>
+    /// Whether the caller may discard the record, by the same rule the record overview uses: the
+    /// lifecycle must allow it, the record must have only one revision, and the caller's role must
+    /// permit it.
+    /// </summary>
+    private bool CanDiscard(LoadedForm form, bool hasSingleRevision) =>
+        Record
+            .GetPermittedActions(
+                new(form.Record.RecordStatus, form.Revision.WorkflowStatus),
+                hasSingleRevision,
+                canUpdate: false,
+                canChangeStatus: false,
+                canConfirm: false,
+                canDiscard: organisationAuthoriser.CanPerformOperationOnOrganisation(
+                    Operation.DiscardRecord,
+                    form.Record.OrganisationId
+                )
+            )
+            .Contains(RecordAction.Discard);
 
     private static RecordTaskListSectionDto ToDto(
         FormSection section,

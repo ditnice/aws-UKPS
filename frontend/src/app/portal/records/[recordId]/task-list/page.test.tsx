@@ -257,7 +257,7 @@ describe('RecordTaskListPage', () => {
 
     expect(screen.getByRole('link', { name: 'Discard record' })).toHaveAttribute(
       'href',
-      '/portal/organisations/7/records/42/discard?recordType=Medicine',
+      '/portal/organisations/7/records/42/discard?recordType=Medicine&returnTo=task-list',
     )
   })
 

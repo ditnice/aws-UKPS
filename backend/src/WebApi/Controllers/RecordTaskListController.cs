@@ -56,9 +56,5 @@ public sealed class RecordTaskListController(IRecordTaskListQueryService querySe
         this.NotFoundProblem("The specified task list could not be found.");
 
     private ObjectResult CannotEdit() =>
-        Problem(
-            statusCode: StatusCodes.Status403Forbidden,
-            title: "Forbidden",
-            detail: "You are not authorised to edit this record."
-        );
+        this.ForbiddenProblem("You are not authorised to edit this record.");
 }

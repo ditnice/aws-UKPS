@@ -25,7 +25,7 @@ import {
   TaskListTask,
   type TaskStatus,
 } from '@/components/TaskList/TaskList'
-import { checkAnswersHref, pageHref } from '@/lib/dynamic-form/links'
+import { checkAnswersHref, pageHref, taskListReturnTo } from '@/lib/dynamic-form/links'
 import { parsePositiveInteger } from '@/lib/valueParsing'
 
 const taskStatuses: Record<RecordTaskStatus, TaskStatus> = {
@@ -161,12 +161,12 @@ const RecordTaskListPage = async ({ params, searchParams }: RecordTaskListPagePr
         {taskList.canDiscard && (
           <Button
             elementType={Link}
-            href={buildRecordHref(
+            href={`${buildRecordHref(
               taskList.organisationId,
               recordId,
               taskList.recordType,
               'discard',
-            )}
+            )}&returnTo=${taskListReturnTo}`}
             variant="secondary"
           >
             Discard record
