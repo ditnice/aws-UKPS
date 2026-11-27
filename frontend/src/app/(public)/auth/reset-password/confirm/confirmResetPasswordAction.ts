@@ -35,6 +35,7 @@ export const confirmResetPasswordAction = async (prev: unknown, formData: FormDa
     if (error || !response?.ok) {
       return {
         ...initialFormState,
+        values,
         errors: [
           'An unexpected error occurred while confirming your password reset. Please try again.',
         ],
@@ -42,7 +43,8 @@ export const confirmResetPasswordAction = async (prev: unknown, formData: FormDa
     }
   } catch (e) {
     if (e instanceof ServerValidateError) {
-      return e.formState
+      // Its errors are all for fields, which show them; as form-level errors they have no text.
+      return { ...e.formState, errors: [] }
     }
     throw e
   }

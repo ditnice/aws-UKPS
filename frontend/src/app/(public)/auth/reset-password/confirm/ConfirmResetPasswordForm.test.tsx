@@ -2,6 +2,7 @@ import { initialFormState } from '@tanstack/react-form-nextjs'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useActionState } from 'react'
+import { renderToString } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import FormLevelErrors from '@/lib/form/FormLevelErrors'
@@ -159,6 +160,30 @@ describe('ConfirmResetPasswordForm', () => {
 
       expect(screen.getByText(codeError)).toBeInTheDocument()
       expect(screen.getByText(passwordError)).toBeInTheDocument()
+    })
+
+    it('shows them in the server-rendered page, for when JavaScript is off', () => {
+      const html = renderToString(<ConfirmResetPasswordForm {...props} />)
+
+      expect(html).toContain(codeError)
+      expect(html).toContain(passwordError)
+    })
+
+    it('keeps an error when its field is only focused and left', async () => {
+      const { user } = setup()
+
+      await user.click(getInput('confirmationCode'))
+      await user.tab()
+
+      expect(screen.getByText(codeError)).toBeInTheDocument()
+    })
+
+    it('does not let an earlier server error stop the next submission', async () => {
+      const { user } = setup()
+
+      await user.click(screen.getByRole('button', { name: /Reset password/i }))
+
+      await vi.waitFor(() => expect(mockAction).toHaveBeenCalledOnce())
     })
 
     it("clears only the edited field's error", async () => {
