@@ -1,7 +1,7 @@
 'use client'
 
 import { initialFormState, mergeForm, useForm, useTransform } from '@tanstack/react-form-nextjs'
-import { ChangeEvent, useActionState } from 'react'
+import { ChangeEvent, startTransition, useActionState, useEffect } from 'react'
 
 import { Button } from '@/components/Button/Button'
 import { Input } from '@/components/Input/Input'
@@ -11,6 +11,10 @@ import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import { confirmResetPasswordAction } from './confirmResetPasswordAction'
 import { confirmPasswordResetFormOptions } from './confirmResetPasswordShared'
+
+type ServerErrorState = { errorMap?: { onServer?: { fields?: Record<string, unknown> } } }
+
+const shownFields = ['confirmationCode', 'newPassword'] as const
 
 type ConfirmResetPasswordFormProps = {
   email: string
@@ -23,10 +27,11 @@ const ConfirmResetPasswordForm = ({ email }: ConfirmResetPasswordFormProps) => {
       ...confirmPasswordResetFormOptions.defaultValues,
       email,
     },
+    // Only the values: server errors go on each field below, so each clears when its own field
+    // changes rather than all clearing together.
     transform: useTransform(
       (baseForm) =>
         mergeForm(baseForm, {
-          ...state!,
           values: {
             ...confirmPasswordResetFormOptions.defaultValues,
             ...state?.values,
@@ -35,10 +40,33 @@ const ConfirmResetPasswordForm = ({ email }: ConfirmResetPasswordFormProps) => {
         }),
       [state],
     ),
+    onSubmitMeta: {} as { formData: FormData },
+    onSubmit: ({ meta }) => {
+      startTransition(() => {
+        action(meta.formData)
+      })
+    },
   })
 
+  useEffect(() => {
+    const fields = (state as ServerErrorState).errorMap?.onServer?.fields
+    shownFields.forEach((name) =>
+      form.setFieldMeta(name, (meta) => ({
+        ...meta,
+        errorMap: { ...meta.errorMap, onSubmit: fields?.[name] },
+      })),
+    )
+  }, [state, form])
+
   return (
-    <form action={action as never} onSubmit={() => form.handleSubmit()}>
+    <form
+      action={action as never}
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault()
+        void form.handleSubmit({ formData: new FormData(e.currentTarget) })
+      }}
+    >
       <FormLevelErrors errors={state.errors} />
       <form.Field name="email">
         {(field) => <input type="hidden" name={field.name} value={field.state.value} />}

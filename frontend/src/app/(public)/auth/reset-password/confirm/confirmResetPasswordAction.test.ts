@@ -124,7 +124,10 @@ describe('confirmResetPasswordAction', () => {
       const state = await run()
 
       expect(mocked.isValidationProblemDetails).toHaveBeenCalledWith(problem)
-      expect(mocked.getFormStateServerErrors).toHaveBeenCalledWith(problem.errors)
+      expect(mocked.getFormStateServerErrors).toHaveBeenCalledWith(problem.errors, [
+        'confirmationCode',
+        'newPassword',
+      ])
       expect(state).toEqual({ ...initialFormState, values, ...serverErrors })
     })
 

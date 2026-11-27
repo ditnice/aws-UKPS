@@ -139,6 +139,68 @@ describe('ConfirmResetPasswordForm', () => {
     })
   })
 
+  describe('server field errors', () => {
+    const codeError = 'The confirmation code is incorrect'
+    const passwordError = 'The new password does not meet the password requirements'
+
+    beforeEach(() => {
+      mockActionState({
+        values: { ...defaultValues, confirmationCode: '123456', newPassword: 'Passw0rd!' },
+        errorMap: {
+          onServer: {
+            fields: { confirmationCode: [codeError], newPassword: [passwordError] },
+          },
+        },
+      } as never)
+    })
+
+    it('shows each error on its own field', () => {
+      setup()
+
+      expect(screen.getByText(codeError)).toBeInTheDocument()
+      expect(screen.getByText(passwordError)).toBeInTheDocument()
+    })
+
+    it("clears only the edited field's error", async () => {
+      const { user } = setup()
+
+      await user.type(getInput('newPassword'), 'x')
+
+      expect(screen.queryByText(passwordError)).not.toBeInTheDocument()
+      expect(screen.getByText(codeError)).toBeInTheDocument()
+    })
+  })
+
+  describe('submitting', () => {
+    it('shows client validation errors without calling the action', async () => {
+      const { user } = setup()
+
+      await user.type(getInput('confirmationCode'), '123')
+      await user.click(screen.getByRole('button', { name: /Reset password/i }))
+
+      expect(
+        await screen.findByText('Confirmation code must be 6 characters long'),
+      ).toBeInTheDocument()
+      expect(mockAction).not.toHaveBeenCalled()
+    })
+
+    it('calls the action with the form data when the values are valid', async () => {
+      const { user } = setup()
+
+      await user.type(getInput('confirmationCode'), '123456')
+      await user.type(getInput('newPassword'), 'Passw0rd!')
+      await user.click(screen.getByRole('button', { name: /Reset password/i }))
+
+      await vi.waitFor(() => expect(mockAction).toHaveBeenCalledOnce())
+      const formData = mockAction.mock.calls[0][0] as FormData
+      expect(Object.fromEntries(formData)).toEqual({
+        email: props.email,
+        confirmationCode: '123456',
+        newPassword: 'Passw0rd!',
+      })
+    })
+  })
+
   describe('submit button', () => {
     it('renders an enabled submit button', () => {
       setup()

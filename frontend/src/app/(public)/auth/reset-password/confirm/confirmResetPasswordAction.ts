@@ -23,7 +23,7 @@ export const confirmResetPasswordAction = async (prev: unknown, formData: FormDa
       return {
         ...initialFormState,
         values,
-        ...getFormStateServerErrors(error.errors),
+        ...getFormStateServerErrors(error.errors, ['confirmationCode', 'newPassword']),
       }
     }
 
