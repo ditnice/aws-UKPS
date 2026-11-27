@@ -1464,6 +1464,36 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task ResendVerificationEmail_WhenPendingEmailIsCloseToTimingOut_ShouldExtendThePendingEmailLifetime()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        _ = await RequestEmailUpdate(currentUser);
+        _harness.Emails.Clear();
+
+        // Resend just before the original request would time out.
+        var resentAt = _currentDateTime + _pendingEmailTimeout - TimeSpan.FromMinutes(1);
+        _harness.UpdateCurrentTime(resentAt);
+        var resendResult = await Service.ResendVerificationEmail(currentUser.Id, Ct);
+        resendResult.ShouldBeSuccess();
+        var newToken = _harness
+            .Emails.Sent.OfType<EmailChangeVerificationRequestEmail>()
+            .ShouldHaveSingleItem()
+            .EmailVerificationLink.Host;
+
+        // Past the original deadline, but well within the timeout measured from the resend.
+        _harness.UpdateCurrentTime(
+            _currentDateTime + _pendingEmailTimeout + TimeSpan.FromMinutes(1)
+        );
+        var verifyResult = await Service.VerifyPendingEmailAddress(
+            currentUser.Id,
+            new VerifyPendingEmailAddressCommand() { VerificationToken = newToken },
+            Ct
+        );
+
+        verifyResult.ShouldBeSuccess();
+    }
+
+    [Fact]
     public async Task VerifyPendingEmailAddress_ShouldMarkPendingEmailAsVerified()
     {
         User currentUser = await CreateExistingCurrentUser();

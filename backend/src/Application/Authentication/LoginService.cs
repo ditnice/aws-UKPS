@@ -232,7 +232,13 @@ internal class LoginService : ILoginService
             return new(user, FoundFromPendingEmail: hasPendingEmailThatMatchesCase);
         }
         var userWithPendingEmail = await ApplyRequiredInclusions(_appDbContext.Users)
-            .GetByPendingEmailOrDefault(emailUsername, cancellationToken);
+            .GetByPendingEmailOrDefault(
+                emailUsername,
+                _dateTimeProvider.GetUtcNow(),
+                _accountRecoveryOptions.PendingEmailChangeTimeout,
+                cancellationToken,
+                includeExpiredPendingEmail: true
+            );
         return userWithPendingEmail is not null ? new(userWithPendingEmail, true) : null;
     }
 

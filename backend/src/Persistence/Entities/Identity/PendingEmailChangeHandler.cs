@@ -59,6 +59,7 @@ internal sealed record PendingEmailChangeHandler : PendingEmailChange
             );
         }
 
+        _requestedAt = dateTime;
         _verificationToken = verificationToken;
 
         return Result<string, RefreshVerificationTokenError>.Ok(data.WorkEmail);
