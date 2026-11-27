@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Shouldly;
+using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.SecurityNotification;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Application.InternalServices.Authorisation;
@@ -62,6 +63,8 @@ public class UserServiceTests : DatabaseTestBase
         DateTimeKind.Utc
     );
 
+    private static readonly TimeSpan _pendingEmailTimeout = TimeSpan.FromMinutes(30);
+
     private readonly GetUsersQueryDto _getAllUserQuery = new GetUsersQueryDto() { PageSize = 1000 };
     private readonly Faker _faker = new Faker();
     private readonly IReadOnlyCollection<UserRegistrationRequest> _userRegistrationRequests;
@@ -83,6 +86,12 @@ public class UserServiceTests : DatabaseTestBase
             .UpdateCurrentTime(_currentDateTime)
             .ConfigureServices(services =>
             {
+                services
+                    .AddOptions<AccountRecoveryOptions>()
+                    .Configure(options =>
+                        options.PendingEmailChangeTimeoutSeconds = (int)
+                            _pendingEmailTimeout.TotalSeconds
+                    );
                 return services.AddSingleton(_mockEmailVerificationLinkCreator);
             });
 
@@ -132,11 +141,11 @@ public class UserServiceTests : DatabaseTestBase
                     CognitoUsername = currentUser.CognitoUsername,
                 }
             );
-            UserInformationDto result = await Service.GetCurrentUser(
+            CurrentUserInformationDto result = await Service.GetCurrentUser(
                 TestContext.Current.CancellationToken
             );
             result.ShouldBe(
-                new UserInformationDto()
+                new CurrentUserInformationDto()
                 {
                     UserId = currentUser.Id,
                     FullName = currentUser.FullName,
@@ -154,6 +163,34 @@ public class UserServiceTests : DatabaseTestBase
                 }
             );
         }
+    }
+
+    [Fact]
+    public async Task GetCurrentUser_ShouldReturnTheRoleAndEmailFromTheSessionClaims()
+    {
+        (User user, UserOrgMembership[] memberships) = await AddUserWithManyMemberships(
+            1,
+            organisationStatus: UserOrgStatus.Active
+        );
+        UserRole claimRole =
+            memberships[0].UserRole == UserRole.Champion ? UserRole.Standard : UserRole.Champion;
+        const string claimEmail = "claim.email@example.com";
+        _harness.UpdateCurrentUser(x =>
+            x with
+            {
+                OrganisationId = memberships[0].OrganisationId,
+                UserRole = claimRole,
+                Email = claimEmail,
+                CognitoUsername = user.CognitoUsername,
+            }
+        );
+
+        CurrentUserInformationDto result = await Service.GetCurrentUser(
+            TestContext.Current.CancellationToken
+        );
+
+        result.UserRole.ShouldBe(claimRole);
+        result.WorkEmail.ShouldBe(claimEmail);
     }
 
     [Theory]
@@ -177,7 +214,7 @@ public class UserServiceTests : DatabaseTestBase
             }
         );
 
-        UserInformationDto result = await Service.GetCurrentUser(
+        CurrentUserInformationDto result = await Service.GetCurrentUser(
             TestContext.Current.CancellationToken
         );
 
@@ -206,11 +243,23 @@ public class UserServiceTests : DatabaseTestBase
             }
         );
 
-        UserInformationDto result = await Service.GetCurrentUser(
+        CurrentUserInformationDto result = await Service.GetCurrentUser(
             TestContext.Current.CancellationToken
         );
 
         result.HasMultipleOrganisations.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task GetCurrentUser_WhenPendingEmailHasTimedOut_ShouldNotReturnPendingEmail()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        _ = await RequestEmailUpdate(currentUser);
+        AdvanceTimeToPendingEmailTimeout();
+
+        var userInformation = await Service.GetCurrentUser(TestContext.Current.CancellationToken);
+
+        userInformation.PendingWorkEmail.ShouldBeNull();
     }
 
     [Fact]
@@ -1154,6 +1203,33 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task UpdateUserDetails_WhenUserDoesNotExist_ShouldReturnUserDoesNotExistError()
+    {
+        var result = await Service.UpdateUserDetails(
+            999,
+            _updateUserDetailsCommandFaker.Generate(),
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.UserDoesNotExist>();
+    }
+
+    [Fact]
+    public async Task UpdateUserDetails_WhenUserIsNotTheTargetUser_ShouldReturnUserIsNoPermittedToUserDetailsError()
+    {
+        var currentUser = await CreateExistingCurrentUser();
+        var otherUserTestHarness = new ServiceTestHarness<IUserService>(_harness).UpdateCurrentUser(
+            x => x with { Email = "otheruser@email.com" }
+        );
+        var command = _updateUserDetailsCommandFaker.Generate();
+        var result = await otherUserTestHarness.Service.UpdateUserDetails(
+            currentUser.Id,
+            command,
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.Unauthorised>();
+    }
+
+    [Fact]
     public async Task UpdateUserEmail_ShouldUpdateUserDtoSoTheyAreMarkedAsHavingAPendingEmail()
     {
         var newEmail = "my-new-email@email.com";
@@ -1208,6 +1284,30 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task UpdateUserEmail_WhenThereIsAnotherExpiredPendingEmailWithTheSameValue_ShouldSucceed()
+    {
+        var newEmail = "my-new-email@email.com";
+
+        User userA = await CreateExistingCurrentUser();
+        Result<UpdateUserEmailError> resultA = await Service.UpdateUserEmail(
+            userA.Id,
+            new UpdateUserEmailCommand() { Value = newEmail },
+            TestContext.Current.CancellationToken
+        );
+        resultA.ShouldBeSuccess();
+
+        AdvanceTimeToPendingEmailTimeout();
+
+        User userB = await CreateExistingCurrentUser();
+        Result<UpdateUserEmailError> resultB = await Service.UpdateUserEmail(
+            userB.Id,
+            new UpdateUserEmailCommand() { Value = newEmail },
+            TestContext.Current.CancellationToken
+        );
+        resultB.ShouldBeSuccess();
+    }
+
+    [Fact]
     public async Task UpdateUserEmail_WhenEmailConflictsWithExistingUser_ShouldReturnAnError()
     {
         var existingOtherUser = await AddEntity(
@@ -1247,7 +1347,13 @@ public class UserServiceTests : DatabaseTestBase
             .GetClearedContext()
             .Users.FindAsync([currentUser.Id], TestContext.Current.CancellationToken);
 
-        email.EmailVerificationLink.Host.ShouldBe(user!.PendingEmailVerificationToken);
+        var verificationResult = user.ShouldNotBeNull()
+            .TryMarkPendingEmailAsVerified(
+                email.EmailVerificationLink.Host,
+                _currentDateTime.Add(TimeSpan.FromMinutes(5)),
+                _pendingEmailTimeout
+            );
+        verificationResult.ShouldBeSuccess();
     }
 
     [Fact]
@@ -1344,6 +1450,50 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task ResendVerificationEmail_WhenPendingEmailHasTimedOut_ShouldNotResendVerificationEmailAndReturnANoPendingVerificationError()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        _ = await RequestEmailUpdate(currentUser);
+        _harness.Emails.Clear();
+        AdvanceTimeToPendingEmailTimeout();
+
+        var result = await Service.ResendVerificationEmail(currentUser.Id, Ct);
+
+        result.ShouldBeError().ShouldBeOfType<ResendVerificationEmailError.NoPendingVerification>();
+        _harness.Emails.Sent.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task ResendVerificationEmail_WhenPendingEmailIsCloseToTimingOut_ShouldExtendThePendingEmailLifetime()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        _ = await RequestEmailUpdate(currentUser);
+        _harness.Emails.Clear();
+
+        // Resend just before the original request would time out.
+        var resentAt = _currentDateTime + _pendingEmailTimeout - TimeSpan.FromMinutes(1);
+        _harness.UpdateCurrentTime(resentAt);
+        var resendResult = await Service.ResendVerificationEmail(currentUser.Id, Ct);
+        resendResult.ShouldBeSuccess();
+        var newToken = _harness
+            .Emails.Sent.OfType<EmailChangeVerificationRequestEmail>()
+            .ShouldHaveSingleItem()
+            .EmailVerificationLink.Host;
+
+        // Past the original deadline, but well within the timeout measured from the resend.
+        _harness.UpdateCurrentTime(
+            _currentDateTime + _pendingEmailTimeout + TimeSpan.FromMinutes(1)
+        );
+        var verifyResult = await Service.VerifyPendingEmailAddress(
+            currentUser.Id,
+            new VerifyPendingEmailAddressCommand() { VerificationToken = newToken },
+            Ct
+        );
+
+        verifyResult.ShouldBeSuccess();
+    }
+
+    [Fact]
     public async Task VerifyPendingEmailAddress_ShouldMarkPendingEmailAsVerified()
     {
         User currentUser = await CreateExistingCurrentUser();
@@ -1360,7 +1510,12 @@ public class UserServiceTests : DatabaseTestBase
             .GetClearedContext()
             .Users.FindAsync([currentUser.Id], TestContext.Current.CancellationToken);
 
-        updatedUser.ShouldNotBeNull().PendingEmailVerifiedAt.ShouldBe(_currentDateTime);
+        updatedUser
+            .ShouldNotBeNull()
+            .PendingEmail.TryGetData(_currentDateTime, _pendingEmailTimeout)
+            .TryGetSuccessValue(out var pendingEmail)
+            .ShouldBeTrue();
+        pendingEmail.Verified.ShouldBeTrue();
     }
 
     [Fact]
@@ -1464,6 +1619,40 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task VerifyPendingEmailAddress_WhenJustBeforePendingEmailTimeout_ShouldMarkPendingEmailAsVerified()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        var token = await RequestEmailUpdate(currentUser);
+        _harness.UpdateCurrentTime(
+            _currentDateTime + _pendingEmailTimeout - TimeSpan.FromSeconds(1)
+        );
+
+        var result = await Service.VerifyPendingEmailAddress(
+            currentUser.Id,
+            new VerifyPendingEmailAddressCommand() { VerificationToken = token },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeSuccess();
+    }
+
+    [Fact]
+    public async Task VerifyPendingEmailAddress_WhenPendingEmailHasTimedOut_ShouldReturnPendingEmailExpiredError()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        var token = await RequestEmailUpdate(currentUser);
+        AdvanceTimeToPendingEmailTimeout();
+
+        var result = await Service.VerifyPendingEmailAddress(
+            currentUser.Id,
+            new VerifyPendingEmailAddressCommand() { VerificationToken = token },
+            TestContext.Current.CancellationToken
+        );
+
+        result.ShouldBeError().ShouldBeOfType<VerifyPendingEmailAddressError.PendingEmailExpired>();
+    }
+
+    [Fact]
     public async Task CancelPendingEmailChange_WhenUnverifiedPendingExists_ShouldClearPendingEmail()
     {
         User currentUser = await CreateExistingCurrentUser();
@@ -1484,9 +1673,9 @@ public class UserServiceTests : DatabaseTestBase
             .GetClearedContext()
             .Users.FindAsync([currentUser.Id], TestContext.Current.CancellationToken);
         databaseUser.ShouldNotBeNull();
-        databaseUser.PendingWorkEmail.ShouldBeNull();
-        databaseUser.PendingEmailVerifiedAt.ShouldBeNull();
-        databaseUser.PendingEmailVerificationToken.ShouldBeNull();
+        databaseUser
+            .PendingEmail.TryGetData(_currentDateTime, _pendingEmailTimeout)
+            .IsErr.ShouldBeTrue();
     }
 
     [Fact]
@@ -1533,6 +1722,23 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task CancelPendingEmailChange_WhenPendingEmailHasTimedOut_ShouldReturnNoPendingEmailToCancelError()
+    {
+        User currentUser = await CreateExistingCurrentUser();
+        _ = await RequestEmailUpdate(currentUser);
+        AdvanceTimeToPendingEmailTimeout();
+
+        var result = await Service.CancelPendingEmailChange(
+            currentUser.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<CancelPendingEmailChangeError.NoPendingEmailToCancel>();
+    }
+
+    [Fact]
     public async Task UpdateEmailToCompletePendingEmailChange_ShouldUpdateUserToHaveNewEmailAndClearPending()
     {
         const string updateEmail = "testupdate@email.com";
@@ -1552,8 +1758,9 @@ public class UserServiceTests : DatabaseTestBase
 
         updatedUser.ShouldNotBeNull();
         updatedUser.WorkEmail.ShouldBe(updateEmail);
-        updatedUser.PendingEmailVerifiedAt.ShouldBeNull();
-        updatedUser.PendingEmailVerifiedAt.ShouldBeNull();
+        updatedUser
+            .PendingEmail.TryGetData(_currentDateTime, _pendingEmailTimeout)
+            .IsErr.ShouldBeTrue();
     }
 
     [Fact]
@@ -1626,6 +1833,32 @@ public class UserServiceTests : DatabaseTestBase
         result.ShouldBeError().ShouldBeOfType<UpdateEmailToCompletePendingEmailError.NotFound>();
     }
 
+    [Fact]
+    public async Task UpdateEmailToCompletePendingEmailChange_WhenVerifiedPendingEmailHasTimedOut_ShouldReturnPendingEmailExpiredErrorAndKeepExistingEmail()
+    {
+        const string updateEmail = "testupdate@email.com";
+        User currentUser = await CreateExistingCurrentUser();
+        await RequestAndVerifyEmailUpdate(currentUser, updateEmail);
+        AdvanceTimeToPendingEmailTimeout();
+
+        var result = await Service.UpdateEmailToCompletePendingEmailChange(
+            currentUser.Id,
+            TestContext.Current.CancellationToken
+        );
+
+        result
+            .ShouldBeError()
+            .ShouldBeOfType<UpdateEmailToCompletePendingEmailError.PendingEmailExpired>();
+        var userInformation = await Service.GetCurrentUser(TestContext.Current.CancellationToken);
+        userInformation.WorkEmail.ShouldBe(currentUser.WorkEmail);
+        _harness.Cognito.GetUserByEmail(updateEmail).ShouldBeNull();
+    }
+
+    private void AdvanceTimeToPendingEmailTimeout()
+    {
+        _harness.UpdateCurrentTime(_currentDateTime + _pendingEmailTimeout);
+    }
+
     private async Task RequestAndVerifyEmailUpdate(User currentUser, string? updateEmail = null)
     {
         var token = await RequestEmailUpdate(currentUser, updateEmail);
@@ -1658,33 +1891,6 @@ public class UserServiceTests : DatabaseTestBase
             .ShouldHaveSingleItem();
 
         return email.EmailVerificationLink.Host;
-    }
-
-    [Fact]
-    public async Task UpdateUserDetails_WhenUserDoesNotExist_ShouldReturnUserDoesNotExistError()
-    {
-        var result = await Service.UpdateUserDetails(
-            999,
-            _updateUserDetailsCommandFaker.Generate(),
-            TestContext.Current.CancellationToken
-        );
-        result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.UserDoesNotExist>();
-    }
-
-    [Fact]
-    public async Task UpdateUserDetails_WhenUserIsNotTheTargetUser_ShouldReturnUserIsNoPermittedToUserDetailsError()
-    {
-        var currentUser = await CreateExistingCurrentUser();
-        var otherUserTestHarness = new ServiceTestHarness<IUserService>(_harness).UpdateCurrentUser(
-            x => x with { Email = "otheruser@email.com" }
-        );
-        var command = _updateUserDetailsCommandFaker.Generate();
-        var result = await otherUserTestHarness.Service.UpdateUserDetails(
-            currentUser.Id,
-            command,
-            TestContext.Current.CancellationToken
-        );
-        result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.Unauthorised>();
     }
 
     private IEnumerable<int> GetOrganisationIdsFromUserEmails(string emailAddress)
@@ -1777,8 +1983,6 @@ public class UserServiceTests : DatabaseTestBase
                 OrganisationName = membership.Organisation!.OrganisationName,
                 UserRole = membership.UserRole,
                 Status = (UserOrgStatus)membership.Status,
-                MfaMethod = "Unknown",
-                MfaPhoneNumber = string.Empty,
                 AllowedPharmaceuticalEntity = membership.AllowedPharmaceuticalEntity,
             }
         );

@@ -213,7 +213,11 @@ internal partial class IdentityAdministrationService : IIdentityAdministrationSe
                         throw new InvalidOperationException(
                             "Invalid operation occurred as a verification required error occurred on a newly setup user."
                         ),
-                    challenge: c => HandleChallenge(userEmail, c, cancellationToken)
+                    challenge: c => HandleChallenge(userEmail, c, cancellationToken),
+                    pendingEmailExpired: () =>
+                        throw new InvalidOperationException(
+                            "Invalid operation occurred as a pending email expired error occurred on a newly setup user."
+                        )
                 )
         );
     }
@@ -578,7 +582,11 @@ internal partial class IdentityAdministrationService : IIdentityAdministrationSe
                                     AuthenticationSession = challenge.AuthenticationSession,
                                 }
                             )
-                            : SetupSmsMfaResult.Err(new SetupSmsMfaError.Unauthorised())
+                            : SetupSmsMfaResult.Err(new SetupSmsMfaError.Unauthorised()),
+                    pendingEmailExpired: () =>
+                        throw new InvalidOperationException(
+                            "Invalid operation occurred as a pending email expired error occurred on a newly setup user."
+                        )
                 )
         );
     }

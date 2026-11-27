@@ -22,6 +22,7 @@ public sealed class AppSettingsTests
 
         (string Section, Type OptionsType)[] sections =
         [
+            (AccountRecoveryOptions.SectionName, typeof(AccountRecoveryOptions)),
             (CognitoOptions.SectionName, typeof(CognitoOptions)),
             (DatabaseOptions.SectionName, typeof(DatabaseOptions)),
             (DevAuthenticationOptions.SectionName, typeof(DevAuthenticationOptions)),

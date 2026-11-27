@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { RecordPageDto, RecordPageQuestionDto } from '@/client/generated'
+import { emptyEntryMessage } from '@/lib/dynamic-form/answers'
 
 import { FormPage } from './FormPage'
 
@@ -1133,6 +1134,41 @@ describe('FormPage', () => {
       }
     })
 
+    it('saves a single blank entry of a hierarchical select', async () => {
+      render(<FormPage page={page({ questions: [areasQuestion], answers: { areas: [] } })} />)
+
+      save()
+
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({ areas: [] })
+    })
+
+    it('reports a blank added entry against its own select, and saves once it is removed', async () => {
+      const user = userEvent.setup()
+      render(<FormPage page={page({ questions: [areasQuestion], answers: { areas: ['2'] } })} />)
+
+      await user.click(screen.getByRole('button', { name: 'Add another therapy area' }))
+      save()
+
+      // findBy fails if the message is shown more than once.
+      const message = await screen.findByText(emptyEntryMessage)
+      const blank = screen.getByRole('combobox', { name: 'Therapeutic area 2' })
+      expect(blank).toBeInvalid()
+      expect(blank).toHaveAccessibleDescription(expect.stringContaining(emptyEntryMessage))
+      expect(blank.getAttribute('aria-describedby')?.split(' ')).toContain(message.id)
+      expect(screen.getByRole('combobox', { name: 'Therapeutic area 1' })).toBeValid()
+      expect(mocks.saveRecordFormPage).not.toHaveBeenCalled()
+
+      await user.click(
+        screen.getByRole('button', { name: 'Remove therapeutic area Therapeutic area 2' }),
+      )
+      expect(screen.queryByText(emptyEntryMessage)).not.toBeInTheDocument()
+      save()
+
+      await waitFor(() => expect(mocks.saveRecordFormPage).toHaveBeenCalledTimes(1))
+      expect(mocks.saveRecordFormPage.mock.calls[0][0].body.answers).toEqual({ areas: ['2'] })
+    })
+
     it('reports the same area chosen twice', async () => {
       render(
         <FormPage page={page({ questions: [areasQuestion], answers: { areas: ['2', '2'] } })} />,
@@ -1672,6 +1708,24 @@ describe('FormPage', () => {
 
       await waitFor(() =>
         expect(mocks.push).toHaveBeenCalledWith('/portal/records/5/check-your-answers'),
+      )
+    })
+
+    it('keeps the way back to check your answers when the page is reloaded after a conflict', async () => {
+      mocks.saveRecordFormPage.mockResolvedValue({
+        error: {
+          code: 'page_answers_changed',
+          detail: 'This record has changed since the page was loaded.',
+        },
+        response: { ok: false, status: 409 },
+      })
+      fromCheckAnswers()
+
+      fireEvent.click(screen.getByRole('button', { name: 'Save and return to check your answers' }))
+
+      expect(await screen.findByRole('link', { name: 'Reload this page' })).toHaveAttribute(
+        'href',
+        '/portal/records/5/indication?returnTo=check-your-answers',
       )
     })
   })

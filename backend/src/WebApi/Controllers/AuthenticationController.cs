@@ -143,7 +143,7 @@ public class AuthenticationController : ControllerBase
     /// <response code="401">
     /// The supplied credentials were invalid.
     /// </response>
-    [HttpPost("login")]
+    [HttpPost("login", Name = nameof(Login))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<AuthenticationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<AuthenticationProblemDetails>(StatusCodes.Status401Unauthorized)]
@@ -193,7 +193,7 @@ public class AuthenticationController : ControllerBase
     /// <response code="200">The refresh token was successfully exchanged for new authentication credentials.</response>
     /// <response code="400">The refresh token request was invalid or could not be processed.</response>
     /// <response code="401">The CSRF token was missing or invalid, or the supplied authentication credentials were unauthorized.</response>
-    [HttpPost("refresh")]
+    [HttpPost("refresh", Name = nameof(RefreshToken))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<AuthenticationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<AuthenticationProblemDetails>(StatusCodes.Status401Unauthorized)]
@@ -222,7 +222,7 @@ public class AuthenticationController : ControllerBase
     /// </returns>
     /// <response code="200">The user was signed out and authentication cookies were cleared.</response>
     /// <response code="401">The CSRF token was missing or invalid.</response>
-    [HttpPost("sign-out")]
+    [HttpPost("sign-out", Name = nameof(SignOut))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult> SignOut(CancellationToken cancellationToken)
@@ -291,7 +291,7 @@ public class AuthenticationController : ControllerBase
     /// <returns>
     ///
     /// </returns>
-    [HttpPost("setup-sms-mfa")]
+    [HttpPost("setup-sms-mfa", Name = nameof(SetupSmsMfa))]
     [ProducesResponseType(typeof(SmsMultiFactorAuthenticationSetupDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -331,7 +331,7 @@ public class AuthenticationController : ControllerBase
     /// <returns>
     ///
     /// </returns>
-    [HttpPost("verify-sms-mfa")]
+    [HttpPost("verify-sms-mfa", Name = nameof(VerifySmsMultiFactorAuthentication))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -399,7 +399,7 @@ public class AuthenticationController : ControllerBase
     /// <response code="410">
     /// The setup token has expired.
     /// </response>
-    [HttpGet("validate-setup-token")]
+    [HttpGet("validate-setup-token", Name = nameof(ValidateSetupToken))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -454,7 +454,7 @@ public class AuthenticationController : ControllerBase
     /// <response code="409">
     /// The setup token has already been consumed.
     /// </response>
-    [HttpPost("resend-setup-token")]
+    [HttpPost("resend-setup-token", Name = nameof(ResendSetupToken))]
     [ProducesResponseType(typeof(ResendSetupTokenResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -502,7 +502,7 @@ public class AuthenticationController : ControllerBase
     /// consumed.
     /// Returns <see cref="StatusCodes.Status410Gone"/> when the setup token has expired.
     /// </returns>
-    [HttpPost("setup-user")]
+    [HttpPost("setup-user", Name = nameof(SetupUser))]
     [ProducesResponseType<MultiFactorAuthenticationSetupDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -559,7 +559,7 @@ public class AuthenticationController : ControllerBase
     /// <response code="404">
     /// The multi-factor authentication onboarding record was not found.
     /// </response>
-    [HttpPost("verify-mfa")]
+    [HttpPost("verify-mfa", Name = nameof(VerifyMultiFactorAuthentication))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -817,6 +817,16 @@ public class AuthenticationController : ControllerBase
             challenge: c =>
                 Unauthorized(
                     AuthenticationProblemDetails.Challenge(c.ChallengeType, c.AuthenticationSession)
+                ),
+            pendingEmailExpired: () =>
+                BadRequest(
+                    new AuthenticationProblemDetails()
+                    {
+                        Title = "Pending Email Expired",
+                        Detail = "The pending email change for the account provided has expired",
+                        Status = StatusCodes.Status400BadRequest,
+                        Code = AuthenticationFailCode.PendingEmailExpired,
+                    }
                 )
         );
     }

@@ -5,7 +5,7 @@ import {
   getCurrentUserOrganisations,
   getUsersMe,
   PharmaceuticalEntity,
-  UserInformationDto,
+  CurrentUserInformationDto,
 } from '@/client/generated'
 import { createServerApiClient } from '@/client/server-api'
 import { notFound, redirect } from '@/test-utils/nextNavigation'
@@ -39,7 +39,7 @@ vi.mock('./_components/SwitchOrganisationControls', () => ({
   ),
 }))
 
-const currentUser: UserInformationDto = {
+const currentUser: CurrentUserInformationDto = {
   userId: 1,
   fullName: 'John Smith',
   workTelephone: '020 7123 4567',
@@ -61,7 +61,7 @@ const organisations = [
 ]
 
 type ApiResponses = {
-  me?: UserInformationDto
+  me?: CurrentUserInformationDto
   userOrganisations?: typeof organisations
 }
 

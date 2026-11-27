@@ -1,11 +1,12 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { UserInformationDto } from '@/client/generated'
-import { fakeUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
+import { CurrentUserInformationDto } from '@/client/generated'
+import { fakeCurrentUserInformationDto } from '@/client/generated/@faker-js/faker.gen'
 import { getUsersMe } from '@/client/generated/sdk.gen'
 import { createServerApiClient } from '@/client/server-api'
 import { errorMessages } from '@/lib/form/errorMessages'
+import { navigationState } from '@/test-utils/nextNavigation'
 
 import { SearchParams } from './navigation'
 import Me from './page'
@@ -21,13 +22,13 @@ vi.mock('@/client/server-api', () => ({
 }))
 
 vi.mock('./_components/UserAuthenticationDetails', () => ({
-  UserAuthenticationDetails: ({ currentUser }: { currentUser: UserInformationDto }) => (
+  UserAuthenticationDetails: ({ currentUser }: { currentUser: CurrentUserInformationDto }) => (
     <div data-testid="user-authentication-details">{currentUser.userId}</div>
   ),
 }))
 
 vi.mock('./_components/UserDetails', () => ({
-  UserDetails: ({ currentUser }: { currentUser: UserInformationDto }) => (
+  UserDetails: ({ currentUser }: { currentUser: CurrentUserInformationDto }) => (
     <div data-testid="user-details">{currentUser.userId}</div>
   ),
 }))
@@ -39,9 +40,15 @@ beforeEach(() => {
   vi.mocked(createServerApiClient).mockResolvedValue(apiClient)
 })
 
-const exampleUser = fakeUserInformationDto()
+const exampleUser = fakeCurrentUserInformationDto()
 
 const renderPage = async (searchParams: SearchParams = {}) => {
+  // The success alerts are shown once, only when the URL carries the banner parameter
+  navigationState.searchParams = new URLSearchParams(
+    Object.entries(searchParams).flatMap(([name, value]) =>
+      typeof value === 'string' ? [[name, value]] : [],
+    ),
+  )
   render(await Me({ searchParams: Promise.resolve(searchParams) }))
 }
 

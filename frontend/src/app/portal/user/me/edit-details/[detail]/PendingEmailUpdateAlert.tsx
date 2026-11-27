@@ -23,7 +23,7 @@ const PendingEmailUpdateAlert = async ({
 }: PendingEmailUpdateAlertProps) => {
   return (
     <Alert type="caution" title="Email update pending">
-      <h2>Email update pending</h2>
+      <h3>Email update pending</h3>
       <p>
         A request has been made to change your work email address to{' '}
         <strong data-testid="target-email">{value}</strong>. This change has not been completed yet.

@@ -29,9 +29,9 @@ public class UserController(IUserService userService) : ControllerBase
     /// <returns>
     /// The current user's information.
     /// </returns>
-    [ProducesResponseType<UserInformationDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<CurrentUserInformationDto>(StatusCodes.Status200OK)]
     [HttpGet("me")]
-    public async Task<ActionResult<UserInformationDto>> GetCurrentUser(
+    public async Task<ActionResult<CurrentUserInformationDto>> GetCurrentUser(
         CancellationToken cancellationToken
     )
     {
@@ -319,12 +319,14 @@ public class UserController(IUserService userService) : ControllerBase
     /// <response code="403">The caller is not authorised to verify the email address for this user.</response>
     /// <response code="404">The user does not exist.</response>
     /// <response code="409">The user has no pending email address, or the pending email address has already been verified.</response>
+    /// <response code="410">The pending email address has expired and can no longer be verified.</response>
     [HttpPost("{userId:int}/email/verify", Name = nameof(VerifyPendingEmailAddress))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status410Gone)]
     public async Task<ActionResult> VerifyPendingEmailAddress(
         [FromRoute] int userId,
         [FromBody] VerifyPendingEmailAddressCommand command,
@@ -376,6 +378,12 @@ public class UserController(IUserService userService) : ControllerBase
                             title: "Email address change could not be completed",
                             detail: "A concurrent change was detected. Please try changing your email address again through the portal.",
                             statusCode: StatusCodes.Status409Conflict
+                        ),
+                    pendingEmailExpired: () =>
+                        Problem(
+                            title: "Pending email expired",
+                            detail: "The pending email address has expired. Please request the email address change again.",
+                            statusCode: StatusCodes.Status410Gone
                         )
                 )
         );

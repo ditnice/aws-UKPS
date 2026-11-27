@@ -81,7 +81,7 @@ const DiscardRecord = async ({ organisationId, recordId, recordType }: DiscardRe
   return (
     <>
       <Alert type="caution">
-        <h2>If you confirm, this record will be discarded</h2>
+        <h3>If you confirm, this record will be discarded</h3>
         <p>
           The record will be discarded and no longer available to submit to QA for review. You
           cannot undo this and this record cannot be recovered in the future.

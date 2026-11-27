@@ -20,20 +20,29 @@ public abstract record UpdateEmailToCompletePendingEmailError
     /// </summary>
     public sealed record ConflictingEmail : UpdateEmailToCompletePendingEmailError;
 
+    /// <summary>
+    /// Represents the error when the pending email update has expired.
+    /// </summary>
+    public sealed record PendingEmailExpired : UpdateEmailToCompletePendingEmailError;
+
     internal TResult Match<TResult>(
         Func<TResult> notFound,
         Func<TResult> conflictingEmail,
-        Func<TResult> notVerified
+        Func<TResult> notVerified,
+        Func<TResult> pendingEmailExpired
     )
     {
         ArgumentNullException.ThrowIfNull(notFound);
         ArgumentNullException.ThrowIfNull(conflictingEmail);
+        ArgumentNullException.ThrowIfNull(notVerified);
+        ArgumentNullException.ThrowIfNull(pendingEmailExpired);
 
         return this switch
         {
             NotFound => notFound(),
             ConflictingEmail => conflictingEmail(),
             NotVerified => notVerified(),
+            PendingEmailExpired => pendingEmailExpired(),
             _ => throw new NotSupportedException(
                 $"Unsupported {nameof(UpdateEmailToCompletePendingEmailError)} subtype: {GetType().Name}."
             ),

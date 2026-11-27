@@ -13,14 +13,6 @@ internal static class ConstraintExceptions
         );
     }
 
-    internal static bool IsUniquePendingEmailException(DbUpdateException updateException)
-    {
-        return UpdateExceptionMatchesConstraint(
-            updateException,
-            ConstraintNames.UserUniqueNormalisedPendingEmail
-        );
-    }
-
     private static bool UpdateExceptionMatchesConstraint(
         DbUpdateException updateException,
         string constraint

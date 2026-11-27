@@ -27,6 +27,9 @@ import type {
 /** Server message for a multi-value answer that repeats a value; mirrors RecordFormMessages.Duplicate. */
 export const duplicateMessage = 'You have selected the same option more than once'
 
+/** Shown on a blank entry of a multi-value hierarchical select once there are several. */
+export const emptyEntryMessage = 'Select a therapeutic area or remove this one'
+
 const emptyEntry: HierarchicalEntry = { parent: '', child: '' }
 
 /**
@@ -43,6 +46,9 @@ export const isTextList = (question: Question) => question.type === FormControl.
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
+
+const isHierarchicalEntry = (value: unknown): value is HierarchicalEntry =>
+  isRecord(value) && typeof value.parent === 'string'
 
 /** A group's items, from its form value. */
 export const groupItems = (value: FormValue | undefined): GroupItemValue[] =>
@@ -237,10 +243,11 @@ export const firstFailure = (rules: Rule[], answer: Answer): string | undefined 
 
 /**
  * An error on a question: its message, the parts of a date it is about when only some are at
- * fault, and the errors of a text list's entries or a group's items. Item errors are keyed by
- * position and child ID joined with dots, as in `1` (a text list entry), `0.study_name` (a group
- * item's question) or `0.other_registry_numbers.1` (an entry of a text list in a group item). The
- * message is empty when only items are at fault.
+ * fault, and the errors of a text list's entries, a group's items or a hierarchical select's
+ * entries. Item errors are keyed by position and child ID joined with dots, as in `1` (a text list
+ * or hierarchical select entry), `0.study_name` (a group item's question) or
+ * `0.other_registry_numbers.1` (an entry of a text list in a group item). The message is empty
+ * when only items are at fault.
  */
 export type QuestionError = { message: string; parts?: DatePart[]; items?: Record<string, string> }
 
@@ -310,6 +317,27 @@ const groupError = (
     : undefined
 }
 
+/**
+ * The errors of a multi-value hierarchical select: each blank entry once there is more than one,
+ * and the question's own errors (a repeated area, too many areas), which ignore blank entries.
+ */
+const hierarchicalError = (question: Question, value: FormValue | undefined) => {
+  // Not filtered, so positions keep lining up with the entries shown; a malformed one is blank.
+  const entries: unknown[] = Array.isArray(value) ? value : []
+  const items: Record<string, string> = {}
+  if (entries.length > 1) {
+    entries.forEach((entry, index) => {
+      if (!isHierarchicalEntry(entry) || !entry.parent) {
+        items[String(index)] = emptyEntryMessage
+      }
+    })
+  }
+  const answer = normaliseAnswer(toAnswer(question, value)) as string[]
+  const message =
+    new Set(answer).size !== answer.length ? duplicateMessage : firstFailure(question.rules, answer)
+  return { message, items }
+}
+
 /** Validates one question's form value; returns the error to show, or undefined. */
 export const questionError = (
   question: Question,
@@ -320,6 +348,10 @@ export const questionError = (
   }
   if (isTextList(question)) {
     const { message, items } = textListError(question, value)
+    return message || Object.keys(items).length > 0 ? { message: message ?? '', items } : undefined
+  }
+  if (isHierarchical(question) && question.multiple) {
+    const { message, items } = hierarchicalError(question, value)
     return message || Object.keys(items).length > 0 ? { message: message ?? '', items } : undefined
   }
   if (

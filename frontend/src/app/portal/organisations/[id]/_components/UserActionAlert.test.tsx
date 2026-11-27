@@ -9,11 +9,13 @@ import {
 } from '@/client/generated/sdk.gen'
 import type { RegisterUserDetailsDto, UserInformationDto } from '@/client/generated/types.gen'
 import { createServerApiClient } from '@/client/server-api'
+import { navigationState } from '@/test-utils/nextNavigation'
 
 import { UserActionAlert } from './UserActionAlert'
 
 import type { UserActionResult } from '../_lib/userActionAlert'
 
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 vi.mock('@/client/generated/sdk.gen', () => ({
   getUserDetailsWithinOrganisation: vi.fn(),
   getUserRegistrationById: vi.fn(),
@@ -27,7 +29,6 @@ const user: UserInformationDto = {
   workEmail: 'julie.brooks@example.com',
   userRole: 'Standard',
   status: 'Active',
-  hasMultipleOrganisations: false,
 }
 
 const registration = {
@@ -51,6 +52,8 @@ async function renderAlert(userAction: UserActionResult) {
 }
 
 beforeEach(() => {
+  // The alert is shown once, only when the URL carries a banner parameter
+  navigationState.searchParams = new URLSearchParams({ action: 'invited' })
   vi.mocked(createServerApiClient).mockResolvedValue(apiClient)
   vi.mocked(getUserDetailsWithinOrganisation).mockResolvedValue({ data: user, error: undefined })
   vi.mocked(getUserRegistrationById).mockResolvedValue({ data: registration, error: undefined })
@@ -113,7 +116,7 @@ describe('UserActionAlert (direct invocation)', () => {
       userRequestId: 4,
     })
 
-    expect(heading).toBe('Approval Email Sent')
+    expect(heading).toBe('Approval email sent')
     expect(message).toBe(
       `We’ve sent an email to ${registration.workEmail} notifying them that their request has been approved and instructions to set up an account.`,
     )
@@ -162,7 +165,7 @@ describe('UserActionAlert (direct invocation)', () => {
     ],
     [
       { type: 'request', action: 'approved-request', userRequestId: 4 },
-      'Approval Email Sent',
+      'Approval email sent',
       'We’ve sent an email to the new user notifying them that their request has been approved and instructions to set up an account.',
     ],
     [

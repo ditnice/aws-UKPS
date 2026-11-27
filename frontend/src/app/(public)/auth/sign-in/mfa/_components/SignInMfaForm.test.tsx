@@ -4,12 +4,11 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 
 import { respondToMultiFactorAuthenticationChallenge } from '@/client/generated'
 import { errorMessages } from '@/lib/form/errorMessages'
-import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
 
 import { SignInMfaForm } from './SignInMfaForm'
 
-const { push: mockPush } = router
+const replace = vi.fn()
 
 vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
@@ -19,6 +18,10 @@ vi.mock('@/client/generated', () => ({
 
 vi.mock('../../../EmailVerificationRequiredAlert', () => ({
   default: () => <div data-testid="email-verification-required-alert" />,
+}))
+
+vi.mock('../../../PendingEmailExpiredAlert', () => ({
+  default: () => <div data-testid="pending-email-expired-alert" />,
 }))
 
 const exampleUserEmail = 'user@email.com'
@@ -43,6 +46,7 @@ const updateForm = async (formValues: FormValues) => {
 let user: ReturnType<typeof userEvent.setup>
 
 beforeEach(() => {
+  vi.stubGlobal('location', { ...globalThis.location, replace })
   vi.mocked(respondToMultiFactorAuthenticationChallenge).mockResolvedValue({
     error: undefined,
     data: undefined,
@@ -73,7 +77,7 @@ describe('SignInMfaForm', () => {
         },
         credentials: 'include',
       })
-      expect(mockPush).toHaveBeenCalledWith('/portal/organisations/select')
+      expect(replace).toHaveBeenCalledWith('/portal/organisations/select')
     })
   })
   it('redirects to the organisation selection page with the returnTo path on successful authentication', async () => {
@@ -87,7 +91,7 @@ describe('SignInMfaForm', () => {
     await updateForm(validFormValues)
     await submitForm()
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith(
+      expect(replace).toHaveBeenCalledWith(
         '/portal/organisations/select?returnTo=%2Fportal%2Forganisations%2F1%3Ftab%3Dusers',
       )
     })
@@ -170,7 +174,7 @@ describe('SignInMfaForm', () => {
     await submitForm()
 
     expect(await screen.findByTestId('email-verification-required-alert')).toBeInTheDocument()
-    expect(mockPush).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
   })
 
   it('does not show the raw error code or a security code error when email verification is required', async () => {
@@ -187,13 +191,29 @@ describe('SignInMfaForm', () => {
     expect(screen.queryByText(errorMessages.incorrectMfaCode)).toBeNull()
   })
 
+  it('shows the pending email expired alert when the response error is PendingEmailExpired', async () => {
+    vi.mocked(respondToMultiFactorAuthenticationChallenge).mockResolvedValue({
+      error: { code: 'PendingEmailExpired' },
+      data: undefined,
+    })
+    renderValidForm()
+    await updateForm(validFormValues)
+    await submitForm()
+
+    expect(await screen.findByTestId('pending-email-expired-alert')).toBeInTheDocument()
+    expect(screen.queryByTestId('email-verification-required-alert')).toBeNull()
+    expect(screen.queryByText('PendingEmailExpired')).toBeNull()
+    expect(screen.queryByText(errorMessages.incorrectMfaCode)).toBeNull()
+    expect(replace).not.toHaveBeenCalled()
+  })
+
   it('does not show the email verification alert on a successful authentication', async () => {
     renderValidForm()
     await updateForm(validFormValues)
     await submitForm()
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalled()
+      expect(replace).toHaveBeenCalled()
     })
     expect(screen.queryByTestId('email-verification-required-alert')).toBeNull()
   })

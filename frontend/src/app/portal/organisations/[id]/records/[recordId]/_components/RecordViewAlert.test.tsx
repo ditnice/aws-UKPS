@@ -1,9 +1,18 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { navigationState } from '@/test-utils/nextNavigation'
 
 import { parseRecordViewAlert, RecordViewAlert } from './RecordViewAlert'
 
+vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
+
 describe('RecordViewAlert', () => {
+  beforeEach(() => {
+    // The alert is shown once, only when the URL carries a banner parameter
+    navigationState.searchParams = new URLSearchParams({ action: 'archived' })
+  })
+
   it.each([
     [
       'archived',
@@ -19,7 +28,7 @@ describe('RecordViewAlert', () => {
   ] as const)('confirms the record was %s', (action, heading, body) => {
     render(<RecordViewAlert action={action} />)
 
-    expect(screen.getByRole('heading', { level: 2, name: heading })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 3, name: heading })).toBeInTheDocument()
     expect(screen.getByText(new RegExp(body))).toBeInTheDocument()
   })
 })

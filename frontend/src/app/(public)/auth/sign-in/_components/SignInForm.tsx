@@ -6,17 +6,18 @@ import { useRouter } from 'next/navigation'
 import { type ChangeEvent } from 'react'
 import { z } from 'zod'
 
-import { postAuthLogin } from '@/client/generated'
+import { login } from '@/client/generated'
 import { Button } from '@/components/Button/Button'
 import { Details } from '@/components/Details/Details'
 import { Input } from '@/components/Input/Input'
 import { PasswordInput } from '@/components/PasswordInput/PasswordInput'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
-import { buildSelectOrganisationHref } from '@/lib/auth/routing'
+import { navigateOnSuccessfulAuth } from '@/lib/auth/routing'
 import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage, getFormErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import EmailVerificationRequiredAlert from '../../EmailVerificationRequiredAlert'
+import PendingEmailExpiredAlert from '../../PendingEmailExpiredAlert'
 import { createResetPasswordHref } from '../../reset-password/navigation'
 
 const signInSchema = z.object({
@@ -50,7 +51,7 @@ export function SignInForm({ returnTo }: SignInFormProps) {
     onSubmit: async ({ value, formApi }) => {
       signInSchema.parse(value)
 
-      const result = await postAuthLogin({
+      const result = await login({
         body: {
           username: value.email,
           password: value.password,
@@ -59,14 +60,17 @@ export function SignInForm({ returnTo }: SignInFormProps) {
       })
 
       if (!result.error) {
-        router.push(buildSelectOrganisationHref(returnTo))
+        navigateOnSuccessfulAuth(returnTo)
         return
       }
 
-      if (result.error?.code === 'PendingEmailRequiredVerification') {
+      if (
+        result.error?.code === 'PendingEmailRequiredVerification' ||
+        result.error?.code === 'PendingEmailExpired'
+      ) {
         formApi.setErrorMap({
           onSubmit: {
-            form: 'PendingEmailRequiredVerification',
+            form: result.error.code,
             fields: {},
           },
         })
@@ -106,6 +110,7 @@ export function SignInForm({ returnTo }: SignInFormProps) {
   return (
     <>
       <form
+        method="post"
         noValidate
         onSubmit={(event) => {
           event.preventDefault()
@@ -128,6 +133,7 @@ export function SignInForm({ returnTo }: SignInFormProps) {
             if (!formError) return null
             if (formError === 'PendingEmailRequiredVerification')
               return <EmailVerificationRequiredAlert />
+            if (formError === 'PendingEmailExpired') return <PendingEmailExpiredAlert />
             return <ErrorState>{formError}</ErrorState>
           }}
         </form.Subscribe>

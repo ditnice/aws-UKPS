@@ -2,10 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { postAuthVerifyMfa } from '@/client/generated/sdk.gen'
-import { routeOnSuccessfulAuth } from '@/lib/auth/routing'
+import { verifyMultiFactorAuthentication } from '@/client/generated/sdk.gen'
 import { errorMessages } from '@/lib/form/errorMessages'
-import { router } from '@/test-utils/nextNavigation'
 import { fillInput } from '@/test-utils/userInteractions'
 
 import { signUpMfaSetupStorageKey } from '../_lib/mfaSetupStorage'
@@ -13,7 +11,7 @@ import { SignUpPasswordProvider } from '../_lib/SignUpPasswordContext'
 
 import SignUpSetMfa from './page'
 
-const { push: mockPush } = router
+const replace = vi.fn()
 
 const setup = {
   authenticationSession: 'test-authentication-session',
@@ -25,12 +23,13 @@ const setup = {
 vi.mock('next/navigation', () => import('@/test-utils/nextNavigation'))
 
 vi.mock('@/client/generated/sdk.gen', () => ({
-  postAuthVerifyMfa: vi.fn(),
+  verifyMultiFactorAuthentication: vi.fn(),
 }))
 
 beforeEach(() => {
+  vi.stubGlobal('location', { ...globalThis.location, replace })
   sessionStorage.setItem(signUpMfaSetupStorageKey, JSON.stringify(setup))
-  vi.mocked(postAuthVerifyMfa).mockResolvedValue({
+  vi.mocked(verifyMultiFactorAuthentication).mockResolvedValue({
     data: undefined,
     error: undefined,
   })
@@ -169,7 +168,7 @@ describe('SignUpSetMfa', () => {
     await submitForm()
 
     await waitFor(() => {
-      expect(postAuthVerifyMfa).toHaveBeenCalledWith({
+      expect(verifyMultiFactorAuthentication).toHaveBeenCalledWith({
         body: {
           authenticationSession: setup.authenticationSession,
           code: '123246',
@@ -196,7 +195,7 @@ describe('SignUpSetMfa', () => {
     })
   })
 
-  it('clears setup details and redirects to the portal after successful verification', async () => {
+  it('clears setup details and redirects through organisation selection to the setup complete banner after successful verification', async () => {
     renderPage()
 
     await enterSecurityCode('123456')
@@ -204,12 +203,14 @@ describe('SignUpSetMfa', () => {
 
     await waitFor(() => {
       expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()
-      expect(mockPush).toHaveBeenCalledWith(routeOnSuccessfulAuth)
+      expect(replace).toHaveBeenCalledWith(
+        `/portal/organisations/select?returnTo=${encodeURIComponent('/portal?action=mfa-setup-complete')}`,
+      )
     })
   })
 
   it('shows an invalid code error for a 400 response', async () => {
-    vi.mocked(postAuthVerifyMfa).mockResolvedValue({
+    vi.mocked(verifyMultiFactorAuthentication).mockResolvedValue({
       data: undefined,
       error: { status: 400 },
       response: new Response(null, { status: 400 }),
@@ -220,11 +221,11 @@ describe('SignUpSetMfa', () => {
     await submitForm()
 
     expect(await screen.findByText(errorMessages.incorrectMfaCode)).toBeInTheDocument()
-    expect(mockPush).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
   })
 
   it('shows the backend detail for a 500 response without clearing setup details', async () => {
-    vi.mocked(postAuthVerifyMfa).mockResolvedValue({
+    vi.mocked(verifyMultiFactorAuthentication).mockResolvedValue({
       data: undefined,
       error: { status: 500, detail: 'The service is temporarily unavailable.' },
       response: new Response(null, { status: 500 }),
@@ -234,12 +235,12 @@ describe('SignUpSetMfa', () => {
     await submitForm()
 
     expect(await screen.findByText('The service is temporarily unavailable.')).toBeInTheDocument()
-    expect(mockPush).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBe(JSON.stringify(setup))
   })
 
   it('shows the generic error for a 500 response without detail', async () => {
-    vi.mocked(postAuthVerifyMfa).mockResolvedValue({
+    vi.mocked(verifyMultiFactorAuthentication).mockResolvedValue({
       data: undefined,
       error: { status: 500 },
       response: new Response(null, { status: 500 }),
@@ -251,12 +252,12 @@ describe('SignUpSetMfa', () => {
     expect(
       await screen.findByText('We could not verify your authentication code. Try again later.'),
     ).toBeInTheDocument()
-    expect(mockPush).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBe(JSON.stringify(setup))
   })
 
   it('shows the generic error when the API error has no response', async () => {
-    vi.mocked(postAuthVerifyMfa).mockResolvedValue({
+    vi.mocked(verifyMultiFactorAuthentication).mockResolvedValue({
       data: undefined,
       error: { status: 500 },
     })
@@ -267,12 +268,12 @@ describe('SignUpSetMfa', () => {
     expect(
       await screen.findByText('We could not verify your authentication code. Try again later.'),
     ).toBeInTheDocument()
-    expect(mockPush).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBe(JSON.stringify(setup))
   })
 
   it('shows a generic error if verification fails unexpectedly', async () => {
-    vi.mocked(postAuthVerifyMfa).mockRejectedValue(new Error('Network error'))
+    vi.mocked(verifyMultiFactorAuthentication).mockRejectedValue(new Error('Network error'))
     renderPage()
 
     await enterSecurityCode('123456')
@@ -281,6 +282,6 @@ describe('SignUpSetMfa', () => {
     expect(
       await screen.findByText('We could not verify your authentication code. Try again later.'),
     ).toBeInTheDocument()
-    expect(mockPush).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
   })
 })

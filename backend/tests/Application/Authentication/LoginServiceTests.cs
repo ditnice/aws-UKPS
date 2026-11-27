@@ -166,11 +166,7 @@ public class LoginServiceTests : DatabaseTestBase
         var newEmail = "pending@email.com";
         var context = _harness.GetClearedContext();
         var user = await context.Users.FindAsync([_user.Id], Ct);
-        user!.UpdateEmail(
-            newEmail,
-            "verification-code",
-            new DateTime(2022, 2, 11, 12, 12, 0, DateTimeKind.Utc)
-        );
+        user!.UpdateEmail(newEmail, "verification-code", DateTime.UtcNow);
         await context.SaveChangesAsync(Ct);
 
         InitiateAuthenticationError.Challenge challenge = await AttemptLoginAndGetChallenge(
@@ -189,6 +185,41 @@ public class LoginServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
         result.ShouldBeError().ShouldBeOfType<InitiateAuthenticationError.VerificationRequired>();
+    }
+
+    [Fact]
+    public async Task RespondToMultiFactorAuthenticationChallenge_WhenSuccessfulLoginAndPendingEmailHasTimedOut_ShouldReturnPendingEmailExpiredError()
+    {
+        _userServiceMock
+            .UpdateEmailToCompletePendingEmailChange(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Result<UpdateEmailToCompletePendingEmailError>.Err(
+                    new UpdateEmailToCompletePendingEmailError.PendingEmailExpired()
+                )
+            );
+
+        var newEmail = "pending@email.com";
+        var context = _harness.GetClearedContext();
+        var user = await context.Users.FindAsync([_user.Id], Ct);
+        user!.UpdateEmail(newEmail, "verification-code", DateTime.UtcNow);
+        await context.SaveChangesAsync(Ct);
+
+        InitiateAuthenticationError.Challenge challenge = await AttemptLoginAndGetChallenge(
+            _defaultLoginRequest with
+            {
+                Username = newEmail,
+            }
+        );
+
+        LoginResult result = await _harness.Service.RespondToMultiFactorAuthenticationChallenge(
+            _defaultResponseToMfaCommand with
+            {
+                Username = newEmail,
+                AuthenticationSession = challenge.AuthenticationSession,
+            },
+            TestContext.Current.CancellationToken
+        );
+        result.ShouldBeError().ShouldBeOfType<InitiateAuthenticationError.PendingEmailExpired>();
     }
 
     [Fact]

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import type { RecordOverviewDto } from '@/client/generated'
+import { RecordDisplayStatus, type RecordOverviewDto } from '@/client/generated'
 import { ActionBanner } from '@/components/ActionBanner/ActionBanner'
 import { Button, ButtonGroup } from '@/components/Button/Button'
 
@@ -92,10 +92,13 @@ export const ManageRecordActionBanner = ({
     'change-record-status',
   )
 
-  if (record.displayStatus === 'Archived' || record.displayStatus == 'QAReview') {
+  if (
+    record.displayStatus === RecordDisplayStatus.ARCHIVED ||
+    record.displayStatus === RecordDisplayStatus.QA_REVIEW
+  ) {
     return <TimelineActionBanner record={record} />
   }
-  if (record.displayStatus === 'OnHold') {
+  if (record.displayStatus === RecordDisplayStatus.ON_HOLD) {
     if (!actions.includes('ChangeStatus') && !actions.includes('ConfirmOnHold')) {
       return <TimelineActionBanner record={record} />
     }
