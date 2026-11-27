@@ -1,6 +1,6 @@
 export const errorMessages = {
   // Authentication
-  incorrectMfaCode: 'The code is incorrect. Try again.',
+  incorrectMfaCode: 'The code is incorrect',
 
   // Required
   organisationNameRequired: 'Enter the organisation name',
