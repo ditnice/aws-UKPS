@@ -9,7 +9,7 @@ export const getUser = async (organisationId: number, userId: number) => {
   }
 
   if (me.userId == userId) {
-    return { user: me }
+    return { user: me, viewingCurrentUser: true }
   }
 
   const { data: user, error } = await getUserDetailsWithinOrganisationAdminView({
@@ -17,5 +17,5 @@ export const getUser = async (organisationId: number, userId: number) => {
     client,
   })
 
-  return { user, error }
+  return { user, error, viewingCurrentUser: false }
 }

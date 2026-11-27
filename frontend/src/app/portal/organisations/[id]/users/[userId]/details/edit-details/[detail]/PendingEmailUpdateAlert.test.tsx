@@ -34,7 +34,7 @@ async function renderAlert(props: Partial<Props>) {
     organisationId: 7,
     returnLink: '/portal/organisations/7/users/123/details',
     onSuccessFlag: 'updated',
-    owner: 'me',
+    viewingCurrentUser: true,
     verificationLinkResent: undefined,
     error: undefined,
   }
@@ -125,9 +125,9 @@ describe('PendingEmailUpdateAlert', () => {
     })
   })
 
-  describe('when viewing another user (owner is "not-me")', () => {
+  describe('when viewing another user', () => {
     it("refers to the user's email address rather than your own", async () => {
-      await renderAlert({ owner: 'not-me', verifiedByEmail: false })
+      await renderAlert({ viewingCurrentUser: false, verifiedByEmail: false })
 
       expect(screen.getByText(/change this user.s work email address to/i)).toBeInTheDocument()
       expect(screen.queryByText(/change your work email address/i)).not.toBeInTheDocument()
@@ -136,7 +136,7 @@ describe('PendingEmailUpdateAlert', () => {
     })
 
     it('explains the user needs to log in when the address is verified', async () => {
-      await renderAlert({ owner: 'not-me', verifiedByEmail: true })
+      await renderAlert({ viewingCurrentUser: false, verifiedByEmail: true })
 
       expect(
         screen.getByText(/the change will be completed the next time the user logs in/i),
@@ -146,7 +146,7 @@ describe('PendingEmailUpdateAlert', () => {
     })
 
     it('renders both buttons when the address is not verified', async () => {
-      await renderAlert({ owner: 'not-me', verifiedByEmail: false })
+      await renderAlert({ viewingCurrentUser: false, verifiedByEmail: false })
 
       expect(screen.getByTestId('resend-verification-email-button')).toBeInTheDocument()
       expect(screen.getByTestId('cancel-verification-email-button')).toBeInTheDocument()

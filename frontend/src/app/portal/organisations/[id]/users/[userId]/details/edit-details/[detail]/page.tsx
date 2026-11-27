@@ -50,7 +50,7 @@ const Page = async (props: PageProps) => {
 
   const onSuccessRedirect = setUrlFlag(params.returnLink, params.onSuccessFlag)
 
-  const { user, error } = await getUser(organisationId, userId)
+  const { user, error, viewingCurrentUser } = await getUser(organisationId, userId)
   const label = userDetailLabels[detail]
 
   if (!user || error) {
@@ -65,7 +65,11 @@ const Page = async (props: PageProps) => {
     if (params.detail === 'email' && user.pendingWorkEmail) {
       return (
         <>
-          <PendingEmailUpdateAlert {...params} {...user.pendingWorkEmail} />
+          <PendingEmailUpdateAlert
+            {...params}
+            {...user.pendingWorkEmail}
+            viewingCurrentUser={viewingCurrentUser}
+          />
         </>
       )
     }

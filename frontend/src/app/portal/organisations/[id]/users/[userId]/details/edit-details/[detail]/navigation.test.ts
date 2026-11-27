@@ -179,24 +179,6 @@ describe('findTypedPageProps', () => {
     })
   })
 
-  describe('searchParams.owner', () => {
-    it.each(['me', 'not-me'] as const)('returns "%s" when provided', async (owner) => {
-      const result = await findTypedPageProps(buildProps('email', { owner }))
-
-      expect(result.owner).toBe(owner)
-    })
-
-    it.each([
-      ['missing', undefined],
-      ['an unknown value', 'someone-else'],
-      ['a different casing', 'ME'],
-    ])('defaults to "not-me" when it is %s', async (_label, owner) => {
-      const result = await findTypedPageProps(buildProps('email', { owner }))
-
-      expect(result.owner).toBe('not-me')
-    })
-  })
-
   describe('full result shape', () => {
     it('returns the ids, detail, navigation and flags', async () => {
       const result = await findTypedPageProps(
@@ -204,7 +186,6 @@ describe('findTypedPageProps', () => {
           verificationLinkResent: 'true',
           returnLink: RETURN_LINK,
           onSuccessFlag: 'requestedNewEmail',
-          owner: 'me',
         }),
       )
 
@@ -214,7 +195,6 @@ describe('findTypedPageProps', () => {
         detail: 'email',
         returnLink: RETURN_LINK,
         onSuccessFlag: 'requestedNewEmail',
-        owner: 'me',
         verificationLinkResent: true,
         error: undefined,
       })
@@ -261,9 +241,8 @@ describe('buildUpdateUserDetailsHref', () => {
     userId: USER_ID,
     returnLink: RETURN_LINK,
     onSuccessFlag: 'updated',
-    owner: 'not-me' as const,
   }
-  const encodedNavigation = `returnLink=${encodeURIComponent(RETURN_LINK)}&onSuccessFlag=updated&owner=not-me`
+  const encodedNavigation = `returnLink=${encodeURIComponent(RETURN_LINK)}&onSuccessFlag=updated`
   const basePath = `/portal/organisations/${ORGANISATION_ID}/users/${USER_ID}/details/edit-details`
 
   it.each(['fullName', 'contactNumber', 'email'] as UserDetail[])(
@@ -277,14 +256,8 @@ describe('buildUpdateUserDetailsHref', () => {
 
   it('omits onSuccessFlag when it is empty', () => {
     expect(buildUpdateUserDetailsHref({ ...base, detail: 'fullName', onSuccessFlag: '' })).toBe(
-      `${basePath}/fullName?returnLink=${encodeURIComponent(RETURN_LINK)}&owner=not-me`,
+      `${basePath}/fullName?returnLink=${encodeURIComponent(RETURN_LINK)}`,
     )
-  })
-
-  it('includes the owner', () => {
-    const href = buildUpdateUserDetailsHref({ ...base, detail: 'fullName', owner: 'me' })
-
-    expect(new URLSearchParams(href.split('?')[1]).get('owner')).toBe('me')
   })
 
   describe('when detail is "email"', () => {

@@ -95,11 +95,10 @@ const setDetail = (detail: string | undefined) => {
     detail,
     returnLink,
     onSuccessFlag,
-    owner: 'not-me',
   } as unknown as Awaited<ReturnType<typeof findTypedPageProps>>)
 }
 
-const mockGetUser = (result: { user?: unknown; error?: unknown }) => {
+const mockGetUser = (result: { user?: unknown; error?: unknown; viewingCurrentUser?: boolean }) => {
   vi.mocked(getUser).mockResolvedValue(result as Awaited<ReturnType<typeof getUser>>)
 }
 
@@ -250,26 +249,30 @@ describe('Edit user detail page', () => {
   })
 
   describe('pending email update', () => {
-    it('renders pending email update alert when pending email', async () => {
-      setDetail('email')
+    it.each([true, false])(
+      'renders pending email update alert when pending email (viewingCurrentUser: %s)',
+      async (viewingCurrentUser) => {
+        setDetail('email')
 
-      const pendingWorkEmail = { ...fakePendingWorkEmailChangeDto(), verifiedByEmail: false }
-      mockGetUser({
-        user: { ...fakeUserInformationDto(), pendingWorkEmail, userId: 123 },
-      })
+        const pendingWorkEmail = { ...fakePendingWorkEmailChangeDto(), verifiedByEmail: false }
+        mockGetUser({
+          user: { ...fakeUserInformationDto(), pendingWorkEmail, userId: 123 },
+          viewingCurrentUser,
+        })
 
-      await renderPage()
+        await renderPage()
 
-      expect(PendingEmailUpdateAlertMock).toHaveBeenCalledTimes(1)
-      expect(PendingEmailUpdateAlertMock.mock.calls[0][0]).toEqual({
-        ...pendingWorkEmail,
-        organisationId: 7,
-        userId: 42,
-        detail: 'email',
-        returnLink,
-        onSuccessFlag,
-        owner: 'not-me',
-      })
-    })
+        expect(PendingEmailUpdateAlertMock).toHaveBeenCalledTimes(1)
+        expect(PendingEmailUpdateAlertMock.mock.calls[0][0]).toEqual({
+          ...pendingWorkEmail,
+          organisationId: 7,
+          userId: 42,
+          detail: 'email',
+          returnLink,
+          onSuccessFlag,
+          viewingCurrentUser,
+        })
+      },
+    )
   })
 })

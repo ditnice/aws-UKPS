@@ -11,11 +11,13 @@ import ResendVerificationEmailButton from './ResendVerificationEmail/ResendVerif
 
 type EmailPageProps = Extract<TypedPageProps, { detail: 'email' }>
 
-export type PendingEmailUpdateAlertProps = PendingWorkEmailChangeDto & EmailPageProps
+export type PendingEmailUpdateAlertProps = PendingWorkEmailChangeDto &
+  EmailPageProps & { viewingCurrentUser: boolean }
 
 const PendingEmailUpdateAlert = async ({
   value,
   verifiedByEmail,
+  viewingCurrentUser,
   ...props
 }: PendingEmailUpdateAlertProps) => {
   const { userId } = props
@@ -61,7 +63,7 @@ const PendingEmailUpdateAlert = async ({
     </>
   )
 
-  if (props.owner === 'me') {
+  if (viewingCurrentUser) {
     return (
       <Alert type="caution" title="Email update pending">
         <h3>Email update pending</h3>

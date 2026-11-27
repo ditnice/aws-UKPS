@@ -1,5 +1,7 @@
 import { notFound } from 'next/navigation'
 
+import { parsePositiveInteger } from '@/lib/valueParsing'
+
 export const updatedFlag = Object.keys({ updated: 'true' } satisfies SearchParams)[0]
 export const requestedNewEmailFlag = Object.keys({
   requestedNewEmail: 'true',
@@ -23,23 +25,13 @@ const convertStringToFlag = (input: string | undefined): true | undefined => {
   return typeof input === 'string' && input?.toLocaleLowerCase() === `${true}` ? true : undefined
 }
 
-const parseId = (value: string | undefined): number => {
-  if (value === undefined || value.trim() === '') notFound()
-
-  const parsed = Number(value)
-
-  if (!Number.isInteger(parsed) || parsed < 0) notFound()
-
-  return parsed
-}
-
 export const parseTypedParams = async (pageParams: PageParams): Promise<TypedParams> => {
   const { id, userId } = await pageParams.params
   const { updated, requestedNewEmail } = await pageParams.searchParams
 
   return {
-    organisationId: parseId(id),
-    userId: parseId(userId),
+    organisationId: parsePositiveInteger(id) ?? notFound(),
+    userId: parsePositiveInteger(userId) ?? notFound(),
     updated: convertStringToFlag(updated),
     requestedNewEmail: convertStringToFlag(requestedNewEmail),
   }

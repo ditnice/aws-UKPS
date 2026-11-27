@@ -3,7 +3,6 @@ import { ReactNode } from 'react'
 
 import {
   buildUpdateUserDetailsHref,
-  Owner,
   UserDetail,
 } from '@/app/portal/organisations/[id]/users/[userId]/details/edit-details/[detail]/navigation'
 import { UserInformationDto } from '@/client/generated'
@@ -13,14 +12,13 @@ import { Tag } from '@/components/Tag/Tag'
 import styles from './UserDetails.module.scss'
 
 type UserDetailsProps = {
-  owner: Owner
   user: UserInformationDto
   navigation: {
     returnLink: string
     onSuccessFlag: Record<UserDetail, string>
   }
 }
-export const UserDetails = ({ owner, user, navigation }: UserDetailsProps) => {
+export const UserDetails = ({ user, navigation }: UserDetailsProps) => {
   const workEmailValue = (
     <div className={styles.workEmailValue}>
       <div>{user.workEmail}</div>
@@ -53,7 +51,6 @@ export const UserDetails = ({ owner, user, navigation }: UserDetailsProps) => {
                     detail: d.changeLinkDetailValue,
                     returnLink: navigation.returnLink,
                     onSuccessFlag: navigation.onSuccessFlag[d.changeLinkDetailValue],
-                    owner,
                   })}
                 >
                   Change
