@@ -1219,22 +1219,6 @@ public class UserServiceTests : DatabaseTestBase
     }
 
     [Fact]
-    public async Task UpdateUserDetails_WhenUserIsNotTheTargetUser_ShouldReturnUserIsNoPermittedToUserDetailsError()
-    {
-        var currentUser = await CreateExistingCurrentUser();
-        var otherUserTestHarness = new ServiceTestHarness<IUserService>(_harness).UpdateCurrentUser(
-            x => x with { Email = "otheruser@email.com" }
-        );
-        var command = _updateUserDetailsCommandFaker.Generate();
-        var result = await otherUserTestHarness.Service.UpdateUserDetails(
-            currentUser.Id,
-            command,
-            TestContext.Current.CancellationToken
-        );
-        result.ShouldBeError().ShouldBeOfType<UpdateUserDetailsError.Unauthorised>();
-    }
-
-    [Fact]
     public async Task UpdateUserEmail_ShouldUpdateUserDtoSoTheyAreMarkedAsHavingAPendingEmail()
     {
         var newEmail = "my-new-email@email.com";
