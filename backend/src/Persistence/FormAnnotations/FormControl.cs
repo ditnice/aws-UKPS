@@ -115,7 +115,8 @@ public enum FormControl
     /// A list of text inputs with an add another button, shown inline. For a collection
     /// navigation to a child entity with exactly one string column (the value) and optionally an
     /// <c>int? DisplayOrder</c>. The answer is an ordered array of trimmed strings; blank entries
-    /// are dropped. May have <see cref="FormMaxItemsAttribute"/> and
+    /// are dropped. May have <see cref="FormMaxLengthAttribute"/>, which limits each entry,
+    /// <see cref="FormMaxItemsAttribute"/> and
     /// <see cref="FormDistinctAttribute"/>, and may set <see cref="FormFieldAttribute.ItemLabel"/>
     /// to label each entry and <see cref="FormFieldAttribute.Width"/> to widen the entries.
     /// </summary>

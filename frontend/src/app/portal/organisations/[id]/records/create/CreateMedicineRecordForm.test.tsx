@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { CreateRecordCommand } from '@/client/generated'
-import { errorMessages } from '@/lib/form/errorMessages'
+import { errorMessages, maxRecordTextLength } from '@/lib/form/errorMessages'
 
 import CreateMedicineRecordForm from './CreateMedicineRecordForm'
 
@@ -154,6 +154,19 @@ describe('CreateMedicineRecordForm', () => {
 
       expect(mocks.createRecord).not.toHaveBeenCalled()
     })
+
+    it('rejects a company code that is too long', async () => {
+      renderComponent()
+      fillInForm({ ...validFormValues, companyCode: 'a'.repeat(maxRecordTextLength + 1) })
+
+      clickSubmitButton()
+
+      await waitFor(() => {
+        expect(screen.getByText(errorMessages.companyCodeTooLong)).toBeDefined()
+      })
+
+      expect(mocks.createRecord).not.toHaveBeenCalled()
+    })
   })
 
   describe('generic names', () => {
@@ -215,6 +228,21 @@ describe('CreateMedicineRecordForm', () => {
 
       await waitFor(() => {
         expect(screen.getByText(errorMessages.genericNamesDistinct)).toBeDefined()
+      })
+
+      expect(mocks.createRecord).not.toHaveBeenCalled()
+    })
+    it('rejects a generic name that is too long', async () => {
+      renderComponent()
+      fillInForm({
+        ...validFormValues,
+        genericNames: ['gn1', 'a'.repeat(maxRecordTextLength + 1)],
+      })
+
+      clickSubmitButton()
+
+      await waitFor(() => {
+        expect(screen.getByText(errorMessages.genericNameTooLong)).toBeDefined()
       })
 
       expect(mocks.createRecord).not.toHaveBeenCalled()

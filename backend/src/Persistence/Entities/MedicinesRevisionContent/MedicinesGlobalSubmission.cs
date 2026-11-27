@@ -31,7 +31,6 @@ internal sealed class MedicinesGlobalSubmission
         Hint = "Specify the geographic region or regulatory authority where the global first submission occurred."
     )]
     [FormRequired("Enter a location")]
-    [FormMaxLength(200, "Global first submission must be 200 characters or fewer")]
     public string? GlobalFirstSubmissionRegion { get; set; }
 
     /// <summary>Conditional on an actual UK submission date being entered.</summary>

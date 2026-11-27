@@ -6359,10 +6359,12 @@
             "format": "int32"
           },
           "companyCode": {
+            "maxLength": 2000,
             "type": "string",
             "description": "Gets the company's internal code or working name for the product, e.g. ABC-123."
           },
           "brandedName": {
+            "maxLength": 2000,
             "type": [
               "null",
               "string"
@@ -6373,6 +6375,7 @@
             "minItems": 1,
             "type": "array",
             "items": {
+              "maxLength": 2000,
               "type": "string"
             },
             "description": "Gets the generic names associated with the record."
@@ -6380,6 +6383,7 @@
           "otherIdentifiers": {
             "type": "array",
             "items": {
+              "maxLength": 2000,
               "type": "string"
             },
             "description": "Gets the other names, codes, or synonyms associated with the record."

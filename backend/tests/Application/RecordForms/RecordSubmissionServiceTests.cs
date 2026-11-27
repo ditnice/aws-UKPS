@@ -358,7 +358,7 @@ public class RecordSubmissionServiceTests : DatabaseTestBase
     [Fact]
     public async Task Submit_TextOverItsMaximumLength_IsReported()
     {
-        await UpdateRow<MedicinesIndicationDetail>(x => x.Indication = new string('a', 5000));
+        await UpdateRow<MedicinesIndicationDetail>(x => x.Indication = new string('a', 20001));
 
         IReadOnlyList<SubmissionErrorDto> errors = await SubmitInvalid();
 

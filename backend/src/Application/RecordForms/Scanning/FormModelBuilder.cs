@@ -2,6 +2,7 @@ using UKPS.Api.Application.RecordForms.Bindings;
 using UKPS.Api.Application.RecordForms.Conditions;
 using UKPS.Api.Application.RecordForms.Model;
 using UKPS.Api.Application.RecordForms.Options;
+using UKPS.Api.Application.RecordForms.Rules;
 using UKPS.Api.Persistence.Enums;
 using UKPS.Api.Persistence.FormAnnotations;
 
@@ -69,13 +70,8 @@ internal static class FormModelBuilder
             _ => [],
         };
 
-    private static FormQuestion BuildQuestion(
-        QuestionDeclaration question,
-        FormEntity entity,
-        OptionProviderRegistry options
-    )
+    private static List<FormRule> BuildRules(QuestionDeclaration question)
     {
-        FormFieldAttribute field = question.Field;
         List<FormRule> rules = [];
         if (question.Required is { } required)
         {
@@ -85,6 +81,16 @@ internal static class FormModelBuilder
         if (question.MaxLength is { } maxLength)
         {
             rules.Add(new FormRule(RuleKind.MaxLength, maxLength.Max, maxLength.Message));
+        }
+        else if (ControlRules.DefaultMaxLength(question.Control) is { } defaultMax)
+        {
+            rules.Add(
+                new FormRule(
+                    RuleKind.MaxLength,
+                    defaultMax,
+                    RecordFormMessages.TooLong(question.Control, defaultMax)
+                )
+            );
         }
 
         if (question.MaxItems is { } maxItems)
@@ -97,6 +103,16 @@ internal static class FormModelBuilder
             rules.Add(new FormRule(RuleKind.Distinct, null, distinct.Message));
         }
 
+        return rules;
+    }
+
+    private static FormQuestion BuildQuestion(
+        QuestionDeclaration question,
+        FormEntity entity,
+        OptionProviderRegistry options
+    )
+    {
+        FormFieldAttribute field = question.Field;
         FormQuestion[] children = question
             .Children.Select(c => BuildQuestion(c, entity, options))
             .OrderBy(static c => c.Order)
@@ -124,7 +140,7 @@ internal static class FormModelBuilder
             PrefixDigits = question.Prefixes is { Digits: > 0 } prefixes ? prefixes.Digits : null,
             NumberName = question.Prefixes?.Name,
             DateName = question.DateEvent?.Name,
-            Rules = [.. rules.OrderBy(static r => r.Kind)],
+            Rules = [.. BuildRules(question).OrderBy(static r => r.Kind)],
             ShowWhen = question.ShowWhen is { } showWhen
                 ? Condition(showWhen.QuestionId, showWhen.Values)
                 : null,

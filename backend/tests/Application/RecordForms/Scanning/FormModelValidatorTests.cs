@@ -66,7 +66,7 @@ public class FormModelValidatorTests
         "BrokenEntity.WrongEnum needs a Enum provider of YesNoUnknown, but 'paediatric-status' is a Enum provider of IndicationPaediatricStatus."
     )]
     [InlineData(
-        "BrokenEntity.WrongEnum has [FormMaxLength], which needs a Text or Textarea control and a positive maximum."
+        "BrokenEntity.WrongEnum has [FormMaxLength], which needs a Text, Textarea or TextList control and a positive maximum."
     )]
     [InlineData("BrokenEntity.UnknownKey uses unknown option provider 'no-such-provider'.")]
     [InlineData(
@@ -127,7 +127,14 @@ public class FormModelValidatorTests
             .Children[1]
             .Rules.Select(static r => r.Kind)
             .ShouldBe([RuleKind.Required, RuleKind.Distinct]);
-        group.Children[2].Rules.Single().Kind.ShouldBe(RuleKind.Distinct);
+        group
+            .Children[2]
+            .Rules.Select(static r => (r.Kind, r.Value))
+            .ShouldBe([(RuleKind.MaxLength, 2000), (RuleKind.Distinct, null)]);
+        group
+            .Children[0]
+            .Rules.Single(static r => r.Kind == RuleKind.MaxLength)
+            .Value.ShouldBe(10, "a declared limit replaces the default");
         group.Children[2].ItemLabel.ShouldBe("Number");
         form.FindQuestion("name").ShouldBeNull("a group's questions are not form questions");
     }
@@ -488,7 +495,12 @@ public class FormModelValidatorTests
             ]);
         questions[0]
             .Rules.Select(static r => r.Kind)
-            .ShouldBe([RuleKind.Required, RuleKind.MaxItems, RuleKind.Distinct]);
+            .ShouldBe([
+                RuleKind.Required,
+                RuleKind.MaxLength,
+                RuleKind.MaxItems,
+                RuleKind.Distinct,
+            ]);
         (questions[0].AddAnotherLabel, questions[0].RemoveLabel).ShouldBe(
             ("Add another first name", "Remove first name")
         );

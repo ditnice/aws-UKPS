@@ -32,7 +32,6 @@ internal sealed class MedicinesDevelopmentBackground
         Order = 20
     )]
     [FormShowWhen("medicines_development_background.is_repurposed_medicine", YesNoUnknown.Yes)]
-    [FormMaxLength(2000, "Differences must be 2000 characters or fewer")]
     public string? RepurposedMedicineDetails { get; set; }
 
     [FormPage(MedicineFormLayout.Originator)]
@@ -57,7 +56,6 @@ internal sealed class MedicinesDevelopmentBackground
     )]
     [FormShowWhen("medicines_development_background.is_originator_company", YesNoUnknown.No)]
     [FormRequired("Enter details")]
-    [FormMaxLength(200, "Originator company name must be 200 characters or fewer")]
     public string? OriginatorCompanyName { get; set; }
 
     [FormPage(MedicineFormLayout.CoMarketing)]
@@ -82,7 +80,6 @@ internal sealed class MedicinesDevelopmentBackground
     )]
     [FormShowWhen("medicines_development_background.is_co_marketed", YesNoUnknown.Yes)]
     [FormRequired("Enter details")]
-    [FormMaxLength(200, "Co-marketing company name must be 200 characters or fewer")]
     public string? CoMarketingCompanyName { get; set; }
 
     // Navigation

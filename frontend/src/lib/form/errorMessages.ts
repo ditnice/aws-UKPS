@@ -1,3 +1,6 @@
+// The default limit of a single-line record form answer; mirrors ControlRules.DefaultMaxLength.
+export const maxRecordTextLength = 2000
+
 export const errorMessages = {
   // Authentication
   incorrectMfaCode: 'The code is incorrect. Try again.',
@@ -38,6 +41,10 @@ export const errorMessages = {
   passwordWhitespace: 'Your password cannot contain spaces',
 
   genericNamesDistinct: 'Generic names must be distinct',
+  companyCodeTooLong: `Company code must be ${maxRecordTextLength} characters or fewer`,
+  brandedNameTooLong: `Branded name must be ${maxRecordTextLength} characters or fewer`,
+  genericNameTooLong: `Generic name must be ${maxRecordTextLength} characters or fewer`,
+  otherIdentifierTooLong: `Identifier must be ${maxRecordTextLength} characters or fewer`,
   recordTitleTooLong: 'Record title must be between 1 and 100 characters',
 
   // Data retrieval

@@ -53,6 +53,18 @@ describe('text lists', () => {
     expect(questionError(names, ['', ' '])).toEqual({ message: 'Enter generic name', items: {} })
   })
 
+  it('reports each entry that is too long against itself, ahead of a repeat', () => {
+    const limited: RecordPageQuestionDto = {
+      ...names,
+      rules: [...names.rules, { kind: 'MaxLength', value: 3, message: 'Too long' }],
+    }
+
+    expect(questionError(limited, ['abcd', '', ' abc ', 'ABCD'])).toEqual({
+      message: '',
+      items: { '0': 'Too long', '3': 'Too long' },
+    })
+  })
+
   it('finds repeats in order', () => {
     expect(repeatIndexes(['a', null, 'A', 'b', 'a'])).toEqual([2, 4])
   })

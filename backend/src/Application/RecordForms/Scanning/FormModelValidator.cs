@@ -548,11 +548,11 @@ internal static partial class FormModelValidator
         string where = question.Where;
         if (
             question.MaxLength is { } maxLength
-            && (control is not (FormControl.Text or FormControl.Textarea) || maxLength.Max <= 0)
+            && (!ControlRules.IsFreeText(control) || maxLength.Max <= 0)
         )
         {
             problems.Add(
-                $"{where} has [FormMaxLength], which needs a Text or Textarea control and a positive maximum."
+                $"{where} has [FormMaxLength], which needs a Text, Textarea or TextList control and a positive maximum."
             );
         }
 

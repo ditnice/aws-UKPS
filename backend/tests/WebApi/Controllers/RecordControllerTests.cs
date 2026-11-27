@@ -66,6 +66,14 @@ public class RecordControllerTests : IClassFixture<WebApplicationFactory<Program
             },
         ["BrandedName empty"] = x => x with { BrandedName = "" },
         ["BrandedName whitespace"] = x => x with { BrandedName = "   " },
+        ["CompanyCode too long"] = x => x with { CompanyCode = new string('e', 2001) },
+        ["BrandedName too long"] = x => x with { BrandedName = new string('e', 2001) },
+        ["GenericNames item too long"] = x => x with { GenericNames = [new string('e', 2001)] },
+        ["OtherIdentifiers item too long"] = x =>
+            x with
+            {
+                OtherIdentifiers = [new string('e', 2001)],
+            },
         ["RecordTitle empty"] = x => x with { RecordTitle = "" },
         ["RecordTitle whitespace"] = x => x with { RecordTitle = "   " },
         ["RecordTitle null"] = x => x with { RecordTitle = null! },

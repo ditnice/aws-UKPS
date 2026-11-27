@@ -13,7 +13,7 @@ import { Input } from '@/components/Input/Input'
 import { ErrorState } from '@/components/Placeholder/ErrorState'
 import { Textarea } from '@/components/Textarea/Textarea'
 import { getCompanyCodeSuggestions } from '@/lib/form/companyCodeSuggestions'
-import { errorMessages } from '@/lib/form/errorMessages'
+import { errorMessages, maxRecordTextLength } from '@/lib/form/errorMessages'
 import { updateFormApiErrors } from '@/lib/form/formErrorHandling'
 import { getFieldErrorMessage } from '@/lib/form/getFieldErrorMessage'
 import { isValidationProblemDetails } from '@/lib/responses/typeGuards'
@@ -27,17 +27,29 @@ const isDistinctIgnoringCase = (values: string[]) =>
 
 export const createRecordCommandSchema = z.object({
   organisationId: z.number(),
-  companyCode: z.string().trim().min(1, errorMessages.companyCodeRequired),
+  companyCode: z
+    .string()
+    .trim()
+    .min(1, errorMessages.companyCodeRequired)
+    .max(maxRecordTextLength, errorMessages.companyCodeTooLong),
   // Other identifiers are optional, so blank entries are dropped rather than rejected.
   otherIdentifiers: z
-    .array(z.string())
-    .transform((values) => values.map((value) => value.trim()).filter(Boolean)),
+    .array(z.string().trim().max(maxRecordTextLength, errorMessages.otherIdentifierTooLong))
+    .transform((values) => values.filter(Boolean)),
   brandedName: z
     .string()
+    .trim()
+    .max(maxRecordTextLength, errorMessages.brandedNameTooLong)
     .nullish()
-    .transform((value) => value?.trim() || null),
+    .transform((value) => value || null),
   genericNames: z
-    .array(z.string().trim().min(1, errorMessages.genericNameRequired))
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1, errorMessages.genericNameRequired)
+        .max(maxRecordTextLength, errorMessages.genericNameTooLong),
+    )
     .min(1, errorMessages.genericNameRequired)
     .refine(isDistinctIgnoringCase, errorMessages.genericNamesDistinct),
   recordTitle: z
