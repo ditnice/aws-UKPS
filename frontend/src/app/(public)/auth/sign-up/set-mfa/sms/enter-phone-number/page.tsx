@@ -91,7 +91,7 @@ export default function EnterPhoneNumber() {
           formApi.setErrorMap({
             onSubmit: {
               fields: {
-                password: 'The password you entered is incorrect.',
+                password: 'The password you entered is incorrect',
               },
             },
           })

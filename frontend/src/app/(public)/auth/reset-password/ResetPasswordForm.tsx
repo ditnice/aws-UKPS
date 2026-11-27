@@ -67,6 +67,7 @@ const ResetPasswordForm = ({
   return (
     <form
       action={action as never}
+      noValidate
       onSubmit={(e) => {
         e.preventDefault()
         void form.handleSubmit({ formData: new FormData(e.currentTarget) })

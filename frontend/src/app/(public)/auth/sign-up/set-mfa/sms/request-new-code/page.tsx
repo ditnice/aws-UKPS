@@ -68,7 +68,7 @@ export default function RequestNewCode() {
         if (result.response?.status === 401) {
           clearPassword()
           setEnteredPassword('')
-          setPasswordError('The password you entered is incorrect.')
+          setPasswordError('The password you entered is incorrect')
           return
         }
 

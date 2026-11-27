@@ -23,27 +23,28 @@ export const confirmResetPasswordAction = async (prev: unknown, formData: FormDa
       return {
         ...initialFormState,
         values,
-        ...getFormStateServerErrors(error.errors),
+        ...getFormStateServerErrors(error.errors, ['confirmationCode', 'newPassword']),
       }
+    }
+
+    // Cognito's rate limits: the user needs the support team to recover their account.
+    if (response?.status === 429) {
+      redirect('/auth/account-recovery')
     }
 
     if (error || !response?.ok) {
-      let message = undefined
-      switch (response?.status) {
-        case 429:
-          message = 'Number of requests exceeded limit. Try again later.'
-          break
-        default:
-          message =
-            'An unexpected error occurred while confirming your password reset. Please try again.'
-          break
+      return {
+        ...initialFormState,
+        values,
+        errors: [
+          'An unexpected error occurred while confirming your password reset. Please try again.',
+        ],
       }
-
-      return { ...initialFormState, errors: [message] }
     }
   } catch (e) {
     if (e instanceof ServerValidateError) {
-      return e.formState
+      // Its errors are all for fields, which show them; as form-level errors they have no text.
+      return { ...e.formState, errors: [] }
     }
     throw e
   }

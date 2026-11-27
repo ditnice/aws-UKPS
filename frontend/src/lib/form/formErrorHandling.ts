@@ -12,10 +12,18 @@ export const lowerCamelCaseKeys = (errors: Errors): Errors => {
   )
 }
 
-export const getFormStateServerErrors = (errors: Errors) => {
+/**
+ * Puts a validation problem's errors on the fields they are keyed to. Those keyed to one of
+ * `fieldNames`, the fields that show their own errors, are left out of the form-level errors so
+ * they are not shown twice.
+ */
+export const getFormStateServerErrors = (errors: Errors, fieldNames: string[] = []) => {
+  const fields = lowerCamelCaseKeys(errors)
   return {
-    errorMap: { onServer: { fields: lowerCamelCaseKeys(errors) } },
-    errors: Object.values(errors).flat(),
+    errorMap: { onServer: { fields } },
+    errors: Object.entries(fields)
+      .filter(([key]) => !fieldNames.includes(key))
+      .flatMap(([, messages]) => messages),
   }
 }
 

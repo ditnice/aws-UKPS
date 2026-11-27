@@ -16,7 +16,7 @@ public record ConfirmNewPasswordCommand
 
     /// <summary>Gets the new password.</summary>
     [Required]
-    [MinLength(8, ErrorMessage = "Password must be at least 8 characters long.")]
-    [MaxLength(256, ErrorMessage = "Password can be no longer that 256 characters.")]
+    [MinLength(8, ErrorMessage = "Password must be at least 8 characters long")]
+    [MaxLength(256, ErrorMessage = "Password can be no longer than 256 characters")]
     public required string NewPassword { get; init; }
 }

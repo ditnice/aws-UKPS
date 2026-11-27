@@ -1,4 +1,5 @@
-import { createServerValidate, formOptions } from '@tanstack/react-form-nextjs'
+import { formOptions, revalidateLogic } from '@tanstack/react-form'
+import { createServerValidate } from '@tanstack/react-form-nextjs'
 import z from 'zod'
 
 import { InitiateForgottenPasswordProcedureCommand } from '@/client/generated'
@@ -13,6 +14,10 @@ export const passwordRestFormOptions = formOptions({
   defaultValues: {
     email: '',
   } satisfies InitiateForgottenPasswordProcedureCommand,
+  validationLogic: revalidateLogic({
+    mode: 'submit',
+    modeAfterSubmission: 'blur',
+  }),
   validators: {
     onDynamic: formSchema,
   },

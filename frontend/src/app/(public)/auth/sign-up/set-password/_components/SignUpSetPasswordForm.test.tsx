@@ -227,7 +227,7 @@ describe('SignUpSetPasswordForm', () => {
     await submitForm()
 
     expect(
-      await screen.findByText('The password does not meet the expected standards.'),
+      await screen.findByText('The password does not meet the expected standards'),
     ).toBeInTheDocument()
     expect(mockPush).not.toHaveBeenCalled()
     expect(sessionStorage.getItem(signUpMfaSetupStorageKey)).toBeNull()

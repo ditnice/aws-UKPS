@@ -671,25 +671,25 @@ public class AuthenticationController : ControllerBase
                         CreateValidationProblem(
                             "Incorrect confirmation code",
                             nameof(value.ConfirmationCode),
-                            "The confirmation code is incorrect."
+                            "The confirmation code is incorrect"
                         ),
                     codeExpired: _ =>
                         CreateValidationProblem(
                             "Expired confirmation code",
                             nameof(value.ConfirmationCode),
-                            "The confirmation code has expired."
+                            "The confirmation code has expired"
                         ),
                     invalidPassword: _ =>
                         CreateValidationProblem(
                             "Invalid password",
                             nameof(value.NewPassword),
-                            "The new password does not meet the password requirements."
+                            "The new password does not meet the password requirements"
                         ),
                     historyPolicyViolation: _ =>
                         CreateValidationProblem(
                             "Invalid password",
                             nameof(value.NewPassword),
-                            "The new password violates the history policy. Be sure to use a new password."
+                            "Your new password cannot be the same as your old password"
                         ),
                     tooManyRequests: _ =>
                         Problem(

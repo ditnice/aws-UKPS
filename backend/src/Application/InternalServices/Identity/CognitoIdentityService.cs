@@ -469,6 +469,17 @@ internal sealed partial class CognitoIdentityService : IIdentityService
                 cancellationToken
             );
         }
+        catch (UserNotFoundException)
+        {
+            // No such user: carry on as if a code was sent, so the response does not reveal who
+            // has an account, whether or not the app client prevents user existence errors.
+        }
+        catch (Exception ex) when (ex is NotAuthorizedException or InvalidParameterException)
+        {
+            // A disabled user, or one with no verified email: carry on as if a code was sent, for
+            // the same reason. Logged, as these exceptions can also mean a configuration problem.
+            LogForgotPasswordCodeNotSent(username.Value, ex.Message, ex);
+        }
         catch (LimitExceededException)
         {
             return false;
@@ -507,6 +518,13 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         }
         catch (CodeMismatchException)
         {
+            return ConfirmNewPasswordResult.Err(new ConfirmNewPasswordError.CodeMismatch());
+        }
+        catch (Exception ex) when (ex is UserNotFoundException or NotAuthorizedException)
+        {
+            // No such user, or a disabled one: answer as for a wrong code, so the response does
+            // not reveal who has an account (as Cognito does when the app client prevents user
+            // existence errors).
             return ConfirmNewPasswordResult.Err(new ConfirmNewPasswordError.CodeMismatch());
         }
         catch (InvalidPasswordException)
@@ -738,6 +756,16 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         Message = "Cognito user {CognitoUsername} was not found when deleting; treating as already deleted."
     )]
     private partial void LogCognitoUserAlreadyDeleted(string cognitoUsername);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Cognito did not send a password reset code to {CognitoUsername}: {Message}"
+    )]
+    private partial void LogForgotPasswordCodeNotSent(
+        string cognitoUsername,
+        string message,
+        Exception exception
+    );
 
     [LoggerMessage(
         Level = LogLevel.Information,

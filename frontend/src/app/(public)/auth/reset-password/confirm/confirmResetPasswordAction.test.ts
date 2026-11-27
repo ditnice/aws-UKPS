@@ -124,7 +124,10 @@ describe('confirmResetPasswordAction', () => {
       const state = await run()
 
       expect(mocked.isValidationProblemDetails).toHaveBeenCalledWith(problem)
-      expect(mocked.getFormStateServerErrors).toHaveBeenCalledWith(problem.errors)
+      expect(mocked.getFormStateServerErrors).toHaveBeenCalledWith(problem.errors, [
+        'confirmationCode',
+        'newPassword',
+      ])
       expect(state).toEqual({ ...initialFormState, values, ...serverErrors })
     })
 
@@ -141,22 +144,23 @@ describe('confirmResetPasswordAction', () => {
       ['an error with no response', { error: {}, status: null }],
       ['a non-ok response with no error', { error: undefined, status: STATUS_SERVER_ERROR }],
       ['no error and no response', { error: undefined, status: null }],
-    ])('returns a form-level error and does not redirect for %s', async (_name, result) => {
+    ])('returns a form-level error, keeping the values, for %s', async (_name, result) => {
       mocked.confirmNewPassword.mockResolvedValue(apiResult(result))
 
       const state = await run()
 
-      expect(state).toEqual({ ...initialFormState, errors: [expect.any(String)] })
+      expect(state).toEqual({ ...initialFormState, values, errors: [expect.any(String)] })
       expect(mocked.redirect).not.toHaveBeenCalled()
     })
 
-    it('uses a rate-limit specific message for a 429, distinct from the generic one', async () => {
-      const rateLimited = await getErrorMessageFor(STATUS_TOO_MANY_REQUESTS)
-      const generic = await getErrorMessageFor(STATUS_SERVER_ERROR)
+    it('redirects to account recovery when Cognito rate limits the request (429)', async () => {
+      mocked.confirmNewPassword.mockResolvedValue(
+        apiResult({ error: { detail: 'x' }, status: STATUS_TOO_MANY_REQUESTS }),
+      )
 
-      expect(rateLimited).toBeTruthy()
-      expect(generic).toBeTruthy()
-      expect(rateLimited).not.toBe(generic)
+      await expect(run()).rejects.toThrow(RedirectSignal)
+
+      expect(mocked.redirect).toHaveBeenCalledExactlyOnceWith('/auth/account-recovery')
     })
 
     it('uses the same generic message regardless of status or missing response', async () => {
@@ -167,15 +171,21 @@ describe('confirmResetPasswordAction', () => {
   })
 
   describe('error handling', () => {
-    it('returns the form state from a ServerValidateError', async () => {
-      const formState = { ...initialFormState, values }
+    it('returns the form state from a ServerValidateError without form-level errors', async () => {
+      // Its field errors also arrive as a form-level error object, which has no text to show.
+      const formState = {
+        ...initialFormState,
+        values,
+        errors: [{ fields: { confirmationCode: 'Too short' } }],
+        errorMap: { onServer: { fields: { confirmationCode: 'Too short' } } },
+      }
       mocked.serverValidate.mockRejectedValue(
-        new ServerValidateError({ formState } as ConstructorParameters<
+        new ServerValidateError({ formState } as unknown as ConstructorParameters<
           typeof ServerValidateError
         >[0]),
       )
 
-      await expect(run()).resolves.toBe(formState)
+      await expect(run()).resolves.toEqual({ ...formState, errors: [] })
       expect(mocked.confirmNewPassword).not.toHaveBeenCalled()
       expect(mocked.redirect).not.toHaveBeenCalled()
     })

@@ -85,7 +85,7 @@ export function SignUpSetPasswordForm({ setupToken }: SignUpSetPasswordFormProps
           formApi.setErrorMap({
             onSubmit: {
               fields: {
-                password: 'The password does not meet the expected standards.',
+                password: 'The password does not meet the expected standards',
               },
             },
           })
