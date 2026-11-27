@@ -112,6 +112,7 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/ukps_payload
       PAYLOAD_SECRET: e2e-not-a-secret
+      QA_SUPPORT_EMAIL: support@example.test
       BACKEND_API_BASE_URL: http://backend:8080
       # The proxy only accepts unsafe requests from this origin. The Playwright runner always uses
       # http://localhost:3000; `just stack-up` sets UKPS_FRONTEND_ORIGIN to match UKPS_FRONTEND_PORT.

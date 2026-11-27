@@ -4,10 +4,6 @@ export const csrfHeaderName = 'X-CSRF-Token'
  * (Super, Champion or Standard), so E2E tests can switch user. Only forwarded in DEV mode. */
 export const devRoleCookieName = 'ukps_dev_role'
 
-export function isDevAuthenticationMode(): boolean {
-  return process.env.AUTHENTICATION_MODE === 'DEV'
-}
-
 export function getCookie(name: string): string | null {
   if (typeof document === 'undefined') {
     return null

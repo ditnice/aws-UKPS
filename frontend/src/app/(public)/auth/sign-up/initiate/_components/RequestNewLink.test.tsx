@@ -1,6 +1,6 @@
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { resendSetupToken } from '@/client/generated'
 
@@ -13,18 +13,12 @@ vi.mock('@/client/generated', () => ({
 }))
 
 beforeEach(() => {
-  vi.stubEnv('QA_SUPPORT_EMAIL', supportEmail)
-})
-
-beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
   vi.mocked(resendSetupToken).mockResolvedValue({
     data: { correlationId: 'correlation-id-1' },
     error: undefined,
   })
 })
-
-afterAll(() => {})
 
 afterEach(() => {
   vi.useRealTimers()
@@ -36,6 +30,10 @@ function getSendButton() {
 
 function getSupportEmailLink() {
   return screen.getByRole('link', { name: supportEmail }) as HTMLAnchorElement
+}
+
+function renderRequestNewLink() {
+  return render(<RequestNewLink setupToken="test-token" supportEmail={supportEmail} />)
 }
 
 async function clickSend() {
@@ -51,7 +49,7 @@ beforeEach(() => {
 
 describe('RequestNewLink', () => {
   it('renders the expired-link message with an enabled send button', () => {
-    render(<RequestNewLink setupToken="test-token" />)
+    renderRequestNewLink()
 
     expect(screen.getByText('This link has expired')).toBeInTheDocument()
     expect(
@@ -63,7 +61,7 @@ describe('RequestNewLink', () => {
   })
 
   it('sends the setup token and shows the check-your-email message on click', async () => {
-    render(<RequestNewLink setupToken="test-token" />)
+    renderRequestNewLink()
 
     await user.click(getSendButton())
 
@@ -86,7 +84,7 @@ describe('RequestNewLink', () => {
       .mockResolvedValueOnce({ data: { correlationId: 'correlation-id-1' }, error: undefined })
       .mockResolvedValueOnce({ data: { correlationId: 'correlation-id-2' }, error: undefined })
 
-    render(<RequestNewLink setupToken="test-token" />)
+    renderRequestNewLink()
 
     await clickSend()
     expect(resendSetupToken).toHaveBeenNthCalledWith(1, {
@@ -104,7 +102,7 @@ describe('RequestNewLink', () => {
   })
 
   it('counts down the wait time once a second', async () => {
-    render(<RequestNewLink setupToken="test-token" />)
+    renderRequestNewLink()
 
     await clickSend()
     expect(screen.getByText('60 seconds')).toBeInTheDocument()
@@ -121,7 +119,7 @@ describe('RequestNewLink', () => {
   })
 
   it('disables the send button immediately after sending', async () => {
-    render(<RequestNewLink setupToken="test-token" />)
+    renderRequestNewLink()
 
     await clickSend()
 
@@ -129,7 +127,7 @@ describe('RequestNewLink', () => {
   })
 
   it('re-enables the send button once the cooldown has elapsed', async () => {
-    render(<RequestNewLink setupToken="test-token" />)
+    renderRequestNewLink()
 
     await clickSend()
     expect(getSendButton()).toBeDisabled()
@@ -148,7 +146,7 @@ describe('RequestNewLink', () => {
       response: new Response(null, { status: 500 }),
     })
 
-    render(<RequestNewLink setupToken="test-token" />)
+    renderRequestNewLink()
 
     await user.click(getSendButton())
 
@@ -167,7 +165,7 @@ describe('RequestNewLink', () => {
       response: new Response(null, { status: 404 }),
     })
 
-    render(<RequestNewLink setupToken="test-token" />)
+    renderRequestNewLink()
 
     await user.click(getSendButton())
 
@@ -183,7 +181,7 @@ describe('RequestNewLink', () => {
       response: new Response(null, { status: 400 }),
     })
 
-    render(<RequestNewLink setupToken="test-token" />)
+    renderRequestNewLink()
 
     await user.click(getSendButton())
 
@@ -193,15 +191,16 @@ describe('RequestNewLink', () => {
   it('shows a contact-support message if the request throws, e.g. a network failure', async () => {
     vi.mocked(resendSetupToken).mockRejectedValue(new Error('Network error'))
 
-    render(<RequestNewLink setupToken="test-token" />)
+    renderRequestNewLink()
 
     await user.click(getSendButton())
 
     expect(await screen.findByText('Contact the support team')).toBeInTheDocument()
+    expect(getSupportEmailLink()).toHaveAttribute('href', `mailto:${supportEmail}`)
   })
 
   it('allows up to three successful attempts', async () => {
-    render(<RequestNewLink setupToken="test-token" />)
+    renderRequestNewLink()
 
     for (let attempt = 1; attempt <= 3; attempt++) {
       await clickSend()
@@ -216,7 +215,7 @@ describe('RequestNewLink', () => {
   })
 
   it('shows contact support text once the backend rejects a fourth attempt', async () => {
-    render(<RequestNewLink setupToken="test-token" />)
+    renderRequestNewLink()
 
     for (let attempt = 1; attempt <= 3; attempt++) {
       await user.click(getSendButton())
@@ -251,7 +250,7 @@ describe('RequestNewLink', () => {
       response: new Response(null, { status: 403 }),
     })
 
-    render(<RequestNewLink setupToken="test-token" />)
+    renderRequestNewLink()
 
     await user.click(getSendButton())
 
@@ -261,26 +260,5 @@ describe('RequestNewLink', () => {
     )
     expect(getSupportEmailLink().getAttribute('href')).toBe(`mailto:${supportEmail}`)
     expect(screen.queryByRole('button', { name: 'Send a new link' })).toBeNull()
-  })
-
-  it('shows contact support text without an email link if no support email is configured', async () => {
-    vi.stubEnv('QA_SUPPORT_EMAIL', '')
-    vi.mocked(resendSetupToken).mockResolvedValue({
-      data: undefined,
-      error: { status: 403 },
-      response: new Response(null, { status: 403 }),
-    })
-
-    render(<RequestNewLink setupToken="test-token" />)
-
-    await user.click(getSendButton())
-
-    expect(
-      await screen.findByText('Please contact the UKPS support team for assistance.'),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText(/You have reached the maximum number of attempts to request a new link\./),
-    ).toBeInTheDocument()
-    expect(screen.queryByRole('link')).toBeNull()
   })
 })

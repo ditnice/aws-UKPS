@@ -15,7 +15,7 @@ const resendCooldownSeconds = 60
 
 type RequestNewLinkProps = {
   setupToken: string
-  supportEmail?: string
+  supportEmail: string
 }
 
 type Status = 'idle' | 'sent' | 'tooManyAttempts' | 'notFound' | 'genericError'
@@ -29,15 +29,13 @@ function getPageContent(
   status: Status,
   remainingSeconds: number,
   countdownRole: 'timer' | 'alert',
-  supportEmail?: string,
+  supportEmail: string,
 ): PageContent {
-  const contactSupport = supportEmail ? (
+  const contactSupport = (
     <>
       Please contact the UKPS support team for assistance{' '}
       <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
     </>
-  ) : (
-    <p>Please contact the UKPS support team for assistance.</p>
   )
 
   switch (status) {
@@ -74,14 +72,10 @@ function getPageContent(
         detail: (
           <>
             <p>You have reached the maximum number of attempts to request a new link.</p>
-            {supportEmail ? (
-              <p>
-                You can contact the support team by email{' '}
-                <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
-              </p>
-            ) : (
-              <p>Please contact the UKPS support team for assistance.</p>
-            )}
+            <p>
+              You can contact the support team by email{' '}
+              <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
+            </p>
           </>
         ),
       }
@@ -92,7 +86,6 @@ function getPageContent(
 }
 
 export function RequestNewLink({ setupToken, supportEmail }: RequestNewLinkProps) {
-  const resolvedSupportEmail = supportEmail ?? process.env.QA_SUPPORT_EMAIL
   const [status, setStatus] = useState<Status>('idle')
   const [coolingDown, setCoolingDown] = useState(false)
   const [remainingSeconds, setRemainingSeconds] = useState(resendCooldownSeconds)
@@ -159,7 +152,7 @@ export function RequestNewLink({ setupToken, supportEmail }: RequestNewLinkProps
   return (
     <>
       <SignUpInitiateError
-        {...getPageContent(status, remainingSeconds, countdownRole, resolvedSupportEmail)}
+        {...getPageContent(status, remainingSeconds, countdownRole, supportEmail)}
       />
       {showResendButton && (
         <div className={styles.actions}>

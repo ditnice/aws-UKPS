@@ -12,10 +12,10 @@ function createRequest(url: string, cookie?: string) {
 
 async function loadProxy(
   overrides: {
-    authenticationMode?: string
+    authenticationMode?: 'DEV'
     issuer?: string
     clientId?: string
-    robotsNoIndex?: string
+    robotsNoIndex?: boolean
   } = {},
 ) {
   vi.resetModules()
@@ -24,19 +24,23 @@ async function loadProxy(
     issuer,
     clientId,
     authenticationMode: undefined,
-    robotsNoIndex: undefined,
+    robotsNoIndex: false,
     ...overrides,
   }
-  vi.stubEnv('COGNITO_ISSUER', config.issuer)
-  vi.stubEnv('COGNITO_CLIENT_ID', config.clientId)
-  vi.stubEnv('AUTHENTICATION_MODE', config.authenticationMode)
-  vi.stubEnv('ROBOTS_NOINDEX', config.robotsNoIndex)
+  vi.doMock('@/env/server', () => ({
+    getServerEnv: () => ({
+      COGNITO_ISSUER: config.issuer,
+      COGNITO_CLIENT_ID: config.clientId,
+      AUTHENTICATION_MODE: config.authenticationMode,
+      ROBOTS_NOINDEX: config.robotsNoIndex,
+    }),
+  }))
 
   return import('./proxy')
 }
 
 afterEach(() => {
-  vi.unstubAllEnvs()
+  vi.doUnmock('@/env/server')
   vi.doUnmock('jose')
   createRemoteJWKSet.mockClear()
   jwtVerify.mockReset()
@@ -59,22 +63,15 @@ describe('proxy', () => {
     expect(jwtVerify).not.toHaveBeenCalled()
   })
 
-  it('does not send X-Robots-Tag when ROBOTS_NOINDEX is not set', async () => {
+  it('does not send X-Robots-Tag when ROBOTS_NOINDEX is false', async () => {
     const { proxy } = await loadProxy()
     const response = await proxy(createRequest('https://frontend.example/'))
 
     expect(response.headers.get('x-robots-tag')).toBeNull()
   })
 
-  it('does not send X-Robots-Tag when ROBOTS_NOINDEX is not true', async () => {
-    const { proxy } = await loadProxy({ robotsNoIndex: 'false' })
-    const response = await proxy(createRequest('https://frontend.example/'))
-
-    expect(response.headers.get('x-robots-tag')).toBeNull()
-  })
-
   it('sends X-Robots-Tag on public pages when ROBOTS_NOINDEX is true', async () => {
-    const { proxy } = await loadProxy({ robotsNoIndex: 'true' })
+    const { proxy } = await loadProxy({ robotsNoIndex: true })
     const response = await proxy(createRequest('https://frontend.example/'))
 
     expect(response.status).toBe(200)
@@ -82,7 +79,7 @@ describe('proxy', () => {
   })
 
   it('sends X-Robots-Tag on sign-in redirects when ROBOTS_NOINDEX is true', async () => {
-    const { proxy } = await loadProxy({ robotsNoIndex: 'true' })
+    const { proxy } = await loadProxy({ robotsNoIndex: true })
     const response = await proxy(createRequest('https://frontend.example/portal'))
 
     expect(response.status).toBe(307)
@@ -91,7 +88,7 @@ describe('proxy', () => {
 
   it('sends X-Robots-Tag on authorised portal requests when ROBOTS_NOINDEX is true', async () => {
     jwtVerify.mockResolvedValue({ payload: { client_id: clientId, token_use: 'access' } })
-    const { proxy } = await loadProxy({ robotsNoIndex: 'true' })
+    const { proxy } = await loadProxy({ robotsNoIndex: true })
     const response = await proxy(
       createRequest('https://frontend.example/portal', 'access_token=valid-token'),
     )

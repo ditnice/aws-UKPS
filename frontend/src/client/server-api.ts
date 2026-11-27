@@ -2,7 +2,8 @@ import { cookies, headers } from 'next/headers'
 import { redirect, unstable_rethrow } from 'next/navigation'
 import 'server-only'
 
-import { devRoleCookieName, isDevAuthenticationMode } from '@/lib/auth/cookies'
+import { getServerEnv } from '@/env/server'
+import { devRoleCookieName } from '@/lib/auth/cookies'
 import { buildSignInHref, getOrganisationSelectionHref } from '@/lib/auth/routing'
 
 import { AuthenticationFailCode } from './generated'
@@ -12,16 +13,30 @@ import type { Client } from './generated/client'
 
 const fallbackReturnTo = '/portal'
 
-export async function createServerApiClient(): Promise<Client> {
-  const baseUrl = process.env.BACKEND_API_BASE_URL
+/**
+ * Creates a server client for anonymous backend calls, such as validating a sign-up link.
+ * It forwards no cookies and does not redirect on 401, so use createServerApiClient for any
+ * call made on behalf of a signed-in user.
+ */
+export function createPublicServerApiClient(): Client {
+  return createClient({
+    baseUrl: getServerEnv().BACKEND_API_BASE_URL,
+    cache: 'no-store',
+  })
+}
 
-  if (!baseUrl) {
-    throw new Error('BACKEND_API_BASE_URL is required to create the server API client.')
-  }
+/**
+ * Creates a server client that forwards the user's access token (and the dev role cookie in DEV
+ * mode). A 401 or organisation-selection 409 from the backend redirects to the matching auth page,
+ * except for auth endpoints, which receive the response unchanged.
+ */
+export async function createServerApiClient(): Promise<Client> {
+  const env = getServerEnv()
 
   const cookieStore = await cookies()
   const accessToken = cookieStore.get('access_token')?.value
-  const devRole = isDevAuthenticationMode() ? cookieStore.get(devRoleCookieName)?.value : undefined
+  const devRole =
+    env.AUTHENTICATION_MODE === 'DEV' ? cookieStore.get(devRoleCookieName)?.value : undefined
   const forwardedCookies = [
     accessToken && `access_token=${accessToken}`,
     devRole && `${devRoleCookieName}=${devRole}`,
@@ -29,8 +44,10 @@ export async function createServerApiClient(): Promise<Client> {
   const returnTo = (await headers()).get('x-ukps-return-to') ?? undefined
 
   const client: Client = createClient({
-    baseUrl,
+    baseUrl: env.BACKEND_API_BASE_URL,
     cache: 'no-store',
+    // TODO: Server Components cannot persist refreshed cookies. Until a renewal layer exists,
+    // server-side 401 responses should redirect to authentication.
     fetch: createServerFetch(returnTo),
     headers: forwardedCookies.length > 0 ? { Cookie: forwardedCookies.join('; ') } : undefined,
   })
