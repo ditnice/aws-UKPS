@@ -95,6 +95,32 @@ public interface IIdentityAdministrationService
     );
 
     /// <summary>
+    /// Initiates an update of the phone number used for SMS multi-factor authentication
+    /// for the user identified by the supplied access token.
+    /// </summary>
+    /// <param name="accessToken">A valid access token identifying the authenticated user.</param>
+    /// <param name="phoneNumber">The new phone number to use.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    Task InitiateUpdateSmsMultiFactorAuthentication(
+        string accessToken,
+        string phoneNumber,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
+    /// Verifies an update of the phone number used for SMS multi-factor authentication
+    /// for the user identified by the supplied access token.
+    /// </summary>
+    /// <param name="accessToken">A valid access token identifying the authenticated user.</param>
+    /// <param name="code">The verification code sent to the new phone number.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    Task VerifyUpdateSmsMultiFactorAuthentication(
+        string accessToken,
+        string code,
+        CancellationToken cancellationToken
+    );
+
+    /// <summary>
     /// Verifies the user's multi-factor authentication setup by validating the
     /// provided authentication code and completing the MFA configuration process.
     /// </summary>

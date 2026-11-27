@@ -316,6 +316,32 @@ internal sealed class MockAmazonCognitoIdentityProvider
                 return Task.FromResult(new AdminUpdateUserAttributesResponse());
             });
 
+        Mock.UpdateUserAttributesAsync(
+                Arg.Any<UpdateUserAttributesRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Task.FromResult(new UpdateUserAttributesResponse()));
+
+        Mock.GetUserAttributeVerificationCodeAsync(
+                Arg.Any<GetUserAttributeVerificationCodeRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Task.FromResult(new GetUserAttributeVerificationCodeResponse()));
+
+        Mock.VerifyUserAttributeAsync(
+                Arg.Any<VerifyUserAttributeRequest>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(callInfo =>
+            {
+                var request = callInfo.Arg<VerifyUserAttributeRequest>();
+                if (!IsValidMfaToken(request.Code))
+                {
+                    throw new CodeMismatchException("Invalid code.");
+                }
+                return Task.FromResult(new VerifyUserAttributeResponse());
+            });
+
         Mock.AdminGetUserAsync(Arg.Any<AdminGetUserRequest>(), Arg.Any<CancellationToken>())
             .Returns(callInfo =>
             {

@@ -1651,6 +1651,16 @@ export type UpdateOrgMembershipUserRoleCommandDto = {
 };
 
 /**
+ * Represents a command to update the phone number used for SMS multi-factor authentication.
+ */
+export type UpdateSmsMultiFactorAuthenticationCommand = {
+    /**
+     * Gets the new phone number to use for SMS multi-factor authentication.
+     */
+    phoneNumber: string;
+};
+
+/**
  * Represents the update status filter for records.
  */
 export const UpdateStatus = { OVERDUE: 'Overdue', NOT_OVERDUE: 'NotOverdue' } as const;
@@ -1929,6 +1939,16 @@ export type VerifySmsMultiFactorAuthenticationCommand = {
      * multi-factor authentication verification flow.
      */
     authenticationSession: string;
+};
+
+/**
+ * Represents a command to verify an SMS multi-factor authentication phone number update.
+ */
+export type VerifySmsMultiFactorAuthenticationUpdateCommand = {
+    /**
+     * Gets the verification code sent to the new phone number.
+     */
+    code: string;
 };
 
 export type LoginData = {
@@ -2471,6 +2491,68 @@ export type VerifyMultiFactorAuthenticationUpdateErrors = {
 export type VerifyMultiFactorAuthenticationUpdateError = VerifyMultiFactorAuthenticationUpdateErrors[keyof VerifyMultiFactorAuthenticationUpdateErrors];
 
 export type VerifyMultiFactorAuthenticationUpdateResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type InitiateUpdateSmsMultiFactorAuthenticationData = {
+    body: UpdateSmsMultiFactorAuthenticationCommand;
+    path?: never;
+    query?: never;
+    url: '/mfa/sms/update';
+};
+
+export type InitiateUpdateSmsMultiFactorAuthenticationErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type InitiateUpdateSmsMultiFactorAuthenticationError = InitiateUpdateSmsMultiFactorAuthenticationErrors[keyof InitiateUpdateSmsMultiFactorAuthenticationErrors];
+
+export type InitiateUpdateSmsMultiFactorAuthenticationResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type VerifyUpdateSmsMultiFactorAuthenticationData = {
+    body: VerifySmsMultiFactorAuthenticationUpdateCommand;
+    path?: never;
+    query?: never;
+    url: '/mfa/sms/verify';
+};
+
+export type VerifyUpdateSmsMultiFactorAuthenticationErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
+     * Unauthorized
+     */
+    401: AuthenticationProblemDetails;
+    /**
+     * Conflict
+     */
+    409: AuthenticationProblemDetails;
+};
+
+export type VerifyUpdateSmsMultiFactorAuthenticationError = VerifyUpdateSmsMultiFactorAuthenticationErrors[keyof VerifyUpdateSmsMultiFactorAuthenticationErrors];
+
+export type VerifyUpdateSmsMultiFactorAuthenticationResponses = {
     /**
      * OK
      */

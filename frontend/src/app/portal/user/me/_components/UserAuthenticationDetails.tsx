@@ -8,6 +8,7 @@ import {
 import { errorMessages } from '@/lib/form/errorMessages'
 
 import { buildUpdateUserMfaLink } from '../update-mfa/navigate'
+import { buildUpdateUserSmsMfaLink } from '../update-sms-mfa/navigate'
 
 export const UserAuthenticationDetails = ({
   currentUser,
@@ -31,6 +32,9 @@ export const UserAuthenticationDetails = ({
     currentUser.mfaMethod === 'Sms' && currentUser.mfaPhoneNumber
       ? `${mfaMethodLabel} (${currentUser.mfaPhoneNumber})`
       : mfaMethodLabel
+  const backupMfaValue = currentUser.mfaPhoneNumber
+    ? `Text message (${currentUser.mfaPhoneNumber})`
+    : 'Text message'
 
   return (
     <div>
@@ -52,7 +56,7 @@ export const UserAuthenticationDetails = ({
             Change
           </SummaryListAction>
         </SummaryListRow>
-        <SummaryListRow label="Backup authentication method" value="Placeholder">
+        <SummaryListRow label="Backup authentication method" value={backupMfaValue}>
           <SummaryListAction href="#make-primary-method" visuallyHiddenText="make-primary">
             Make primary method
           </SummaryListAction>
@@ -63,7 +67,7 @@ export const UserAuthenticationDetails = ({
             Send recovery link
           </SummaryListAction>
           <SummaryListAction
-            href="#update-backup-authentication-method"
+            href={buildUpdateUserSmsMfaLink()}
             visuallyHiddenText="update-backup-method"
           >
             Change

@@ -1006,6 +1006,61 @@ public class IdentityAdministrationServiceTests : DatabaseTestBase
             .ShouldBeOfType<VerifyMultiFactorAuthenticationUpdateError.InvalidCode>();
     }
 
+    [Fact]
+    public async Task InitiateUpdateSmsMultiFactorAuthentication_ShouldCallUpdateUserAttributesAsync()
+    {
+        const string accessToken = "access_token";
+        const string phoneNumber = "+447123123123";
+
+        await _harness.Service.InitiateUpdateSmsMultiFactorAuthentication(
+            accessToken,
+            phoneNumber,
+            Ct
+        );
+
+        await _harness
+            .Cognito.Mock.Received(1)
+            .UpdateUserAttributesAsync(
+                Arg.Is<UpdateUserAttributesRequest>(r =>
+                    r.AccessToken == accessToken
+                    && r.UserAttributes.Any(a => a.Name == "phone_number" && a.Value == phoneNumber)
+                ),
+                Ct
+            );
+    }
+
+    [Fact]
+    public async Task VerifyUpdateSmsMultiFactorAuthentication_WhenValidCode_ShouldCallVerifyUserAttributeAsync()
+    {
+        const string accessToken = "access_token";
+        string code = _harness.Cognito.ValidMfaCode;
+
+        await _harness.Service.VerifyUpdateSmsMultiFactorAuthentication(accessToken, code, Ct);
+
+        await _harness
+            .Cognito.Mock.Received(1)
+            .VerifyUserAttributeAsync(
+                Arg.Is<VerifyUserAttributeRequest>(r =>
+                    r.AccessToken == accessToken
+                    && r.AttributeName == "phone_number"
+                    && r.Code == code
+                ),
+                Ct
+            );
+    }
+
+    [Fact]
+    public async Task VerifyUpdateSmsMultiFactorAuthentication_WhenInvalidCode_ShouldThrowCodeMismatchException()
+    {
+        await Should.ThrowAsync<CodeMismatchException>(async () =>
+            await _harness.Service.VerifyUpdateSmsMultiFactorAuthentication(
+                "access_token",
+                "1234",
+                Ct
+            )
+        );
+    }
+
     private async Task<(
         Guid SetupToken,
         string Session,

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Amazon.CognitoIdentityProvider.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -146,6 +147,87 @@ public class MultiFactorAuthenticationControllerTests
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
+    [Fact]
+    public async Task InitiateUpdateSmsMultiFactorAuthentication_WhenPhoneNumberInvalid_ShouldReturn400AndNotCallService()
+    {
+        var command = new UpdateSmsMultiFactorAuthenticationCommand
+        {
+            PhoneNumber = "not-a-phone-number",
+        };
+
+        var response = await SendInitiateUpdateSmsMultiFactorAuthenticationRequest(command);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        await _mockedAuthorisationService
+            .DidNotReceive()
+            .InitiateUpdateSmsMultiFactorAuthentication(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            );
+    }
+
+    [Fact]
+    public async Task InitiateUpdateSmsMultiFactorAuthentication_WhenPhoneNumberValid_ShouldPassE164NumberToService()
+    {
+        var command = new UpdateSmsMultiFactorAuthenticationCommand
+        {
+            PhoneNumber = "07123 123123",
+        };
+
+        var response = await SendInitiateUpdateSmsMultiFactorAuthenticationRequest(command);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        await _mockedAuthorisationService
+            .Received(1)
+            .InitiateUpdateSmsMultiFactorAuthentication(
+                AccessToken,
+                "+447123123123",
+                Arg.Any<CancellationToken>()
+            );
+    }
+
+    [Fact]
+    public async Task VerifyUpdateSmsMultiFactorAuthentication_WhenSuccess_ShouldReturn200()
+    {
+        var command = new VerifySmsMultiFactorAuthenticationUpdateCommand { Code = "123456" };
+
+        var response = await SendVerifyUpdateSmsMultiFactorAuthenticationRequest(command);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        await _mockedAuthorisationService
+            .Received(1)
+            .VerifyUpdateSmsMultiFactorAuthentication(
+                AccessToken,
+                command.Code,
+                Arg.Any<CancellationToken>()
+            );
+    }
+
+    [Fact]
+    public async Task VerifyUpdateSmsMultiFactorAuthentication_WhenCognitoThrows_ShouldReturn400()
+    {
+        _mockedAuthorisationService
+            .When(x =>
+                x.VerifyUpdateSmsMultiFactorAuthentication(
+                    Arg.Any<string>(),
+                    Arg.Any<string>(),
+                    Arg.Any<CancellationToken>()
+                )
+            )
+            .Throws(new CodeMismatchException("Invalid code."));
+
+        var response = await SendVerifyUpdateSmsMultiFactorAuthenticationRequest(
+            new VerifySmsMultiFactorAuthenticationUpdateCommand { Code = "123456" }
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        string body = await response.Content.ReadAsStringAsync(
+            TestContext.Current.CancellationToken
+        );
+        body.ShouldContain("Invalid multi-factor authentication code.");
+    }
+
     private void MockVerifyMultiFactorAuthenticationUpdate(
         VerifyMultiFactorAuthenticationUpdateResult expectedValues
     )
@@ -180,6 +262,28 @@ public class MultiFactorAuthenticationControllerTests
         var command = overrides is null ? defaultCommand : overrides(defaultCommand);
         return _client.PostAsJsonAsync(
             new Uri($"/{ControllerPath}/verify", UriKind.Relative),
+            command,
+            TestContext.Current.CancellationToken
+        );
+    }
+
+    private Task<HttpResponseMessage> SendInitiateUpdateSmsMultiFactorAuthenticationRequest(
+        UpdateSmsMultiFactorAuthenticationCommand command
+    )
+    {
+        return _client.PostAsJsonAsync(
+            new Uri($"/{ControllerPath}/sms/update", UriKind.Relative),
+            command,
+            TestContext.Current.CancellationToken
+        );
+    }
+
+    private Task<HttpResponseMessage> SendVerifyUpdateSmsMultiFactorAuthenticationRequest(
+        VerifySmsMultiFactorAuthenticationUpdateCommand command
+    )
+    {
+        return _client.PostAsJsonAsync(
+            new Uri($"/{ControllerPath}/sms/verify", UriKind.Relative),
             command,
             TestContext.Current.CancellationToken
         );

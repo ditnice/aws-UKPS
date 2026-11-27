@@ -561,6 +561,39 @@ internal sealed partial class CognitoIdentityService : IIdentityService
         );
     }
 
+    public async Task UpdateUserPhoneNumberWithAccessToken(
+        string accessToken,
+        string phoneNumber,
+        CancellationToken cancellationToken
+    )
+    {
+        await _cognito.UpdateUserAttributesAsync(
+            new UpdateUserAttributesRequest
+            {
+                AccessToken = accessToken,
+                UserAttributes = [new AttributeType { Name = "phone_number", Value = phoneNumber }],
+            },
+            cancellationToken
+        );
+    }
+
+    public async Task VerifyUserPhoneNumber(
+        string accessToken,
+        string code,
+        CancellationToken cancellationToken
+    )
+    {
+        await _cognito.VerifyUserAttributeAsync(
+            new VerifyUserAttributeRequest
+            {
+                AccessToken = accessToken,
+                AttributeName = "phone_number",
+                Code = code,
+            },
+            cancellationToken
+        );
+    }
+
     public async Task<UserMfaDetails?> GetUserMfaDetails(
         CognitoUsername cognitoUsername,
         CancellationToken cancellationToken

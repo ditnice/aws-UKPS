@@ -1,7 +1,9 @@
+using Amazon.CognitoIdentityProvider;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.Authentication.Dtos;
+using UKPS.Api.Application.Common;
 using UKPS.Api.WebApi.InternalServices.Authentication;
 
 namespace UKPS.Api.WebApi.Controllers;
@@ -112,5 +114,61 @@ public class MultiFactorAuthenticationController : ControllerBase
             Ok,
             err => err.Match<ActionResult>(invalidCode: _ => BadRequest(_invalidMfaSetupCode))
         );
+    }
+
+    /// <summary>
+    /// Initiates an update of the phone number used for SMS multi-factor authentication.
+    /// </summary>
+    [HttpPost("sms/update", Name = nameof(InitiateUpdateSmsMultiFactorAuthentication))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult> InitiateUpdateSmsMultiFactorAuthentication(
+        [FromBody] UpdateSmsMultiFactorAuthenticationCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        if (!PhoneNumberValidator.IsValidSmsNumber(command.PhoneNumber, out string? e164Number))
+        {
+            return BadRequest("The supplied phone number is invalid.");
+        }
+
+        string accessToken = await _accessTokenProvider.GetAccessTokenAsync();
+        await _authorisationAdministrationService.InitiateUpdateSmsMultiFactorAuthentication(
+            accessToken,
+            e164Number!,
+            cancellationToken
+        );
+        return Ok();
+    }
+
+    /// <summary>
+    /// Verifies an update of the phone number used for SMS multi-factor authentication.
+    /// </summary>
+    [HttpPost("sms/verify", Name = nameof(VerifyUpdateSmsMultiFactorAuthentication))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult> VerifyUpdateSmsMultiFactorAuthentication(
+        [FromBody] VerifySmsMultiFactorAuthenticationUpdateCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        string accessToken = await _accessTokenProvider.GetAccessTokenAsync();
+        try
+        {
+            await _authorisationAdministrationService.VerifyUpdateSmsMultiFactorAuthentication(
+                accessToken,
+                command.Code,
+                cancellationToken
+            );
+            return Ok();
+        }
+        catch (AmazonCognitoIdentityProviderException)
+        {
+            return BadRequest(_invalidMfaSetupCode);
+        }
     }
 }
