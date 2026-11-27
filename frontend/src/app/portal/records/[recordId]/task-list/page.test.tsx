@@ -35,6 +35,8 @@ const taskList = {
     displayStatus: 'Draft',
     companyCode: 'GC123',
     recordTitle: 'COVID-19, 18+ who do not require supplemental oxygen',
+    recordType: 'Medicine',
+    canDiscard: false,
     sections: [
       {
         id: 'indication-and-development',
@@ -86,6 +88,12 @@ const mandatoryTasksCompleteTaskList = {
       taskList.data.sections[1],
     ],
   },
+} satisfies GetRecordTaskListResult
+
+// The same list for a draft the user may discard.
+const discardableTaskList = {
+  ...taskList,
+  data: { ...taskList.data, canDiscard: true },
 } satisfies GetRecordTaskListResult
 
 const renderPage = async (recordId = '42', action?: string) => {
@@ -240,6 +248,23 @@ describe('RecordTaskListPage', () => {
       'href',
       '/portal/organisations/7/records',
     )
+  })
+
+  it('links to the discard page when the record can be discarded', async () => {
+    vi.mocked(getRecordTaskList).mockResolvedValue(discardableTaskList)
+
+    await renderPage()
+
+    expect(screen.getByRole('link', { name: 'Discard record' })).toHaveAttribute(
+      'href',
+      '/portal/organisations/7/records/42/discard?recordType=Medicine',
+    )
+  })
+
+  it('does not offer discard when the record cannot be discarded', async () => {
+    await renderPage()
+
+    expect(screen.queryByRole('link', { name: 'Discard record' })).not.toBeInTheDocument()
   })
 
   it('shows the draft saved alert when the draft-saved action is set', async () => {

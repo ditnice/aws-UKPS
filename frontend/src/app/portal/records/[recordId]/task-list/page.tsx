@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { buildRecordHref } from '@/app/portal/organisations/[id]/records/[recordId]/_lib/recordLinks'
 import { RecordActionAlert } from '@/app/portal/organisations/[id]/records/_components/RecordActionAlert'
 import {
   parseRecordAction,
@@ -142,6 +143,21 @@ const RecordTaskListPage = async ({ params, searchParams }: RecordTaskListPagePr
         >
           Return to my records
         </Button>
+
+        {taskList.canDiscard && (
+          <Button
+            elementType={Link}
+            href={buildRecordHref(
+              taskList.organisationId,
+              recordId,
+              taskList.recordType,
+              'discard',
+            )}
+            variant="secondary"
+          >
+            Discard record
+          </Button>
+        )}
       </ButtonGroup>
     </>
   )
