@@ -102,7 +102,7 @@ public interface IUserService
     /// A task that resolves to a <see cref="VerifyPendingEmailAddressResult"/> indicating whether the
     /// email address was verified, or which <see cref="VerifyPendingEmailAddressError"/> case prevented it
     /// (for example, the user was not found, the caller was not authorised, there was no pending email
-    /// address, it was already verified, or the token was invalid).
+    /// address, it was already verified, the token was invalid, or the pending email address has expired).
     /// </returns>
     Task<VerifyPendingEmailAddressResult> VerifyPendingEmailAddress(
         int userId,
@@ -116,7 +116,10 @@ public interface IUserService
     /// <param name="userId">The ID of the user whose email address is being updated.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>
-    /// A task representing the asynchronous operation, containing the result of the pending email change.
+    /// A task representing the asynchronous operation, containing the result of the pending email change,
+    /// or which <see cref="UpdateEmailToCompletePendingEmailError"/> case prevented it (for example, there was
+    /// no pending email change, it was not verified, the email conflicts with another user, or the pending
+    /// email change has expired).
     /// </returns>
     Task<UpdateEmailToCompletePendingEmailChangeResult> UpdateEmailToCompletePendingEmailChange(
         int userId,

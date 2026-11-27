@@ -50,6 +50,7 @@ builder
     .BindAppOptions<DatabaseOptions>()
     .BindAppOptions<EmailOptions>()
     .BindAppOptions<HostingOptions>()
+    .BindAppOptions<AccountRecoveryOptions>()
     .BindAppOptions<UserOnboardingOptions>();
 
 builder.Services.ConfigureHttpJsonOptions(options =>

@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Linq.Expressions;
 using UKPS.Api.Application.Common;
 using UKPS.Api.Persistence.Enums;
 
@@ -7,6 +8,14 @@ namespace UKPS.Api.Persistence.Entities.Identity;
 internal sealed partial class User
 {
     private const string RemovedPersonalValue = "REMOVED";
+
+    /// <summary>
+    /// Lets <see cref="PendingEmailChange.HasActivePendingEmail"/> reach the mapped complex
+    /// property in query expressions without exposing the handler itself.
+    /// </summary>
+    internal static readonly Expression<
+        Func<User, PendingEmailChangeHandler>
+    > _pendingEmailHandlerAccessor = user => user.PendingEmailHandler;
 
     public IReadOnlyCollection<IUserDomainEvent> Events => _events;
     public int Id { get; set; }
@@ -178,7 +187,7 @@ internal sealed partial class User
             return;
         }
 
-        PendingEmailHandler = new PendingEmailChangeHandler(workEmail, verificationToken);
+        PendingEmailHandler = new PendingEmailChangeHandler(workEmail, verificationToken, dateTime);
         UpdatedAt = dateTime;
         _events.Add(
             new PendingEmailUpdatedEvent()
@@ -192,9 +201,9 @@ internal sealed partial class User
     internal Result<
         string,
         PendingEmailChange.RefreshVerificationTokenError
-    > TryRefreshVerificationToken(string token, DateTime dateTime)
+    > TryRefreshVerificationToken(string token, DateTime dateTime, TimeSpan timeout)
     {
-        var result = PendingEmailHandler.TryRefreshVerificationToken(token);
+        var result = PendingEmailHandler.TryRefreshVerificationToken(token, dateTime, timeout);
 
         if (result.IsOk)
         {
@@ -205,10 +214,11 @@ internal sealed partial class User
     }
 
     internal Result<string, PendingEmailChange.CompletionError> CompletePendingEmail(
-        DateTime dateTime
+        DateTime dateTime,
+        TimeSpan timeout
     )
     {
-        var result = PendingEmailHandler.TryComplete();
+        var result = PendingEmailHandler.TryComplete(dateTime, timeout);
 
         if (result.TryGetSuccessValue(out string? newWorkEmail))
         {
@@ -309,10 +319,15 @@ internal sealed partial class User
 
     internal Result<PendingEmailChange.VerificationError> TryMarkPendingEmailAsVerified(
         string verificationToken,
-        DateTime dateTime
+        DateTime dateTime,
+        TimeSpan timeout
     )
     {
-        var result = PendingEmailHandler.TryMarkPendingEmailAsVerified(verificationToken, dateTime);
+        var result = PendingEmailHandler.TryMarkPendingEmailAsVerified(
+            verificationToken,
+            dateTime,
+            timeout
+        );
         if (result.IsOk)
         {
             UpdatedAt = dateTime;
@@ -321,11 +336,12 @@ internal sealed partial class User
     }
 
     internal Result<PendingEmailChange.PendingEmailCancellationError> TryCancelPendingEmailChange(
-        DateTime dateTime
+        DateTime dateTime,
+        TimeSpan timeout
     )
     {
         Result<PendingEmailChange.PendingEmailCancellationError> result =
-            PendingEmailHandler.TryCancelPendingEmailChange();
+            PendingEmailHandler.TryCancelPendingEmailChange(dateTime, timeout);
         if (result.IsOk)
         {
             UpdatedAt = dateTime;

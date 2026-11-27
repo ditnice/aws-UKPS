@@ -50,4 +50,9 @@ public enum AuthenticationFailCode
     /// The user must verify their pending email address before authentication can continue.
     /// </summary>
     PendingEmailRequiredVerification = 8,
+
+    /// <summary>
+    /// The pending email address used to sign in has expired and can no longer be used.
+    /// </summary>
+    PendingEmailExpired = 9,
 }

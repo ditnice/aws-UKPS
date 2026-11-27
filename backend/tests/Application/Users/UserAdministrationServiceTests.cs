@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Shouldly;
+using UKPS.Api.Application.Authentication;
 using UKPS.Api.Application.InternalServices.Hosting;
 using UKPS.Api.Application.Users;
 using UKPS.Api.Application.Users.Dtos;
@@ -34,6 +35,7 @@ public class UserAdministrationServiceTests : DatabaseTestBase
         20,
         DateTimeKind.Utc
     );
+    private readonly TimeSpan _pendingEmailTimeout = TimeSpan.FromHours(2);
     private readonly string _targetUserEmail = "target.user@email.com";
     private readonly string _currentUserEmail = "current.user@email.com";
     private readonly User _creator = new UserFaker().Generate();
@@ -160,6 +162,37 @@ public class UserAdministrationServiceTests : DatabaseTestBase
             TestContext.Current.CancellationToken
         );
         result.ShouldBeError().ShouldBeOfType<OnboardUserError.UserAlreadyInOrganisation>();
+    }
+
+    [Fact]
+    public async Task OnboardUser_WhenAUserHasAnExpiredPendingEmailThatMatchesTheOnboardedValue_ShouldOnboardUser()
+    {
+        var emailAddress = "test@email.com";
+        var existingUser = new UserFaker()
+            .FinishWith(
+                (_, user) =>
+                    user.UpdateEmail(
+                        emailAddress,
+                        "verification-token",
+                        _currentTime - _pendingEmailTimeout
+                    )
+            )
+            .Generate();
+        await AddEntity(existingUser, Ct);
+        OnboardUserCommandDto command = await GenerateValidOnboardingCommand() with
+        {
+            NewUserEmail = emailAddress,
+        };
+
+        OnboardUserResult result = await _harness.Service.OnboardUser(command, Ct);
+
+        int newUserId = result.ShouldBeSuccess();
+        User? foundUser = await _harness
+            .GetClearedContext()
+            .Users.SingleOrDefaultAsync(x => x.WorkEmail == emailAddress, Ct);
+        foundUser.ShouldNotBeNull();
+        foundUser.Id.ShouldBe(newUserId);
+        foundUser.Id.ShouldNotBe(existingUser.Id);
     }
 
     [Fact]
@@ -421,7 +454,16 @@ public class UserAdministrationServiceTests : DatabaseTestBase
                 }
             )
             .UpdateCurrentTime(_currentTime)
-            .ConfigureServices(services => services.AddTransient(_ => _setupLinkCreator));
+            .ConfigureServices(services =>
+            {
+                services
+                    .AddOptions<AccountRecoveryOptions>()
+                    .Configure(options =>
+                        options.PendingEmailChangeTimeoutSeconds = (int)
+                            _pendingEmailTimeout.TotalSeconds
+                    );
+                return services.AddTransient(_ => _setupLinkCreator);
+            });
 
         harness.Cognito.AddCurrentUser(
             _mockUserFaker.Generate() with

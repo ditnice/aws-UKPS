@@ -14,6 +14,7 @@ import { errorMessages } from '@/lib/form/errorMessages'
 import { getFieldErrorMessage, getFormErrorMessage } from '@/lib/form/getFieldErrorMessage'
 
 import EmailVerificationRequiredAlert from '../../../EmailVerificationRequiredAlert'
+import PendingEmailExpiredAlert from '../../../PendingEmailExpiredAlert'
 
 import styles from './SignInMfaForm.module.scss'
 
@@ -72,10 +73,13 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
         navigateOnSuccessfulAuth(returnTo)
         return
       }
-      if (response.error?.code === 'PendingEmailRequiredVerification') {
+      if (
+        response.error?.code === 'PendingEmailRequiredVerification' ||
+        response.error?.code === 'PendingEmailExpired'
+      ) {
         formApi.setErrorMap({
           onSubmit: {
-            form: 'PendingEmailRequiredVerification',
+            form: response.error.code,
             fields: {},
           },
         })
@@ -110,6 +114,7 @@ export function SignInMfaForm({ username, returnTo, session }: SignInFormProps) 
           if (!formError) return null
           if (formError === 'PendingEmailRequiredVerification')
             return <EmailVerificationRequiredAlert />
+          if (formError === 'PendingEmailExpired') return <PendingEmailExpiredAlert />
           return <ErrorState>{formError}</ErrorState>
         }}
       </form.Subscribe>

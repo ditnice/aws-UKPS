@@ -21,6 +21,12 @@ public abstract record InitiateAuthenticationError
     public sealed record VerificationRequired : InitiateAuthenticationError;
 
     /// <summary>
+    /// Indicates that authentication cannot be completed because the pending email change
+    /// used to sign in has expired.
+    /// </summary>
+    public sealed record PendingEmailExpired : InitiateAuthenticationError;
+
+    /// <summary>
     /// Indicates that authentication cannot be completed until the specified challenge
     /// has been satisfied.
     /// </summary>
@@ -73,17 +79,22 @@ public abstract record InitiateAuthenticationError
     /// <param name="challenge">
     /// The handler invoked when an authentication challenge must be completed.
     /// </param>
+    /// <param name="pendingEmailExpired">
+    /// The handler invoked when the pending email change used to sign in has expired.
+    /// </param>
     /// <returns>The result returned by the matching handler.</returns>
     internal TResult Match<TResult>(
         Func<TResult> unauthorised,
         Func<TResult> verificationRequired,
-        Func<Challenge, TResult> challenge
+        Func<Challenge, TResult> challenge,
+        Func<TResult> pendingEmailExpired
     ) =>
         this switch
         {
             Unauthorised => unauthorised(),
             VerificationRequired => verificationRequired(),
             Challenge c => challenge(c),
+            PendingEmailExpired => pendingEmailExpired(),
             _ => throw new UnreachableException(),
         };
 }
