@@ -112,13 +112,10 @@ export function getSafeReturnTo(returnTo: string | undefined): string | undefine
     return undefined
   }
 
+  // With an http(s) base the pathname always starts with "/" and any "\" in it has already become
+  // "/", so a leading "//" is the only unsafe shape left to check for.
   const safeReturnTo = `${url.pathname}${url.search}${url.hash}`
-  if (
-    url.origin !== returnToBase ||
-    !safeReturnTo.startsWith('/') ||
-    safeReturnTo.startsWith('//') ||
-    safeReturnTo.startsWith('/\\')
-  ) {
+  if (url.origin !== returnToBase || safeReturnTo.startsWith('//')) {
     return undefined
   }
 

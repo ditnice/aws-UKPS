@@ -38,6 +38,12 @@ describe('auth routing', () => {
     expect(getSafeReturnTo(returnTo)).toBeUndefined()
   })
 
+  it('returns the normalised path', () => {
+    expect(getSafeReturnTo('/portal/organisations/1/../2/records')).toBe(
+      '/portal/organisations/2/records',
+    )
+  })
+
   it('keeps encoded slashes as a path on this origin', () => {
     expect(getSafeReturnTo('/%2F%2Fexample.com')).toBe('/%2F%2Fexample.com')
   })
